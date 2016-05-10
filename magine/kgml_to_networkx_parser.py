@@ -9,9 +9,8 @@ except:
     kegg.TIMEOUT = 100
 
 
-
 def kgml_to_graph(xmlfile, species='hsa'):
-    """
+    """ Converts a kgml to networkx DiGraph
 
     :param xmlfile: to be translated
     :param species: string, of species that the network is to be translated. Is used for dictionary purposes.

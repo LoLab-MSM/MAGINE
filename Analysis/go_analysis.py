@@ -1,13 +1,14 @@
 import matplotlib
 import numpy as np
 
-matplotlib.use('Qt4Agg')
+matplotlib.use('Agg')
 from orangecontrib.bio import go
 import matplotlib.pyplot as plt
 import mpl_toolkits.axes_grid1 as axgrid
 import scipy.cluster.hierarchy as sch
 import os
 from textwrap  import wrap
+
 
 class GoAnalysis:
     """
@@ -132,7 +133,6 @@ class GoAnalysis:
         plt.yticks(y_ticks, names_2, fontsize=16)
         x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
         if labels:
-            print(x_ticks)
             plt.xticks(x_ticks, labels, fontsize=16, rotation='90')
         else:
             print("Provide labels")

@@ -7,6 +7,8 @@ For this I downloaded all the xml files from hmdb. They are free. We just need t
 
 
 """
+#TODO Need to automatically download all HMDB to automate this part.
+#TODO need to extract out gene-metabolite pairs to add to network information
 hmdb_to_kegg = {}
 kegg_to_hmdb = {}
 kegg_hmdb_to_name = {}
