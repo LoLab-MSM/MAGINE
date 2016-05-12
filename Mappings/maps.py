@@ -1,24 +1,25 @@
 # -*- coding: utf-8 -*-
+"""
+Mapping between data identifiers
+"""
 import cPickle as pickle
 import os
-from bioservices import UniProt, KEGG, UniChem, HGNC, PathwayCommons, EUtils
-import networkx as nx
-try:
-    uniprot.get('TP53')
-except:
-    uniprot = UniProt()
-    uniprot.TIMEOUT = 100
-try:
-    kegg.get('hsa:219')
-except:
-    kegg = KEGG()
-    kegg.TIMEOUT = 100
+from sys import modules
 
+import networkx as nx
+from bioservices import UniProt, KEGG, UniChem, HGNC
+
+try:
+    kegg = modules['kegg']
+except KeyError:
+    kegg = KEGG()
+
+uniprot = UniProt()
 hugo = HGNC()
 chem = UniChem()
 
-#TODO create a database to store all of this
-#TODO create a kegg to uniprot identifier dictionary
+# TODO create a database to store all of this
+# TODO create a kegg to uniprot identifier dictionary
 directory = os.path.dirname(__file__)
 # mouse genes
 mouse_kegg_to_uniprot = pickle.load(open(os.path.join(directory, 'mouse_kegg_mapper.p'), 'rb'))
@@ -30,8 +31,8 @@ human_kegg_to_uniprot = pickle.load(open(os.path.join(directory, 'human_kegg_map
 # chemical conversions
 hmdb_to_kegg_improved = pickle.load(open(os.path.join(directory, 'hmdb_to_kegg_from_hmdb.p'), 'rb'))
 kegg_to_hmdb_improved = pickle.load(open(os.path.join(directory, 'kegg_to_hmdb_from_hmdb.p'), 'rb'))
-kegg_to_hmdb = pickle.load(open(os.path.join(directory, 'kegg_to_hmdb.p'),'rb'))
-kegg_hmdb_to_name = pickle.load(open(os.path.join(directory,"kegg_to_chemical_name_from_hmdb.p"), "rb"))
+kegg_to_hmdb = pickle.load(open(os.path.join(directory, 'kegg_to_hmdb.p'), 'rb'))
+kegg_hmdb_to_name = pickle.load(open(os.path.join(directory, "kegg_to_chemical_name_from_hmdb.p"), "rb"))
 # creation of a manual dictionary because of kegg to uniprot errors.
 # These errors are mostly on KEGG sides that link it to an unreviewed Uniprot ID
 manual_dict = {'hsa:857': 'CAV1',
@@ -44,11 +45,11 @@ manual_dict = {'hsa:857': 'CAV1',
                'hsa:10411': 'RAPGEF3'
                }
 
-compound_manual ={'cpd:C07909': 'HMDB15015',
-                  }
+compound_manual = {'cpd:C07909': 'HMDB15015',
+                   }
 
 
-def create_gene_dictionaries(network,species='hsa'):
+def create_gene_dictionaries(network, species='hsa'):
     """
     maps network from kegg to gene names
     :param network:
@@ -99,7 +100,7 @@ def create_gene_dictionaries(network,species='hsa'):
                 uniprot_tmp = str(dict(uniprot_tmp)[i].lstrip('up:'))
             else:
                 continue
-            tmp_dict = dict(uniprot.mapping(fr="ACC", to="GENENAME", query=[uniprot_tmp+'\t']))
+            tmp_dict = dict(uniprot.mapping(fr="ACC", to="GENENAME", query=[uniprot_tmp + '\t']))
             if uniprot_tmp in tmp_dict:
                 kegg_to_gene_name[i] = tmp_dict[uniprot_tmp][0]
             else:
@@ -110,6 +111,7 @@ def create_gene_dictionaries(network,species='hsa'):
 def hugo_mapper(network, species='hsa'):
     """ Converts all MIR from kegg
 
+    :param species:
     :param network:
     :return:
 
@@ -118,10 +120,10 @@ def hugo_mapper(network, species='hsa'):
     hugo_dict = {}
     for i in nodes:
         if str(i).startswith(species):
-            out = hugo.fetch("entrez_id",i.lstrip('hsa:'),frmt='json')
+            out = hugo.fetch("entrez_id", i.lstrip(species), frmt='json')
             if 'response' in out:
                 if 'docs' in out['response']:
-                    if len(out['response']['docs'])>0:
+                    if len(out['response']['docs']) > 0:
                         if 'symbol' in out['response']['docs'][0]:
                             hugo_dict[i] = out['response']['docs'][0]['symbol']
     return hugo_dict
@@ -134,7 +136,7 @@ def create_compound_dictionary(network):
     :return: dictionary
 
     """
-    cpd_to_hmdb = {} # he
+    cpd_to_hmdb = {}  # he
     still_unknown = []
     nodes = network.nodes()
     for i in nodes:
@@ -169,7 +171,7 @@ def create_compound_dictionary(network):
     return cpd_to_hmdb
 
 
-def convert_all(network,species='hsa'):
+def convert_all(network, species='hsa'):
     """ Maps gene names to HGNC and kegg compound to HMDB
 
     :param network:
@@ -183,8 +185,8 @@ def convert_all(network,species='hsa'):
     print('Started converting kegg genes to HGNC')
     dict2 = create_gene_dictionaries(renamed_network, species=species)
     renamed_network = nx.relabel_nodes(renamed_network, dict2)
-    print('Started to check for miRNAs')
-    dict3 = hugo_mapper(renamed_network,species=species)
-    renamed_network = nx.relabel_nodes(renamed_network, dict3)
+    #print('Started to check for miRNAs')
+    #dict3 = hugo_mapper(renamed_network, species=species)
+    #renamed_network = nx.relabel_nodes(renamed_network, dict3)
 
     return renamed_network
