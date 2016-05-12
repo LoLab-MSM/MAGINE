@@ -1,15 +1,18 @@
-import matplotlib
+"""
+GO analysis function using orange bioinformatics
+"""
 import numpy as np
-
-matplotlib.use('Agg')
 from orangecontrib.bio import go
-import matplotlib.pyplot as plt
-import mpl_toolkits.axes_grid1 as axgrid
 import scipy.cluster.hierarchy as sch
 import os
-from textwrap  import wrap
+from textwrap import wrap
+import matplotlib
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 
+# noinspection PyUnresolvedReferences
 class GoAnalysis:
     """
     Go analysis class.
@@ -17,6 +20,8 @@ class GoAnalysis:
     """
 
     def __init__(self, species='hsa', slim=False, output_directory='tmp', reference=None):
+        self.array = None
+        self.names = None
         self.ontology = go.Ontology()
         self.slim = False
         self.reference = reference
@@ -35,7 +40,6 @@ class GoAnalysis:
 
         :param data:
         :param aspect:
-        :param slims:
         :return:
         """
         res = self.annotations.get_enriched_terms(data, slims_only=self.slim, aspect=aspect, reference=self.reference)
@@ -48,23 +52,21 @@ class GoAnalysis:
                 pass
             elif ref < 10.:
                 continue
-
-            sorted_list[n, 0] = self.ontology[go_id].name
-            sorted_list[n, 1] = go_id
             if p_value > 0.05:
                 continue
-                sorted_list[n, 2] = float(0)
             else:
                 # sorted_list[n, 2] = float(len(genes) / float(ref)) * 100.
                 sorted_list[n, 2] = -1. * np.log10(p_value)
-            print(
-            go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref, genes)
+            sorted_list[n, 0] = self.ontology[go_id].name
+            sorted_list[n, 1] = go_id
+            print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
+                  genes, n)
             self.global_go[go_id] = self.ontology[go_id].name
             sorted_list[n, 3] = str(genes)
             n += 1
         if n == 0:
             print("No significant p-values")
-        return sorted_list[:n - 1, :]
+        return sorted_list[:n, :]
 
     def create_data_set(self, list_of_exp, aspect):
         """
@@ -97,7 +99,7 @@ class GoAnalysis:
         :return:
         """
         shape = np.shape(data)[1]
-        new_data = np.zeros((len(data), shape), dtype=('S50'))
+        new_data = np.zeros((len(data), shape), dtype='S50')
         new_names = data[:, 0]
         n = 0
         for i in range(len(new_names)):
@@ -110,6 +112,7 @@ class GoAnalysis:
     def plot_heatmap(self, data, all_names, start, stop, savename, labels):
         """
 
+        :param labels:
         :param data:
         :param all_names:
         :param start:
@@ -120,7 +123,7 @@ class GoAnalysis:
         matrix = data[start:stop, :]
         size_of_data = np.shape(data)[1]
         length_matrix = len(matrix)
-        fig = plt.figure(figsize=(6,12))
+        fig = plt.figure(figsize=(6, 12))
         ax1 = fig.add_subplot(111)
         # plt.title(savename)
         im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
@@ -136,17 +139,13 @@ class GoAnalysis:
             plt.xticks(x_ticks, labels, fontsize=16, rotation='90')
         else:
             print("Provide labels")
-
-        # divider = axgrid.make_axes_locatable(ax1)
-        # cax = divider.append_axes("top", size="5%", pad=0.3)
-        # color_bar = fig.colorbar(im, cax=cax, orientation='horizontal')
-        # color_bar.set_label('% change', labelpad=-40, y=0.45)
         plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=300, bbox_inches='tight')
         plt.close()
 
     def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True):
         """
 
+        :param analyze:
         :param data:
         :param aspect:
         :param savename:
@@ -156,8 +155,8 @@ class GoAnalysis:
         data = self.create_data_set(data, aspect)
         # self.print_ranked_over_time(data)
         names, array = sort_data(data)
-        self.names = names
         self.array = array
+        self.names = names
         if not analyze:
             return
         if self.slim:
@@ -166,25 +165,25 @@ class GoAnalysis:
 
         self.plot_heatmap(array, names, 0, 50, '%s_top' % savename, labels)
         self.plot_heatmap(array, names, -50, -1, '%s_bottom' % savename, labels)
-        D = array[:, :]
+        tmp_array = array[:, :].copy()
         fig = plt.figure()
         axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
-        Y = sch.linkage(D, method='centroid')
-        Z = sch.dendrogram(Y, orientation='right')
+        linkage = sch.linkage(tmp_array, method='centroid')
+        dendrogram = sch.dendrogram(linkage, orientation='right')
         axdendro.set_xticks([])
         axdendro.set_yticks([])
         axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.8])
-        index = Z['leaves']
-        D = D[index, :]
-        N = names[index]
-        im = axmatrix.matshow(D, aspect='auto', origin='lower')
+        index = dendrogram['leaves']
+        tmp_array = tmp_array[index, :]
+        names_sorted = names[index]
+        im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower')
         axmatrix.set_xticks([])
         axmatrix.set_yticks([])
         axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
         plt.colorbar(im, cax=axcolor)
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
-        self.plot_heatmap(D, N, 0, 50, '%s_top_dendro' % savename, labels)
-        self.plot_heatmap(D, N, -50, -1, '%s_bottom_dendro' % savename, labels)
+        self.plot_heatmap(tmp_array, names_sorted, 0, 50, '%s_top_dendrogram' % savename, labels)
+        self.plot_heatmap(tmp_array, names_sorted, -50, -1, '%s_bottom_dendrogram' % savename, labels)
 
     def print_ranked_over_time(self, data):
         """ Prints information about top hits
@@ -198,19 +197,22 @@ class GoAnalysis:
             for j in range(len(data), len(data) - 10):
                 print(i, self.global_go[names[j]], tmp[j, 1 + i] - tmp[j, i])
 
-    def find_and_plot_subterms(self,term,savename):
+    def find_and_plot_subterms(self, term, savename):
+        """
+
+        :param term:
+        :param savename:
+        """
         print(term)
         terms = self.ontology.extract_sub_graph(term)
         for i in terms:
             if i in self.global_go:
                 print(i, self.global_go[i])
-        self.plot_specific_GO(terms, savename)
+        self.plot_specific_go(terms, savename)
 
-    def plot_specific_GO(self, term, savename):
+    def plot_specific_go(self, term, savename):
         """ Plots a scatter plot of selected terms over time
 
-        :param names:
-        :param data:
         :param term:
         :param savename:
         :return:
@@ -218,10 +220,10 @@ class GoAnalysis:
         found_terms = []
         for i in term:
             if i in self.names:
-                #print(self.ontology.term_depth(i),i)
+                # print(self.ontology.term_depth(i),i)
                 found_terms.append(i)
-            # else:
-            #    print("%s is not found" % i)
+                # else:
+                #    print("%s is not found" % i)
         num_colors = len(found_terms)
         if num_colors == 0:
             print("Did not find any of the terms")
@@ -240,15 +242,15 @@ class GoAnalysis:
             ax.plot(x, y, 'o-', label=label)
         plt.ylabel('-log(p-value)', fontsize=16)
         plt.xlabel('Time(hr)', fontsize=16)
-        #ax.legend(loc=0, bbox_to_anchor=(0.5, 1.05),
+        # ax.legend(loc=0, bbox_to_anchor=(0.5, 1.05),
         #          ncol=1, fancybox=True, shadow=True)
-        #box = ax.get_position()
-        #ax.set_position([box.x0, box.y0 + box.height * 0.1,
+        # box = ax.get_position()
+        # ax.set_position([box.x0, box.y0 + box.height * 0.1,
         #                  box.width, box.height * 0.9])
-        #ax.legend(loc='center', bbox_to_anchor=(0.5, -0.15),
+        # ax.legend(loc='center', bbox_to_anchor=(0.5, -0.15),
         #          fancybox=True, shadow=True, ncol=5)
         # #plt.legend(loc=0)
-        #plt.tight_layout()
+        # plt.tight_layout()
         handles, labels = ax.get_legend_handles_labels()
         lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
         fig.savefig('%s.png' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
