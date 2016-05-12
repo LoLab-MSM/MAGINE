@@ -3,22 +3,26 @@
 File that generates networks
 """
 import os
+import warnings
+from sys import modules
+
 import networkx as nx
 from bioservices import KEGG
+
 import Mappings.maps as mapper
 from kgml_to_networkx_parser import kgml_to_graph
-from sys import modules
-import warnings
+
 try:
     kegg = modules['kegg']
 except KeyError:
     kegg = KEGG()
 
 
-def find_kegg_pathways(protein_names, num_overlap=1, download=True, species='hsa',overwrite=True):
+def find_kegg_pathways(protein_names, num_overlap=1, download=True, species='hsa', overwrite=True):
     """
     find_kegg_pathways(protein_names,num_overlap,download)
     Find pathways associated with a list of genes.
+    :param overwrite:
     :param download: optional, downloads the kgml for each pathway
     :param num_overlap: optional, default 1
     :param protein_names: List
@@ -51,13 +55,13 @@ def find_kegg_pathways(protein_names, num_overlap=1, download=True, species='hsa
             results.append(name)
     if download:
         for i in results:
-            download_kegg_pathway(i,overwrite=overwrite)
+            download_kegg_pathway(i, overwrite=overwrite)
     if len(list_not_found) != 0:
         print("Not found in KEGG", list_not_found)
     return results
 
 
-def delete_disconnected_network(full_graph,verbose=False):
+def delete_disconnected_network(full_graph, verbose=False):
     """
 
     :param full_graph:
@@ -69,13 +73,14 @@ def delete_disconnected_network(full_graph,verbose=False):
     for i in range(1, len(sorted_graphs)):
         for node in sorted_graphs[i].nodes():
             if verbose:
-                print("Removing disconnected node %s",node)
+                print("Removing disconnected node %s", node)
             full_graph.remove_node(node)
 
 
 def download_kegg_pathway(pathway, overwrite=True):
     """
     Downloads a pathway from kegg
+    :param overwrite:
     :param pathway: string; kegg pathway (without .xml)
     :return: None
     """
@@ -89,7 +94,7 @@ def download_kegg_pathway(pathway, overwrite=True):
             warnings.warn('Removing pathway to download new one, can change behavior if you set "overwrite"=False')
         else:
             print("%s already downloaded" % pathway)
-            download=False
+            download = False
     if download:
         file_name = kegg.get(pathway, "kgml")
         if file_name == 404:
@@ -99,19 +104,20 @@ def download_kegg_pathway(pathway, overwrite=True):
                 f.write(file_name)
 
 
-def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',overwrite=True):
-    """
-    build_network_kegg_ids(gene_list, num_overlap ,savename )
-
-    :param species: list of gene names
+def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa', overwrite=True):
+    """ Construct a network from a list of gene names.
+    build_network_kegg_ids(gene_list, num_overlap ,save_name )
+    :param gene_list: List of genes to construct network
+    :param overwrite:
+    :param species: organism type
     :param save_name: Output filename, optional, default tmp
     :param num_overlap: number of hits by protein to be added to
         the network. optional, Default 1
-    :param gene_list: List of genes to construct network
     """
 
     end_network = nx.DiGraph()
-    list_of_all = find_kegg_pathways(protein_names=gene_list, num_overlap=num_overlap, species=species,overwrite=overwrite)
+    list_of_all = find_kegg_pathways(protein_names=gene_list, num_overlap=num_overlap, species=species,
+                                     overwrite=overwrite)
     list_of_graphs = []
     networks_added = []
     for each in list_of_all:
@@ -133,10 +139,6 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',overw
                     drug_dict[i] = split_name[1]
                     end_network.node[i]['drug'] = split_name[0]
     end_network = nx.relabel_nodes(end_network, drug_dict)
-    #dict1 = create_gene_dictionaries(end_network, species=species)
-    #end_network = nx.relabel_nodes(end_network, dict1)
-    #dict2 = create_compound_dictionary(end_network)
-    #end_network = nx.relabel_nodes(end_network, dict2)
     end_network = mapper.convert_all(end_network, species=species)
     delete_disconnected_network(end_network)
     print('Number of edges', len(end_network.edges()))

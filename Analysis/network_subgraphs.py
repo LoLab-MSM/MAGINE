@@ -1,7 +1,7 @@
 import networkx as nx
 import pygraphviz as pyg
 
-from network_tools import compress_edges
+from magine.network_tools import compress_edges
 import os
 
 
@@ -41,8 +41,8 @@ class NetworkSubgraphs:
     def generate_shortest_paths_between_lists_of_proteins(self, protein_list,savename):
         """
         Generates a graph based on all shortest paths between two proteins
-        :param protein_1:
-        :param protein_2:
+        :param protein_list:
+        :param savename:
         :return: graph
         """
         graph = pyg.AGraph(directed=True)
@@ -245,24 +245,7 @@ class NetworkSubgraphs:
 
 
 
-    def paint_network(self, graph, list_to_paint, color):
-        """
-        Paints a graph given a list of nodes and a color for that list
-        :param graph: pygraphvix.AGraph
-        :param list_to_paint: list
-        :param color: string
-        :return:
-        """
-        tmp_g = graph.copy()
-        nodes1 = tmp_g.nodes()
-        for i in list_to_paint:
-            if i in nodes1:
-                n = tmp_g.get_node(i)
-                n.attr['measured'] = 'True'
-                n.attr['color'] = 'black'
-                n.attr['fillcolor'] = color
-                n.attr['style'] = 'filled'
-        return tmp_g
+
 
     def paint_network_overtime(self, graph, list_of_lists, color_list,savename):
         """
@@ -277,7 +260,7 @@ class NetworkSubgraphs:
         string = 'convert '
         tmp_graph = graph.copy()
         for n, i in enumerate(list_of_lists):
-            graph2 = self.paint_network(tmp_graph, i, color_list[n])
+            graph2 = paint_network(tmp_graph, i, color_list[n])
             self.write(graph2)
             graph2.draw('%s_%04i.png' % (savename, n), prog='dot')
             string += '%s_%04i.png ' % (savename, n)
@@ -334,3 +317,21 @@ class NetworkSubgraphs:
         graph.add_subgraph(subgraph, name='cluster_legend', rank="LR")
 
 
+def paint_network(graph, list_to_paint, color):
+    """
+    Paints a graph given a list of nodes and a color for that list
+    :param graph: pygraphvix.AGraph
+    :param list_to_paint: list
+    :param color: string
+    :return:
+    """
+    tmp_g = graph.copy()
+    nodes1 = tmp_g.nodes()
+    for i in list_to_paint:
+        if i in nodes1:
+            n = tmp_g.get_node(i)
+            n.attr['measured'] = 'True'
+            n.attr['color'] = 'black'
+            n.attr['fillcolor'] = color
+            n.attr['style'] = 'filled'
+    return tmp_g
