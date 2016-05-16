@@ -7,9 +7,9 @@ import scipy.cluster.hierarchy as sch
 import os
 from textwrap import wrap
 import matplotlib
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import pandas as pd
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC']
 # noinspection PyUnresolvedReferences
@@ -169,6 +169,7 @@ class GoAnalysis:
         names, array = sort_data(data)
         self.array = array
         self.names = names
+        self.export_to_html(labels)
         if not analyze:
             return
         if self.slim:
@@ -209,7 +210,7 @@ class GoAnalysis:
             for j in range(len(data), len(data) - 10):
                 print(i, self.global_go[names[j]], tmp[j, 1 + i] - tmp[j, i])
 
-    def find_and_plot_subterms(self, term, savename,x= [1, 6, 24, 48]):
+    def find_and_plot_subterms(self, term, savename,x=[1, 6, 24, 48]):
         """
 
         :param term:
@@ -258,6 +259,23 @@ class GoAnalysis:
         lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
         fig.savefig('%s.png' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.show()
+
+    def export_to_html(self,labels):
+        real_names = [self.global_go[n] for n in self.names]
+        real_names = np.array(real_names)
+        for n, i in enumerate(real_names):
+            self.find_and_plot_subterms(str(self.names[n]), '{0}'.format(n))
+            real_names[n] = '<a href="{0}.png">{1}</a>'.format(n, i)
+        d = pd.DataFrame(data=self.array, index=real_names, columns=labels)
+        HEADER = """<html>\n  <body>"""
+        FOOTER = """  </body>\n</html>
+            """
+        print(d.dtypes)
+
+        with open('test.html', 'w') as f:
+            f.write(HEADER)
+            f.write(d.to_html(classes='df', float_format='{0:.4e}'.format, escape=False))
+            f.write(FOOTER)
 
 
 def return_go_number(go_term, go_array):
