@@ -11,7 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-
+evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC']
 # noinspection PyUnresolvedReferences
 class GoAnalysis:
     """
@@ -42,10 +42,13 @@ class GoAnalysis:
         :param aspect:
         :return:
         """
-        res = self.annotations.get_enriched_terms(data, slims_only=self.slim, aspect=aspect, reference=self.reference)
+        res = self.annotations.get_enriched_terms(data, slims_only=self.slim, aspect=aspect,
+                                                  evidence_codes=evidence_codes, reference=self.reference)
         # Slims goslim_chembl
         sorted_list = np.ones((len(res.items()), 4), dtype='S50')
         sorted_list[:, 2].astype('float')
+        number_of_genes = len(data)
+        number_of_total_reference_genes = len(self.annotations.gene_names)
         n = 0
         for go_id, (genes, p_value, ref) in res.items():
             if self.slim:
@@ -55,8 +58,17 @@ class GoAnalysis:
             if p_value > 0.05:
                 continue
             else:
+
+                # expected_value = number_of_genes * num_ref / num_total_reference_genes
+                print(number_of_genes,float(ref), number_of_genes * float(ref), number_of_total_reference_genes)
+                expected_value = number_of_genes * float(ref) / number_of_total_reference_genes
+                print('expected = %s' % str(expected_value))
+                enrichment = float(len(genes))/expected_value
+                print('enrichment = %s' % str(enrichment))
                 # sorted_list[n, 2] = float(len(genes) / float(ref)) * 100.
-                sorted_list[n, 2] = -1. * np.log10(p_value)
+                #sorted_list[n, 2] = -1. * np.log10(p_value)
+                sorted_list[n,2] = enrichment
+
             sorted_list[n, 0] = self.ontology[go_id].name
             sorted_list[n, 1] = go_id
             print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
@@ -197,7 +209,7 @@ class GoAnalysis:
             for j in range(len(data), len(data) - 10):
                 print(i, self.global_go[names[j]], tmp[j, 1 + i] - tmp[j, i])
 
-    def find_and_plot_subterms(self, term, savename):
+    def find_and_plot_subterms(self, term, savename,x= [1, 6, 24, 48]):
         """
 
         :param term:
@@ -208,9 +220,9 @@ class GoAnalysis:
         for i in terms:
             if i in self.global_go:
                 print(i, self.global_go[i])
-        self.plot_specific_go(terms, savename)
+        self.plot_specific_go(terms, savename,x)
 
-    def plot_specific_go(self, term, savename):
+    def plot_specific_go(self, term, savename, x =  [1, 6, 24, 48]):
         """ Plots a scatter plot of selected terms over time
 
         :param term:
@@ -233,7 +245,7 @@ class GoAnalysis:
         cm = plt.get_cmap('jet')
 
         ax.set_color_cycle([cm(1. * i / num_colors) for i in range(num_colors)])
-        x = [1, 6, 24, 48]
+
         for i in found_terms:
             y_index = np.where(self.names == i)
 
@@ -242,15 +254,6 @@ class GoAnalysis:
             ax.plot(x, y, 'o-', label=label)
         plt.ylabel('-log(p-value)', fontsize=16)
         plt.xlabel('Time(hr)', fontsize=16)
-        # ax.legend(loc=0, bbox_to_anchor=(0.5, 1.05),
-        #          ncol=1, fancybox=True, shadow=True)
-        # box = ax.get_position()
-        # ax.set_position([box.x0, box.y0 + box.height * 0.1,
-        #                  box.width, box.height * 0.9])
-        # ax.legend(loc='center', bbox_to_anchor=(0.5, -0.15),
-        #          fancybox=True, shadow=True, ncol=5)
-        # #plt.legend(loc=0)
-        # plt.tight_layout()
         handles, labels = ax.get_legend_handles_labels()
         lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
         fig.savefig('%s.png' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
@@ -282,7 +285,7 @@ def sort_data(data):
     array = data[:, 1:].astype(np.float32).copy()
     # step_size = np.average(array,axis=1).argsort()
     # step_size = (array[:, 2] - array[:, 1]).argsort()
-    step_size = (array[:, -1]).argsort()
+    step_size = (array[:, 0]).argsort()
     names = names[step_size]
     array = array[step_size]
     # array_2 = array[:,1:] - array[:,:-1]

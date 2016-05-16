@@ -367,5 +367,52 @@ def remove_canonical_from_mega(Network1,Network2,savename):
     #Network.draw('mega_min_fullcan_without_islands.pdf',prog='dot')
     #nx.write_gml(nx.from_agraph(Network),'mega_min_full_islands_rm.gml')
 
+def create_lists_of_subgraphs(network,save_name, exp_data):
+
+    G = network.to_undirected()
+    sorted_graphs = sorted(nx.connected_component_subgraphs(G), key=len, reverse=True)
+    counter = 0
+    data = []
+    cnt = 0
+    subgraph_species = []
+    for i in sorted_graphs:
+
+        size = len(i.nodes())
+        with open('%s_%s_size_%s.txt' % (save_name,str(cnt),str(size)),'w') as f:
+            for j in i.nodes():
+                f.write('%s,' % j)
+
+        cnt += 1
+        if size == 1:
+            counter += 1
+        else:
+            data.append(size)
+        if size ==1:
+            continue
+        measured = ''
+        measured_species = []
+        for j in i.nodes():
+            if j in exp_data:
+                measured_species.append(j)
+                measured += '%s,' % str(j)
+        if measured == '':
+            continue
+        else:
+            subgraph_species.append(measured_species)
+            print(measured)
+    data.remove(max(data))
+    data = np.asarray(data)
+    print(data,10)
+    plt.hist(data)
+    plt.title("Distribution of subgraphs with canonical removed")
+    #plt.xlim(1,100)
+    #plt.ylim(0,20)
+    plt.xlabel("Number of nodes")
+    plt.ylabel("Count")
+    plt.savefig("histogram_mega_minus_canonical_subgraphs.png",dpi=200)
+    plt.show()
+    print "Number of subgraphs with 1 node = %s"%counter
+    return subgraph_species
+
 if __name__ == '__main__':
     test_compress()
