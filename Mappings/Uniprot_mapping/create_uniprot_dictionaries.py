@@ -20,9 +20,9 @@ mouse = create_mouse_dataframe()
 
 
 def create_human_dataframe():
-    # human = pd.read_table('MOUSE_10090_idmapping_selected.tab.gz', delimiter='\t', names=headers)
-    # human = human[wanted_headers]
-    # human.to_csv('../human_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
+    human = pd.read_table('HUMAN_9606_idmapping_selected.tab.gz', delimiter='\t', names=headers)
+    human = human[wanted_headers]
+    human.to_csv('../human_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
     human = pd.read_csv('../human_uniprot.gz')
     return human
 
