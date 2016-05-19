@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-from Mappings.maps import create_gene_dictionaries, create_compound_dictionary, hugo_mapper
+from Mappings.maps import create_gene_dictionaries, create_compound_dictionary
 
 
 def test_kegg_to_uniprot():
@@ -40,21 +40,21 @@ def test_kegg_to_hmdb():
     assert (g.node['HMDB60180']['keggName'] == 'cpd:C00197')
 
 
-def test_hugo():
-    """
-
-    :return:
-    """
-    g = nx.DiGraph()
-    g.add_node('hsa:406915')
-    g.add_node('hsa:406913')
-    g.add_node('hsa:406912')
-    g.add_node('hsa:406911')
-    g.add_node('hsa:406910')
-    dic = hugo_mapper(g)
-    g = nx.relabel_nodes(g, dic)
-    for i in g.nodes():
-        print(i)
+# def test_hugo():
+#     """
+#
+#     :return:
+#     """
+#     g = nx.DiGraph()
+#     g.add_node('hsa:406915')
+#     g.add_node('hsa:406913')
+#     g.add_node('hsa:406912')
+#     g.add_node('hsa:406911')
+#     g.add_node('hsa:406910')
+#     dic = hugo_mapper(g)
+#     g = nx.relabel_nodes(g, dic)
+#     for i in g.nodes():
+#         print(i)
 
 if __name__ =='__main__':
     #test_kegg_to_uniprot()
