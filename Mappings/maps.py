@@ -7,6 +7,7 @@ import os
 from sys import modules
 
 import networkx as nx
+import pandas as pd
 from bioservices import UniProt, KEGG, UniChem, HGNC
 
 try:
@@ -28,11 +29,56 @@ mouse_uniprot_to_gene_name = pickle.load(open(os.path.join(directory, 'mouse_uni
 human_uniprot_to_gene_name = pickle.load(open(os.path.join(directory, 'network_based_UPids_to_genes.p'), 'rb'))
 human_uniprot_to_gene_name_2 = pickle.load(open(os.path.join(directory, 'kegg_to_uniprot_gene_name.p'), 'rb'))
 human_kegg_to_uniprot = pickle.load(open(os.path.join(directory, 'human_kegg_mapper.p'), 'rb'))
-# chemical conversions
-hmdb_to_kegg_improved = pickle.load(open(os.path.join(directory, 'hmdb_to_kegg_from_hmdb.p'), 'rb'))
-kegg_to_hmdb_improved = pickle.load(open(os.path.join(directory, 'kegg_to_hmdb_from_hmdb.p'), 'rb'))
-kegg_to_hmdb = pickle.load(open(os.path.join(directory, 'kegg_to_hmdb.p'), 'rb'))
-kegg_hmdb_to_name = pickle.load(open(os.path.join(directory, "kegg_to_chemical_name_from_hmdb.p"), "rb"))
+
+
+# human_uniprot_to_gene_name = pd.read_table(os.path.join(directory, 'humanID_to_gene_name.tab'))
+
+
+class ChemicalMapper:
+    """
+    converts chemical species
+    Datbase was creating by pulling down everything from HMDB
+    """
+    categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id', 'biocyc_id', 'synonyms',
+                  'pubchem_compound_id', 'iupac_name', 'protein_associations']
+
+    def __init__(self):
+        hmdb_database = pd.read_pickle(os.path.join(directory, 'hmdb_dataframe.p'))
+        self.database = hmdb_database
+        self.hmdb_accession_to_chemical_name = self.convert_to_dict("accession", "name")
+        self.chemical_name_to_hmdb_accession = self.convert_to_dict("name", "accession")
+        self.hmdb_accession_to_kegg = self.convert_to_dict("accession", "kegg_id")
+        self.kegg_to_hmdb_accession = self.convert_to_dict("kegg_id", "accession")
+        self.synonyms_to_hmdb = None
+
+    def convert_to_dict(self, key, value):
+        """ creates a dictionary from hmdb with a list of values for each key
+
+        :param key:
+        :param value:
+        :return:
+        """
+        return {k: list(v) for k, v in self.database.groupby(key)[value]}
+
+    def check_synonym_dict(self, term, format_name):
+        """ checks hmdb database for synonyms and returns formatted name
+
+        :param term:
+        :param format_name:
+        :return:
+        """
+        for index, row in self.database.iterrows():
+            each = row.synonyms
+            if type(each) == list:
+                if term in each:
+                    return self.database.iloc[index][format_name]
+        return None
+
+
+cm = ChemicalMapper()
+
+
+
 # creation of a manual dictionary because of kegg to uniprot errors.
 # These errors are mostly on KEGG sides that link it to an unreviewed Uniprot ID
 manual_dict = {'hsa:857': 'CAV1',
@@ -116,11 +162,12 @@ def hugo_mapper(network, species='hsa'):
     :return:
 
     """
+    #TODO Broken since bioservices update
     nodes = network.nodes()
     hugo_dict = {}
     for i in nodes:
         if str(i).startswith(species):
-            out = hugo.fetch("entrez_id", i.lstrip(species), frmt='json')
+            out = hugo.mapping("entrez_id", i.lstrip(species), frmt='json')
             if 'response' in out:
                 if 'docs' in out['response']:
                     if len(out['response']['docs']) > 0:
@@ -142,22 +189,30 @@ def create_compound_dictionary(network):
     for i in nodes:
         if i.startswith('cpd:'):
             network.node[i]['keggName'] = i
-            if i.lstrip('cpd:') in kegg_to_hmdb_improved:
-                mapping = kegg_to_hmdb_improved[i.lstrip('cpd:')]
+            name_stripped = i.lstrip('cpd:')
+            if name_stripped in cm.kegg_to_hmdb_accession:
+                mapping = cm.kegg_to_hmdb_accession[name_stripped]
                 if type(mapping) == list:
                     hmdb_options = mapping[0]
                     if len(mapping) == 1:
-                        cpd_to_hmdb[i] = mapping[0]
+                        cpd_to_hmdb[i] = hmdb_options
                     else:
-                        cpd_to_hmdb[i] = mapping[0]
+                        cpd_to_hmdb[i] = hmdb_options
                         for j in range(1, len(mapping)):
-                            hmdb_options += "_%s" % mapping[j]
-                    network.node[i]['hmdbNames'] = hmdb_options
-                    if i.lstrip('cpd:') in kegg_hmdb_to_name:
-                        network.node[i]['chemName'] = kegg_hmdb_to_name[i.lstrip('cpd:')]
+                            hmdb_options += "__%s" % mapping[j]
+                    network.node[i]['hmdbNames'] = hmdb_options.rstrip('__')
+                    chem_names = ''
+                    for name in mapping:
+                        if name in cm.hmdb_accession_to_chemical_name:
+                            for each in cm.hmdb_accession_to_chemical_name[name]:
+                                print(each)
+                                chem_names += "%s__" % each
+                    network.node[i]['chemName'] = chem_names.rstrip('__')
+                elif type(mapping) == str:
+                    cpd_to_hmdb[i] = mapping
+                    network.node[i]['chemName'] = cm.hmdb_accession_to_chemical_name[mapping]
                 else:
-                    print('Did not return a list...')
-
+                    print('Returned something else...', mapping)
             else:
                 still_unknown.append(i)
     if len(still_unknown) == 0:
@@ -165,7 +220,7 @@ def create_compound_dictionary(network):
     kegg_hmdb = chem.get_mapping("kegg_ligand", "hmdb")
     for i in still_unknown:
         if i.lstrip('cpd') in kegg_hmdb:
-            cpd_to_hmdb[i] = kegg_to_hmdb[i.lstrip('cpd:')][0]
+            cpd_to_hmdb[i] = kegg_hmdb[i.lstrip('cpd:')][0]
         else:
             print("Cannot find a HMDB mapping for %s " % i)
     return cpd_to_hmdb

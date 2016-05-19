@@ -1,12 +1,14 @@
 """
 GO analysis function using orange bioinformatics
 """
-import numpy as np
-from orangecontrib.bio import go
-import scipy.cluster.hierarchy as sch
 import os
 from textwrap import wrap
+
 import matplotlib
+import numpy as np
+import scipy.cluster.hierarchy as sch
+from orangecontrib.bio import go
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -169,7 +171,7 @@ class GoAnalysis:
         names, array = sort_data(data)
         self.array = array
         self.names = names
-        self.export_to_html(labels)
+        # self.export_to_html(labels)
         if not analyze:
             return
         if self.slim:
