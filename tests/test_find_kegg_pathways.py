@@ -12,4 +12,4 @@ def test_find_kegg_pathways():
         print(i)
 
 
-test_find_kegg_pathways()
+        # test_find_kegg_pathways()
