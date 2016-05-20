@@ -229,9 +229,6 @@ class GoAnalysis:
         """
         print(term)
         terms = self.ontology.extract_sub_graph(term)
-        for i in terms:
-            if i in self.global_go:
-                print(i, self.global_go[i])
         self.plot_specific_go(terms, savename,x)
 
     def plot_specific_go(self, term, savename, x):
@@ -276,24 +273,26 @@ class GoAnalysis:
         handles, labels = ax.get_legend_handles_labels()
         lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
         fig.savefig('%s.png' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
-        plt.show()
+        plt.close()
 
     def export_to_html(self, labels, html_name='tmp', x=None):
         directory_name = '%s_source' % html_name
         os.system('mkdir %s' % directory_name)
         real_names = [self.global_go[n] for n in self.names]
-        real_names = np.array(real_names)
+        real_names = []
         html_array = self.array.copy()
         to_remove = []
-        for n, i in enumerate(real_names):
-            if len(self.getChildren(self.names[n], self.data, self.get_parents(self.names[n], self.data))) < 2:
+        parents = dict([(term, self.get_parents(term, self.names)) for term in self.names])
+        for n, i in enumerate(self.names):
+            new_name = self.global_go[i]
+            if len(self.getChildren(i, self.names, parents)) < 2:
                 to_remove.append(n)
                 continue
             self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
-            real_names[n] = '<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, i)
+            real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
+        html_array = np.delete(html_array, to_remove)
+        d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
-        d = pd.DataFrame(data=self.array, index=real_names, columns=labels)
-        d.drop(d.index[to_remove])
         header = "<html>\n\t<body>"
         footer = "\t</body>\n</html>"
 
