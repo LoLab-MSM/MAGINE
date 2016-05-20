@@ -1,5 +1,6 @@
 import matplotlib
-matplotlib.use('Qt4Agg')
+
+matplotlib.use('Agg')
 from matplotlib import pyplot as plt
 from matplotlib_venn import venn3, venn2
 
@@ -14,6 +15,7 @@ def create_venn3(list1,list2,list3,label1,label2,label3,savename):
     plt.savefig("Figures/%s.png" % savename)
     plt.savefig("Figures/%s.pdf" % savename)
     plt.close()
+
 
 def create_venn2(list1,list2,label1,label2,savename):
     set1 = set(list1)
