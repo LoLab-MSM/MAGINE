@@ -8,6 +8,27 @@ headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "RefSeq", "GI"
 wanted_headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "PDB", "GO"]
 
 
+def create_from_hngc():
+    hngc = pd.read_table('hgnc_data.txt', delimiter='\t')
+    print(hngc.dtypes)
+    hngc = hngc[hngc['Status'] == 'Approved']
+    hngc = hngc[['Approved symbol','UniProt accession']]
+    hngc.to_csv('../hngc.gz', compression='gzip', header=True)
+    hngc = pd.read_csv('../hngc.gz')
+    return hngc
+hngc = create_from_hngc()
+
+
+def convert_to_dict( key, value):
+    """ creates a dictionary from hmdb with a list of values for each key
+
+    :param key:
+    :param value:
+    :return:
+    """
+    return {k: list(v) for k, v in hngc.groupby(key)[value]}
+un_to_genename = convert_to_dict('UniProt accession', 'Approved symbol')
+
 def create_mouse_dataframe():
     # mouse = pd.read_table('MOUSE_10090_idmapping_selected.tab.gz', delimiter='\t', names=headers)
     # mouse = mouse[wanted_headers]
@@ -16,18 +37,29 @@ def create_mouse_dataframe():
     return mouse
 
 
-mouse = create_mouse_dataframe()
-
-
 def create_human_dataframe():
-    human = pd.read_table('HUMAN_9606_idmapping_selected.tab.gz', delimiter='\t', names=headers)
-    human = human[wanted_headers]
-    human.to_csv('../human_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
+    #human = pd.read_table('HUMAN_9606_idmapping_selected.tab.gz', delimiter='\t', names=headers)
+    #human = human[wanted_headers]
+    #human.to_csv('../human_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
     human = pd.read_csv('../human_uniprot.gz')
     return human
 
 
 human = create_human_dataframe()
+
+mouse = create_mouse_dataframe()
+count_in = 0
+count_out = 0
+for i in human["UniProtKB-AC"]:
+    if i in un_to_genename:
+        count_in+=1
+        print(i)
+    else:
+        count_out += 1
+        print('not',i)
+print('in',count_in)
+print('out',count_out)
+quit()
 
 mouse_string = ''
 for i in np.array(mouse["UniProtKB-AC"]):
@@ -53,7 +85,8 @@ result = uniprot_id_mouse_to_kegg.merge(mouse, how='right')
 result = result[["UniProtKB-AC", "UniProtKB-ID", 'kegg']]
 print("Shape of combined data", np.shape(result))
 
-result.to_csv('mouse.csv', sheet_name='Sheet1')
+result.to_csv('mouse.gz', compression='gzip', )
+
 j = uniprot_id_mouse_to_kegg["UniProtKB-ID"].astype(str)
 k = mouse["UniProtKB-ID"].astype(str)
 

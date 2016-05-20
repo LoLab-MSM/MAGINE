@@ -12,6 +12,7 @@ from orangecontrib.bio import go
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
+pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC']
 # noinspection PyUnresolvedReferences
@@ -210,7 +211,7 @@ class GoAnalysis:
         self.plot_heatmap(tmp_array, names_sorted, -50, -1, '%s_bottom_dendrogram' % savename, labels)
         figures = ['%s_top' % savename,
                    '%s_bottom' % savename,
-                   '%s_dendrogram.pdf' % savename,
+                   '%s_dendrogram' % savename,
                    '%s_top_dendrogram' % savename,
                    '%s_bottom_dendrogram' % savename, ]
         html_pages = []
@@ -288,16 +289,24 @@ class GoAnalysis:
     def export_to_html(self, labels, html_name='tmp', x=None):
         directory_name = '%s_source' % html_name
         os.system('mkdir %s' % directory_name)
-        real_names = [self.global_go[n] for n in self.names]
         real_names = []
         html_array = self.array.copy()
         to_remove = []
         parents = dict([(term, self.get_parents(term, self.names)) for term in self.names])
         for n, i in enumerate(self.names):
             new_name = self.global_go[i]
+            number_of_children = len(self.getChildren(i, self.names, parents))
+            print(number_of_children)
+            if number_of_children < 2:
             if len(self.getChildren(i, self.names, parents)) < 2:
                 to_remove.append(n)
                 continue
+            elif number_of_children > 20:
+                real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
+                continue
+            else:
+                self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
+                real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
             self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
             real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
         html_array = np.delete(html_array, to_remove, 0)
