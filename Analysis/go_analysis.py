@@ -45,7 +45,8 @@ class GoAnalysis:
         :return:
         """
         res = self.annotations.get_enriched_terms(data, slims_only=self.slim, aspect=aspect,
-                                                  evidence_codes=evidence_codes, reference=self.reference)
+                                                  evidence_codes=evidence_codes,
+                                                  reference=self.reference)
         # Slims goslim_chembl
         sorted_list = np.ones((len(res.items()), 4), dtype='S50')
         sorted_list[:, 2].astype('float')
@@ -53,28 +54,28 @@ class GoAnalysis:
         number_of_total_reference_genes = len(self.annotations.gene_names)
         n = 0
         for go_id, (genes, p_value, ref) in res.items():
-            if self.slim:
-                pass
-            elif ref < 10.:
-                continue
+            # if self.slim:
+            #     pass
+            # elif ref < 10.:
+            #     continue
             if p_value > 0.05:
                 continue
             else:
 
                 # expected_value = number_of_genes * num_ref / num_total_reference_genes
-                print(number_of_genes,float(ref), number_of_genes * float(ref), number_of_total_reference_genes)
+                # print(number_of_genes,float(ref), number_of_genes * float(ref), number_of_total_reference_genes)
                 expected_value = number_of_genes * float(ref) / number_of_total_reference_genes
-                print('expected = %s' % str(expected_value))
+                #print('expected = %s' % str(expected_value))
                 enrichment = float(len(genes))/expected_value
-                print('enrichment = %s' % str(enrichment))
+
                 # sorted_list[n, 2] = float(len(genes) / float(ref)) * 100.
-                #sorted_list[n, 2] = -1. * np.log10(p_value)
-                sorted_list[n,2] = enrichment
+                # sorted_list[n, 2] = -1. * np.log10(p_value)
+                sorted_list[n, 2] = np.log2(enrichment)
 
             sorted_list[n, 0] = self.ontology[go_id].name
             sorted_list[n, 1] = go_id
-            print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
-                  genes, n)
+            print(go_id, self.ontology[go_id].name, float(len(genes) / float(ref)) * 100, p_value, len(genes), ref,
+                  enrichment)
             self.global_go[go_id] = self.ontology[go_id].name
             sorted_list[n, 3] = str(genes)
             n += 1
@@ -140,7 +141,7 @@ class GoAnalysis:
         fig = plt.figure(figsize=(6, 12))
         ax1 = fig.add_subplot(111)
         # plt.title(savename)
-        im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
+        im = ax1.imshow(matrix, aspect=.35, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
                         origin='lower')
         plt.colorbar(im)
         names_2 = []
