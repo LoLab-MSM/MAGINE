@@ -290,7 +290,7 @@ class GoAnalysis:
                 continue
             self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
             real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
-        html_array = np.delete(html_array, to_remove)
+        html_array = np.delete(html_array, to_remove, 0)
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
         header = "<html>\n\t<body>"
