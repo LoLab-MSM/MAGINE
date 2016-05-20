@@ -208,6 +208,16 @@ class GoAnalysis:
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
         self.plot_heatmap(tmp_array, names_sorted, 0, 50, '%s_top_dendrogram' % savename, labels)
         self.plot_heatmap(tmp_array, names_sorted, -50, -1, '%s_bottom_dendrogram' % savename, labels)
+        figures = ['%s_top' % savename,
+                   '%s_bottom' % savename,
+                   '%s_dendrogram.pdf' % savename,
+                   '%s_top_dendrogram' % savename,
+                   '%s_bottom_dendrogram' % savename, ]
+        html_pages = []
+        for i in figures:
+            html_pages.append('<a href="{0}/{1}.pdf">{2}</a>'.format(self.out_dir, i, i))
+        self.html_pdfs = pd.DataFrame(html_pages)
+        # pd.DataFrame()
 
     def print_ranked_over_time(self, data):
         """ Prints information about top hits
@@ -298,6 +308,7 @@ class GoAnalysis:
 
         with open('%s.html' % html_name, 'w') as f:
             f.write(header)
+            f.write(self.html_pdfs.to_html(classes='df', escape=False))
             f.write(d.to_html(classes='df', float_format='{0:.4e}'.format, escape=False))
             f.write(footer)
 
