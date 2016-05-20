@@ -290,6 +290,7 @@ def trim_nodes(network,list_of_nodes):
         tmp2=tmp1
         tmp1 =trim(network,list_of_nodes)
 
+
 def trim(network,list_of_nodes):
     list_of_not_found_network_to_data = []
     found ,not_found= 0.,0.

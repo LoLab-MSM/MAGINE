@@ -47,7 +47,11 @@ class NetworkSubgraphs:
         """
         graph = pyg.AGraph(directed=True)
         for protein_1 in protein_list:
+            if not protein_1 in self.network.nodes():
+                continue
             for protein_2 in protein_list:
+                if not protein_2 in self.network.nodes():
+                    continue
                 if protein_1 == protein_2:
                     continue
                 else:

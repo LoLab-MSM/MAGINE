@@ -77,8 +77,6 @@ class ChemicalMapper:
 
 cm = ChemicalMapper()
 
-
-
 # creation of a manual dictionary because of kegg to uniprot errors.
 # These errors are mostly on KEGG sides that link it to an unreviewed Uniprot ID
 manual_dict = {'hsa:857': 'CAV1',
@@ -88,7 +86,12 @@ manual_dict = {'hsa:857': 'CAV1',
                'hsa:102723407': 'IGHV4OR15-8',
                'hsa:100132074': 'FOXO6',
                'hsa:728635': 'DHRS4L1',
-               'hsa:10411': 'RAPGEF3'
+               'hsa:10411': 'RAPGEF3',
+               'hsa:100101267': 'POM121C',
+               'hsa:2768': 'GNA12',
+               'hsa:2044': 'EPHA5',
+               'hsa:100533467': 'BIVM-ERCC5',
+               'hsa:7403': 'KDM6A'
                }
 
 compound_manual = {'cpd:C07909': 'HMDB15015',
@@ -162,7 +165,7 @@ def hugo_mapper(network, species='hsa'):
     :return:
 
     """
-    #TODO Broken since bioservices update
+    # TODO Broken since bioservices update
     nodes = network.nodes()
     hugo_dict = {}
     for i in nodes:
@@ -240,8 +243,8 @@ def convert_all(network, species='hsa'):
     print('Started converting kegg genes to HGNC')
     dict2 = create_gene_dictionaries(renamed_network, species=species)
     renamed_network = nx.relabel_nodes(renamed_network, dict2)
-    #print('Started to check for miRNAs')
-    #dict3 = hugo_mapper(renamed_network, species=species)
-    #renamed_network = nx.relabel_nodes(renamed_network, dict3)
+    # print('Started to check for miRNAs')
+    # dict3 = hugo_mapper(renamed_network, species=species)
+    # renamed_network = nx.relabel_nodes(renamed_network, dict3)
 
     return renamed_network
