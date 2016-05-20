@@ -12,6 +12,7 @@ from orangecontrib.bio import go
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
+pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC']
 # noinspection PyUnresolvedReferences
@@ -21,12 +22,17 @@ class GoAnalysis:
     Uses the orangecontrib.bio package
     """
 
-    def __init__(self, species='hsa', slim=False, output_directory='tmp', reference=None):
+    def __init__(self, species='hsa', slim=False, output_directory='tmp', reference=None, metric='enrichment',
+                 verbose=False):
         self.array = None
+        self.data = None
         self.names = None
+        self.go_terms = None
         self.ontology = go.Ontology()
         self.slim = False
         self.reference = reference
+        self.metric = metric
+        self.verbose = verbose
         if slim:
             self.slim = True
             self.slim_name = slim
@@ -62,19 +68,20 @@ class GoAnalysis:
             else:
 
                 # expected_value = number_of_genes * num_ref / num_total_reference_genes
-                print(number_of_genes,float(ref), number_of_genes * float(ref), number_of_total_reference_genes)
                 expected_value = number_of_genes * float(ref) / number_of_total_reference_genes
-                print('expected = %s' % str(expected_value))
                 enrichment = float(len(genes))/expected_value
-                print('enrichment = %s' % str(enrichment))
-                # sorted_list[n, 2] = float(len(genes) / float(ref)) * 100.
-                #sorted_list[n, 2] = -1. * np.log10(p_value)
-                sorted_list[n,2] = enrichment
+                if self.metric == 'fraction':
+                    sorted_list[n, 2] = float(len(genes) / float(ref)) * 100.
+                if self.metric == 'pvalue':
+                    sorted_list[n, 2] = -1. * np.log10(p_value)
+                if self.metric == 'enrichment':
+                    sorted_list[n, 2] = np.log2(enrichment)
 
             sorted_list[n, 0] = self.ontology[go_id].name
             sorted_list[n, 1] = go_id
-            print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
-                  genes, n)
+            if self.verbose:
+                print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
+                      enrichment)
             self.global_go[go_id] = self.ontology[go_id].name
             sorted_list[n, 3] = str(genes)
             n += 1
@@ -167,10 +174,13 @@ class GoAnalysis:
         :return:
         """
         data = self.create_data_set(data, aspect)
+        self.data = data
         # self.print_ranked_over_time(data)
-        names, array = sort_data(data)
+        # names, array = sort_data(data)
+        names, array = self.sort_by_hierarchy(data)
         self.array = array
         self.names = names
+        self.go_terms = data[:, 0]
         # self.export_to_html(labels)
         if not analyze:
             return
@@ -199,6 +209,16 @@ class GoAnalysis:
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
         self.plot_heatmap(tmp_array, names_sorted, 0, 50, '%s_top_dendrogram' % savename, labels)
         self.plot_heatmap(tmp_array, names_sorted, -50, -1, '%s_bottom_dendrogram' % savename, labels)
+        figures = ['%s_top' % savename,
+                   '%s_bottom' % savename,
+                   '%s_dendrogram' % savename,
+                   '%s_top_dendrogram' % savename,
+                   '%s_bottom_dendrogram' % savename, ]
+        html_pages = []
+        for i in figures:
+            html_pages.append('<a href="{0}/{1}.pdf">{2}</a>'.format(self.out_dir, i, i))
+        self.html_pdfs = pd.DataFrame(html_pages)
+        # pd.DataFrame()
 
     def print_ranked_over_time(self, data):
         """ Prints information about top hits
@@ -220,25 +240,22 @@ class GoAnalysis:
         """
         print(term)
         terms = self.ontology.extract_sub_graph(term)
-        for i in terms:
-            if i in self.global_go:
-                print(i, self.global_go[i])
         self.plot_specific_go(terms, savename,x)
 
-    def plot_specific_go(self, term, savename, x =  [1, 6, 24, 48]):
+    def plot_specific_go(self, term, savename, x):
         """ Plots a scatter plot of selected terms over time
 
         :param term:
         :param savename:
         :return:
         """
+        if x is None:
+            x = [1, 6, 24, 48]
         found_terms = []
         for i in term:
             if i in self.names:
-                # print(self.ontology.term_depth(i),i)
                 found_terms.append(i)
-                # else:
-                #    print("%s is not found" % i)
+
         num_colors = len(found_terms)
         if num_colors == 0:
             print("Did not find any of the terms")
@@ -255,29 +272,95 @@ class GoAnalysis:
             y = self.array[y_index][0]
             label = "\n".join(wrap(self.global_go[i], 40))
             ax.plot(x, y, 'o-', label=label)
-        plt.ylabel('-log(p-value)', fontsize=16)
+        y_label = None
+        if self.metric == 'enrichment':
+            y_label = 'log2(enrichment)'
+        if self.metric == 'pvalue':
+            y_label = '-log10(p value)'
+        if self.metric == 'fraction':
+            y_label = 'fraction(%%)'
+        plt.ylabel(y_label, fontsize=16)
         plt.xlabel('Time(hr)', fontsize=16)
         handles, labels = ax.get_legend_handles_labels()
         lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
         fig.savefig('%s.png' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
-        plt.show()
+        plt.close()
 
-    def export_to_html(self,labels):
-        real_names = [self.global_go[n] for n in self.names]
-        real_names = np.array(real_names)
-        for n, i in enumerate(real_names):
-            self.find_and_plot_subterms(str(self.names[n]), '{0}'.format(n))
-            real_names[n] = '<a href="{0}.png">{1}</a>'.format(n, i)
-        d = pd.DataFrame(data=self.array, index=real_names, columns=labels)
-        HEADER = """<html>\n  <body>"""
-        FOOTER = """  </body>\n</html>
-            """
-        print(d.dtypes)
+    def export_to_html(self, labels, html_name='tmp', x=None):
+        directory_name = '%s_source' % html_name
+        os.system('mkdir %s' % directory_name)
+        real_names = []
+        html_array = self.array.copy()
+        to_remove = []
+        parents = dict([(term, self.get_parents(term, self.names)) for term in self.names])
+        for n, i in enumerate(self.names):
+            new_name = self.global_go[i]
+            number_of_children = len(self.getChildren(i, self.names, parents))
+            print(number_of_children)
+            if number_of_children < 2:
+            if len(self.getChildren(i, self.names, parents)) < 2:
+                to_remove.append(n)
+                continue
+            elif number_of_children > 20:
+                real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
+                continue
+            else:
+                self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
+                real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
+            self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
+            real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
+        html_array = np.delete(html_array, to_remove, 0)
+        d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
-        with open('test.html', 'w') as f:
-            f.write(HEADER)
+        header = "<html>\n\t<body>"
+        footer = "\t</body>\n</html>"
+
+        with open('%s.html' % html_name, 'w') as f:
+            f.write(header)
+            f.write(self.html_pdfs.to_html(classes='df', escape=False))
             f.write(d.to_html(classes='df', float_format='{0:.4e}'.format, escape=False))
-            f.write(FOOTER)
+            f.write(footer)
+
+    def get_parents(self, term, data):
+        parents = self.ontology.extract_super_graph([term])
+        parents = [id for id in parents if id in data and id != term]
+        lst = [set(self.ontology.extract_super_graph([id])) - set([id]) for id in parents]
+        c = set.union(*lst) if lst else set()
+        parents = [t for t in parents if t not in c]
+        return parents
+
+    def getChildren(self, term, data, parents):
+        return [id for id in data if term in parents[id]]
+
+    def sort_by_hierarchy(self, data):
+        names = data[:, 0].copy()
+        array = data[:, 1:].astype(np.float32).copy()
+        parents = dict([(term, self.get_parents(term, names)) for term in names])
+        topLevelTerms = [id for id in parents if not parents[id]]
+        term_list = []
+        visited = []
+
+        def collect(go_term, parent):
+            term_list.append((go_term, self.global_go[go_term], parent))
+            parent = len(term_list) - 1
+            for c in self.getChildren(go_term, names, parents):
+                if c in visited:
+                    continue
+                else:
+                    visited.append(c)
+                    collect(c, parent)
+
+        for topTerm in topLevelTerms:
+            collect(topTerm, None)
+        term_list = np.array(term_list)
+        list_sorted = list(term_list[:, 0])
+        tmp_array = []
+        for i in list_sorted:
+            ind = np.where(names == i)
+            tmp_array.append(ind[0][0])
+        array = array[tmp_array]
+        names = names[tmp_array]
+        return names, array
 
 
 def return_go_number(go_term, go_array):
