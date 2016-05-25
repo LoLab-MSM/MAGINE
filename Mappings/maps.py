@@ -49,6 +49,7 @@ class ChemicalMapper:
         self.chemical_name_to_hmdb_accession = self.convert_to_dict("name", "accession")
         self.hmdb_accession_to_kegg = self.convert_to_dict("accession", "kegg_id")
         self.kegg_to_hmdb_accession = self.convert_to_dict("kegg_id", "accession")
+        self.hmdb_accession_to_protein = self.convert_to_dict("accession", "protein_associations")
         self.synonyms_to_hmdb = None
 
     def convert_to_dict(self, key, value):
@@ -59,6 +60,7 @@ class ChemicalMapper:
         :return:
         """
         return {k: list(v) for k, v in self.database.groupby(key)[value]}
+
 
     def check_synonym_dict(self, term, format_name):
         """ checks hmdb database for synonyms and returns formatted name

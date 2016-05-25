@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from bioservices import UniProt, KEGG
 import networkx as nx
 import pygraphviz as pyg
-from Mappings.maps import kegg_to_hmdb, human_kegg_to_uniprot
 uniprot = UniProt()
 uniprot.TIMEOUT = 100
 kegg = KEGG()
@@ -14,9 +13,25 @@ kegg.TIMEOUT = 100
 def add_attribute_to_network(graph,list_to_add_attribute,attribute,true_term):
     tmp_g = graph.copy()
     nodes1 = tmp_g.nodes()
-    for i in list_to_add_attribute:
-        if i in nodes1:
+    for i in nodes1 :
+        if i in list_to_add_attribute:
             tmp_g.node[i][attribute] = true_term
+        else:
+            tmp_g.node[i][attribute] = 'false'
+
+    return tmp_g
+
+
+def append_attribute_to_network(graph,list_to_add_attribute,attribute,true_term):
+    tmp_g = graph.copy()
+    nodes1 = tmp_g.nodes()
+    for i in nodes1:
+        if i in list_to_add_attribute:
+            if attribute in tmp_g.node[i].keys():
+                tmp_g.node[i][attribute] += true_term
+            else:
+                tmp_g.node[i][attribute] = true_term
+
     return tmp_g
 
 
@@ -76,72 +91,7 @@ def return_gml(graph):
         newGraph.add_edge(each[0],each[1],attr_dict=each.attr)
     return newGraph
 
-def convert_kegg_uniprot(graph):
-    not_found = 0
-    newGraph = nx.DiGraph()
-    for node in graph.nodes():
-        newGraph.add_node(str(node))
-    for each in graph.edges():
-        newGraph.add_edge(each[0],each[1],attr_dict=each.attr)
-    print(newGraph.is_multigraph())
 
-    newGraph = nx.relabel_nodes(newGraph, human_kegg_to_uniprot)
-    newGraph = nx.relabel_nodes(newGraph,kegg_to_hmdb)
-    print(newGraph.is_multigraph())
-    generated_dict = {}
-    for i in newGraph.nodes():
-        i = str(i)
-        if i.startswith('hsa') or i.startswith('cpd') or i.startswith('gl'):
-            info = kegg.get(i,parse=True)
-            if info == 404:
-                print("%s not found" % i)
-                newGraph.remove_node(i)
-                not_found += 1
-                continue
-            if i.startswith('cp'):
-                if i[4:].capitalize() in kegg_to_hmdb:
-                    generated_dict[i]= kegg_to_hmdb[i[4:].capitalize()]
-                #elif 'DBLINKS' in info.keys():
-                #    if 'PubChem' in info['DBLINKS']:
-                #        name = 'PUBCHEM'+info['DBLINKS']['PubChem']
-                #        generated_dict[i] = name
-                #    else:
-                #        generated_dict[i] = i.replace(':','')
-                else:
-                    generated_dict[i] = i
-            elif i.startswith('gl'):
-                print i
-                if 'DBLINKS' in info.keys():
-                    print info.keys()
-
-                    print info['DBLINKS']
-                    if 'REMARK' in info.keys():
-                        print info['REMARK']
-                if i[4:].capitalize() in kegg_to_hmdb:
-                    generated_dict[i]= kegg_to_hmdb[i[4:].capitalize()]
-                elif 'DBLINKS' in info.keys():
-                    if 'PubChem' in info['DBLINKS']:
-                        name = 'PUBCHEM'+info['DBLINKS']['PubChem']
-                        generated_dict[i] = name
-                    else:
-                        generated_dict[i] = i.replace(':','')
-                else:
-                    generated_dict[i] = i.replace(':','')
-            else:
-                if 'NAME' not in info.keys():
-                    newGraph.remove_node(i)
-                    print("%s not found" % i)
-                    continue
-                name = info['NAME'][0].split(',')[0]
-                generated_dict[i]= name
-        elif i.startswith('dr'):
-            print "Removing %s because it isn't a protein,gylcan, or compound"%i
-            newGraph.remove_node(i)
-        else:
-            continue
-    newGraph = nx.relabel_nodes(newGraph,generated_dict)
-    print('%s number of species not found.' % not_found)
-    return newGraph
 
 def compress_edges(graph,networkx = True):
     if not networkx:
