@@ -4,17 +4,17 @@ GO analysis function using orange bioinformatics
 import os
 from textwrap import wrap
 
-import matplotlib
 import numpy as np
 import scipy.cluster.hierarchy as sch
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from orangecontrib.bio import go
 
-matplotlib.use('Agg')
+# matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import pandas as pd
 pd.set_option('display.max_colwidth', -1)
 
-evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC']
+evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
 # noinspection PyUnresolvedReferences
 class GoAnalysis:
     """
@@ -26,6 +26,7 @@ class GoAnalysis:
                  verbose=False):
         self.array = None
         self.data = None
+        self.data_2 = None
         self.names = None
         self.go_terms = None
         self.ontology = go.Ontology()
@@ -51,14 +52,18 @@ class GoAnalysis:
         :return:
         """
         res = self.annotations.get_enriched_terms(data, slims_only=self.slim, aspect=aspect,
-                                                  evidence_codes=evidence_codes, reference=self.reference)
+                                                  evidence_codes=evidence_codes,
+                                                  reference=self.reference)
+
         # Slims goslim_chembl
         sorted_list = np.ones((len(res.items()), 4), dtype='S50')
         sorted_list[:, 2].astype('float')
         number_of_genes = len(data)
         number_of_total_reference_genes = len(self.annotations.gene_names)
         n = 0
+        sorted_list_2 = []
         for go_id, (genes, p_value, ref) in res.items():
+            tmp_entry = []
             if self.slim:
                 pass
             elif ref < 10.:
@@ -67,27 +72,39 @@ class GoAnalysis:
                 continue
             else:
 
-                # expected_value = number_of_genes * num_ref / num_total_reference_genes
-                expected_value = number_of_genes * float(ref) / number_of_total_reference_genes
-                enrichment = float(len(genes))/expected_value
                 if self.metric == 'fraction':
-                    sorted_list[n, 2] = float(len(genes) / float(ref)) * 100.
+                    score = float(len(genes) / float(ref)) * 100.
                 if self.metric == 'pvalue':
-                    sorted_list[n, 2] = -1. * np.log10(p_value)
+                    score = -1. * np.log10(p_value)
                 if self.metric == 'enrichment':
-                    sorted_list[n, 2] = np.log2(enrichment)
+                    # expected_value = number_of_genes * num_ref / num_total_reference_genes
+                    expected_value = number_of_genes * float(ref) / number_of_total_reference_genes
+                    enrichment = float(len(genes)) / expected_value
+                    score = np.log2(enrichment)
 
             sorted_list[n, 0] = self.ontology[go_id].name
             sorted_list[n, 1] = go_id
+            sorted_list[n, 2] = score
+            sorted_list[n, 3] = str(genes)
+            self.global_go[go_id] = self.ontology[go_id].name
+
+            n += 1
+            # This is to return pandas datagrame
+            tmp_entry.append(self.ontology[go_id].name)
+            tmp_entry.append(go_id)
+            tmp_entry.append(score)
+            tmp_entry.append(genes)
+            sorted_list_2.append(tmp_entry)
+            # End of pandas upgrade space
             if self.verbose:
                 print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
                       enrichment)
-            self.global_go[go_id] = self.ontology[go_id].name
-            sorted_list[n, 3] = str(genes)
-            n += 1
+
         if n == 0:
             print("No significant p-values")
-        return sorted_list[:n, :]
+        cols = ['GO_name', 'GO_id', 'score', 'genes']
+        data = pd.DataFrame(sorted_list_2, columns=cols)
+        return sorted_list[:n, :], data
 
     def create_data_set(self, list_of_exp, aspect):
         """
@@ -96,39 +113,27 @@ class GoAnalysis:
         :param aspect:
         :return:
         """
-        num_of_lists = len(list_of_exp)
+
         results = []
-        for i in list_of_exp:
-            tmp_array = self.create_array_per_time(i, aspect)
+        results_2 = []
+        for n, i in enumerate(list_of_exp):
+            tmp_array, tmp_array_2 = self.create_array_per_time(i, aspect)
+            tmp_array_2['entry'] = n
             results.append(tmp_array)
+            results_2.append(tmp_array_2)
+        data_set_2 = pd.concat(results_2)
         all_terms = []
         for each in results:
             all_terms.extend(list(each[:, 1]))
         all_terms = set(all_terms)
+        num_of_lists = len(list_of_exp)
         data_set = np.zeros((len(all_terms), num_of_lists + 1), dtype='S50')
         for n, i in enumerate(all_terms):
             data_set[n, 0] = i
             for num in range(1, num_of_lists + 1):
                 data_set[n, num] = return_go_number(i, results[num - 1])
+        self.data_2 = data_set_2
         return data_set
-
-    def find_terms(self, data, term):
-        """
-
-        :param data:
-        :param term:
-        :return:
-        """
-        shape = np.shape(data)[1]
-        new_data = np.zeros((len(data), shape), dtype='S50')
-        new_names = data[:, 0]
-        n = 0
-        for i in range(len(new_names)):
-            if len(self.global_go[new_names[i]].split(term)) < 2:
-                continue
-            new_data[n, :] = data[i, :]
-            n += 1
-        return new_data[:n - 1, :]
 
     def plot_heatmap(self, data, all_names, start, stop, savename, labels):
         """
@@ -144,12 +149,14 @@ class GoAnalysis:
         matrix = data[start:stop, :]
         size_of_data = np.shape(data)[1]
         length_matrix = len(matrix)
-        fig = plt.figure(figsize=(6, 12))
+        fig = plt.figure(figsize=(10, 20))
+        fig = plt.figure()
         ax1 = fig.add_subplot(111)
+        ax1 = plt.gca()
         # plt.title(savename)
-        im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
+        im = ax1.imshow(matrix, aspect='auto', interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
                         origin='lower')
-        plt.colorbar(im)
+
         names_2 = []
         for i in all_names[start:stop]:
             names_2.append(self.global_go[i])
@@ -160,7 +167,14 @@ class GoAnalysis:
             plt.xticks(x_ticks, labels, fontsize=16, rotation='90')
         else:
             print("Provide labels")
+        divider = make_axes_locatable(ax1)
+        cax = divider.append_axes("right", size="5%", pad=0.05)
+
+        plt.colorbar(im, cax=cax)
+        # plt.axes().set_aspect('equal', 'datalim')
+        plt.tight_layout()
         plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=300, bbox_inches='tight')
         plt.close()
 
     def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True):
@@ -181,15 +195,14 @@ class GoAnalysis:
         self.array = array
         self.names = names
         self.go_terms = data[:, 0]
-        # self.export_to_html(labels)
         if not analyze:
             return
         if self.slim:
             savename += "_%s" % self.slim_name
         savename += '_%s' % aspect
 
-        self.plot_heatmap(array, names, 0, 50, '%s_top' % savename, labels)
-        self.plot_heatmap(array, names, -50, -1, '%s_bottom' % savename, labels)
+        self.plot_heatmap(array, names, 0, 100, '%s_top' % savename, labels)
+        self.plot_heatmap(array, names, -100, -1, '%s_bottom' % savename, labels)
         tmp_array = array[:, :].copy()
         fig = plt.figure()
         axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
@@ -206,9 +219,10 @@ class GoAnalysis:
         axmatrix.set_yticks([])
         axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
         plt.colorbar(im, cax=axcolor)
+        fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
-        self.plot_heatmap(tmp_array, names_sorted, 0, 50, '%s_top_dendrogram' % savename, labels)
-        self.plot_heatmap(tmp_array, names_sorted, -50, -1, '%s_bottom_dendrogram' % savename, labels)
+        self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
+        self.plot_heatmap(tmp_array, names_sorted, -100, -1, '%s_bottom_dendrogram' % savename, labels)
         figures = ['%s_top' % savename,
                    '%s_bottom' % savename,
                    '%s_dendrogram' % savename,
@@ -217,20 +231,24 @@ class GoAnalysis:
         html_pages = []
         for i in figures:
             html_pages.append('<a href="{0}/{1}.pdf">{2}</a>'.format(self.out_dir, i, i))
-        self.html_pdfs = pd.DataFrame(html_pages)
+        self.html_pdfs = pd.DataFrame(html_pages, columns=['Clustered output'])
+        self.print_ranked_over_time(savename=savename, labels=labels)
         # pd.DataFrame()
 
-    def print_ranked_over_time(self, data):
+    def print_ranked_over_time(self, savename, labels):
         """ Prints information about top hits
-
-        :param data:
-        :return:
         """
-        for i in range(0, np.shape(data)[1] - 2):
-            print(i)
-            names, tmp = sort_data_by_index(data, i)
-            for j in range(len(data), len(data) - 10):
-                print(i, self.global_go[names[j]], tmp[j, 1 + i] - tmp[j, i])
+        html_pages = []
+
+        for i in range(0, np.shape(self.data)[1] - 1):
+            names, tmp = sort_data_by_index(self.data, i)
+            self.plot_heatmap(tmp, names, -11, -1, 'top_hits_entry_%i_%s' % (i, savename), labels)
+            html_pages.append('<a href="{0}/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(self.out_dir, i, savename,
+                                                                                        labels[i]))
+            for j in reversed(range(len(self.data) - 10, len(self.data))):
+                print(i, names[j], self.global_go[names[j]], tmp[j, i])
+        self.html_pdfs2 = pd.DataFrame(html_pages, columns=['Top hits per time'])
+
 
     def find_and_plot_subterms(self, term, savename,x=[1, 6, 24, 48]):
         """
@@ -240,6 +258,7 @@ class GoAnalysis:
         """
         print(term)
         terms = self.ontology.extract_sub_graph(term)
+
         self.plot_specific_go(terms, savename,x)
 
     def plot_specific_go(self, term, savename, x):
@@ -287,6 +306,13 @@ class GoAnalysis:
         plt.close()
 
     def export_to_html(self, labels, html_name='tmp', x=None):
+        """ exports to html to be viewed by browser
+
+        :param labels:
+        :param html_name:
+        :param x:
+        :return:
+        """
         directory_name = '%s_source' % html_name
         os.system('mkdir %s' % directory_name)
         real_names = []
@@ -295,30 +321,33 @@ class GoAnalysis:
         parents = dict([(term, self.get_parents(term, self.names)) for term in self.names])
         for n, i in enumerate(self.names):
             new_name = self.global_go[i]
-            number_of_children = len(self.getChildren(i, self.names, parents))
+            # number_of_children = len(self.getChildren(i, self.names, parents))
+
+            number_of_children = len(self.ontology.extract_sub_graph(str(i)))
             print(number_of_children)
             if number_of_children < 2:
-            if len(self.getChildren(i, self.names, parents)) < 2:
                 to_remove.append(n)
                 continue
-            elif number_of_children > 20:
+            elif number_of_children > 30:
                 real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
                 continue
             else:
                 self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
                 real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
-            self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
-            real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
+
         html_array = np.delete(html_array, to_remove, 0)
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
-        header = "<html>\n\t<body>"
-        footer = "\t</body>\n</html>"
+        header = "<html>\n\t<body>\n"
+        footer = "\n\t</body>\n</html>"
 
         with open('%s.html' % html_name, 'w') as f:
             f.write(header)
-            f.write(self.html_pdfs.to_html(classes='df', escape=False))
-            f.write(d.to_html(classes='df', float_format='{0:.4e}'.format, escape=False))
+            f.write('\n<div style="float: left">\n')
+            f.write(self.html_pdfs.to_html(classes='df', escape=False, justify='left'))
+            f.write('\n</div>\n')
+            f.write(self.html_pdfs2.to_html(classes='df', escape=False, justify='left'))
+            f.write(d.to_html(classes='df', float_format='{0:.4}'.format, escape=False, justify='left'))
             f.write(footer)
 
     def get_parents(self, term, data):
@@ -333,14 +362,25 @@ class GoAnalysis:
         return [id for id in data if term in parents[id]]
 
     def sort_by_hierarchy(self, data):
+        """ Sorts according to GO hierarchy
+
+        :param data:
+        :return:
+        """
         names = data[:, 0].copy()
         array = data[:, 1:].astype(np.float32).copy()
         parents = dict([(term, self.get_parents(term, names)) for term in names])
-        topLevelTerms = [id for id in parents if not parents[id]]
+        top_level_terms = [id for id in parents if not parents[id]]
         term_list = []
         visited = []
 
         def collect(go_term, parent):
+            """  collects all children terms to a hierarchy
+            modified from bio.orange.go
+            :param go_term:
+            :param parent:
+            :return:
+            """
             term_list.append((go_term, self.global_go[go_term], parent))
             parent = len(term_list) - 1
             for c in self.getChildren(go_term, names, parents):
@@ -350,7 +390,7 @@ class GoAnalysis:
                     visited.append(c)
                     collect(c, parent)
 
-        for topTerm in topLevelTerms:
+        for topTerm in top_level_terms:
             collect(topTerm, None)
         term_list = np.array(term_list)
         list_sorted = list(term_list[:, 0])
@@ -361,6 +401,24 @@ class GoAnalysis:
         array = array[tmp_array]
         names = names[tmp_array]
         return names, array
+
+    def find_terms(self, data, term):
+        """
+
+        :param data:
+        :param term:
+        :return:
+        """
+        shape = np.shape(data)[1]
+        new_data = np.zeros((len(data), shape), dtype='S50')
+        new_names = data[:, 0]
+        n = 0
+        for i in range(len(new_names)):
+            if len(self.global_go[new_names[i]].split(term)) < 2:
+                continue
+            new_data[n, :] = data[i, :]
+            n += 1
+        return new_data[:n - 1, :]
 
 
 def return_go_number(go_term, go_array):
@@ -405,7 +463,7 @@ def sort_data_by_index(data, index):
     names = data[:, 0].copy()
     array = data[:, 1:].astype(np.float32).copy()
     # step_size = np.average(array,axis=1).argsort()
-    step_size = (array[:, index + 1] - array[:, index]).argsort()
+    step_size = (array[:, index]).argsort()
     names = names[step_size]
     array = array[step_size]
     return names, array

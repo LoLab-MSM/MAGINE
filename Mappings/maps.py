@@ -61,7 +61,6 @@ class ChemicalMapper:
         """
         return {k: list(v) for k, v in self.database.groupby(key)[value]}
 
-
     def check_synonym_dict(self, term, format_name):
         """ checks hmdb database for synonyms and returns formatted name
 
@@ -76,6 +75,15 @@ class ChemicalMapper:
                     return self.database.iloc[index][format_name]
         return None
 
+    def print_info(self):
+        """ print information about the dataframe
+
+        :return:
+        """
+
+        print('Number of HMDB accessions = {0}'.format(len(self.database['accession'].unique())))
+        print('Number of unique KEGG ids = {0}'.format(len(self.hmdb_accession_to_kegg.keys())))
+        print('Number of HMDB to KEGG mappings = {0}'.format(len(self.kegg_to_hmdb_accession.values())))
 
 cm = ChemicalMapper()
 
