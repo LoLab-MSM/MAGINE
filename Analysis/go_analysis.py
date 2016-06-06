@@ -149,12 +149,12 @@ class GoAnalysis:
         matrix = data[start:stop, :]
         size_of_data = np.shape(data)[1]
         length_matrix = len(matrix)
-        fig = plt.figure(figsize=(10, 20))
-        fig = plt.figure()
+        fig = plt.figure(figsize=(12, 20))
+        #fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        ax1 = plt.gca()
+        #ax1 = plt.gca()
         # plt.title(savename)
-        im = ax1.imshow(matrix, aspect='auto', interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
+        im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
                         origin='lower')
 
         names_2 = []
@@ -167,12 +167,12 @@ class GoAnalysis:
             plt.xticks(x_ticks, labels, fontsize=16, rotation='90')
         else:
             print("Provide labels")
-        divider = make_axes_locatable(ax1)
-        cax = divider.append_axes("right", size="5%", pad=0.05)
+        #divider = make_axes_locatable(ax1)
+        #cax = divider.append_axes("right", size="5%", pad=0.05)
 
-        plt.colorbar(im, cax=cax)
+        # plt.colorbar(im, cax=cax)
         # plt.axes().set_aspect('equal', 'datalim')
-        plt.tight_layout()
+        # plt.tight_layout()
         plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=300, bbox_inches='tight')
         plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=300, bbox_inches='tight')
         plt.close()
