@@ -146,14 +146,18 @@ class GoAnalysis:
         :param savename:
         :return:
         """
-        matrix = data[start:stop, :]
+        print(start,stop)
+        print(data[-1,:])
+        if stop is None:
+            matrix = data[start:, :]
+        else:
+            matrix = data[start:stop, :]
+        print(matrix)
         size_of_data = np.shape(data)[1]
         length_matrix = len(matrix)
         fig = plt.figure(figsize=(12, 20))
-        #fig = plt.figure()
         ax1 = fig.add_subplot(111)
-        #ax1 = plt.gca()
-        # plt.title(savename)
+
         im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
                         origin='lower')
 
@@ -168,9 +172,9 @@ class GoAnalysis:
         else:
             print("Provide labels")
         #divider = make_axes_locatable(ax1)
-        #cax = divider.append_axes("right", size="5%", pad=0.05)
+        #cax = divider.append_axes("top", size="5%", pad=0.05)
 
-        # plt.colorbar(im, cax=cax)
+        plt.colorbar(im)
         # plt.axes().set_aspect('equal', 'datalim')
         # plt.tight_layout()
         plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=300, bbox_inches='tight')
@@ -202,7 +206,7 @@ class GoAnalysis:
         savename += '_%s' % aspect
 
         self.plot_heatmap(array, names, 0, 100, '%s_top' % savename, labels)
-        self.plot_heatmap(array, names, -100, -1, '%s_bottom' % savename, labels)
+        self.plot_heatmap(array, names, -100, None, '%s_bottom' % savename, labels)
         tmp_array = array[:, :].copy()
         fig = plt.figure()
         axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
@@ -222,7 +226,7 @@ class GoAnalysis:
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
         self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
-        self.plot_heatmap(tmp_array, names_sorted, -100, -1, '%s_bottom_dendrogram' % savename, labels)
+        self.plot_heatmap(tmp_array, names_sorted, -100, None, '%s_bottom_dendrogram' % savename, labels)
         figures = ['%s_top' % savename,
                    '%s_bottom' % savename,
                    '%s_dendrogram' % savename,
@@ -242,10 +246,11 @@ class GoAnalysis:
 
         for i in range(0, np.shape(self.data)[1] - 1):
             names, tmp = sort_data_by_index(self.data, i)
-            self.plot_heatmap(tmp, names, -11, -1, 'top_hits_entry_%i_%s' % (i, savename), labels)
+            self.plot_heatmap(tmp, names, -21, None
+                              , 'top_hits_entry_%i_%s' % (i, savename), labels)
             html_pages.append('<a href="{0}/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(self.out_dir, i, savename,
                                                                                         labels[i]))
-            for j in reversed(range(len(self.data) - 10, len(self.data))):
+            for j in reversed(range(len(self.data) - 20, len(self.data))):
                 print(i, names[j], self.global_go[names[j]], tmp[j, i])
         self.html_pdfs2 = pd.DataFrame(html_pages, columns=['Top hits per time'])
 
@@ -324,9 +329,9 @@ class GoAnalysis:
             # number_of_children = len(self.getChildren(i, self.names, parents))
 
             number_of_children = len(self.ontology.extract_sub_graph(str(i)))
-            print(number_of_children)
-            if number_of_children < 2:
+            if number_of_children < 3:
                 to_remove.append(n)
+                real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
                 continue
             elif number_of_children > 30:
                 real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
@@ -335,19 +340,19 @@ class GoAnalysis:
                 self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
                 real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
 
-        html_array = np.delete(html_array, to_remove, 0)
+        #html_array = np.delete(html_array, to_remove, 0)
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
-        header = "<html>\n\t<body>\n"
+        header = '<script src="sorttable.js"></script>\n<html>\n\t<body>\n'
         footer = "\n\t</body>\n</html>"
 
         with open('%s.html' % html_name, 'w') as f:
             f.write(header)
             f.write('\n<div style="float: left">\n')
-            f.write(self.html_pdfs.to_html(classes='df', escape=False, justify='left'))
+            f.write(self.html_pdfs.to_html(classes='sortable', escape=False, justify='left'))
             f.write('\n</div>\n')
-            f.write(self.html_pdfs2.to_html(classes='df', escape=False, justify='left'))
-            f.write(d.to_html(classes='df', float_format='{0:.4}'.format, escape=False, justify='left'))
+            f.write(self.html_pdfs2.to_html(classes='sortable', escape=False, justify='left'))
+            f.write(d.to_html(classes='sortable', float_format='{0:.4}'.format, escape=False, justify='left'))
             f.write(footer)
 
     def get_parents(self, term, data):
