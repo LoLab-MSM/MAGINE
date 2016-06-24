@@ -4,17 +4,17 @@ GO analysis function using orange bioinformatics
 import os
 from textwrap import wrap
 
+import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy.cluster.hierarchy as sch
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from orangecontrib.bio import go
 
-# matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import pandas as pd
 pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
+
+
 # noinspection PyUnresolvedReferences
 class GoAnalysis:
     """
@@ -39,8 +39,10 @@ class GoAnalysis:
             self.slim_name = slim
             self.ontology.set_slims_subset(slim)  # goslim_pir goslim_generic
         self.annotations = go.Annotations(species, ontology=self.ontology)
+        self.number_of_total_reference_genes = len(self.annotations.gene_names)
         self.global_go = {}
         self.out_dir = output_directory
+        self.top_hits = []
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
 
@@ -51,22 +53,36 @@ class GoAnalysis:
         :param aspect:
         :return:
         """
-        res = self.annotations.get_enriched_terms(data, slims_only=self.slim, aspect=aspect,
-                                                  evidence_codes=evidence_codes,
+        number_of_genes = 0
+        genes_present = []
+        for i in data:
+            if i in self.annotations.gene_names:
+                number_of_genes += 1
+                genes_present.append(i)
+            else:
+                split_name = i.split(',')
+
+                if len(split_name) > 1:
+                    for i in split_name:
+                        if i in self.annotations.gene_names:
+                            number_of_genes += 1
+                            genes_present.append(i)
+        print("Number of genes given = {0}. Number of genes in GO = {1}".format(len(data), number_of_genes))
+        res = self.annotations.get_enriched_terms(genes_present, slims_only=self.slim, aspect=aspect,
+                                                  # evidence_codes=evidence_codes,
                                                   reference=self.reference)
 
         # Slims goslim_chembl
         sorted_list = np.ones((len(res.items()), 4), dtype='S50')
         sorted_list[:, 2].astype('float')
-        number_of_genes = len(data)
-        number_of_total_reference_genes = len(self.annotations.gene_names)
+
         n = 0
         sorted_list_2 = []
         for go_id, (genes, p_value, ref) in res.items():
             tmp_entry = []
             if self.slim:
                 pass
-            elif ref < 10.:
+            elif ref < 5.:
                 continue
             if p_value > 0.05:
                 continue
@@ -78,7 +94,7 @@ class GoAnalysis:
                     score = -1. * np.log10(p_value)
                 if self.metric == 'enrichment':
                     # expected_value = number_of_genes * num_ref / num_total_reference_genes
-                    expected_value = number_of_genes * float(ref) / number_of_total_reference_genes
+                    expected_value = number_of_genes * float(ref) / self.number_of_total_reference_genes
                     enrichment = float(len(genes)) / expected_value
                     score = np.log2(enrichment)
 
@@ -98,7 +114,7 @@ class GoAnalysis:
             # End of pandas upgrade space
             if self.verbose:
                 print(go_id, float(len(genes) / float(ref)) * 100, self.ontology[go_id].name, p_value, len(genes), ref,
-                      enrichment)
+                      score)
 
         if n == 0:
             print("No significant p-values")
@@ -146,13 +162,12 @@ class GoAnalysis:
         :param savename:
         :return:
         """
-        print(start,stop)
-        print(data[-1,:])
+
         if stop is None:
             matrix = data[start:, :]
         else:
             matrix = data[start:stop, :]
-        print(matrix)
+
         size_of_data = np.shape(data)[1]
         length_matrix = len(matrix)
         fig = plt.figure(figsize=(12, 20))
@@ -171,17 +186,17 @@ class GoAnalysis:
             plt.xticks(x_ticks, labels, fontsize=16, rotation='90')
         else:
             print("Provide labels")
-        #divider = make_axes_locatable(ax1)
-        #cax = divider.append_axes("top", size="5%", pad=0.05)
+        # divider = make_axes_locatable(ax1)
+        # cax = divider.append_axes("top", size="5%", pad=0.05)
 
         plt.colorbar(im)
         # plt.axes().set_aspect('equal', 'datalim')
         # plt.tight_layout()
-        plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=300, bbox_inches='tight')
-        plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=300, bbox_inches='tight')
+        plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=150, bbox_inches='tight')
         plt.close()
 
-    def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True):
+    def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True, search_term=None):
         """
 
         :param analyze:
@@ -192,7 +207,10 @@ class GoAnalysis:
         :return:
         """
         data = self.create_data_set(data, aspect)
-        self.data = data
+        if search_term is not None:
+            self.data = self.find_terms(data, search_term)
+        else:
+            self.data = data
         # self.print_ranked_over_time(data)
         # names, array = sort_data(data)
         names, array = self.sort_by_hierarchy(data)
@@ -223,7 +241,7 @@ class GoAnalysis:
         axmatrix.set_yticks([])
         axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
         plt.colorbar(im, cax=axcolor)
-        fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
+        # fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
         self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
         self.plot_heatmap(tmp_array, names_sorted, -100, None, '%s_bottom_dendrogram' % savename, labels)
@@ -239,23 +257,27 @@ class GoAnalysis:
         self.print_ranked_over_time(savename=savename, labels=labels)
         # pd.DataFrame()
 
-    def print_ranked_over_time(self, savename, labels):
+    def print_ranked_over_time(self, savename, labels, number=20):
         """ Prints information about top hits
         """
         html_pages = []
 
         for i in range(0, np.shape(self.data)[1] - 1):
+            points = []
             names, tmp = sort_data_by_index(self.data, i)
-            self.plot_heatmap(tmp, names, -21, None
+            self.plot_heatmap(tmp, names, -11, None
                               , 'top_hits_entry_%i_%s' % (i, savename), labels)
             html_pages.append('<a href="{0}/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(self.out_dir, i, savename,
                                                                                         labels[i]))
-            for j in reversed(range(len(self.data) - 20, len(self.data))):
+            for j in reversed(range(len(self.data) - number, len(self.data))):
                 print(i, names[j], self.global_go[names[j]], tmp[j, i])
+                points.append(names[j])
+            self.top_hits.append(points)
+        for i in self.top_hits:
+            print(i)
         self.html_pdfs2 = pd.DataFrame(html_pages, columns=['Top hits per time'])
 
-
-    def find_and_plot_subterms(self, term, savename,x=[1, 6, 24, 48]):
+    def find_and_plot_subterms(self, term, savename, x=[1, 6, 24, 48]):
         """
 
         :param term:
@@ -264,7 +286,7 @@ class GoAnalysis:
         print(term)
         terms = self.ontology.extract_sub_graph(term)
 
-        self.plot_specific_go(terms, savename,x)
+        self.plot_specific_go(terms, savename, x)
 
     def plot_specific_go(self, term, savename, x):
         """ Plots a scatter plot of selected terms over time
@@ -307,7 +329,7 @@ class GoAnalysis:
         plt.xlabel('Time(hr)', fontsize=16)
         handles, labels = ax.get_legend_handles_labels()
         lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
-        fig.savefig('%s.png' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
+        fig.savefig('%s.pdf' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.close()
 
     def export_to_html(self, labels, html_name='tmp', x=None):
@@ -328,19 +350,20 @@ class GoAnalysis:
             new_name = self.global_go[i]
             # number_of_children = len(self.getChildren(i, self.names, parents))
 
-            number_of_children = len(self.ontology.extract_sub_graph(str(i)))
-            if number_of_children < 3:
-                to_remove.append(n)
-                real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
-                continue
-            elif number_of_children > 30:
-                real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
-                continue
-            else:
-                self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
-                real_names.append('<a href="{0}/{1}.png">{2}</a>'.format(directory_name, n, new_name))
+            # number_of_children = len(self.ontology.extract_sub_graph(str(i)))
+            real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
+            # if number_of_children < 3:
+            #     to_remove.append(n)
+            #     real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
+            #     continue
+            # elif number_of_children > 30:
+            #     real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
+            #     continue
+            # else:
+            #     self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
+            #     real_names.append('<a href="{0}/{1}.pdf">{2}</a>'.format(directory_name, n, new_name))
 
-        #html_array = np.delete(html_array, to_remove, 0)
+        # html_array = np.delete(html_array, to_remove, 0)
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
         header = '<script src="sorttable.js"></script>\n<html>\n\t<body>\n'
