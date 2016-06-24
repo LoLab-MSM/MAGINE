@@ -13,6 +13,8 @@ from orangecontrib.bio import go
 pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
+
+
 # noinspection PyUnresolvedReferences
 class GoAnalysis:
     """
@@ -58,8 +60,14 @@ class GoAnalysis:
                 number_of_genes += 1
                 genes_present.append(i)
             else:
-                print('Not in', i)
-        print(len(data), number_of_genes)
+                split_name = i.split(',')
+
+                if len(split_name) > 1:
+                    for i in split_name:
+                        if i in self.annotations.gene_names:
+                            number_of_genes += 1
+                            genes_present.append(i)
+        print("Number of genes given = {0}. Number of genes in GO = {1}".format(len(data), number_of_genes))
         res = self.annotations.get_enriched_terms(genes_present, slims_only=self.slim, aspect=aspect,
                                                   # evidence_codes=evidence_codes,
                                                   reference=self.reference)
@@ -72,9 +80,6 @@ class GoAnalysis:
         sorted_list_2 = []
         for go_id, (genes, p_value, ref) in res.items():
             tmp_entry = []
-            if go_id == 'GO:0008219':
-                print(genes)
-                quit()
             if self.slim:
                 pass
             elif ref < 5.:
@@ -157,8 +162,7 @@ class GoAnalysis:
         :param savename:
         :return:
         """
-        print(start,stop)
-        print(data[-1,:])
+
         if stop is None:
             matrix = data[start:, :]
         else:
@@ -182,8 +186,8 @@ class GoAnalysis:
             plt.xticks(x_ticks, labels, fontsize=16, rotation='90')
         else:
             print("Provide labels")
-        #divider = make_axes_locatable(ax1)
-        #cax = divider.append_axes("top", size="5%", pad=0.05)
+        # divider = make_axes_locatable(ax1)
+        # cax = divider.append_axes("top", size="5%", pad=0.05)
 
         plt.colorbar(im)
         # plt.axes().set_aspect('equal', 'datalim')
@@ -192,7 +196,7 @@ class GoAnalysis:
         plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=150, bbox_inches='tight')
         plt.close()
 
-    def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True):
+    def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True, search_term=None):
         """
 
         :param analyze:
@@ -203,7 +207,10 @@ class GoAnalysis:
         :return:
         """
         data = self.create_data_set(data, aspect)
-        self.data = data
+        if search_term is not None:
+            self.data = self.find_terms(data, search_term)
+        else:
+            self.data = data
         # self.print_ranked_over_time(data)
         # names, array = sort_data(data)
         names, array = self.sort_by_hierarchy(data)
@@ -234,7 +241,7 @@ class GoAnalysis:
         axmatrix.set_yticks([])
         axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
         plt.colorbar(im, cax=axcolor)
-        #fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
+        # fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
         self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
         self.plot_heatmap(tmp_array, names_sorted, -100, None, '%s_bottom_dendrogram' % savename, labels)
@@ -270,8 +277,7 @@ class GoAnalysis:
             print(i)
         self.html_pdfs2 = pd.DataFrame(html_pages, columns=['Top hits per time'])
 
-
-    def find_and_plot_subterms(self, term, savename,x=[1, 6, 24, 48]):
+    def find_and_plot_subterms(self, term, savename, x=[1, 6, 24, 48]):
         """
 
         :param term:
@@ -280,7 +286,7 @@ class GoAnalysis:
         print(term)
         terms = self.ontology.extract_sub_graph(term)
 
-        self.plot_specific_go(terms, savename,x)
+        self.plot_specific_go(terms, savename, x)
 
     def plot_specific_go(self, term, savename, x):
         """ Plots a scatter plot of selected terms over time
@@ -357,7 +363,7 @@ class GoAnalysis:
             #     self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
             #     real_names.append('<a href="{0}/{1}.pdf">{2}</a>'.format(directory_name, n, new_name))
 
-        #html_array = np.delete(html_array, to_remove, 0)
+        # html_array = np.delete(html_array, to_remove, 0)
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
 
         header = '<script src="sorttable.js"></script>\n<html>\n\t<body>\n'

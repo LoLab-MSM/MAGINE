@@ -1,8 +1,9 @@
+import os
+
 import networkx as nx
 import pygraphviz as pyg
 
 from magine.network_tools import compress_edges
-import os
 
 
 class NetworkSubgraphs:
@@ -14,7 +15,7 @@ class NetworkSubgraphs:
         self.nodes = self.network.nodes()
         self.exp_data = exp_data
 
-    def generate_shortest_paths_between_two_proteins(self, protein_1, protein_2):
+    def generate_shortest_paths_between_two_proteins(self, protein_1, protein_2, draw=False):
         """
         Generates a graph based on all shortest paths between two proteins
         :param protein_1:
@@ -35,10 +36,11 @@ class NetworkSubgraphs:
         #self.create_legend(graph)
         self.write(graph)
         graph.write("%s_and_%s.dot" % (protein_1, protein_2))
-        graph.draw("%s_and_%s.pdf" % (protein_1, protein_2), prog='dot')
+        if draw:
+            graph.draw("%s_and_%s.pdf" % (protein_1, protein_2), prog='dot')
         return graph
 
-    def generate_shortest_paths_between_lists_of_proteins(self, protein_list,savename):
+    def generate_shortest_paths_between_lists_of_proteins(self, protein_list, savename, draw=False):
         """
         Generates a graph based on all shortest paths between two proteins
         :param protein_list:
@@ -46,11 +48,12 @@ class NetworkSubgraphs:
         :return: graph
         """
         graph = pyg.AGraph(directed=True)
+        nodes = self.network.nodes()
         for protein_1 in protein_list:
-            if not protein_1 in self.network.nodes():
+            if protein_1 not in nodes:
                 continue
             for protein_2 in protein_list:
-                if not protein_2 in self.network.nodes():
+                if protein_2 not in nodes:
                     continue
                 if protein_1 == protein_2:
                     continue
@@ -68,12 +71,13 @@ class NetworkSubgraphs:
         # self.create_legend(graph)
         self.write(graph)
         graph.write("%s.dot" % savename)
-        graph.draw("%s.pdf" % savename, prog='dot')
+        if draw:
+            graph.draw("%s.pdf" % savename, prog='dot')
         return graph
 
     #TODO create a function that finds all neighbors of each proteins and links them
     # THis would find more than the shortest path
-    def generate_all_paths_between_two_proteins(self, protein_1, protein_2):
+    def generate_all_paths_between_two_proteins(self, protein_1, protein_2, draw=False):
         """
         Generates a graph based on all shortest paths between two proteins
         :param protein_1:
@@ -94,10 +98,11 @@ class NetworkSubgraphs:
             self.add_edges_from_path(graph, path)
         self.create_legend(graph)
         graph.write("%s_and_%s.dot" % (protein_1, protein_2))
-        graph.draw("%s_and_%s.pdf" % (protein_1, protein_2), prog='dot')
+        if draw:
+            graph.draw("%s_and_%s.pdf" % (protein_1, protein_2), prog='dot')
         return graph
 
-    def generate_shortest_paths_from_protein_to_protein(self, protein_1, protein_2):
+    def generate_shortest_paths_from_protein_to_protein(self, protein_1, protein_2, draw=False):
         """
         Generates a graph from all the shortests paths FROM protein 1 to protein 2
         :param protein_1: string
@@ -115,7 +120,8 @@ class NetworkSubgraphs:
             self.add_edges_from_path(graph, path)
         #self.create_legend(graph)
         graph.write("%s_to_%s.dot" % (protein_1, protein_2))
-        graph.draw("%s_to_%s.pdf" % (protein_1, protein_2), prog='dot')
+        if draw:
+            graph.draw("%s_to_%s.pdf" % (protein_1, protein_2), prog='dot')
         return graph
 
     def generate_paths_between_proteins_list(self, protein_list, save_name):
@@ -137,8 +143,7 @@ class NetworkSubgraphs:
         protein_pair_graph.draw("%s.pdf" % save_name, prog='dot')
         return protein_pair_graph
 
-
-    def generate_upstream_network_of_protein(self, protein_1, savename='test',compress=False):
+    def generate_upstream_network_of_protein(self, protein_1, savename='test', compress=False, draw=False):
         """
         Finds all linear pathways leading up to a protein.
         :param protein_1: string
@@ -164,10 +169,12 @@ class NetworkSubgraphs:
             temporary_graph = compress_edges(temporary_graph)
         #self.create_legend(temporary_graph)
         temporary_graph.write('%s.dot' % savename)
-        temporary_graph.draw('%s.pdf' % savename, prog='dot')
+        if draw:
+            temporary_graph.draw('%s.pdf' % savename, prog='dot')
         return temporary_graph
 
-    def generate_downstream_network_of_protein(self, network, protein_1, exp_data, savename='test', compress=False):
+    def generate_downstream_network_of_protein(self, network, protein_1, exp_data, savename='test', compress=False,
+                                               draw=False):
         """
         Finds all linear pathways leading up to a protein.
         :param protein_1: string
@@ -194,7 +201,8 @@ class NetworkSubgraphs:
             temporary_graph = compress_edges(temporary_graph)
         #self.create_legend(temporary_graph)
         temporary_graph.write('%s.dot' % savename)
-        temporary_graph.draw('%s.pdf' % savename, prog='dot')
+        if draw:
+            temporary_graph.draw('%s.pdf' % savename, prog='dot')
         return temporary_graph
 
     def write(self,network):

@@ -6,7 +6,6 @@ import numpy as np
 import pygraphviz as pyg
 from orangecontrib.bio import go
 
-
 ontology = go.Ontology()
 annotations = go.Annotations('hsa', ontology=ontology)
 
@@ -62,7 +61,7 @@ def create_go_network(ddn, term1, term2, term3, save_name):
     return g
 
 
-def create_network_from_list(network, list_of_go_terms, save_name):
+def create_network_from_list(network, list_of_go_terms, save_name, draw=False):
     list_of_go_terms = np.array(np.unique(list_of_go_terms))
     graph = nx.DiGraph()
     nodes = network.nodes()
@@ -79,26 +78,33 @@ def create_network_from_list(network, list_of_go_terms, save_name):
         label_1 = go_names[term1]
         label_2 = go_names[term2]
         a_to_b, b_to_a = calculate_terms_between_a_b(nodes, network, term_1, term_2)
-        if (a_to_b and b_to_a) != 0:
-            print('both', a_to_b, b_to_a)
+        # if (a_to_b and b_to_a) != 0:
+        #    print('both', a_to_b, b_to_a)
+        #    graph.add_node(label_1, go=str(term1).replace(':', ''))
+        #    graph.add_node(label_2, go=str(term2).replace(':', ''))
+        #    graph.add_edge(label_1, label_2, label=str(a_to_b) + '/' + str(b_to_a), dir='both')
+        if a_to_b != 0:
             graph.add_node(label_1, go=str(term1).replace(':', ''))
             graph.add_node(label_2, go=str(term2).replace(':', ''))
-            graph.add_edge(label_1, label_2, label=str(a_to_b) + '/' + str(b_to_a), dir='both')
-        elif a_to_b != 0:
-            graph.add_node(label_1, go=str(term1).replace(':', ''))
-            graph.add_node(label_2, go=str(term2).replace(':', ''))
-            graph.add_edge(label_1, label_2, label=str(a_to_b))
+            graph.add_edge(label_1, label_2, label=str(a_to_b), weight=a_to_b)
 
-        elif b_to_a != 0:
+        if b_to_a != 0:
             graph.add_node(label_1, go=str(term1).replace(':', ''))
             graph.add_node(label_2, go=str(term2).replace(':', ''))
-            graph.add_edge(label_2, label_1, label=str(b_to_a))
+            graph.add_edge(label_2, label_1, label=str(b_to_a), weight=b_to_a)
 
     nx.nx.write_dot(graph, '{0}.dot'.format(save_name))
-
+    nx.write_graphml(graph, '{0}.graphml'.format(save_name))
+    from networkx.readwrite import json_graph
+    data = json_graph.node_link_data(graph)
+    import json
+    s = json.dumps(data)
+    with open('test.json', 'w') as f:
+        f.write(s)
     g = pyg.AGraph()
     g.read('{0}.dot'.format(save_name))
-    g.draw('{0}.pdf'.format(save_name), prog='dot')
+    if draw:
+        g.draw('{0}.pdf'.format(save_name), prog='dot')
     return graph
 
 
