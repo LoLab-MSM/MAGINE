@@ -21,17 +21,21 @@ class LayoutClient(object):
         url = self.__url + '/' + name + '/columntypes'
         return requests.get(url).json()
 
+    def get_parameters(self, name):
+        url = self.__url + '/' + name + '/parameters'
+        return requests.get(url).json()
+
     def update(self, name, parameters='color'):
         url = self.__url + '/' + name + '/' + str(parameters)
         requests.put(url)
 
-    def apply(self, name='force-directed', network=None):
+    def apply(self, name='force-directed', network=None, params=None):
         if network is None:
             raise ValueError('Target network is required')
 
         url = self.__url + '/' + name + '/' + str(network.get_id())
 
-        requests.get(url, params={'column': 'color'})
+        requests.get(url, params)
 
     def bundle_edge(self, network=None):
         if network is None:
