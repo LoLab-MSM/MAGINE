@@ -1,23 +1,24 @@
 # -*- coding: utf-8 -*-
-import numpy as np
 import matplotlib.pyplot as plt
-from bioservices import UniProt, KEGG
 import networkx as nx
+import numpy as np
 import pygraphviz as pyg
+from bioservices import UniProt, KEGG
+
 uniprot = UniProt()
 uniprot.TIMEOUT = 100
 kegg = KEGG()
 kegg.TIMEOUT = 100
 
 
-def add_attribute_to_network(graph,list_to_add_attribute,attribute,true_term):
+def add_attribute_to_network(graph, list_to_add_attribute, attribute, true_term, false_term='false'):
     tmp_g = graph.copy()
     nodes1 = tmp_g.nodes()
     for i in nodes1 :
         if i in list_to_add_attribute:
             tmp_g.node[i][attribute] = true_term
         else:
-            tmp_g.node[i][attribute] = 'false'
+            tmp_g.node[i][attribute] = false_term
 
     return tmp_g
 

@@ -46,7 +46,7 @@ class GoAnalysis:
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
 
-    def create_array_per_time(self, data, aspect='F'):
+    def create_array_per_time(self, data, aspect='F', num=0):
         """
 
         :param data:
@@ -118,7 +118,7 @@ class GoAnalysis:
 
         if n == 0:
             print("No significant p-values")
-        cols = ['GO_name', 'GO_id', 'score', 'genes']
+        cols = ['GO_name', 'GO_id', 'score_{0}'.format(num), 'genes_{0}'.format(num)]
         data = pd.DataFrame(sorted_list_2, columns=cols)
         return sorted_list[:n, :], data
 
@@ -131,13 +131,15 @@ class GoAnalysis:
         """
 
         results = []
-        results_2 = []
         for n, i in enumerate(list_of_exp):
-            tmp_array, tmp_array_2 = self.create_array_per_time(i, aspect)
-            tmp_array_2['entry'] = n
+            tmp_array, tmp_array_2 = self.create_array_per_time(i, aspect, n)
             results.append(tmp_array)
-            results_2.append(tmp_array_2)
-        data_set_2 = pd.concat(results_2)
+            if n == 0:
+                data_set_2 = tmp_array_2
+            else:
+                data_set_2 = pd.merge(data_set_2, tmp_array_2, on=['GO_id', 'GO_name'], how='outer')
+        self.data_2 = data_set_2.fillna(0)
+
         all_terms = []
         for each in results:
             all_terms.extend(list(each[:, 1]))
@@ -148,7 +150,7 @@ class GoAnalysis:
             data_set[n, 0] = i
             for num in range(1, num_of_lists + 1):
                 data_set[n, num] = return_go_number(i, results[num - 1])
-        self.data_2 = data_set_2
+
         return data_set
 
     def plot_heatmap(self, data, all_names, start, stop, savename, labels):
@@ -254,28 +256,84 @@ class GoAnalysis:
         for i in figures:
             html_pages.append('<a href="{0}/{1}.pdf">{2}</a>'.format(self.out_dir, i, i))
         self.html_pdfs = pd.DataFrame(html_pages, columns=['Clustered output'])
-        self.print_ranked_over_time(savename=savename, labels=labels)
+        # self.print_ranked_over_time(savename=savename, labels=labels, )
         # pd.DataFrame()
 
-    def print_ranked_over_time(self, savename, labels, number=20):
+    def print_ranked_over_time(self, savename=None, labels=None, number=20, create_plots=False):
         """ Prints information about top hits
         """
         html_pages = []
+        self.html_pdfs2 = []
+        self.top_hits = []
+        n = np.shape(self.data)[1] - 1
+        score_names = []
+        if labels is None:
+            labels = list(range(n))
+        for i in range(n):
+            score_names.append('score_{0}'.format(i))
 
         for i in range(0, np.shape(self.data)[1] - 1):
-            points = []
-            names, tmp = sort_data_by_index(self.data, i)
-            self.plot_heatmap(tmp, names, -11, None
-                              , 'top_hits_entry_%i_%s' % (i, savename), labels)
-            html_pages.append('<a href="{0}/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(self.out_dir, i, savename,
-                                                                                        labels[i]))
-            for j in reversed(range(len(self.data) - number, len(self.data))):
-                print(i, names[j], self.global_go[names[j]], tmp[j, i])
-                points.append(names[j])
-            self.top_hits.append(points)
-        for i in self.top_hits:
-            print(i)
-        self.html_pdfs2 = pd.DataFrame(html_pages, columns=['Top hits per time'])
+            terms = self.retrieve_top_ranked(i, number)
+
+            tmp = []
+            names = []
+            for t in terms:
+                names.append(t)
+                tmp.append(np.array(self.data_2[self.data_2['GO_id'] == t][score_names])[0])
+
+            tmp = np.array(tmp)
+            names = np.array(names)
+
+            if create_plots:
+                self.plot_heatmap(tmp, names, -1 * number, None
+                                  , 'top_hits_entry_%i_%s' % (i, savename), labels)
+                html_pages.append('<a href="{0}/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(self.out_dir, i, savename,
+                                                                                            labels[i]))
+            terms_dict = {}
+            for j in range(number):
+                terms_dict[terms[j]] = tmp[j]
+                print("Top hits = {0}, {1}, {2}, {3}".format(i, terms[j], self.global_go[terms[j]], tmp[j, i]))
+
+            self.top_hits.append(terms_dict)
+
+        if create_plots:
+            self.html_pdfs2 = pd.DataFrame(html_pages, columns=['Top hits per time'])
+
+    def retrieve_top_ranked(self, index, number=20):
+        """ Prints information about top hits
+        """
+        names, tmp = sort_data_by_index(self.data, index)
+        scores = {}
+        for i in range(len(names)):
+            scores[names[i]] = tmp[i, index]
+        points = []
+        counter = 0
+        go_terms = list(names[-1 * number:])
+        go_terms.reverse()
+        term_to_add = -1 * number
+        while counter < number:
+            parents = dict([(term, self.get_parents(term, go_terms)) for term in go_terms])
+            top_level_terms = [id for id in parents if not parents[id]]
+            terms_to_remove = []
+            index_to_add = []
+            for term in top_level_terms:
+                child = self.getChildren(term, go_terms, parents)
+                if len(child) == 0:
+                    counter += 1
+                else:
+                    terms_to_remove.append(term)
+                    term_to_add -= 1
+                    index_to_add.append(names[term_to_add])
+            for t in terms_to_remove:
+                go_terms.remove(t)
+            for t in index_to_add:
+                go_terms.append(t)
+
+        for j in range(number):
+            points.append(go_terms[j])
+        return points
+
+
 
     def find_and_plot_subterms(self, term, savename, x=[1, 6, 24, 48]):
         """

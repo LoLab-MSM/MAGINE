@@ -10,3 +10,4 @@ pandas
 Orange-Bioinformatics
 xlrd
 openpyxl
+py2cytoscape
