@@ -21,8 +21,10 @@ class GoAnalysis:
     """
 
     def __init__(self, species='hsa', slim=False, output_directory='tmp', reference=None, metric='enrichment',
-                 verbose=False):
+                 verbose=False, experimental_data=None, save_png=False):
+
         self.array = None
+        self.exp_data = experimental_data
         self.data = None
         self.data_2 = None
         self.names = None
@@ -32,6 +34,7 @@ class GoAnalysis:
         self.reference = reference
         self.metric = metric
         self.verbose = verbose
+        self.ran_go_pdfs = False
         if slim:
             self.slim = True
             self.slim_name = slim
@@ -41,6 +44,8 @@ class GoAnalysis:
         self.global_go = {}
         self.out_dir = output_directory
         self.top_hits = []
+        self.num_data_sets = 0
+        self.save_png = save_png
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
 
@@ -57,9 +62,10 @@ class GoAnalysis:
             if i in self.annotations.gene_names:
                 number_of_genes += 1
                 genes_present.append(i)
+            elif type(i) != str:
+                continue
             else:
                 split_name = i.split(',')
-
                 if len(split_name) > 1:
                     for i in split_name:
                         if i in self.annotations.gene_names:
@@ -129,6 +135,7 @@ class GoAnalysis:
         """
 
         results = []
+        self.num_data_sets = len(list_of_exp)
         for n, i in enumerate(list_of_exp):
             tmp_array, tmp_array_2 = self.create_array_per_time(i, aspect, n)
             results.append(tmp_array)
@@ -193,7 +200,8 @@ class GoAnalysis:
         # plt.axes().set_aspect('equal', 'datalim')
         # plt.tight_layout()
         plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=150, bbox_inches='tight')
-        plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=150, bbox_inches='tight')
+        if self.save_png:
+            plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=150, bbox_inches='tight')
         plt.close()
 
     def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True, search_term=None):
@@ -211,21 +219,21 @@ class GoAnalysis:
             self.data = self.find_terms(data, search_term)
         else:
             self.data = data
-        # self.print_ranked_over_time(data)
-        # names, array = sort_data(data)
-        names, array = self.sort_by_hierarchy(data)
-        self.array = array
-        self.names = names
+
+        self.names, self.array = self.sort_by_hierarchy(data)
+
         self.go_terms = data[:, 0]
+
         if not analyze:
             return
         if self.slim:
             savename += "_%s" % self.slim_name
         savename += '_%s' % aspect
+        self.savename = savename
 
-        self.plot_heatmap(array, names, 0, 100, '%s_top' % savename, labels)
-        self.plot_heatmap(array, names, -100, None, '%s_bottom' % savename, labels)
-        tmp_array = array[:, :].copy()
+        self.plot_heatmap(self.array, self.names, 0, 100, '%s_top' % savename, labels)
+        self.plot_heatmap(self.array, self.names, -100, None, '%s_bottom' % savename, labels)
+        tmp_array = self.array[:, :].copy()
         fig = plt.figure()
         axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
         linkage = sch.linkage(tmp_array, method='centroid')
@@ -235,13 +243,14 @@ class GoAnalysis:
         axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.8])
         index = dendrogram['leaves']
         tmp_array = tmp_array[index, :]
-        names_sorted = names[index]
+        names_sorted = self.names[index]
         im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower')
         axmatrix.set_xticks([])
         axmatrix.set_yticks([])
         axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
         plt.colorbar(im, cax=axcolor)
-        # fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
+        if self.save_png:
+            fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
         self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
         self.plot_heatmap(tmp_array, names_sorted, -100, None, '%s_bottom_dendrogram' % savename, labels)
@@ -261,6 +270,15 @@ class GoAnalysis:
         """ Prints information about top hits
         """
         html_pages = []
+        self.html_pdfs2 = []
+        self.top_hits = []
+        n = np.shape(self.data)[1] - 1
+        score_names = []
+
+        if labels is None:
+            labels = list(range(n))
+        for i in range(n):
+            score_names.append('score_{0}'.format(i))
 
         for i in range(0, np.shape(self.data)[1] - 1):
             terms = self.retrieve_top_ranked(i, number)
@@ -271,8 +289,8 @@ class GoAnalysis:
                 names.append(t)
                 tmp.append(np.array(self.data_2[self.data_2['GO_id'] == t][score_names])[0])
 
-            tmp = np.array(tmp)
-            names = np.array(names)
+            tmp = np.array(tmp)[::-1]
+            names = np.array(names)[::-1]
 
             if create_plots:
                 self.plot_heatmap(tmp, names, -1 * number, None
@@ -282,7 +300,10 @@ class GoAnalysis:
             terms_dict = {}
             for j in range(number):
                 terms_dict[terms[j]] = tmp[j]
-                print("Top hits = {0}, {1}, {2}, {3}".format(i, terms[j], self.global_go[terms[j]], tmp[j, i]))
+                if tmp[j, i] == 0.0:
+                    continue
+                else:
+                    print("Top hits = {0}, {1}, {2}, {3}".format(i, terms[j], self.global_go[terms[j]], tmp[j, i]))
 
             self.top_hits.append(terms_dict)
 
@@ -293,52 +314,23 @@ class GoAnalysis:
         """ Prints information about top hits
         """
         names, tmp = sort_data_by_index(self.data, index)
+
+        if len(names) < number:
+            number = len(names)
+
         scores = {}
         for i in range(len(names)):
             scores[names[i]] = tmp[i, index]
         points = []
         counter = 0
         go_terms = list(names[-1 * number:])
+
         go_terms.reverse()
         term_to_add = -1 * number
         while counter < number:
             parents = dict([(term, self.get_parents(term, go_terms)) for term in go_terms])
             top_level_terms = [id for id in parents if not parents[id]]
-            terms_to_remove = []
-            index_to_add = []
-            for term in top_level_terms:
-                child = self.getChildren(term, go_terms, parents)
-                if len(child) == 0:
-                    counter += 1
-                else:
-                    terms_to_remove.append(term)
-                    term_to_add -= 1
-                    index_to_add.append(names[term_to_add])
-            for t in terms_to_remove:
-                go_terms.remove(t)
-            for t in index_to_add:
-                go_terms.append(t)
 
-        for j in range(number):
-            points.append(go_terms[j])
-        return points
-
-
-    def retrieve_top_ranked(self, index, number=20):
-        """ Prints information about top hits
-        """
-        names, tmp = sort_data_by_index(self.data, index)
-        scores = {}
-        for i in range(len(names)):
-            scores[names[i]] = tmp[i, index]
-        points = []
-        counter = 0
-        go_terms = list(names[-1 * number:])
-        go_terms.reverse()
-        term_to_add = -1 * number
-        while counter < number:
-            parents = dict([(term, self.get_parents(term, go_terms)) for term in go_terms])
-            top_level_terms = [id for id in parents if not parents[id]]
             terms_to_remove = []
             index_to_add = []
             for term in top_level_terms:
@@ -361,8 +353,9 @@ class GoAnalysis:
     def find_and_plot_subterms(self, term, savename, x=[1, 6, 24, 48]):
         """
 
-        :param term:
-        :param savename:
+        :param term: term to plot
+        :param savename: name to save the image as
+        :param x : labels for x axis
         """
         print(term)
         terms = self.ontology.extract_sub_graph(term)
@@ -421,35 +414,41 @@ class GoAnalysis:
         :param x:
         :return:
         """
-        directory_name = '%s_source' % html_name
-        os.system('mkdir %s' % directory_name)
+
         real_names = []
         html_array = self.array.copy()
-        to_remove = []
-        parents = dict([(term, self.get_parents(term, self.names)) for term in self.names])
+
+        # replace GO numbers with GO name
+        # create plot of genes over time
         for n, i in enumerate(self.names):
-            new_name = self.global_go[i]
-            # number_of_children = len(self.getChildren(i, self.names, parents))
 
-            # number_of_children = len(self.ontology.extract_sub_graph(str(i)))
-            real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
-            # if number_of_children < 3:
-            #     to_remove.append(n)
-            #     real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
-            #     continue
-            # elif number_of_children > 30:
-            #     real_names.append('<a> {2}</a>'.format(directory_name, n, new_name))
-            #     continue
-            # else:
-            #     self.find_and_plot_subterms(str(self.names[n]), '{0}/{1}'.format(directory_name, n), x=x)
-            #     real_names.append('<a href="{0}/{1}.pdf">{2}</a>'.format(directory_name, n, new_name))
-
-        # html_array = np.delete(html_array, to_remove, 0)
+            gene_set = set()
+            for k in range(self.num_data_sets):
+                genes = list(self.data_2[self.data_2['GO_id'] == i]['genes_{0}'.format(k)])
+                for g in genes:
+                    if type(g) == list:
+                        for e in g:
+                            gene_set.add(e)
+            save_name = '{0}/go_{1}.pdf'.format(self.out_dir, i).replace(':', '')
+            title = "{0} : {1}".format(str(i), self.global_go[i])
+            if len(gene_set) > 50:
+                real_names.append('<a>{0}</a>'.format(self.global_go[i]))
+            else:
+                self.exp_data.plot_list_of_genes(list(gene_set), save_name, title=title)
+                real_names.append('<a href="{0}">{1}</a>'.format(save_name, self.global_go[i]))
+        # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
+        self.ran_go_pdfs = True
+        # duplicate the sort table class so we can sort by column
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html_additions', 'sorttable.js'),
+                  'r') as f:
+            x = f.read()
+            with open('sorttable_tmp.js', 'w') as tmp_file:
+                tmp_file.write(x)
 
-        header = '<script src="sorttable.js"></script>\n<html>\n\t<body>\n'
+        header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n'
         footer = "\n\t</body>\n</html>"
-
+        # write out the html file
         with open('%s.html' % html_name, 'w') as f:
             f.write(header)
             f.write('\n<div style="float: left">\n')
@@ -545,24 +544,7 @@ def return_go_number(go_term, go_array):
         return 0
 
 
-def sort_data(data):
-    """
-
-    :param data:
-    :return:
-    """
-    names = data[:, 0].copy()
-    array = data[:, 1:].astype(np.float32).copy()
-    # step_size = np.average(array,axis=1).argsort()
-    # step_size = (array[:, 2] - array[:, 1]).argsort()
-    step_size = (array[:, 0]).argsort()
-    names = names[step_size]
-    array = array[step_size]
-    # array_2 = array[:,1:] - array[:,:-1]
-    return names, array
-
-
-def sort_data_by_index(data, index):
+def sort_data_by_index(data, index=0):
     """
 
     :param index:
@@ -571,7 +553,6 @@ def sort_data_by_index(data, index):
     """
     names = data[:, 0].copy()
     array = data[:, 1:].astype(np.float32).copy()
-    # step_size = np.average(array,axis=1).argsort()
     step_size = (array[:, index]).argsort()
     names = names[step_size]
     array = array[step_size]
