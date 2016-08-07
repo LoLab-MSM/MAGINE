@@ -12,10 +12,12 @@ from cytoscape_mod_layout import LayoutClient
 
 
 class RenderModel:
-    def __init__(self, graph, layout="attributes-layout", style='Directed'):
+    def __init__(self, graph, layout="force-directed-cl", style='Directed'):
+        # force-directed
+        # attributes-layout
         self.graph = graph
         self.cy = CyRestClient()
-        self.cy.session.delete()
+        #self.cy.session.delete()
         self.cy.layout = LayoutClient()
 
         self.style = None
@@ -48,12 +50,12 @@ class RenderModel:
 
         options = {'NODE_LABEL_FONT_SIZE': 24,
                    'EDGE_WIDTH': 2,
-                   'EDGE_TRANSPARENCY': '100',
+                   'EDGE_TRANSPARENCY': '150',
                    'NETWORK_HEIGHT': '2400',
                    'NETWORK_WIDTH': '2400',
-                   # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
+                   'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
                    # 'NETWORK_CENTER_X_LOCATION' :0.0,
-                   #'NETWORK_CENTER_Y_LOCATION': 0.0,
+                   # 'NETWORK_CENTER_Y_LOCATION': 0.0,
                    }
 
         self.style.update_defaults(options)
@@ -64,7 +66,7 @@ class RenderModel:
             self.cy.layout.apply(name=layout, network=self.g_cy)
         self.node_name2id = util.name2suid(self.g_cy, 'node')
         self.edge_name2id = util.name2suid(self.g_cy, 'edge')
-        #self.print_options()
+        # self.print_options()
 
     def print_options(self):
         """ print cytoscape options for network, style, nodes, edges
@@ -96,7 +98,10 @@ class RenderModel:
         :param list_of_time:
         :return:
         """
-
+        if os.path.exists(directory):
+            pass
+        else:
+            os.mkdir(directory)
         node_label_values = {self.node_name2id[i[0]]: i[1]['label'] for i in self.graph.nodes(data=True)}
         node_color_values = {self.node_name2id[i[0]]: i[1]['color'] for i in self.graph.nodes(data=True)}
         edge_color_values = {}
@@ -126,18 +131,18 @@ class RenderModel:
             self.view1.update_edge_views(visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT', values=edge_color_values)
             self.view1.update_edge_views(visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT', values=edge_color_values)
             network_svg = self.g_cy.get_svg()
-            if os.path.exists(directory):
-                continue
-            else:
-                os.mkdir(directory)
-            with open(os.path.join(directory, '{0}_{1}.svg'.format(prefix, j)), 'wb') as f:
+
+            with open(os.path.join(directory, 'go_network_{0}_{1}.svg'.format(prefix, j)), 'wb') as f:
                 f.write(network_svg)
                 f.close()
             network_pdf = self.g_cy.get_pdf()
-            with open(os.path.join(directory, '{0}_{1}.pdf'.format(prefix, j)), 'wb') as f:
+            with open(os.path.join(directory, 'go_network_{0}_{1}.pdf'.format(prefix, j)), 'wb') as f:
                 f.write(network_pdf)
                 f.close()
-            os.system('pdfcrop {0)/{1}_{2}.pdf {0)/{1}_{2}_wpr.pdf'.format(directory, prefix, j))
+            os.system('pdfcrop {0}/go_network_{1}_{2}.pdf {0}/go_network_{1}_{2}_wpr.pdf'.format(directory, prefix, j))
+        os.system(
+            'convert -delay 100 -density 300 -trim {0}/go_network_output_time_00??_wpr.pdf -quality 100 -trim {0}/go_network.gif'.format(
+                directory))
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)

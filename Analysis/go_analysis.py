@@ -21,13 +21,14 @@ class GoAnalysis:
     """
 
     def __init__(self, species='hsa', slim=False, output_directory='tmp', reference=None, metric='enrichment',
-                 verbose=False, experimental_data=None, save_png=False):
+                 verbose=False, experimental_data=None, save_png=False, save_name='tmp'):
 
         self.array = None
         self.exp_data = experimental_data
         self.data = None
         self.data_2 = None
         self.names = None
+        self.savename = save_name
         self.go_terms = None
         self.ontology = go.Ontology()
         self.slim = False
@@ -38,7 +39,7 @@ class GoAnalysis:
         if slim:
             self.slim = True
             self.slim_name = slim
-            self.ontology.set_slims_subset(slim)  # goslim_pir goslim_generic
+            self.ontology.set_slims_subset(slim)  # goslim_pir goslim_generic goslim_chembl
         self.annotations = go.Annotations(species, ontology=self.ontology)
         self.number_of_total_reference_genes = len(self.annotations.gene_names)
         self.global_go = {}
@@ -46,6 +47,7 @@ class GoAnalysis:
         self.top_hits = []
         self.num_data_sets = 0
         self.save_png = save_png
+        self.created_go_pds = set()
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
 
@@ -76,7 +78,6 @@ class GoAnalysis:
                                                   # evidence_codes=evidence_codes,
                                                   reference=self.reference)
 
-        # Slims goslim_chembl
         sorted_list = np.ones((len(res.items()), 4), dtype='S50')
         sorted_list[:, 2].astype('float')
 
@@ -113,7 +114,9 @@ class GoAnalysis:
             tmp_entry.append(self.ontology[go_id].name)
             tmp_entry.append(go_id)
             tmp_entry.append(score)
-            tmp_entry.append(genes)
+            tmp_entry.append(list(np.sort(genes)))
+            tmp_entry.append(len(genes))
+            tmp_entry.append(ref)
             sorted_list_2.append(tmp_entry)
             # End of pandas upgrade space
             if self.verbose:
@@ -122,7 +125,7 @@ class GoAnalysis:
 
         if n == 0:
             print("No significant p-values")
-        cols = ['GO_name', 'GO_id', 'score_{0}'.format(num), 'genes_{0}'.format(num)]
+        cols = ['GO_name', 'GO_id', 'score_{0}'.format(num), 'genes_{0}'.format(num),'num_{0}'.format(num),'ref']
         data = pd.DataFrame(sorted_list_2, columns=cols)
         return sorted_list[:n, :], data
 
@@ -215,6 +218,7 @@ class GoAnalysis:
         :return:
         """
         data = self.create_data_set(data, aspect)
+        self.data_2.to_csv('{0}.csv'.format(savename))
         if search_term is not None:
             self.data = self.find_terms(data, search_term)
         else:
@@ -266,7 +270,8 @@ class GoAnalysis:
         self.print_ranked_over_time(savename=savename, labels=labels)
         # pd.DataFrame()
 
-    def print_ranked_over_time(self, savename=None, labels=None, number=20, create_plots=True):
+
+    def print_ranked_over_time(self, savename=None, labels=None, number=25, create_plots=True):
         """ Prints information about top hits
         """
         html_pages = []
@@ -282,6 +287,7 @@ class GoAnalysis:
 
         for i in range(0, np.shape(self.data)[1] - 1):
             terms = self.retrieve_top_ranked(i, number)
+            #terms = self.data_2
 
             tmp = []
             names = []
@@ -299,11 +305,11 @@ class GoAnalysis:
                                                                                             labels[i]))
             terms_dict = {}
             for j in range(number):
-                terms_dict[terms[j]] = tmp[j]
+                terms_dict[names[j]] = tmp[j]
                 if tmp[j, i] == 0.0:
                     continue
                 else:
-                    print("Top hits = {0}, {1}, {2}, {3}".format(i, terms[j], self.global_go[terms[j]], tmp[j, i]))
+                    print("Top hits = {0}, {1}, {2}, {3}".format(i, names[j], self.global_go[names[j]], tmp[j, i]))
 
             self.top_hits.append(terms_dict)
 
@@ -324,8 +330,9 @@ class GoAnalysis:
         points = []
         counter = 0
         go_terms = list(names[-1 * number:])
-
         go_terms.reverse()
+        #return go_terms
+
         term_to_add = -1 * number
         while counter < number:
             parents = dict([(term, self.get_parents(term, go_terms)) for term in go_terms])
@@ -431,10 +438,13 @@ class GoAnalysis:
                             gene_set.add(e)
             save_name = '{0}/go_{1}.pdf'.format(self.out_dir, i).replace(':', '')
             title = "{0} : {1}".format(str(i), self.global_go[i])
+
             if len(gene_set) > 50:
                 real_names.append('<a>{0}</a>'.format(self.global_go[i]))
             else:
-                self.exp_data.plot_list_of_genes(list(gene_set), save_name, title=title)
+                if save_name not in self.created_go_pds:
+                    self.created_go_pds.add(save_name)
+                    #self.exp_data.plot_list_of_genes(list(gene_set), save_name, title=title)
                 real_names.append('<a href="{0}">{1}</a>'.format(save_name, self.global_go[i]))
         # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)

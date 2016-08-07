@@ -20,7 +20,8 @@ class GoNetworkGenerator:
         if network is None:
             print("Please provide networkx network to map GO onto")
         self.network = network
-        self.nodes = set(self.network.nodes())
+        if network is not None:
+            self.nodes = set(self.network.nodes())
         self.go_network = None
         self.molecular_network = None
         self.out_dir = directory
@@ -108,33 +109,39 @@ class GoNetworkGenerator:
             go_2 = str(term2).replace(':', '')
 
             a_to_b, b_to_a, genes_in_edges = self.calculate_terms_between_a_b(term_1, term_2)
-
-            x = self.network.subgraph(genes_in_edges)
-            # molecular_network_subgraph.add_edges_from(x.edges())
-            for i, j, s in x.edges(data=True):
-                molecular_network_subgraph.add_edge(i, j, s)
-            for gene in genes_in_edges:
-                if gene in all_genes:
-
-                    if gene in term_1:
-                        molecular_network_subgraph.node[gene]['go'] += ',' + go_1
-                    if gene in term_2:
-                        molecular_network_subgraph.node[gene]['go'] += ',' + go_2
-                else:
-                    if gene in term_1:
-                        molecular_network_subgraph.node[gene]['go'] = go_1
-                    if gene in term_2:
-                        molecular_network_subgraph.node[gene]['go'] = go_2
-            all_genes.add(g for g in genes_in_edges)
-            if a_to_b > threshold:
+            if a_to_b or b_to_a:
+                x = self.network.subgraph(genes_in_edges)
+                # molecular_network_subgraph.add_edges_from(x.edges())
+                for i, j, s in x.edges(data=True):
+                    molecular_network_subgraph.add_edge(i, j, s)
+                for gene in genes_in_edges:
+                    if gene in all_genes:
+                        if gene in term_1:
+                            molecular_network_subgraph.node[gene]['go'] += ',' + go_1
+                        if gene in term_2:
+                            molecular_network_subgraph.node[gene]['go'] += ',' + go_2
+                    else:
+                        if gene in term_1:
+                            molecular_network_subgraph.node[gene]['go'] = go_1
+                        if gene in term_2:
+                            molecular_network_subgraph.node[gene]['go'] = go_2
+                all_genes.add(g for g in genes_in_edges)
+            if a_to_b > threshold or b_to_a > threshold :
                 graph.add_node(label_1, go=go_1, label=label_1)
                 graph.add_node(label_2, go=go_2, label=label_2)
-                graph.add_edge(label_1, label_2, label=str(a_to_b), weight=a_to_b)
+                graph.add_edge(label_1, label_2, label=str(a_to_b+b_to_a), weight=a_to_b+b_to_a)
+            else:
+                print(label_1,label_2)
 
-            if b_to_a > threshold:
-                graph.add_node(label_1, go=go_1, label=label_1)
-                graph.add_node(label_2, go=go_2, label=label_2)
-                graph.add_edge(label_2, label_1, label=str(b_to_a), weight=b_to_a)
+            # if a_to_b > threshold:
+            #     graph.add_node(label_1, go=go_1, label=label_1)
+            #     graph.add_node(label_2, go=go_2, label=label_2)
+            #     graph.add_edge(label_1, label_2, label=str(a_to_b), weight=a_to_b)
+            #
+            # if b_to_a > threshold:
+            #     graph.add_node(label_1, go=go_1, label=label_1)
+            #     graph.add_node(label_2, go=go_2, label=label_2)
+            #     graph.add_edge(label_2, label_1, label=str(b_to_a), weight=b_to_a)
 
         self.molecular_network = molecular_network_subgraph
         nx.write_gml(molecular_network_subgraph,
@@ -159,7 +166,7 @@ if __name__ == '__main__':
     # test_list = ['GO:1902175', 'GO:0006805', 'GO:0006766', 'GO:0015893', 'GO:0006936']
     gnc = GoNetworkGenerator('hsa', ddn)
 
-    gnc.create_network_from_list(ddn, test_list, 'xeno', draw=True)
+    gnc.create_network_from_list(ddn, test_list, 'xeno', draw=False)
     # create_go_network,save_name='death_dnaRepair_proliferation')
 
     # create_go_network('GO:0043066', 'GO:0043065', 'GO:1902175', 'apoptosis')
