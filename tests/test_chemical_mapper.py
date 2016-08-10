@@ -21,6 +21,5 @@ def test_protein_network():
     g.draw('test_oxytocin.png', prog='dot')
 
 
-
-#test_synonyms()
+test_synonyms()
 test_protein_network()

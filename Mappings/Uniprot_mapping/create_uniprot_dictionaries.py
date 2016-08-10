@@ -5,42 +5,22 @@ headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "RefSeq", "GI"
            "UniRef50", "UniParc", "PIR", "NCBI-taxon", "MIM", "UniGene", "PubMed", "EMBL", "EMBL-CDS", "Ensembl",
            "Ensembl_TRS", "Ensembl_PRO", "Additional PubMed"]
 
-wanted_headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "PDB", "GO"]
+wanted_headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "PDB", "GO", "Ensembl"]
 
 
-def create_from_hngc():
-    hngc = pd.read_table('hgnc_data.txt', delimiter='\t')
-    print(hngc.dtypes)
-    hngc = hngc[hngc['Status'] == 'Approved']
-    hngc = hngc[['Approved symbol','UniProt accession']]
-    hngc.to_csv('../hngc.gz', compression='gzip', header=True)
-    hngc = pd.read_csv('../hngc.gz')
-    return hngc
-hngc = create_from_hngc()
-
-
-def convert_to_dict( key, value):
-    """ creates a dictionary from hmdb with a list of values for each key
-
-    :param key:
-    :param value:
-    :return:
-    """
-    return {k: list(v) for k, v in hngc.groupby(key)[value]}
-un_to_genename = convert_to_dict('UniProt accession', 'Approved symbol')
 
 def create_mouse_dataframe():
-    # mouse = pd.read_table('MOUSE_10090_idmapping_selected.tab.gz', delimiter='\t', names=headers)
-    # mouse = mouse[wanted_headers]
-    # mouse.to_csv('../mouse_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
+    mouse = pd.read_table('MOUSE_10090_idmapping_selected.tab.gz', delimiter='\t', names=headers)
+    mouse = mouse[wanted_headers]
+    mouse.to_csv('../mouse_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
     mouse = pd.read_csv('../mouse_uniprot.gz')
     return mouse
 
 
 def create_human_dataframe():
-    #human = pd.read_table('HUMAN_9606_idmapping_selected.tab.gz', delimiter='\t', names=headers)
-    #human = human[wanted_headers]
-    #human.to_csv('../human_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
+    human = pd.read_table('HUMAN_9606_idmapping_selected.tab.gz', delimiter='\t', names=headers)
+    human = human[wanted_headers]
+    human.to_csv('../human_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
     human = pd.read_csv('../human_uniprot.gz')
     return human
 
@@ -48,6 +28,7 @@ def create_human_dataframe():
 human = create_human_dataframe()
 
 mouse = create_mouse_dataframe()
+quit()
 count_in = 0
 count_out = 0
 for i in human["UniProtKB-AC"]:
