@@ -49,6 +49,9 @@ class NetworkSubgraphs:
         """
         graph = pyg.AGraph(directed=True)
         nodes = self.network.nodes()
+        for i in protein_list:
+            if i not in nodes:
+                print('{} not in network'.format(i))
         for protein_1 in protein_list:
             if protein_1 not in nodes:
                 continue

@@ -72,3 +72,6 @@ class GeneMapper:
         print('Number of HMDB accessions = {0}'.format(len(self.database['accession'].unique())))
         print('Number of unique KEGG ids = {0}'.format(len(self.hmdb_accession_to_kegg.keys())))
         print('Number of HMDB to KEGG mappings = {0}'.format(len(self.kegg_to_hmdb_accession.values())))
+
+
+gm = GeneMapper()

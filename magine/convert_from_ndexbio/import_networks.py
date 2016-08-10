@@ -1,20 +1,22 @@
 import numpy as np
 import pandas as pd
 
-from Mappings.maps import human_uniprot_to_gene_name
+from Mappings.gene_mapper import gm
 
-proteins = []
-for each in human_uniprot_to_gene_name.values():
-    for j in each:
-        proteins.append(j)
-proteins = set(proteins)
-hmdb = pd.read_pickle('../hmdb_dataframe.p')
-hmdb.set_index('name').to_dict()
-hmdb.name = map(lambda x: x.upper(), hmdb.name)
 
-# names = hmdb.keys()
-names = dict(zip(hmdb.name, hmdb.accession))
-
+#
+# proteins = []
+# for each in human_uniprot_to_gene_name.values():
+#     for j in each:
+#         proteins.append(j)
+# proteins = set(proteins)
+# hmdb = pd.read_pickle('../hmdb_dataframe.p')
+# hmdb.set_index('name').to_dict()
+# hmdb.name = map(lambda x: x.upper(), hmdb.name)
+#
+# # names = hmdb.keys()
+# names = dict(zip(hmdb.name, hmdb.accession))
+#
 
 # print(names)
 def extract_humancyc():
@@ -53,4 +55,24 @@ def extract_humancyc():
     print('Unknown ids = %i' % len(unknown_still))
     for i in unknown_still:
         print(i)
-extract_humancyc()
+
+
+columns = ['uniprot_source', 'ensebml_source', 'ensebml_source_id', 'uniprot_target', 'ensebml_target',
+           'ensebml_target_id', 'type', 'database_source', 'else']
+
+
+def parse_NCI_database():
+    data = pd.read_table('homo_sapiens.interactions.txt', sep='\t', names=columns, low_memory=False)
+    print(np.shape(data))
+    # print(data[['uniprot_source','uniprot_target','database_source']])
+    for index, i in data.iterrows():
+        source = i['uniprot_source'].lstrip('UniProt:')
+        target = i['uniprot_target'].lstrip('UniProt:')
+        interaction = i['type']
+        if source in gm.uniprot_to_gene_name:
+            if target in gm.uniprot_to_gene_name:
+                print(gm.uniprot_to_gene_name[source], gm.uniprot_to_gene_name[target], interaction)
+
+
+# extract_humancyc()
+parse_NCI_database()
