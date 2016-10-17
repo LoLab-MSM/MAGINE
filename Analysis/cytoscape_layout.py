@@ -12,12 +12,13 @@ from cytoscape_mod_layout import LayoutClient
 
 
 class RenderModel:
-    def __init__(self, graph, layout="force-directed-cl", style='Directed'):
+    def __init__(self, graph, layout="attributes-layout", style='Directed',
+                 name='From MAGINE'):
         # force-directed
         # attributes-layout
         self.graph = graph
         self.cy = CyRestClient()
-        #self.cy.session.delete()
+        self.cy.session.delete()
         self.cy.layout = LayoutClient()
 
         self.style = None
@@ -28,7 +29,8 @@ class RenderModel:
         for n, i in enumerate(self.graph.edges()):
             self.graph[i[0]][i[1]]['name'] = str(i[0]) + ',' + str(i[1])
 
-        self.g_cy = self.cy.network.create_from_networkx(self.graph)
+        self.g_cy = self.cy.network.create_from_networkx(self.graph, name=name,
+                                                         collection=name)
         # time.sleep(10)
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], format='view')
@@ -48,14 +50,15 @@ class RenderModel:
 
         # self.style = self.cy.style.create('Marquee')
 
-        options = {'NODE_LABEL_FONT_SIZE': 24,
-                   'EDGE_WIDTH': 2,
-                   'EDGE_TRANSPARENCY': '150',
-                   'NETWORK_HEIGHT': '2400',
-                   'NETWORK_WIDTH': '2400',
-                   'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
-                   # 'NETWORK_CENTER_X_LOCATION' :0.0,
-                   # 'NETWORK_CENTER_Y_LOCATION': 0.0,
+        options = {'NODE_LABEL_FONT_SIZE'     : 24,
+                   'EDGE_WIDTH'               : 2,
+                   'EDGE_TRANSPARENCY'        : '150',
+                   'NETWORK_HEIGHT'           : '2800',
+                   'NETWORK_WIDTH'            : '2800',
+                   'NODE_FILL_COLOR'          : 'red',
+                   # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
+                   'NETWORK_CENTER_X_LOCATION': 0.0,
+                   'NETWORK_CENTER_Y_LOCATION': 0.0,
                    }
 
         self.style.update_defaults(options)
@@ -112,8 +115,10 @@ class RenderModel:
             edge_width_values[self.edge_name2id[str(i[0]) + ',' + str(i[1])]] = i[2]['weight']
         simple_slope = StyleUtil.create_slope(min=min(edge_width_values.values()),
                                               max=max(edge_width_values.values()),
-                                              values=(1, 10))
+                                              values=(3, 10))
+        print(simple_slope)
         self.style.create_continuous_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH', points=simple_slope)
+        # self.style.create_passthrough_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH')
 
         for j in list_of_time:
             size = np.array([self.graph.node[n][j] for n in self.graph.nodes()])
@@ -124,24 +129,30 @@ class RenderModel:
             self.view1.update_network_view(visual_property='NETWORK_BACKGROUND_PAINT', value='white')
             self.view1.update_node_views(visual_property='NODE_LABEL', values=node_label_values)
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR', values=node_label_values)
-            self.view1.update_node_views(visual_property='NODE_FILL_COLOR', values=node_color_values)
-            self.view1.update_node_views(visual_property='NODE_BORDER_PAINT', values=node_color_values)
+            # self.view1.update_node_views(visual_property='NODE_FILL_COLOR', values=node_color_values)
+            #self.view1.update_node_views(visual_property='NODE_BORDER_PAINT', values=node_color_values)
             self.view1.update_edge_views(visual_property='EDGE_LABEL_COLOR', values=edge_color_values)
             self.view1.update_edge_views(visual_property='EDGE_STROKE_UNSELECTED_PAINT', values=edge_color_values)
             self.view1.update_edge_views(visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT', values=edge_color_values)
             self.view1.update_edge_views(visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT', values=edge_color_values)
-            network_svg = self.g_cy.get_svg()
 
             with open(os.path.join(directory, 'go_network_{0}_{1}.svg'.format(prefix, j)), 'wb') as f:
+                network_svg = self.g_cy.get_svg()
                 f.write(network_svg)
                 f.close()
-            network_pdf = self.g_cy.get_pdf()
             with open(os.path.join(directory, 'go_network_{0}_{1}.pdf'.format(prefix, j)), 'wb') as f:
+                network_pdf = self.g_cy.get_pdf()
                 f.write(network_pdf)
+                f.close()
+            with open(os.path.join(directory,
+                                   'go_network_{0}_{1}.png'.format(prefix, j)),
+                      'wb') as f:
+                network_png = self.g_cy.get_png()
+                f.write(network_png)
                 f.close()
             os.system('pdfcrop {0}/go_network_{1}_{2}.pdf {0}/go_network_{1}_{2}_wpr.pdf'.format(directory, prefix, j))
         os.system(
-            'convert -delay 100 -density 300 -trim {0}/go_network_output_time_00??_wpr.pdf -quality 100 -trim {0}/go_network.gif'.format(
+                'convert -delay 100 -density 300 -trim {0}/go_network_*_wpr.pdf -quality 100 -trim {0}/go_network.gif'.format(
                 directory))
 
     def update_node_color(self, attribute, save_name):

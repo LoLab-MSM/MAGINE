@@ -94,7 +94,7 @@ class GoNetworkGenerator:
         go_names = dict()
         all_genes = set()
         for i in list_of_go_terms:
-            gene_annotations_dict[i] = self.annotations.get_all_genes(i)
+            gene_annotations_dict[i] = set(self.annotations.get_all_genes(i))
             # go_names[i] = "\n".join(wrap(self.ontology[i].name, 20))
             go_names[i] = self.ontology[i].name
 
@@ -112,36 +112,77 @@ class GoNetworkGenerator:
             if a_to_b or b_to_a:
                 x = self.network.subgraph(genes_in_edges)
                 # molecular_network_subgraph.add_edges_from(x.edges())
-                for i, j, s in x.edges(data=True):
-                    molecular_network_subgraph.add_edge(i, j, s)
+                for x, y, s in x.edges(data=True):
+                    molecular_network_subgraph.add_edge(x, y, s)
                 for gene in genes_in_edges:
                     if gene in all_genes:
                         if gene in term_1:
-                            molecular_network_subgraph.node[gene]['go'] += ',' + go_1
+                            names = molecular_network_subgraph.node[gene][
+                                'go'].split(',')
+
+                            if go_1 not in names:
+                                molecular_network_subgraph.node[gene][
+                                    'go'] += ',' + go_1
+                                molecular_network_subgraph.node[gene][
+                                    'goName'] += ',' + label_1
+                                molecular_network_subgraph.node[gene][
+                                    'proteins'] += '|' + gene
                         if gene in term_2:
-                            molecular_network_subgraph.node[gene]['go'] += ',' + go_2
+
+                            names = molecular_network_subgraph.node[gene][
+                                'go'].split(',')
+                            if go_2 not in names:
+                                molecular_network_subgraph.node[gene][
+                                    'go'] += ',' + go_2
+                                molecular_network_subgraph.node[gene][
+                                    'goName'] += ',' + label_2
+                                molecular_network_subgraph.node[gene][
+                                    'proteins'] += '|' + gene
                     else:
                         if gene in term_1:
                             molecular_network_subgraph.node[gene]['go'] = go_1
+                            molecular_network_subgraph.node[gene][
+                                'goName'] = label_1
+                            molecular_network_subgraph.node[gene][
+                                'proteins'] = gene
                         if gene in term_2:
                             molecular_network_subgraph.node[gene]['go'] = go_2
-                all_genes.add(g for g in genes_in_edges)
-            if a_to_b > threshold or b_to_a > threshold :
-                graph.add_node(label_1, go=go_1, label=label_1)
-                graph.add_node(label_2, go=go_2, label=label_2)
-                graph.add_edge(label_1, label_2, label=str(a_to_b+b_to_a), weight=a_to_b+b_to_a)
+                            molecular_network_subgraph.node[gene][
+                                'goName'] = label_2
+                            molecular_network_subgraph.node[gene][
+                                'proteins'] = gene
+                for g in genes_in_edges:
+                    all_genes.add(g)
             else:
-                print(label_1,label_2)
+                print('No edges between {} and {}'.format(label_1, label_2))
 
-            # if a_to_b > threshold:
+            # if a_to_b > threshold or b_to_a > threshold:
             #     graph.add_node(label_1, go=go_1, label=label_1)
             #     graph.add_node(label_2, go=go_2, label=label_2)
-            #     graph.add_edge(label_1, label_2, label=str(a_to_b), weight=a_to_b)
-            #
-            # if b_to_a > threshold:
-            #     graph.add_node(label_1, go=go_1, label=label_1)
-            #     graph.add_node(label_2, go=go_2, label=label_2)
-            #     graph.add_edge(label_2, label_1, label=str(b_to_a), weight=b_to_a)
+            #     if a_to_b > b_to_a:
+            #         graph.add_edge(label_2, label_1, label=str(a_to_b + b_to_a), weight=a_to_b + b_to_a,
+            #                        weightAtoB=b_to_a, weightBtoA=a_to_b)
+            #     else:
+            #         graph.add_edge(label_1, label_2, label=str(a_to_b + b_to_a), weight=a_to_b + b_to_a,
+            #                        weightAtoB=a_to_b, weightBtoA=b_to_a)
+            # else:
+            #     pass
+
+            if a_to_b > threshold:
+                graph.add_node(label_1, go=go_1, label=label_1,
+                               proteins=','.join(n for n in term_1))
+                graph.add_node(label_2, go=go_2, label=label_2,
+                               proteins=','.join(n for n in term_2))
+                graph.add_edge(label_1, label_2, label=str(a_to_b),
+                               weight=a_to_b)
+
+            if b_to_a > threshold:
+                graph.add_node(label_1, go=go_1, label=label_1,
+                               proteins=','.join(n for n in term_1))
+                graph.add_node(label_2, go=go_2, label=label_2,
+                               proteins=','.join(n for n in term_2))
+                graph.add_edge(label_2, label_1, label=str(b_to_a),
+                               weight=b_to_a)
 
         self.molecular_network = molecular_network_subgraph
         nx.write_gml(molecular_network_subgraph,

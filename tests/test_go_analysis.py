@@ -8,7 +8,7 @@ def test_go_heatmap():
     tests the ability to create a heatmap from list of genes
     :return None
     """
-    go = GoAnalysis(species='hsa', output_directory='tmp2', slim='goslim_pir')
+    go = GoAnalysis(species='hsa', output_directory='tmp', slim='goslim_pir')
     go.analysis_data([['BAX', 'BAK1', 'BOK'],
                       ['BCL2L1', 'BCL2', 'MCL1'],],
                       #['BAD', 'BID', 'BBC3'],
@@ -22,7 +22,7 @@ def test_print_hit_by_index():
     tests the ability to create a heatmap from list of genes
     :return None
     """
-    go = GoAnalysis(species='hsa', output_directory='tmp2', verbose=True)
+    go = GoAnalysis(species='hsa', output_directory='tmp', verbose=True)
     go.analysis_data([
         ['BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2', 'MCL1', 'BAD', 'BID', 'BBC3']],
         aspect='P', labels=['1', '2'], savename='test_11', analyze=False)
@@ -35,14 +35,17 @@ def test_print_top_hits():
     :return None
     """
     go = GoAnalysis(species='hsa', output_directory='tmp2', verbose=False, save_png=True)
-    go.analysis_data([['ATR', 'CHEK1', 'CHEK2', 'ATM', 'TP53', 'BAX', 'CYCS', 'CASP3', 'CASP8','FAS']],
-                     aspect='P', labels=['1'], savename='test_11', analyze=False)
-    # go.analysis_data([['BAX', 'BAK1', 'BOK'],
-    #                   ['BCL2L1', 'BCL2', 'MCL1'],
-    #                   ['BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2', 'MCL1', 'BAD', 'BID', 'BBC3']],
+    # go.analysis_data([['ATR', 'CHEK1', 'CHEK2', 'ATM', 'TP53', 'BAX', 'CYCS', 'CASP3', 'CASP8','FAS']],
+    #                 aspect='P', labels=['1'], savename='test_11', analyze=False)
+    go.analysis_data([['BAX', 'BAK1', 'BOK',
+                       'BCL2L1', 'BCL2', 'MCL1',
+                       'BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2', 'MCL1', 'BAD',
+                       'BID', 'BBC3']],
     #
-    #                  aspect='P', labels=['1', '2'], savename='test_11', analyze=False)
-    go.print_ranked_over_time(savename='yolo', labels=None, number=9, create_plots=True)
+                     aspect='P', labels=['1', '2'], savename='test_11',
+                     analyze=True)
+    #go.print_ranked_over_time(savename='yolo', labels=None, number=9, create_plots=True)
 
 
+#test_print_top_hits()
 test_print_top_hits()

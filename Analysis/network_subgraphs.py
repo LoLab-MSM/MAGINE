@@ -64,11 +64,13 @@ class NetworkSubgraphs:
                     if not nx.has_path(self.network, protein_1, protein_2):
                         print("Path does NOT exist between %s and %s" % (protein_1, protein_2))
                     else:
+                        # self.add_edges_from_path(graph,nx.shortest_path(self.network, protein_1, protein_2))
                         for path in nx.all_shortest_paths(self.network, protein_1, protein_2):
                             self.add_edges_from_path(graph, path)
-                    if not nx.has_path(self.network,  protein_2,protein_1):
+                    if not nx.has_path(self.network, protein_2, protein_1):
                             print("Path does NOT exist between %s and %s" % (protein_2, protein_1))
                     else:
+                        # self.add_edges_from_path(graph, nx.shortest_path(self.network, protein_2, protein_1))
                         for path in nx.all_shortest_paths(self.network, protein_2, protein_1):
                             self.add_edges_from_path(graph, path)
         # self.create_legend(graph)
@@ -76,6 +78,9 @@ class NetworkSubgraphs:
         graph.write("%s.dot" % savename)
         if draw:
             graph.draw("%s.pdf" % savename, prog='dot')
+            graph.draw("%s.png" % savename, prog='dot')
+        g = nx.nx.from_agraph(graph)
+        nx.write_gml(g, "%s.gml" % savename)
         return graph
 
     #TODO create a function that finds all neighbors of each proteins and links them
@@ -297,6 +302,8 @@ class NetworkSubgraphs:
                 previous = protein
                 continue
             else:
+                graph.add_node(previous, **self.network.node[previous])
+                graph.add_node(protein, **self.network.node[protein])
                 graph.add_edge(previous, protein, **self.network.edge[previous][protein])
                 previous = protein
 
