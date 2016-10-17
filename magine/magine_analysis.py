@@ -9,6 +9,13 @@ from magine.network_generator import build_network
 
 
 class Analyzer():
+    """ MAGINE analyzer
+    Class to perform entire MAGINE pipeline.
+    Creates a network
+    Performs gene enrichment analysis
+    Combines the two
+    Requires cytoscape session to be opened if you want the output networks
+    """
     def __init__(self, experimental_data, network=None, species='hsa', metric='pvalue', output_directory='tmp',
                  save_name='tmp'):
         self.build_network = build_network
@@ -37,11 +44,15 @@ class Analyzer():
         proteins = self.exp_data.sign_changed_proteomics
         self.network = self.build_network(proteins, num_overlap=1, save_name=save_name, species=self.species)
 
-    def run_go(self, data_type='proteomics', slim=False, metric=None, run_type='all'):
+    def run_go(self, data_type='proteomics', slim=False, metric=None,
+               run_type='all', aspect='P'):
         """ performs GO analysis
 
         :param data_type: proteomics or RNAseq (limited to types of genes)
         :param slim: boolean
+        :param metric: type of scoring function (pvalue, enrichment, fraction)
+        :param run_type: proteomics, rna_seq, or all
+        :param aspect: type of GO analysis (P = biological process, C = cellular component, F = molecular function)
         :return:
         """
         if metric is None:
@@ -55,10 +66,10 @@ class Analyzer():
             labels = list(self.exp_data.protomics_time_points)
             save_name = self.save_name + '_proteomics'
         if data_type == 'rnaseq':
-            up_reg = self.exp_data.proteomics_up_over_time
-            down_reg = self.exp_data.proteomics_down_over_time
-            sig_changes = self.exp_data.proteomics_over_time
-            labels = list(self.exp_data.protomics_time_points)
+            up_reg = self.exp_data.rna_up_over_time
+            down_reg = self.exp_data.rna_down_over_time
+            sig_changes = self.exp_data.rna_over_time
+            labels = list(self.exp_data.rna_time_points)
             save_name = self.save_name + '_rnaseq'
         if slim:
             save_name += '_slim'
@@ -68,34 +79,43 @@ class Analyzer():
             go = self.go(species=self.species, output_directory=self.out_dir, metric=metric,
                          experimental_data=self.exp_data)
 
-        save_name_up = save_name + '_up'
-        save_name_down = save_name + '_down'
-        save_name_both = save_name + '_changed'
         if run_type == 'up' or run_type == 'all':
-            go.analysis_data(up_reg, aspect='P', savename=save_name_up, labels=labels, analyze=True)
-            go.export_to_html(labels, x=labels, html_name=save_name_up)
+            save_name_up = save_name + '_up' + '_' + aspect
+            self.html_names.append(save_name_up)
+
+            go.analysis_data(up_reg, aspect=aspect, savename=save_name_up,
+                             labels=labels, analyze=True)
+            quit()
+            go.export_to_html(labels, html_name=save_name_up)
             go.print_ranked_over_time(create_plots=False, number=5)
             self.create_go_network_and_render(go, savename=save_name_up)
+
         if run_type == 'down' or run_type == 'all':
-            go.analysis_data(down_reg, aspect='P', savename=save_name_down, labels=labels, analyze=True)
-            go.export_to_html(labels, x=labels, html_name=save_name_down)
+            save_name_down = save_name + '_down' + '_' + aspect
+            self.html_names.append(save_name_down)
+            go.analysis_data(down_reg, aspect=aspect, savename=save_name_down,
+                             labels=labels, analyze=True)
+            go.export_to_html(labels, html_name=save_name_down)
             go.print_ranked_over_time(create_plots=False, number=5)
             self.create_go_network_and_render(go, savename=save_name_down)
 
         if run_type == 'changed' or run_type == 'all':
-            go.analysis_data(sig_changes, aspect='P', savename=save_name_both, labels=labels, analyze=True)
-            go.export_to_html(labels, x=labels, html_name=save_name_both)
+            save_name_both = save_name + '_changed' + '_' + aspect
+            self.html_names.append(save_name_both)
+            go.analysis_data(sig_changes, aspect=aspect,
+                             savename=save_name_both, labels=labels,
+                             analyze=True)
+            go.export_to_html(labels, html_name=save_name_both)
             go.print_ranked_over_time(create_plots=False, number=5)
             self.create_go_network_and_render(go, savename=save_name_both)
-        self.html_names.append(save_name_up)
-        self.html_names.append(save_name_down)
-        self.html_names.append(save_name_both)
+
         return go
 
     def create_go_network_and_render(self, go, savename):
 
         all_timepoints = []
         list_of_timepoints = []
+        print(len(go.top_hits))
         for n, i in enumerate(go.top_hits):
             remove_zeros(i, n)
             list_of_timepoints.append(i)
@@ -105,7 +125,8 @@ class Analyzer():
         tall = self.go_net_gen.create_network_from_list(list_of_go_terms=all_timepoints,
                                                         save_name='{0}_network'.format(savename),
                                                         threshold=0)
-
+        if len(tall.nodes()) == 0:
+            return
         # Do these in reverse so we see where the signal started
         for n, each in enumerate(reversed(list_of_timepoints)):
             paint_graph(tall, each, colors[n])
@@ -113,7 +134,7 @@ class Analyzer():
         save_name = os.path.join(self.out_dir, '{0}_all_colored_{1}.graphml'.format(savename, self.metric))
         nx.nx.write_graphml(tall, save_name)
         rm = RenderModel(tall)
-        rm.visualize_by_list_of_time(create_names(len(self.exp_data.protomics_time_points)),
+        rm.visualize_by_list_of_time(create_names(len(go.top_hits)),
                                      prefix=savename,
                                      directory=self.out_dir)
 
@@ -143,23 +164,35 @@ class Analyzer():
                                      prefix=savename,
                                      directory='.')
 
-    def create_html_report(self, save_name):
+    def create_html_report(self):
         print(self.html_names)
         out = html_code.format(*tuple(self.html_names))
-        with open(save_name + '.html', 'w') as f:
+        with open(self.save_name + '_all_analysis.html', 'w') as f:
             f.write(out)
         pass
 
-    def run_all(self):
+    def run_all(self, data_type='proteomics'):
         """ performs all analysis
 
         :return:
         """
         if self.network is None:
             self.generate_network('network')
-        self.run_go(data_type='proteomics')
-        self.run_go(data_type='proteomics', slim=True)
-        self.create_html_report('all_analysis')
+        if data_type == 'proteomics' or data_type == 'all':
+            self.run_go(data_type='proteomics', aspect='P')
+            self.run_go(data_type='proteomics', aspect='F')
+            self.run_go(data_type='proteomics', aspect='C')
+            self.run_go(data_type='proteomics', slim=True, aspect='P')
+            self.run_go(data_type='proteomics', slim=True, aspect='F')
+            self.run_go(data_type='proteomics', slim=True, aspect='C')
+        if data_type == 'rnaseq' or data_type == 'all':
+            self.run_go(data_type='rnaseq', aspect='P')
+            self.run_go(data_type='rnaseq', aspect='F')
+            self.run_go(data_type='rnaseq', aspect='C')
+            # self.run_go(data_type='rnaseq', slim=True, aspect='P')
+            # self.run_go(data_type='rnaseq', slim=True, aspect='F')
+            # self.run_go(data_type='rnaseq', slim=True, aspect='C')
+        self.create_html_report()
 
 
 def remove_zeros(top_hits, value):
@@ -189,11 +222,11 @@ def paint_graph(graph, time_point, color):
         tmp = graph.node[i]['go']
         tmp = tmp[:2] + ':' + tmp[2:]
         if tmp in time_point:
-            graph.node[i]['color'] = 'red'
+            graph.node[i]['color'] = color  # 'red'
             for n, time in enumerate(time_point[tmp]):
                 t = 'time_{0:04d}'.format(n)
                 graph.node[i][t] = float(time)
-                # graph.node[i][t] = 25#float(time)
+                #graph.node[i][t] = 25#float(time)
 
 
 def create_names(n):
@@ -204,7 +237,8 @@ def create_names(n):
     return names
 
 
-colors = ["#000000", "#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6", "#A30059",
+colors = ["#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6",
+          "#A30059",
           "#FFDBE5", "#7A4900", "#0000A6", "#63FFAC", "#B79762", "#004D43", "#8FB0FF", "#997D87",
           "#5A0007", "#809693", "#FEFFE6", "#1B4400", "#4FC601", "#3B5DFF", "#4A3B53", "#FF2F80",
           "#61615A", "#BA0900", "#6B7900", "#00C2A0", "#FFAA92", "#FF90C9", "#B903AA", "#D16100",
@@ -226,23 +260,46 @@ html_code = """
     <title>Analysis</title>
 </head>
 <body>
-<h1>GO enrichment analysis</h1>
-<p>These three sections are GO enrichment analysis of label free. Pvalue >=.1, |FC| > 1.5</p>
+<h1> Proteomics GO enrichment analysis</h1>
 <p>Up regulated genes only</p>
-<a href="{0}.html">Up regulated</a>
+<a href="{0}.html">Up regulated biological processes</a><br>
+<a href="{3}.html">Up regulated molecular function</a><br>
+<a href="{6}.html">Up regulated cellular component</a><br>
 <p>Down regulated only</p>
-<a href="{1}.html">Down regulated</a>
+<a href="{1}.html">Down regulated biological processes</a><br>
+<a href="{4}.html">Down regulated molecular function</a><br>
+<a href="{7}.html">Down regulated cellular component</a><br>
 <p>Both up and down regulated genes.</p>
-<a href="{2}.html">Absolute changed</a>
+<a href="{2}.html">Absolute change biological processes</a><br>
+<a href="{5}.html">Absolute change molecular function</a><br>
+<a href="{8}.html">Absolute change cellular component</a><br>
 <h1>GO enrichment analysis with slim terms</h1>
-<p>This uses GO slim terms, which are "higher" level classifications. These three sections are GO enrichment analysis of
-    label free. Pvalue >=.1, |FC| > 1.5</p>
+<p>GO slim enrichment analysis </p>
 <p>Up regulated genes only</p>
-<a href="{3}.html">Up regulated</a>
+<a href="{9}.html">Up regulated biological processes</a><br>
+<a href="{12}.html">Up regulated molecular function</a><br>
+<a href="{15}.html">Up regulated cellular component</a><br>
 <p>Down regulated only</p>
-<a href="{4}.html">Down regulated</a>
+<a href="{10}.html">Down regulated biological processes</a><br>
+<a href="{13}.html">Down regulated molecular function</a><br>
+<a href="{16}.html">Down regulated cellular component</a><br>
 <p>Both up and down regulated genes.</p>
-<a href="{5}.html">Absolute changed</a>
+<a href="{11}.html">Absolute change biological processes</a><br>
+<a href="{14}.html">Absolute change molecular function</a><br>
+<a href="{17}.html">Absolute change cellular component</a><br>
+<h1>RNA seq GO enrichment analysis</h1>
+<p>Up regulated genes only</p>
+<a href="{18}.html">Up regulated biological processes</a><br>
+<a href="{21}.html">Up regulated molecular function</a><br>
+<a href="{24}.html">Up regulated cellular component</a><br>
+<p>Down regulated only</p>
+<a href="{19}.html">Down regulated biological processes</a><br>
+<a href="{22}.html">Down regulated molecular function</a><br>
+<a href="{25}.html">Down regulated cellular component</a><br>
+<p>Both up and down regulated genes.</p>
+<a href="{20}.html">Absolute change biological processes</a><br>
+<a href="{23}.html">Absolute change molecular function</a><br>
+<a href="{26}.html">Absolute change cellular component</a><br>
 </body>
 </html>
 """

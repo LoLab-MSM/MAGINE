@@ -2,13 +2,24 @@ from Mappings.maps import cm
 
 
 def expand_by_hmdb(graph, metabolite_list, all_measured):
+    """ Expands a network using HMDB metabolite-protein information
+
+
+    :param graph: Networkx network
+    :param metabolite_list:  List of HMDB ids
+    :param all_measured: list of all species measured
+    :return:
+    """
     tmp_graph = graph.copy()
-    start_nodes = tmp_graph.nodes()
+    start_nodes = set(tmp_graph.nodes())
     start_edges = tmp_graph.edges()
     missing_metabolites = []
     for i in metabolite_list:
         if i not in start_nodes:
-            missing_metabolites.append(i)
+            if i.startswith('HMDB'):
+                missing_metabolites.append(i)
+            else:
+                print('Not an HMDB : {}'.format(i))
 
     count_in_network, count_not_in_network = 0, 0
     missing_edge = 0
@@ -29,8 +40,11 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                         if each is None:
                             continue
                         elif each not in tmp_graph.nodes():
+
                             added_proteins.append(each)
                         missing_edge += 1
+                        tmp_graph.add_node(i, speciesType='gene',
+                                           databaseSource='HMDB')
                         tmp_graph.add_edge(each, i)
 
         else:
@@ -46,11 +60,13 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                             pass
                         elif each in start_nodes:
                             missing_edge += 1
+                            tmp_graph.add_node(i, speciesType='gene',
+                                               databaseSource='HMDB')
                             tmp_graph.add_edge(i, each)
                             protein_hits += 1
                         else:
                             missing_proteins.add(each)
-    end_nodes = tmp_graph.nodes()
+    end_nodes = set(tmp_graph.nodes())
     end_edges = tmp_graph.edges()
     metabolites_added = []
     still_missing = []
