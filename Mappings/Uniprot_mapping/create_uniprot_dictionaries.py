@@ -11,6 +11,7 @@ wanted_headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "PDB", 
 
 def create_mouse_dataframe():
     mouse = pd.read_table('MOUSE_10090_idmapping_selected.tab.gz', delimiter='\t', names=headers)
+    print(mouse.head(10))
     mouse = mouse[wanted_headers]
     mouse.to_csv('../mouse_uniprot.gz', compression='gzip', columns=wanted_headers, header=True)
     mouse = pd.read_csv('../mouse_uniprot.gz')
@@ -25,7 +26,7 @@ def create_human_dataframe():
     return human
 
 
-human = create_human_dataframe()
+# human = create_human_dataframe()
 
 mouse = create_mouse_dataframe()
 quit()
