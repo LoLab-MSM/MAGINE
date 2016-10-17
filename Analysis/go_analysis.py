@@ -2,13 +2,13 @@
 GO analysis function using orange bioinformatics
 """
 import os
-from textwrap import wrap
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 from orangecontrib.bio import go
+from textwrap import wrap
 
 pd.set_option('display.max_colwidth', -1)
 
@@ -39,6 +39,7 @@ class GoAnalysis:
         if slim:
             self.slim = True
             self.slim_name = slim
+            self.savename += '_slim'
             self.ontology.set_slims_subset(slim)  # goslim_pir goslim_generic goslim_chembl
         self.annotations = go.Annotations(species, ontology=self.ontology)
         self.number_of_total_reference_genes = len(self.annotations.gene_names)
@@ -58,21 +59,19 @@ class GoAnalysis:
         :param aspect:
         :return:
         """
-        number_of_genes = 0
-        genes_present = []
+        genes_present = set()
         for i in data:
-            if i in self.annotations.gene_names:
-                number_of_genes += 1
-                genes_present.append(i)
-            elif type(i) != str:
+            if type(i) != str:
                 continue
+            elif i in self.annotations.gene_names:
+                genes_present.add(i)
             else:
                 split_name = i.split(',')
                 if len(split_name) > 1:
-                    for i in split_name:
-                        if i in self.annotations.gene_names:
-                            number_of_genes += 1
-                            genes_present.append(i)
+                    for n in split_name:
+                        if n in self.annotations.gene_names:
+                            genes_present.add(n)
+        number_of_genes = len(genes_present)
         print("Number of genes given = {0}. Number of genes in GO = {1}".format(len(data), number_of_genes))
         res = self.annotations.get_enriched_terms(genes_present, slims_only=self.slim, aspect=aspect,
                                                   # evidence_codes=evidence_codes,
@@ -89,19 +88,27 @@ class GoAnalysis:
                 pass
             elif ref < 5.:
                 continue
-            if p_value > 0.05:
-                continue
-            else:
+            # if p_value > 0.05:
+            #    continue
+            # else:
 
-                if self.metric == 'fraction':
-                    score = float(len(genes) / float(ref)) * 100.
-                if self.metric == 'pvalue':
-                    score = -1. * np.log10(p_value)
-                if self.metric == 'enrichment':
-                    # expected_value = number_of_genes * num_ref / num_total_reference_genes
-                    expected_value = number_of_genes * float(ref) / self.number_of_total_reference_genes
-                    enrichment = float(len(genes)) / expected_value
-                    score = np.log2(enrichment)
+            if self.metric == 'fraction':
+                score = float(len(genes) / float(ref)) * 100.
+            if self.metric == 'pvalue':
+                score = -1. * np.log10(p_value)
+            if self.metric == 'enrichment':
+                # expected_value = number_of_genes * num_ref / num_total_reference_genes
+                expected_value = number_of_genes * float(
+                    ref) / self.number_of_total_reference_genes
+                print(
+                'number of reference', self.number_of_total_reference_genes)
+                # pvalue_2 = scipy.stats.binom_test(len(genes),
+                #                                  number_of_genes,
+                #                                  float(ref) / self.number_of_total_reference_genes)
+                enrichment = float(len(genes)) / expected_value
+                # print('their pvalue = {}, my pvalue = {}, enrichment = {}'.format(p_value, pvalue_2, enrichment))
+                # score = np.log2(enrichment)
+                score = enrichment
 
             sorted_list[n, 0] = self.ontology[go_id].name
             sorted_list[n, 1] = go_id
@@ -158,6 +165,8 @@ class GoAnalysis:
             data_set[n, 0] = i
             for num in range(1, num_of_lists + 1):
                 data_set[n, num] = return_go_number(i, results[num - 1])
+        if np.shape(data_set)[0] == 0:
+            print('Warning! No significanance')
 
         return data_set
 
@@ -180,7 +189,7 @@ class GoAnalysis:
 
         size_of_data = np.shape(data)[1]
         length_matrix = len(matrix)
-        fig = plt.figure(figsize=(12, 20))
+        fig = plt.figure(figsize=(14, 20))
         ax1 = fig.add_subplot(111)
 
         im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
@@ -198,8 +207,8 @@ class GoAnalysis:
             print("Provide labels")
         # divider = make_axes_locatable(ax1)
         # cax = divider.append_axes("top", size="5%", pad=0.05)
-
-        plt.colorbar(im)
+        plt.colorbar(im, fraction=0.046, pad=0.04)
+        # plt.colorbar(im)
         # plt.axes().set_aspect('equal', 'datalim')
         # plt.tight_layout()
         plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=150, bbox_inches='tight')
@@ -218,7 +227,11 @@ class GoAnalysis:
         :return:
         """
         data = self.create_data_set(data, aspect)
+        if data is None:
+            print('No data! Error! Returning nothing')
+            return
         self.data_2.to_csv('{0}.csv'.format(savename))
+        quit()
         if search_term is not None:
             self.data = self.find_terms(data, search_term)
         else:
@@ -230,8 +243,6 @@ class GoAnalysis:
 
         if not analyze:
             return
-        if self.slim:
-            savename += "_%s" % self.slim_name
         savename += '_%s' % aspect
         self.savename = savename
 
@@ -240,6 +251,8 @@ class GoAnalysis:
         tmp_array = self.array[:, :].copy()
         fig = plt.figure()
         axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
+        # distance_matrix = dist.pdist(tmp_array, 'euclidean')
+        #linkage = sch.linkage(distance_matrix, method='single')
         linkage = sch.linkage(tmp_array, method='centroid')
         dendrogram = sch.dendrogram(linkage, orientation='right')
         axdendro.set_xticks([])
@@ -256,6 +269,7 @@ class GoAnalysis:
         if self.save_png:
             fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
         fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
+        plt.close()
         self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
         self.plot_heatmap(tmp_array, names_sorted, -100, None, '%s_bottom_dendrogram' % savename, labels)
         figures = ['%s_top' % savename,
@@ -268,10 +282,9 @@ class GoAnalysis:
             html_pages.append('<a href="{0}/{1}.pdf">{2}</a>'.format(self.out_dir, i, i))
         self.html_pdfs = pd.DataFrame(html_pages, columns=['Clustered output'])
         self.print_ranked_over_time(savename=savename, labels=labels)
-        # pd.DataFrame()
 
-
-    def print_ranked_over_time(self, savename=None, labels=None, number=25, create_plots=True):
+    def print_ranked_over_time(self, savename=None, labels=None, number=10,
+                               create_plots=True):
         """ Prints information about top hits
         """
         html_pages = []
@@ -287,8 +300,6 @@ class GoAnalysis:
 
         for i in range(0, np.shape(self.data)[1] - 1):
             terms = self.retrieve_top_ranked(i, number)
-            #terms = self.data_2
-
             tmp = []
             names = []
             for t in terms:
@@ -341,12 +352,15 @@ class GoAnalysis:
             terms_to_remove = []
             index_to_add = []
             for term in top_level_terms:
-                child = self.getChildren(term, go_terms, parents)
+                child = self.get_children(term, go_terms, parents)
                 if len(child) == 0:
                     counter += 1
                 else:
-                    terms_to_remove.append(term)
                     term_to_add -= 1
+                    if np.abs(term_to_add) > len(names):
+                        continue
+                    terms_to_remove.append(term)
+
                     index_to_add.append(names[term_to_add])
             for t in terms_to_remove:
                 go_terms.remove(t)
@@ -413,7 +427,7 @@ class GoAnalysis:
         fig.savefig('%s.pdf' % savename, bbox_extra_artists=(lgd,), bbox_inches='tight')
         plt.close()
 
-    def export_to_html(self, labels, html_name='tmp', x=None):
+    def export_to_html(self, labels, html_name='tmp'):
         """ exports to html to be viewed by browser
 
         :param labels:
@@ -432,11 +446,13 @@ class GoAnalysis:
             gene_set = set()
             for k in range(self.num_data_sets):
                 genes = list(self.data_2[self.data_2['GO_id'] == i]['genes_{0}'.format(k)])
+
                 for g in genes:
                     if type(g) == list:
                         for e in g:
                             gene_set.add(e)
-            save_name = '{0}/go_{1}.pdf'.format(self.out_dir, i).replace(':', '')
+            save_name = '{0}/go_{1}_{2}.pdf'.format(self.out_dir, i,
+                                                    self.savename).replace(':', '')
             title = "{0} : {1}".format(str(i), self.global_go[i])
 
             if len(gene_set) > 50:
@@ -444,7 +460,8 @@ class GoAnalysis:
             else:
                 if save_name not in self.created_go_pds:
                     self.created_go_pds.add(save_name)
-                    #self.exp_data.plot_list_of_genes(list(gene_set), save_name, title=title)
+                    self.exp_data.plot_list_of_genes(list(gene_set), save_name,
+                                                     title=title)
                 real_names.append('<a href="{0}">{1}</a>'.format(save_name, self.global_go[i]))
         # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
@@ -456,12 +473,11 @@ class GoAnalysis:
             with open('sorttable_tmp.js', 'w') as tmp_file:
                 tmp_file.write(x)
 
-        header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n'
+        header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n\n<div style="float: left">\n'
         footer = "\n\t</body>\n</html>"
         # write out the html file
         with open('%s.html' % html_name, 'w') as f:
             f.write(header)
-            f.write('\n<div style="float: left">\n')
             f.write(self.html_pdfs.to_html(classes='sortable', escape=False, justify='left'))
             f.write('\n</div>\n')
             f.write(self.html_pdfs2.to_html(classes='sortable', escape=False, justify='left'))
@@ -476,7 +492,7 @@ class GoAnalysis:
         parents = [t for t in parents if t not in c]
         return parents
 
-    def getChildren(self, term, data, parents):
+    def get_children(self, term, data, parents):
         return [id for id in data if term in parents[id]]
 
     def sort_by_hierarchy(self, data):
@@ -501,7 +517,7 @@ class GoAnalysis:
             """
             term_list.append((go_term, self.global_go[go_term], parent))
             parent = len(term_list) - 1
-            for c in self.getChildren(go_term, names, parents):
+            for c in self.get_children(go_term, names, parents):
                 if c in visited:
                     continue
                 else:
