@@ -2,9 +2,9 @@ import os
 
 import networkx as nx
 
-from Analysis.cytoscape_layout import RenderModel
-from Analysis.go_analysis import GoAnalysis
+from Analysis.cytoscape_view import RenderModel
 from Analysis.go_network_generator import GoNetworkGenerator
+from Analysis.ontology_analysis import GoAnalysis
 from magine.network_generator import build_network
 
 
@@ -45,7 +45,7 @@ class Analyzer():
         self.network = self.build_network(proteins, num_overlap=1, save_name=save_name, species=self.species)
 
     def run_go(self, data_type='proteomics', slim=False, metric=None,
-               run_type='all', aspect='P'):
+               run_type='all', aspect='P', create_networks=True):
         """ performs GO analysis
 
         :param data_type: proteomics or RNAseq (limited to types of genes)
@@ -85,10 +85,10 @@ class Analyzer():
 
             go.analysis_data(up_reg, aspect=aspect, savename=save_name_up,
                              labels=labels, analyze=True)
-            quit()
             go.export_to_html(labels, html_name=save_name_up)
             go.print_ranked_over_time(create_plots=False, number=5)
-            self.create_go_network_and_render(go, savename=save_name_up)
+            if create_networks:
+                self.create_go_network_and_render(go, savename=save_name_up)
 
         if run_type == 'down' or run_type == 'all':
             save_name_down = save_name + '_down' + '_' + aspect
@@ -97,7 +97,8 @@ class Analyzer():
                              labels=labels, analyze=True)
             go.export_to_html(labels, html_name=save_name_down)
             go.print_ranked_over_time(create_plots=False, number=5)
-            self.create_go_network_and_render(go, savename=save_name_down)
+            if create_networks:
+                self.create_go_network_and_render(go, savename=save_name_down)
 
         if run_type == 'changed' or run_type == 'all':
             save_name_both = save_name + '_changed' + '_' + aspect
@@ -107,7 +108,8 @@ class Analyzer():
                              analyze=True)
             go.export_to_html(labels, html_name=save_name_both)
             go.print_ranked_over_time(create_plots=False, number=5)
-            self.create_go_network_and_render(go, savename=save_name_both)
+            if create_networks:
+                self.create_go_network_and_render(go, savename=save_name_both)
 
         return go
 
@@ -164,9 +166,15 @@ class Analyzer():
                                      prefix=savename,
                                      directory='.')
 
-    def create_html_report(self):
-        print(self.html_names)
-        out = html_code.format(*tuple(self.html_names))
+    def create_html_report(self, d_type):
+        if d_type == 'proteomics':
+            out = proteomics_html.format(*tuple(self.html_names))
+        if d_type == 'rna':
+            out = rna_html.format(*tuple(self.html_names))
+        if d_type == 'all':
+            out = proteomics_html.format(*tuple(self.html_names))
+            out2 = rna_html.format(*tuple(self.html_names))
+            out = out + out2
         with open(self.save_name + '_all_analysis.html', 'w') as f:
             f.write(out)
         pass
@@ -182,9 +190,11 @@ class Analyzer():
             self.run_go(data_type='proteomics', aspect='P')
             self.run_go(data_type='proteomics', aspect='F')
             self.run_go(data_type='proteomics', aspect='C')
-            self.run_go(data_type='proteomics', slim=True, aspect='P')
-            self.run_go(data_type='proteomics', slim=True, aspect='F')
-            self.run_go(data_type='proteomics', slim=True, aspect='C')
+            # self.run_go(data_type='proteomics', slim=True, aspect='P')
+            # self.run_go(data_type='proteomics', slim=True, aspect='F')
+            # self.run_go(data_type='proteomics', slim=True, aspect='C')
+            if data_type == 'proteomics':
+                self.create_html_report('proteomics')
         if data_type == 'rnaseq' or data_type == 'all':
             self.run_go(data_type='rnaseq', aspect='P')
             self.run_go(data_type='rnaseq', aspect='F')
@@ -192,7 +202,7 @@ class Analyzer():
             # self.run_go(data_type='rnaseq', slim=True, aspect='P')
             # self.run_go(data_type='rnaseq', slim=True, aspect='F')
             # self.run_go(data_type='rnaseq', slim=True, aspect='C')
-        self.create_html_report()
+        self.create_html_report(data_type)
 
 
 def remove_zeros(top_hits, value):
@@ -252,7 +262,7 @@ colors = ["#FFFF00", "#1CE6FF", "#FF34FF", "#FF4A46", "#008941", "#006FA6",
           "#549E79", "#FFF69F", "#201625", "#72418F", "#BC23FF", "#99ADC0", "#3A2465", "#922329",
           "#5B4534", "#FDE8DC", "#404E55", "#0089A3", "#CB7E98", "#A4E804", "#324E72", "#6A3A4C", ]
 
-html_code = """
+proteomics_html = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -273,6 +283,8 @@ html_code = """
 <a href="{2}.html">Absolute change biological processes</a><br>
 <a href="{5}.html">Absolute change molecular function</a><br>
 <a href="{8}.html">Absolute change cellular component</a><br>
+"""
+slim_prot = """
 <h1>GO enrichment analysis with slim terms</h1>
 <p>GO slim enrichment analysis </p>
 <p>Up regulated genes only</p>
@@ -287,6 +299,9 @@ html_code = """
 <a href="{11}.html">Absolute change biological processes</a><br>
 <a href="{14}.html">Absolute change molecular function</a><br>
 <a href="{17}.html">Absolute change cellular component</a><br>
+"""
+
+rna_html = """
 <h1>RNA seq GO enrichment analysis</h1>
 <p>Up regulated genes only</p>
 <a href="{18}.html">Up regulated biological processes</a><br>
@@ -345,7 +360,3 @@ network_images = """
     <br>
 </p>
 """
-if __name__ == '__main__':
-    print(create_names(4))
-    html_code.format(*('1', '2', '3', '4', '5', '6'))
-    print(html_code)
