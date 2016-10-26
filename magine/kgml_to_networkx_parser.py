@@ -1,15 +1,19 @@
 # -*- coding: utf-8 -*-
-from bioservices import UniProt, KEGG, UniChem
-import xml.etree.cElementTree as ET
+import os
+from sys import modules
+
 import networkx as nx
+import xml.etree.cElementTree as ET
+from bioservices import KEGG
+
 try:
-    kegg.get('hsa:219')
+    kegg = modules['kegg']
 except:
     kegg = KEGG()
     kegg.TIMEOUT = 100
 
 
-def kgml_to_graph(xmlfile, species='hsa'):
+def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
     """ Converts a kgml to networkx DiGraph
 
     :param xmlfile: to be translated
@@ -17,7 +21,7 @@ def kgml_to_graph(xmlfile, species='hsa'):
     :return: networkx graph - graph of xmlfile, list - pathway_name, list - species_in_network
     """
     try:
-        tree = ET.parse("KEGG/" + xmlfile)
+        tree = ET.parse(os.path.join(output_dir, xmlfile))
     except TypeError:
         print("This file (%s)is messed up! Investigate" % str(xmlfile))
         return nx.DiGraph(), [], []
@@ -80,7 +84,9 @@ def kgml_to_graph(xmlfile, species='hsa'):
         one, two = name_label_dict[e1], name_label_dict[e2]
         for i in one.split(','):
             for j in two.split(','):
-                pathway_local.add_edge(i, j, interactionType=type_of_interaction, intType=int_type)
+                pathway_local.add_edge(i, j,
+                                       interactionType=type_of_interaction,
+                                       intType=int_type)
 
     # Add reactions
     for reaction in tree.getiterator('reaction'):
@@ -99,10 +105,12 @@ def kgml_to_graph(xmlfile, species='hsa'):
         enzyme = name_label_dict[id_local]
         for i in enzyme.split(','):
             for sub in substrates:
-                pathway_local.add_edge(sub, i, reactionType=reaction_type, interactionType='compound',
+                pathway_local.add_edge(sub, i, reactionType=reaction_type,
+                                       interactionType='compound',
                                        intType='Reaction')
             for prod in products:
-                pathway_local.add_edge(i, prod, reactionType=reaction_type, interactionType='compound',
+                pathway_local.add_edge(i, prod, reactionType=reaction_type,
+                                       interactionType='compound',
                                        intType='Reaction')
-    species_in_network = set() #TODO delete this once I finish refactoring the dictionary
-    return pathway_local, pathway_name, species_in_network
+
+    return pathway_local, pathway_name, set()
