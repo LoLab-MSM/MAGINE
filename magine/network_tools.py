@@ -324,5 +324,30 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     return subgraph_species
 
 
+def add_reactome(network):
+    combined_network = network.copy()
+    existing_nodes = set(network.nodes())
+    ddn2 = nx.read_gml(
+            '/home/pinojc/PycharmProjects/Magine/magine/reactome_expansion/reactome_network.gml')
+    added_nodes = 0
+    for i in ddn2.nodes(data=True):
+        if i[0] in existing_nodes:
+            continue
+        else:
+            network.add_node(i[0], i[1])
+            added_nodes += 1
+    print("Added {} nodes from REACTOME".format(added_nodes))
+
+    added_edges = 0
+    kegg_edges = set(combined_network.edges())
+    reactome_edges = ddn2.edges(data=True)
+    for i, j, k in reactome_edges:
+        if (i, j) in kegg_edges:
+            continue
+        else:
+            combined_network.add_edge(i, j, k)
+            added_edges += 1
+    print("Added {} edges from REACTOME".format(added_edges))
+    return combined_network
 if __name__ == '__main__':
     test_compress()
