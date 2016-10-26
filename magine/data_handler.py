@@ -10,48 +10,62 @@ from textwrap import wrap
 import subprocess
 
 pandas.set_option('display.max_colwidth', -1)
+# column definitions
+fold_change = 'treated_control_fold_change'
+flag = 'significant_flag'
+exp_method = 'data_type'
+
 
 class ExperimentalData:
     def __init__(self, proteomics_file, data_directory, P_VALUE=0.1,
                  FOLD_CHANGE=.1):
-        all_prot = pandas.read_csv(os.path.join(data_directory, proteomics_file),
-                                   parse_dates=False, low_memory=False)
+        all_prot = pandas.read_csv(
+                os.path.join(data_directory, proteomics_file),
+                parse_dates=False, low_memory=False)
 
-        all_prot = all_prot[all_prot['treated_control_fold_change'].notnull()]
-        all_prot.loc[all_prot[
-                         'treated_control_fold_change'] == np.inf, 'treated_control_fold_change'] = 1000
-        all_prot.loc[all_prot[
-                         'treated_control_fold_change'] == -np.inf, 'treated_control_fold_change'] = -1000
+        all_prot = all_prot[all_prot[fold_change].notnull()]
+        all_prot.loc[all_prot[fold_change] == np.inf, fold_change] = 1000
+        all_prot.loc[all_prot[fold_change] == -np.inf, fold_change] = -1000
         self.proteomics = all_prot[all_prot['species_type'] == 'protein']
+        self.proteomics = self.proteomics.dropna(subset=['gene'])
         self.metabolite = all_prot[all_prot['species_type'] == 'metabolite']
-
-        self.proteomics_sign = self.proteomics[self.proteomics['significant_flag']]
+        self.metabolite = self.metabolite.dropna(subset=['compound'])
+        self.proteomics_sign = self.proteomics[self.proteomics[flag]]
         self.metabolite_sign = self.metabolite[
-            self.metabolite['significant_flag']]
+            self.metabolite[flag]]
 
-        self.rna_seq = self.proteomics[self.proteomics['data_type'] == 'rna_seq']
+        self.rna_seq = self.proteomics[
+            self.proteomics[exp_method] == 'rna_seq']
 
         self.proteomics_non_rna = self.proteomics[
-            self.proteomics['data_type'] != 'rna_seq']
+            self.proteomics[exp_method] != 'rna_seq']
 
         self.rna_seq_sign = self.proteomics_sign[
-            self.proteomics_sign['data_type'] == 'rna_seq']
+            self.proteomics_sign[exp_method] == 'rna_seq']
+
         self.proteomics_non_rna_sig = self.proteomics_sign[
-            self.proteomics_sign['data_type'] != 'rna_seq']
+            self.proteomics_sign[exp_method] != 'rna_seq']
 
         self.total_unique_genes_proteomics = len(
-            self.proteomics_non_rna['gene'].unique())
+                self.proteomics_non_rna['gene'].unique())
 
         self.total_sign_rna = len(
-            self.rna_seq[self.rna_seq['significant_flag']]['gene'].unique())
+                self.rna_seq[self.rna_seq[flag]]['gene'].unique())
 
         self.gene_fold_change = {}
-        # self.set_up_gene_fold_change_access()
+        self.set_up_gene_fold_change_access()
         self.proteins_measured = self.return_proteomics()
-        self.proteins_sign_measured = self.return_proteomics(significant=True)
+        self.proteomics_sign_measured = self.return_proteomics(
+                significant=True)
+        self.rnaseq_sign_measured = self.return_rna(significant=True)
+        self.proteins_sign_measured = list(set(self.proteomics_sign_measured +
+                                               self.rnaseq_sign_measured))
 
-        self.prot_up = self.return_proteomics(significant=True, fold_change_value=FOLD_CHANGE)
-        self.prot_down = self.return_proteomics(significant=True, fold_change_value=-1 * FOLD_CHANGE)
+        self.prot_up = self.return_proteomics(significant=True,
+                                              fold_change_value=1)
+        self.prot_down = self.return_proteomics(significant=True,
+                                                fold_change_value=-1)
+
         self.sign_changed_proteomics = list(set(self.prot_down + self.prot_up))
         self.proteomics_up = {}
         self.proteomics_down = {}
@@ -72,18 +86,24 @@ class ExperimentalData:
         self.rna_up_over_time = []
         self.rna_down_over_time = []
         for i in self.protomics_time_points:
-            self.proteomics_up[i] = self.return_proteomics(time=i, significant=True, fold_change_value=FOLD_CHANGE)
+            self.proteomics_up[i] = self.return_proteomics(time=i,
+                                                           significant=True,
+                                                           fold_change_value=FOLD_CHANGE)
             self.proteomics_down[i] = self.return_proteomics(time=i,
                                                              significant=True,
                                                              fold_change_value=-1. * FOLD_CHANGE)
-            self.proteomics_sign_changed[i] = list(set(self.proteomics_up[i] + self.proteomics_down[i]))
+            self.proteomics_sign_changed[i] = list(
+                    set(self.proteomics_up[i] + self.proteomics_down[i]))
             self.proteomics_over_time.append(self.proteomics_sign_changed[i])
             self.proteomics_up_over_time.append(self.proteomics_up[i])
             self.proteomics_down_over_time.append(self.proteomics_down[i])
         for i in self.rna_time_points:
-            self.rna_up[i] = self.return_rna(time=i, significant=True, fold_change_value=FOLD_CHANGE)
-            self.rna_down[i] = self.return_rna(time=i, significant=True, fold_change_value=-1. * FOLD_CHANGE)
-            self.rna_sign_changed[i] = list(set(self.rna_up[i] + self.rna_down[i]))
+            self.rna_up[i] = self.return_rna(time=i, significant=True,
+                                             fold_change_value=FOLD_CHANGE)
+            self.rna_down[i] = self.return_rna(time=i, significant=True,
+                                               fold_change_value=-1. * FOLD_CHANGE)
+            self.rna_sign_changed[i] = list(
+                    set(self.rna_up[i] + self.rna_down[i]))
             self.rna_over_time.append(self.rna_sign_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
@@ -103,20 +123,20 @@ class ExperimentalData:
             time = False
         if significant:
             tmp = self.proteomics.dropna(subset=['gene'])
-            tmp = tmp[tmp['data_type'] != 'rna_seq']
-            tmp = tmp[tmp['significant_flag']]
+            tmp = tmp[tmp[exp_method] != 'rna_seq']
+            tmp = tmp[tmp[flag]]
             if fold_change_value is not None:
                 if fold_change_value > 0.:
-                    tmp = tmp[tmp['treated_control_fold_change'] >= fold_change_value]
+                    tmp = tmp[tmp[fold_change] >= fold_change_value]
                 else:
-                    tmp = tmp[tmp['treated_control_fold_change'] <= fold_change_value]
+                    tmp = tmp[tmp[fold_change] <= fold_change_value]
             if time:
                 return list(tmp[tmp['time'] == time]['gene'].unique())
             else:
                 return list(tmp['gene'].unique())
         else:
             tmp = self.proteomics.dropna(subset=['gene'])
-            tmp = tmp[tmp['data_type'] != 'rna_seq']
+            tmp = tmp[tmp[exp_method] != 'rna_seq']
             if time:
                 return list(tmp[tmp['time'] == time]['gene'].unique())
             else:
@@ -136,12 +156,12 @@ class ExperimentalData:
             time = False
         if significant:
             tmp = self.rna_seq.dropna(subset=['gene'])
-            tmp = tmp[tmp['significant_flag']]
+            tmp = tmp[tmp[flag]]
             if fold_change_value is not None:
                 if fold_change_value > 0.:
-                    tmp = tmp[tmp['treated_control_fold_change'] >= fold_change_value]
+                    tmp = tmp[tmp[fold_change] >= fold_change_value]
                 else:
-                    tmp = tmp[tmp['treated_control_fold_change'] <= fold_change_value]
+                    tmp = tmp[tmp[fold_change] <= fold_change_value]
             if time:
                 return list(tmp[tmp['time'] == time]['gene'].unique())
             else:
@@ -159,29 +179,32 @@ class ExperimentalData:
         :return:
         """
         print(
-        "\nNumber of unique genes in proteomics, non rnaseq = %s" % self.total_unique_genes_proteomics)
+            "\nNumber of unique genes in measured(non rna seq) = %s" % self.total_unique_genes_proteomics)
         print(
-        "\nNumber of sig , unique rna seq proteomics = %s" % self.total_sign_rna)
+            "\nNumber of unique genes rna seq  = %s" % self.total_sign_rna)
 
-        print("\nNumber of significantly change unique proteomics = %s" % len(self.sign_changed_proteomics))
+        print("\nNumber of significantly changed unique proteomics = %s" % len(
+                self.sign_changed_proteomics))
 
-        # print("\nNumber of proteins")
-        # for i in np.sort(self.protomics_time_points):
-        #     print("{0} hour = {1}".format(i, len(self.proteomics_sign_changed[i])))
-        #
-        # print('\nStats on upregulated proteins')
-        #
-        # for i in np.sort(self.protomics_time_points):
-        #     print("{0} hour = {1}".format(i, len(self.proteomics_up[i])))
-        #
-        # print("\nNumber of down regulated proteins")
-        #
-        # for i in np.sort(self.protomics_time_points):
-        #     print("{0} hour = {1}".format(i, len(self.proteomics_down[i])))
+        print("\nNumber of proteins")
+        for i in np.sort(self.protomics_time_points):
+            print(
+                "{0} hour = {1}".format(i,
+                                        len(self.proteomics_sign_changed[i])))
+
+            # print('\nStats on upregulated proteins')
+            #
+            # for i in np.sort(self.protomics_time_points):
+            #     print("{0} hour = {1}".format(i, len(self.proteomics_up[i])))
+            #
+            # print("\nNumber of down regulated proteins")
+            #
+            # for i in np.sort(self.protomics_time_points):
+            #     print("{0} hour = {1}".format(i, len(self.proteomics_down[i])))
 
     def set_up_gene_fold_change_access(self):
 
-        tmp = self.proteomics[self.proteomics['significant_flag']]
+        tmp = self.proteomics[self.proteomics[flag]]
         tmp = tmp.dropna(subset=['gene'])
         group = tmp.groupby('gene')
         gene_fold_change = {}
@@ -190,12 +213,11 @@ class ExperimentalData:
             group2 = j.groupby('protein')
             for n, m in group2:
                 x = np.array(m['time'])
-                y = np.array(m['treated_control_fold_change'])
-                sig_flag = np.array(m['significant_flag'])
+                y = np.array(m[fold_change])
+                sig_flag = np.array(m[flag])
                 tmp_dict[n] = [x, y, sig_flag]
             gene_fold_change[i] = tmp_dict
         self.gene_fold_change = gene_fold_change
-
 
     def plot_all_proteins(self, out_dir='proteins'):
         if os.path.exists(out_dir):
@@ -208,7 +230,8 @@ class ExperimentalData:
         genes_to_plot = list(set(list(tmp) + list(tmp2)))
         for i in np.sort(genes_to_plot):
             self.create_heat_map_of_gene(out_dir, i)
-            html_pages.append('<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
+            html_pages.append(
+                    '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
 
         proteins = pandas.DataFrame(html_pages, columns=['Genes'])
         header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n'
@@ -217,7 +240,8 @@ class ExperimentalData:
         with open('proteins.html', 'w') as f:
             f.write(header)
             f.write('\n<div style="float: left">\n')
-            f.write(proteins.to_html(classes='sortable', escape=False, justify='left'))
+            f.write(proteins.to_html(classes='sortable', escape=False,
+                                     justify='left'))
             f.write(footer)
 
     def plot_list_of_genes(self, list_of_genes, save_name, title=None):
@@ -240,7 +264,8 @@ class ExperimentalData:
         num_colors = len(X)
         if num_colors != 0:
             ax = plt.subplot(111)
-            ax.set_color_cycle([cm(1. * i / num_colors) for i in range(num_colors)])
+            ax.set_color_cycle(
+                    [cm(1. * i / num_colors) for i in range(num_colors)])
             for i in range(num_colors):
                 label = "\n".join(wrap(labels[i], 40))
                 index = np.argsort(X[i])
@@ -260,36 +285,41 @@ class ExperimentalData:
             ax.set_xscale('log', basex=2)
             ax.get_xaxis().get_major_formatter().labelOnlyBase = False
             ax.set_xticks(self.protomics_time_points)
-            ax.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.4f'))
-            ax.set_xlim(0)
+            ax.xaxis.set_major_formatter(
+                    matplotlib.ticker.FormatStrFormatter('%.4f'))
+            plt.xlim(min(self.protomics_time_points),
+                     max(self.protomics_time_points))
             locs, labels = plt.xticks()
             plt.setp(labels, rotation=90)
             plt.axhline(y=np.log2(1.5), linestyle='--')
             plt.axhline(y=-np.log2(1.5), linestyle='--')
             handles, labels = ax.get_legend_handles_labels()
-            lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
+            lgd = ax.legend(handles, labels, loc='best',
+                            bbox_to_anchor=(1.01, 1.0))
             plt.savefig('%s' % save_name, bbox_extra_artists=(lgd,),
                         bbox_inches='tight')
             plt.close()
 
     def create_table_of_data(self, sig=False, save_name='tmp', unique=False):
         if sig:
-            proteins = self.proteomics[self.proteomics['significant_flag']]
-            metabolites = self.metabolite[self.metabolite['significant_flag']]
+            proteins = self.proteomics[self.proteomics[flag]]
+            metabolites = self.metabolite[self.metabolite[flag]]
         else:
             proteins = self.proteomics
             metabolites = self.metabolite
 
-        exp_methods = ['hilic', 'rplc', 'label_free', 'silac', 'ph_silac', 'rna_seq']
-        timepoints = ['30s', '30min', '1h', '3h', '6h', '12h', '18h', '24h', '36h', '48h', '60h', '72h']
+        exp_methods = ['hilic', 'rplc', 'label_free', 'silac', 'ph_silac',
+                       'rna_seq']
+        timepoints = ['30s', '30min', '1h', '3h', '6h', '12h', '18h', '24h',
+                      '36h', '48h', '60h', '72h']
         measured_table = []
         genes = set()
         meta = set()
         for i in exp_methods:
             if i in ['hilic', 'rplc']:
-                tmp = metabolites[metabolites['data_type'] == i]
+                tmp = metabolites[metabolites[exp_method] == i]
             else:
-                tmp = proteins[proteins['data_type'] == i]
+                tmp = proteins[proteins[exp_method] == i]
             local = set()
             values = []
 
@@ -315,19 +345,25 @@ class ExperimentalData:
         print('genes', len(genes))
         print('meta', len(meta))
         measured_table = np.array(measured_table)
-        t = pandas.DataFrame(data=measured_table, index=exp_methods, columns=timepoints)
+        t = pandas.DataFrame(data=measured_table, index=exp_methods,
+                             columns=timepoints)
         filename = '{0}.tex'.format(save_name)
         pdffile = '{0}.pdf'.format(save_name)
         outname = '{0}.png'.format(save_name)
 
         with open(filename, 'wb') as f:
-            f.write(template.format(t.to_latex(column_format='*{%s}{c}' % str(len(timepoints) + 1))))
+            f.write(template.format(t.to_latex(
+                    column_format='*{%s}{c}' % str(len(timepoints) + 1))))
 
         with open(os.devnull, "w") as fnull:
-            subprocess.call(['pdflatex', filename], stderr=subprocess.STDOUT, stdout=fnull)
-            subprocess.call(['pdfcrop', pdffile, pdffile], stderr=subprocess.STDOUT, stdout=fnull)
-            subprocess.call(['convert', '-density', '300', pdffile, '-quality', '90', outname],
+            subprocess.call(['pdflatex', filename], stderr=subprocess.STDOUT,
+                            stdout=fnull)
+            subprocess.call(['pdfcrop', pdffile, pdffile],
                             stderr=subprocess.STDOUT, stdout=fnull)
+            subprocess.call(
+                    ['convert', '-density', '300', pdffile, '-quality', '90',
+                     outname],
+                    stderr=subprocess.STDOUT, stdout=fnull)
 
     def create_heat_map_of_gene(self, out_dir, gene):
         X = []
@@ -337,8 +373,8 @@ class ExperimentalData:
         gene_data = self.proteomics[self.proteomics['gene'] == gene]
         grouped = gene_data.groupby('protein')
         for i, row in grouped:
-            fc = np.array(row['treated_control_fold_change'])
-            sig_flag = np.array(row['significant_flag'])
+            fc = np.array(row[fold_change])
+            sig_flag = np.array(row[flag])
 
             time = np.array(row['time'])
 
@@ -353,7 +389,8 @@ class ExperimentalData:
         if num_colors != 0:
             fig = plt.figure()
             ax = plt.subplot(111)
-            ax.set_color_cycle([cm(1. * i / num_colors) for i in range(num_colors)])
+            ax.set_color_cycle(
+                    [cm(1. * i / num_colors) for i in range(num_colors)])
             for i in range(num_colors):
                 label = "\n".join(wrap(labels[i], 40))
                 index = np.argsort(X[i])
@@ -372,15 +409,20 @@ class ExperimentalData:
             ax.set_xscale('log', basex=2)
             ax.get_xaxis().get_major_formatter().labelOnlyBase = False
             ax.set_xticks(self.protomics_time_points)
-            ax.xaxis.set_major_formatter(matplotlib.ticker.FormatStrFormatter('%.4f'))
-            ax.set_xlim(left=0)
+            ax.xaxis.set_major_formatter(
+                    matplotlib.ticker.FormatStrFormatter('%.4f'))
+
+            plt.xlim(min(self.protomics_time_points),
+                     max(self.protomics_time_points))
             locs, labels = plt.xticks()
             plt.setp(labels, rotation=90)
             plt.axhline(y=np.log2(1.5), linestyle='--')
             plt.axhline(y=-np.log2(1.5), linestyle='--')
             handles, labels = ax.get_legend_handles_labels()
-            lgd = ax.legend(handles, labels, loc='best', bbox_to_anchor=(1.01, 1.0))
-            fig.savefig('%s/%s.pdf' % (out_dir, gene), bbox_extra_artists=(lgd,), bbox_inches='tight')
+            lgd = ax.legend(handles, labels, loc='best',
+                            bbox_to_anchor=(1.01, 1.0))
+            fig.savefig('%s/%s.pdf' % (out_dir, gene),
+                        bbox_extra_artists=(lgd,), bbox_inches='tight')
             plt.close()
 
     def volcano_plot(self, data, save_name, def_range=[-5, 5]):
@@ -393,22 +435,18 @@ class ExperimentalData:
         fc = np.log2(fc)
         p_value = -1 * np.log10(p)
         data = data.dropna(subset=['p_value_group_1_and_group_2'])
-        data = data[np.isfinite(data['treated_control_fold_change'])]
-        data = data.dropna(subset=['treated_control_fold_change'])
+        data = data[np.isfinite(data[fold_change])]
+        data = data.dropna(subset=[fold_change])
         tmp = data.loc[:,
-              ('p_value_group_1_and_group_2', 'treated_control_fold_change')]
+              ('p_value_group_1_and_group_2', fold_change)]
         tmp['p_value_group_1_and_group_2'] = np.log10(
                 data['p_value_group_1_and_group_2']) * -1
-        # tmp['treated_control_fold_change'] = np.log2(tmp['treated_control_fold_change'])
-        # print(tmp['treated_control_fold_change'])
-        tmp['treated_control_fold_change'] = np.where(
-            tmp['treated_control_fold_change'] > 0,
-            np.log2(tmp['treated_control_fold_change']),
-            -np.log2(-tmp['treated_control_fold_change']))
-        # print(tmp['treated_control_fold_change'])
 
-        # pvalues = data['p_value_group_1_and_group_2']
-        # fold_change = data['treated_control_fold_change']
+        tmp[fold_change] = np.where(
+                tmp[fold_change] > 0,
+                np.log2(tmp[fold_change]),
+                -np.log2(-tmp[fold_change]))
+
         #    0    #    1   #      0     #
         #         #        #            #
         #################################
@@ -418,22 +456,22 @@ class ExperimentalData:
         #################################
 
         sec_0 = tmp[(tmp['p_value_group_1_and_group_2'] >= p_value) & (
-        np.abs(tmp['treated_control_fold_change']) >= fc)]
+            np.abs(tmp[fold_change]) >= fc)]
         sec_1 = tmp[(tmp['p_value_group_1_and_group_2'] >= p_value) & (
-        np.abs(tmp['treated_control_fold_change']) < fc)]
+            np.abs(tmp[fold_change]) < fc)]
         sec_2 = tmp[(tmp['p_value_group_1_and_group_2'] < p_value)]
 
         print('{0} : sec0 = {1} , sec1 = {2} , sec2 = {3}'.format(save_name,
                                                                   len(sec_0),
                                                                   len(sec_1),
                                                                   len(sec_2)))
-        plt.scatter(sec_2['treated_control_fold_change'],
+        plt.scatter(sec_2[fold_change],
                     sec_2['p_value_group_1_and_group_2'], s=1, marker=',',
                     color='gray')
-        plt.scatter(sec_0['treated_control_fold_change'],
+        plt.scatter(sec_0[fold_change],
                     sec_0['p_value_group_1_and_group_2'], marker='.',
                     color='blue')
-        plt.scatter(sec_1['treated_control_fold_change'],
+        plt.scatter(sec_1[fold_change],
                     sec_1['p_value_group_1_and_group_2'], marker='.',
                     color='red')
 
@@ -455,20 +493,20 @@ class ExperimentalData:
         # We declare fold change as  less than -1 or greater than 1
 
         data = data.dropna(subset=['p_value_group_1_and_group_2'])
-        data = data[np.isfinite(data['treated_control_fold_change'])]
-        data = data.dropna(subset=['treated_control_fold_change'])
+        data = data[np.isfinite(data[fold_change])]
+        data = data.dropna(subset=[fold_change])
 
-        data = data.dropna(subset=['treated_control_fold_change'])
+        data = data.dropna(subset=[fold_change])
         tmp = data.loc[:,
-              ('p_value_group_1_and_group_2', 'treated_control_fold_change')]
+              ('p_value_group_1_and_group_2', fold_change)]
         tmp['p_value_group_1_and_group_2'] = np.log10(
                 data['p_value_group_1_and_group_2']) * -1
-        tmp['treated_control_fold_change'] = np.where(
-            tmp['treated_control_fold_change'] > 0,
-            np.log2(tmp['treated_control_fold_change']),
-            -np.log2(-tmp['treated_control_fold_change']))
+        tmp[fold_change] = np.where(
+                tmp[fold_change] > 0,
+                np.log2(tmp[fold_change]),
+                -np.log2(-tmp[fold_change]))
 
-        plt.hist(tmp['treated_control_fold_change'], 100, color='gray')
+        plt.hist(tmp[fold_change], 100, color='gray')
 
         plt.xlim(def_range[0], def_range[1])
         # plt.title('p-values vs fold-change', fontsize=20)
