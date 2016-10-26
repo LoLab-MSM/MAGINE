@@ -152,8 +152,8 @@ class RenderModel:
                 f.close()
             os.system('pdfcrop {0}/go_network_{1}_{2}.pdf {0}/go_network_{1}_{2}_wpr.pdf'.format(directory, prefix, j))
         os.system(
-                'convert -delay 100 -density 300 -trim {0}/go_network_*_wpr.pdf -quality 100 -trim {0}/go_network.gif'.format(
-                directory))
+                'convert -delay 100 -density 300 -trim {0}/go_network_{1}_*_wpr.pdf -quality 100 -trim {0}/go_network_{1}.gif'.format(
+                        directory, prefix))
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
