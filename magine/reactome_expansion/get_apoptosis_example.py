@@ -42,122 +42,161 @@ apoptosis_complex = reactome.pathway_complexes(109581)
 #         for each in x[i]:
 #             print(each['displayName'])
 
-x = reactome.get_pathway(109581)
-
+apoptosis = 109581
+necrosis = 5218859
+x = reactome.get_pathway_events(necrosis)
 import pygraphviz as pyg
 
 g = pyg.AGraph(directed=True)
 
 
 def shorten_compartment_name(string):
-    name_dict = {'plasma membrane'                  : 'PM',
+    name_dict = {'plasma membrane'                  : 'PlasmaMem',
                  'cytosol'                          : 'CYTO',
                  'mitochondrial outer membrane'     : 'MOM',
-                 'nucleoplasm'                      : 'NP',
-                 'endosome membrane'                : 'EndoMem',
-                 'mitochondrial intermembrane space': 'MIM'}
-    for i in name_dict:
-        if i in string:
-            string = string.replace(i, name_dict[i])
+                 'nucleoplasm'                      : 'NucPlasm',
+                 'endosome membrane'                : 'EndosomeMem',
+                 'mitochondrial intermembrane space': 'MIM',
+                 'nuclear envelope'                 : 'NucEnv',
+                 'endoplasmic reticulum membrane'   : 'ERM',
+                 '['                                : r'\n['}
+    for s in name_dict:
+        if s in string:
+            string = string.replace(s, name_dict[s])
     return string
 
 
+shapes = {'Protein'          : 'box',
+          'Chemical Compound': 'oval',
+          'Complex'          : 'note'}
+
+
+def add_to_graph(sample, list_of_species, graph):
+    if type(sample) == int:
+        # print('output type = int')
+        # outputs.add(each)
+        return
+    if sample['className'] != 'Protein':
+        if sample['className'] != 'Chemical Compound':
+            print('Is a {}'.format(sample['className']))
+    name = sample['dbId']
+    graph.add_node(name,
+                   label=shorten_compartment_name(sample['displayName']),
+                   shape=shapes[sample['className']])
+
+    list_of_species[name] = shorten_compartment_name(sample['displayName'])
+
+
 def get_reaction_info(reaction):
+
     # print("Reaction : {}".format(reaction))
     if 'className' not in reaction:
         # print("No class name")
         return
     if reaction['className'] != 'Reaction':
-        # print("Not a reaction")
+        print("Not a reaction")
+        print(reaction)
+        # y = reactome.get_pathway_events(reaction['dbId'])
+        # print(y)
+        # for i in y:
+        #     get_reaction_info(i)
         # print('{} name : {}'.format(reaction['className'], reaction['displayName']))
         return
     print(
-    '{} name : {}'.format(reaction['className'], reaction['displayName']))
-    for i in reaction.keys():
-        print('{} : {}'.format(i, reaction[i]))
-    print('\n')
+        '{} name : {}'.format(reaction['className'], reaction['displayName']))
+    # for i in reaction.keys():
+    #     print('{} : {}'.format(i, reaction[i]))
+
     y = reactome.get_reaction_info(reaction['stId'])
     # print('Reaction info : {}'.format(y))
     for i in y.keys():
         print('{} : {}'.format(i, y[i]))
-    inputs = []
-    outputs = []
+
     if ('input' or 'output') not in y:
         print("No input or output")
         return
     catalyst = False
+    cat_all = []
     if 'catalystActivity' in y:
-        print('Catalyst reaction')
-        print(y['catalystActivity'])
+        # print('Catalyst reaction')
+        # print(y['catalystActivity'])
+        # print('number of cat {}'.format(len(y['catalystActivity'])))
         catalyst = y['catalystActivity'][0]['dbId']
         test = reactome.get_event_participating_phys_entities(catalyst)
-        print('TEST', test)
+        # print('TEST', test)
         for n in test:
             if 'displayName' in n:
-                catalyst = n['displayName']
-                catalyst = shorten_compartment_name(catalyst)
+                catalyst = n['dbId']
+                # if n['className'] == 'Set':
+                #     print('set of species')
+                #     print(n['stId'])
+                #     x = reactome.get_event_participants(n['stId'])
+                #     print('HERE', x)
+                #     quit()
+                cat_all.append(catalyst)
+                g.add_node(catalyst,
+                           label=shorten_compartment_name(n['displayName']),
+                           shape='box', fillcolor='grey', style='filled')
+    if len(cat_all) > 1:
+        print(cat_all)
+        quit()
+    print("number of inputs : {}".format(len(y['input'])))
+    print("number of outputs : {}".format(len(y['output'])))
+
+    inputs = {}
+    outputs = {}
 
     for each in y['input']:
-        if type(each) == int:
-            print('input type = int')
-            continue
-        # for k in each.keys():
-        #     print('Input {} : {}'.format(k, each[k]))
-        # print('input keys {}'.format(each.keys()))
-        print('Inputs : {}'.format(each['displayName']))
-        name = each['displayName']
-        name = shorten_compartment_name(name)
-        inputs.append(name)
-    for each in y['output']:
-        if type(each) == int:
-            print('output type = int')
-            continue
-        # for k in each.keys():
-        #     print('Ouput {} : {}'.format(k, each[k]))
-        # for k in each.keys():
-        #     print('{} : {}'.format(k, each[k]))
-        print('Output : {}'.format(each['displayName']))
-        name = each['displayName']
-        name = shorten_compartment_name(name)
-        outputs.append(name)
-    # for each in y['compartment']:
-    #     print('compartment : {}'.format(each['displayName']))
+        add_to_graph(each, inputs, g)
 
+    for each in y['output']:
+        add_to_graph(each, outputs, g)
+
+    for i in inputs:
+        print("Input : {}".format(inputs[i]))
+    for i in outputs:
+        print("Output : {}".format(outputs[i]))
     # z = reactome.get_event_participants(y['input'][0]['consumedByEvent'][0])
     # print('event participant : {}'.format(z))
     # for i in z:
     #     print(i)
-    #     print(i['peDbId'])
     #     p = i['refEntities']
-    #     for each in p:
-    #        print(each['dbId'])
-    #        print(each['identifier'])
-    #
+        #     print(i['peDbId'])
+        #     label = shorten_compartment_name(i['displayName'])
+        #     g.add_node(i['peDbId'], label=label, shape='box')
+        # #     for each in p:
+        # #        print(each['dbId'])
+        # #        print(each['identifier'])
+        # #
     # z = reactome.get_event_participants(y['output'][0]['producedByEvent'][0])
     # print('event participant : {}'.format(z))
     # for i in z:
     #     print(i)
     #     p = i['refEntities']
     #     print(i['peDbId'])
-    #     for each in p:
-    #        print(each['dbId'])
-    #        print(each['identifier'])
+        #     label = shorten_compartment_name(i['displayName'])
+        #     g.add_node(i['peDbId'], label=label, shape='box')
+        # for each in p:
+        #    print('dbid',each['dbId'])
+        #    print('id',each['identifier'])
 
     for each in inputs:
-        if catalyst:
-            g.add_edge(catalyst, each)
-        for n in outputs:
-            g.add_edge(each, n)
+        # if catalyst:
+        #     g.add_edge(catalyst, each)
+        g.add_edge(each, 'rxn_{}'.format(reaction['dbId']))
+    for n in outputs:
+        g.add_edge('rxn_{}'.format(reaction['dbId']), n)
 
 
-# get_reaction_info(x[155])
-# g.draw('test.pdf', prog='dot')
-# quit()
-# samples = [154, 155, 156]
+get_reaction_info(x[3])
+g.draw('test.pdf', prog='dot')
+g.write('test.dot')
+quit()
+samples = [149, 150, 151, 152, 153, 154, 155, 156]
 for i in range(len(x)):
     # for i in samples:
-    # for i in range(10):
-    print(i)
+    # for i in range(11, 20):
+    print('ITERATION NUMBER {}\n'.format(i))
     get_reaction_info(x[i])
 g.draw('test.pdf', prog='dot')
 print("Number of nodes :{}".format(len(g.nodes())))

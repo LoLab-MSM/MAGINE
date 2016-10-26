@@ -418,11 +418,21 @@ class Reactome(REST):
         .. note:: draft version
         """
         res = self.http_get(
-                'http://reactome.org/ContentService/data/pathway/%s/containedEvents' % pathway_id,
+                'http://reactome.org/ContentService/data/pathway/%s/Complex' % pathway_id,
                 frmt='json')
 
         return res
 
+    def get_pathway_events(self, pathway_id):
+        """Fetch information from the reaction HTML page
+
+        .. note:: draft version
+        """
+        res = self.http_get(
+                'http://reactome.org/ContentService/data/pathway/%s/containedEvents' % pathway_id,
+                frmt='json')
+
+        return res
 
 """
 class ReactomePathway(object):
