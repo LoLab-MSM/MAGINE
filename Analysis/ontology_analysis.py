@@ -35,7 +35,6 @@ class GoAnalysis:
         self.reference = reference
         self.metric = metric
         self.verbose = verbose
-        self.ran_go_pdfs = False
         if slim:
             self.slim = True
             self.slim_name = slim
@@ -88,8 +87,8 @@ class GoAnalysis:
                 pass
             elif ref < 5.:
                 continue
-            # if p_value > 0.05:
-            #    continue
+            if p_value > 0.05:
+                continue
             # else:
 
             if self.metric == 'fraction':
@@ -100,8 +99,8 @@ class GoAnalysis:
                 # expected_value = number_of_genes * num_ref / num_total_reference_genes
                 expected_value = number_of_genes * float(
                     ref) / self.number_of_total_reference_genes
-                print(
-                'number of reference', self.number_of_total_reference_genes)
+                # print(
+                # 'number of reference', self.number_of_total_reference_genes)
                 # pvalue_2 = scipy.stats.binom_test(len(genes),
                 #                                  number_of_genes,
                 #                                  float(ref) / self.number_of_total_reference_genes)
@@ -231,7 +230,7 @@ class GoAnalysis:
             print('No data! Error! Returning nothing')
             return
         self.data_2.to_csv('{0}.csv'.format(savename))
-        quit()
+
         if search_term is not None:
             self.data = self.find_terms(data, search_term)
         else:
@@ -316,11 +315,14 @@ class GoAnalysis:
                                                                                             labels[i]))
             terms_dict = {}
             for j in range(number):
+                if j > len(tmp) - 1:
+                    continue
                 terms_dict[names[j]] = tmp[j]
                 if tmp[j, i] == 0.0:
                     continue
                 else:
-                    print("Top hits = {0}, {1}, {2}, {3}".format(i, names[j], self.global_go[names[j]], tmp[j, i]))
+                    print("Top hits = {0}, {1}, {2}, {3}".format(
+                            i, names[j], self.global_go[names[j]], tmp[j, i]))
 
             self.top_hits.append(terms_dict)
 
@@ -460,12 +462,11 @@ class GoAnalysis:
             else:
                 if save_name not in self.created_go_pds:
                     self.created_go_pds.add(save_name)
-                    self.exp_data.plot_list_of_genes(list(gene_set), save_name,
-                                                     title=title)
+                    # self.exp_data.plot_list_of_genes(list(gene_set), save_name,
+                    #                                 title=title)
                 real_names.append('<a href="{0}">{1}</a>'.format(save_name, self.global_go[i]))
         # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
-        self.ran_go_pdfs = True
         # duplicate the sort table class so we can sort by column
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html_additions', 'sorttable.js'),
                   'r') as f:
