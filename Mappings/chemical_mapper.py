@@ -11,9 +11,6 @@ class ChemicalMapper:
     converts chemical species
     Datbase was creating by pulling down everything from HMDB
     """
-    categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id',
-                  'biocyc_id', 'synonyms',
-                  'pubchem_compound_id', 'iupac_name', 'protein_associations']
 
     def __init__(self):
         self.database = None
@@ -24,29 +21,30 @@ class ChemicalMapper:
         self.hmdb_accession_to_protein = {}
         self.synonyms_to_hmdb = {}
         try:
-            self.load()
+            self.reload()
             print('Loading class data')
         except:
             print('Initializing Chemical mapping')
-            self.reload()
+            self.load()
 
-    def reload(self):
-            hmdb_database = pd.read_csv(
-                    os.path.join(directory, 'HMDB_processing',
-                                 'hmdb_dataframe.csv.gz'))
-            self.database = hmdb_database
-            self.hmdb_accession_to_chemical_name = self.convert_to_dict(
-                    "accession", "name")
-            self.chemical_name_to_hmdb_accession = self.convert_to_dict(
-                    "name", "accession")
-            self.hmdb_accession_to_kegg = self.convert_to_dict("accession",
-                                                               "kegg_id")
-            self.kegg_to_hmdb_accession = self.convert_to_dict("kegg_id",
-                                                               "accession")
-            self.hmdb_accession_to_protein = self.convert_to_dict(
-                    "accession", "protein_associations")
-            self.synonyms_to_hmdb = None
-            self.save()
+    def load(self):
+        filename = os.path.join(directory, 'HMDB_processing',
+                                'hmdb_dataframe.csv.gz')
+        hmdb_database = pd.read_csv(filename)
+
+        self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
+        self.hmdb_accession_to_chemical_name = self.convert_to_dict(
+                "accession", "name")
+        self.chemical_name_to_hmdb_accession = self.convert_to_dict(
+                "name", "accession")
+        self.hmdb_accession_to_kegg = self.convert_to_dict("accession",
+                                                           "kegg_id")
+        self.kegg_to_hmdb_accession = self.convert_to_dict("kegg_id",
+                                                           "accession")
+        self.hmdb_accession_to_protein = self.convert_to_dict(
+                "accession", "protein_associations")
+        self.synonyms_to_hmdb = None
+        self.save()
 
     def convert_to_dict(self, key, value):
         """ creates a dictionary from hmdb with a list of values for each key
@@ -93,18 +91,19 @@ class ChemicalMapper:
         with open(os.path.join(directory, 'hmdb_instance.txt'), 'w') as f:
             f.write(cPickle.dumps(self.__dict__))
 
-    def load(self):
+    def reload(self):
         """ loads class instance
 
         :return:
         """
 
         with open(os.path.join(directory, 'hmdb_instance.txt'), 'r') as f:
-            dataPickle = f.read()
+            data = f.read()
             f.close()
-        self.__dict__ = cPickle.loads(dataPickle)
+        self.__dict__ = cPickle.loads(data)
 
 
 if __name__ == '__main__':
     cm = ChemicalMapper()
+    cm.load()
     cm.print_info()
