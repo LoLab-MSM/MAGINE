@@ -18,7 +18,7 @@ class ExperimentalData:
             parse_dates=False, low_memory=False)
         # all_prot.dropna(subset=['gene'])
         self.proteomics = all_prot[all_prot['species_type'] == 'protein']
-        self.metabolite = all_prot[all_prot['species_type'] == 'metabolite']
+        self.metabolite = all_prot[all_prot['species_type'] == 'metabolites']
 
         self.proteomics_sign = self.proteomics[
             self.proteomics['significant_flag']]
