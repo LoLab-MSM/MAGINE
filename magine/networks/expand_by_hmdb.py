@@ -2,7 +2,7 @@ from Mappings.maps import cm
 
 
 def expand_by_hmdb(graph, metabolite_list, all_measured):
-    """ Expands a network using HMDB metabolite-protein information
+    """ Expands a network using HMDB metabolites-protein information
 
 
     :param graph: Networkx network
@@ -51,7 +51,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
             count_not_in_network += 1
             if i in cm.hmdb_accession_to_protein:
                 tmp_list = cm.hmdb_accession_to_protein[i][0]
-                if tmp_list is None:
+                if tmp_list is None or len(tmp_list) == 0:
                     missing_protein_info += 1
                     continue
                 else:
@@ -77,6 +77,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
             still_missing.append(i)
 
     count = 0
+    all_measured = set(all_measured)
     for each in added_proteins:
         if each in all_measured:
             count += 1
@@ -99,6 +100,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     print('Number of add proteins = {0}'.format(len(added_proteins)))
     print('Proteins added that were measured = {0}'.format(count))
     print('\n')
-    print('missing metabolite-protein info = {0}'.format(missing_protein_info))
+    print(
+    'missing metabolites-protein info = {0}'.format(missing_protein_info))
 
     return tmp_graph

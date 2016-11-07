@@ -9,8 +9,7 @@ from sys import modules
 import networkx as nx
 from bioservices import KEGG
 
-import Mappings.maps as mapper
-from kgml_to_networkx_parser import kgml_to_graph
+from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:
     kegg = modules['kegg']
