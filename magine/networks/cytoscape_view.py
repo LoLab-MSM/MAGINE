@@ -8,7 +8,7 @@ from py2cytoscape.data.cyrest_client import CyRestClient
 from py2cytoscape.data.style import StyleUtil
 from py2cytoscape.data.util_network import NetworkUtil as util
 
-from cytoscape_mod_layout import LayoutClient
+from magine.networks.cytoscape_mod_layout import LayoutClient
 
 
 class RenderModel:
