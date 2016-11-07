@@ -35,14 +35,18 @@ class RenderModel:
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], format='view')
 
-        params = [{u'type': u'double', u'name': u'spacingx', u'value': 150.0,
+        params = [{u'type'       : u'double', u'name': u'spacingx',
+                   u'value'      : 150.0,
                    u'description': u'Horizontal spacing between two partitions in a row:'},
-                  {u'type': u'double', u'name': u'spacingy', u'value': 150.0,
+                  {u'type'       : u'double', u'name': u'spacingy',
+                   u'value'      : 150.0,
                    u'description': u'Vertical spacing between the largest partitions of two rows:'},
                   {u'name': u'maxwidth', u'value': 1000.0},
-                  {u'type': u'double', u'name': u'minrad', u'value': 20.0,
+                  {u'type'       : u'double', u'name': u'minrad',
+                   u'value'      : 20.0,
                    u'description': u'Minimum width of a partition:'},
-                  {u'type': u'double', u'name': u'radmult', u'value': 50.0,
+                  {u'type'       : u'double', u'name': u'radmult',
+                   u'value'      : 50.0,
                    u'description': u'Scale of the radius of the partition:'}]
 
         # Marquee Directed Simple
@@ -64,7 +68,8 @@ class RenderModel:
         self.style.update_defaults(options)
         if layout == 'attributes-layout':
             self.cy.layout.update(name=layout, parameters=params)
-            self.cy.layout.apply(name=layout, network=self.g_cy, params={'column': 'color'})
+            self.cy.layout.apply(name=layout, network=self.g_cy,
+                                 params={'column': 'color'})
         else:
             self.cy.layout.apply(name=layout, network=self.g_cy)
         self.node_name2id = util.name2suid(self.g_cy, 'node')
@@ -94,71 +99,118 @@ class RenderModel:
         for i in style_opts:
             print(i)
 
-    def visualize_by_list_of_time(self, list_of_time, prefix='tmp', directory='tmp'):
+    def visualize_by_list_of_time(self, list_of_time, prefix='tmp',
+                                  out_dir='tmp'):
         """ create sequences of pdfs and svgs based on list of attributes
         list_of_time should point to attributes of the network. This attribute will update the network accordingly.
 
         :param list_of_time:
         :return:
         """
-        if os.path.exists(directory):
-            pass
-        else:
-            os.mkdir(directory)
-        node_label_values = {self.node_name2id[i[0]]: i[1]['label'] for i in self.graph.nodes(data=True)}
-        node_color_values = {self.node_name2id[i[0]]: i[1]['color'] for i in self.graph.nodes(data=True)}
+        if not os.path.exists(out_dir):
+            os.mkdir(out_dir)
+            os.mkdir(os.path.join(out_dir, 'Figures'))
+        node_label_values = {self.node_name2id[i[0]]: i[1]['label'] for i in
+                             self.graph.nodes(data=True)}
+        node_color_values = {self.node_name2id[i[0]]: i[1]['color'] for i in
+                             self.graph.nodes(data=True)}
         edge_color_values = {}
         for i in self.edge_name2id:
             edge_color_values[self.edge_name2id[i]] = 'gray'
         edge_width_values = {}
         for i in self.graph.edges(data=True):
-            edge_width_values[self.edge_name2id[str(i[0]) + ',' + str(i[1])]] = i[2]['weight']
-        simple_slope = StyleUtil.create_slope(min=min(edge_width_values.values()),
-                                              max=max(edge_width_values.values()),
-                                              values=(3, 10))
+            edge_width_values[self.edge_name2id[str(i[0]) + ',' + str(i[1])]] = \
+                i[2]['weight']
+        simple_slope = StyleUtil.create_slope(
+                min=min(edge_width_values.values()),
+                max=max(edge_width_values.values()),
+                values=(3, 10))
         print(simple_slope)
-        self.style.create_continuous_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH', points=simple_slope)
+        self.style.create_continuous_mapping(column='weight',
+                                             col_type='Double',
+                                             vp='EDGE_WIDTH',
+                                             points=simple_slope)
         # self.style.create_passthrough_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH')
 
         for j in list_of_time:
-            size = np.array([self.graph.node[n][j] for n in self.graph.nodes()])
-            simple_slope = StyleUtil.create_slope(min=size.min(), max=size.max(), values=(10, 50))
-            self.style.create_continuous_mapping(column=j, col_type='Double', vp='NODE_SIZE', points=simple_slope)
+            size = np.array(
+                    [self.graph.node[n][j] for n in self.graph.nodes()])
+            simple_slope = StyleUtil.create_slope(min=size.min(),
+                                                  max=size.max(),
+                                                  values=(10, 50))
+            self.style.create_continuous_mapping(column=j, col_type='Double',
+                                                 vp='NODE_SIZE',
+                                                 points=simple_slope)
             self.cy.style.apply(style=self.style, network=self.g_cy)
-            self.view1.update_network_view(visual_property='NETWORK_SCALE_FACTOR', value='.25')
-            self.view1.update_network_view(visual_property='NETWORK_BACKGROUND_PAINT', value='white')
-            self.view1.update_node_views(visual_property='NODE_LABEL', values=node_label_values)
-            self.view1.update_node_views(visual_property='NODE_LABEL_COLOR', values=node_label_values)
-            # self.view1.update_node_views(visual_property='NODE_FILL_COLOR', values=node_color_values)
-            #self.view1.update_node_views(visual_property='NODE_BORDER_PAINT', values=node_color_values)
-            self.view1.update_edge_views(visual_property='EDGE_LABEL_COLOR', values=edge_color_values)
-            self.view1.update_edge_views(visual_property='EDGE_STROKE_UNSELECTED_PAINT', values=edge_color_values)
-            self.view1.update_edge_views(visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT', values=edge_color_values)
-            self.view1.update_edge_views(visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT', values=edge_color_values)
+            self.fit_to_window()
+            self.view1.update_network_view(
+                    visual_property='NETWORK_SCALE_FACTOR', value='.15')
+            self.view1.update_network_view(
+                    visual_property='NETWORK_BACKGROUND_PAINT', value='white')
+            self.view1.update_node_views(visual_property='NODE_LABEL',
+                                         values=node_label_values)
+            self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
+                                         values=node_label_values)
+            # self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
+            #                              values=node_color_values)
+            # self.view1.update_node_views(visual_property='NODE_BORDER_PAINT',
+            #                              values=node_color_values)
+            self.view1.update_edge_views(visual_property='EDGE_LABEL_COLOR',
+                                         values=edge_color_values)
+            self.view1.update_edge_views(
+                    visual_property='EDGE_STROKE_UNSELECTED_PAINT',
+                    values=edge_color_values)
+            self.view1.update_edge_views(
+                    visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
+                    values=edge_color_values)
+            self.view1.update_edge_views(
+                    visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
+                    values=edge_color_values)
 
-            with open(os.path.join(directory, 'go_network_{0}_{1}.svg'.format(prefix, j)), 'wb') as f:
+            fig_name = 'go_network_{0}_{1}'.format(prefix, j)
+            with open(os.path.join(out_dir, 'Figures',
+                                   '{}.svg'.format(fig_name)),
+                      'wb') as f:
                 network_svg = self.g_cy.get_svg()
+                # network_svg = self.get_svg()
                 f.write(network_svg)
                 f.close()
-            with open(os.path.join(directory, 'go_network_{0}_{1}.pdf'.format(prefix, j)), 'wb') as f:
-                network_pdf = self.g_cy.get_pdf()
-                f.write(network_pdf)
-                f.close()
-            with open(os.path.join(directory,
-                                   'go_network_{0}_{1}.png'.format(prefix, j)),
-                      'wb') as f:
-                network_png = self.g_cy.get_png()
-                f.write(network_png)
-                f.close()
-            os.system('pdfcrop {0}/go_network_{1}_{2}.pdf {0}/go_network_{1}_{2}_wpr.pdf'.format(directory, prefix, j))
-        os.system(
-                'convert -delay 100 -density 300 -trim {0}/go_network_{1}_*_wpr.pdf -quality 100 -trim {0}/go_network_{1}.gif'.format(
-                        directory, prefix))
+                os.system('convert -density 1000 -background White  '
+                          '{0}/Figures/go_network_{1}_{2}.svg'
+                          ' {0}/Figures/go_network_{1}_{2}_wpr.png'
+                          ''.format(out_dir, prefix, j, label=j))
+                os.system('convert -density 1000    '
+                          '{0}/Figures/go_network_{1}_{2}_wpr.png -trim'
+                          ' -background White label:"{label}"  -gravity Center -append'
+                          ' {0}/Figures/go_network_{1}_{2}_wpr.png'
+                          ''.format(out_dir, prefix, j, label=j))
+                # quit()
+                # with open(os.path.join(out_dir, 'Figures', '{}.pdf'.format(fig_name)),
+                #           'wb') as f:
+                #     network_pdf = self.g_cy.get_pdf()
+                #     f.write(network_pdf)
+                #     f.close()
+
+                # with open(os.path.join(out_dir,'Figures', '{}.png'.format(fig_name)),
+                #           'wb') as f:
+                #     network_png = self.g_cy.get_png()
+                #     f.write(network_png)
+                #     f.close()
+                #
+                # os.system(
+                #     'pdfcrop {0}/Figures/go_network_{1}_{2}.pdf {0}/Figures/go_network_{1}_{2}_wpr.pdf'.format(
+                #             out_dir, prefix, j))
+        os.system('convert -delay 100 -density 500'
+                  ' {0}/Figures/go_network_{1}_*_wpr.png '
+                  ' {0}/Figures/go_network_{1}.gif'.format(
+                out_dir, prefix))
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
-        node_color_values = {self.node_name2id[i[0]]: i[1][attribute] for i in self.graph.nodes(data=True)}
-        self.view1.update_node_views(visual_property='NODE_FILL_COLOR', values=node_color_values)
+        node_color_values = {self.node_name2id[i[0]]: i[1][attribute] for i in
+                             self.graph.nodes(data=True)}
+        self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
+                                     values=node_color_values)
         network_pdf = self.g_cy.get_svg()
         with open('{0}.svg'.format(save_name), 'wb') as f:
             f.write(network_pdf)
@@ -180,8 +232,12 @@ class RenderModel:
         url = '%sviews/first.png?h=%d' % (self.g_cy._CyNetwork__url, height)
         return requests.get(url).content
 
+    def get_svg(self, height=2000):
+        url = '%sviews/first.svg?h=%d' % (self.g_cy._CyNetwork__url, height)
+        return requests.get(url).content
 
 if __name__ == '__main__':
     ddn = nx.nx.read_graphml('t_all_colored_pvalue_2.graphml')
     rm = RenderModel(ddn, style='Marquee')
-    rm.visualize_by_list_of_time(['time_0', 'time_1', 'time_2', 'time_3', 'time_4', ])
+    rm.visualize_by_list_of_time(
+            ['time_0', 'time_1', 'time_2', 'time_3', 'time_4', ])

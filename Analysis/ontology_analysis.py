@@ -44,6 +44,10 @@ class GoAnalysis:
         self.number_of_total_reference_genes = len(self.annotations.gene_names)
         self.global_go = {}
         self.out_dir = output_directory
+        if not os.path.exists(self.out_dir):
+            os.mkdir(self.out_dir)
+        if not os.path.exists(os.path.join(self.out_dir, 'Figures')):
+            os.mkdir(os.path.join(self.out_dir, 'Figures'))
         self.top_hits = []
         self.num_data_sets = 0
         self.save_png = save_png
@@ -191,7 +195,8 @@ class GoAnalysis:
         fig = plt.figure(figsize=(14, 20))
         ax1 = fig.add_subplot(111)
 
-        im = ax1.imshow(matrix, aspect=.25, interpolation='nearest', extent=(0, size_of_data, 0, length_matrix + 1),
+        im = ax1.imshow(matrix, aspect=.25, interpolation='nearest',
+                        extent=(0, size_of_data, 0, length_matrix + 1),
                         origin='lower')
 
         names_2 = []
@@ -210,9 +215,12 @@ class GoAnalysis:
         # plt.colorbar(im)
         # plt.axes().set_aspect('equal', 'datalim')
         # plt.tight_layout()
-        plt.savefig(os.path.join(self.out_dir, '%s.pdf' % savename), dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(self.out_dir, 'Figures', '%s.pdf' % savename),
+                    dpi=150, bbox_inches='tight')
         if self.save_png:
-            plt.savefig(os.path.join(self.out_dir, '%s.png' % savename), dpi=150, bbox_inches='tight')
+            plt.savefig(
+                os.path.join(self.out_dir, 'Figures', '%s.png' % savename),
+                dpi=150, bbox_inches='tight')
         plt.close()
 
     def analysis_data(self, data, aspect='F', savename='tmp', labels=None, analyze=True, search_term=None):
@@ -266,19 +274,26 @@ class GoAnalysis:
         axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
         plt.colorbar(im, cax=axcolor)
         if self.save_png:
-            fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.png' % savename))
-        fig.savefig(os.path.join(self.out_dir, '%s_dendrogram.pdf' % savename))
+            fig.savefig(
+                os.path.join(self.out_dir, '%s_clustered.png' % savename))
+        fig.savefig(os.path.join(self.out_dir, '%s_clustered.pdf' % savename))
         plt.close()
-        self.plot_heatmap(tmp_array, names_sorted, 0, 100, '%s_top_dendrogram' % savename, labels)
-        self.plot_heatmap(tmp_array, names_sorted, -100, None, '%s_bottom_dendrogram' % savename, labels)
+
+        self.plot_heatmap(tmp_array, names_sorted, 0, 100,
+                          '%s_top_clustered' % savename, labels)
+        self.plot_heatmap(tmp_array, names_sorted, -100, None,
+                          '%s_bottom_clustered' % savename, labels)
+
         figures = ['%s_top' % savename,
                    '%s_bottom' % savename,
-                   '%s_dendrogram' % savename,
-                   '%s_top_dendrogram' % savename,
-                   '%s_bottom_dendrogram' % savename, ]
+                   '%s_clustered' % savename,
+                   '%s_top_clustered' % savename,
+                   '%s_bottom_clustered' % savename, ]
         html_pages = []
         for i in figures:
-            html_pages.append('<a href="{0}/{1}.pdf">{2}</a>'.format(self.out_dir, i, i))
+            html_pages.append(
+                '<a href="{0}/Figures/{1}.pdf">{2}</a>'.format(self.out_dir, i,
+                                                               i))
         self.html_pdfs = pd.DataFrame(html_pages, columns=['Clustered output'])
         self.print_ranked_over_time(savename=savename, labels=labels)
 
@@ -311,8 +326,10 @@ class GoAnalysis:
             if create_plots:
                 self.plot_heatmap(tmp, names, -1 * number, None
                                   , 'top_hits_entry_%i_%s' % (i, savename), labels)
-                html_pages.append('<a href="{0}/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(self.out_dir, i, savename,
-                                                                                            labels[i]))
+                html_pages.append(
+                    '<a href="{0}/Figures/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(
+                        self.out_dir, i, savename,
+                        labels[i]))
             terms_dict = {}
             for j in range(number):
                 if j > len(tmp) - 1:
@@ -453,8 +470,8 @@ class GoAnalysis:
                     if type(g) == list:
                         for e in g:
                             gene_set.add(e)
-            save_name = '{0}/go_{1}_{2}.pdf'.format(self.out_dir, i,
-                                                    self.savename).replace(':', '')
+            save_name = '{0}/Figures/go_{1}_{2}.pdf'.format(self.out_dir, i,
+                                                            self.savename).replace(':', '')
             title = "{0} : {1}".format(str(i), self.global_go[i])
 
             if len(gene_set) > 50:
@@ -462,8 +479,8 @@ class GoAnalysis:
             else:
                 if save_name not in self.created_go_pds:
                     self.created_go_pds.add(save_name)
-                    # self.exp_data.plot_list_of_genes(list(gene_set), save_name,
-                    #                                 title=title)
+                    self.exp_data.plot_list_of_genes(list(gene_set), save_name,
+                                                     title=title)
                 real_names.append('<a href="{0}">{1}</a>'.format(save_name, self.global_go[i]))
         # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
@@ -471,13 +488,14 @@ class GoAnalysis:
         with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html_additions', 'sorttable.js'),
                   'r') as f:
             x = f.read()
-            with open('sorttable_tmp.js', 'w') as tmp_file:
+            with open('{}/Figures/sorttable_tmp.js'.format(self.out_dir),
+                      'w') as tmp_file:
                 tmp_file.write(x)
 
         header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n\n<div style="float: left">\n'
         footer = "\n\t</body>\n</html>"
         # write out the html file
-        with open('%s.html' % html_name, 'w') as f:
+        with open(os.path.join(self.out_dir, '%s.html' % html_name), 'w') as f:
             f.write(header)
             f.write(self.html_pdfs.to_html(classes='sortable', escape=False, justify='left'))
             f.write('\n</div>\n')

@@ -25,10 +25,9 @@ class GoNetworkGenerator:
         self.go_network = None
         self.molecular_network = None
         self.out_dir = directory
-        if os.path.exists(self.out_dir):
-            pass
-        else:
+        if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
+            os.mkdir(os.path.join(self.out_dir, 'Network_files'))
 
     def calculate_terms_between_a_b(self, term_a, term_b):
         """ calculates the number of edges between species in two lists
@@ -186,17 +185,22 @@ class GoNetworkGenerator:
 
         self.molecular_network = molecular_network_subgraph
         nx.write_gml(molecular_network_subgraph,
-                     os.path.join(self.out_dir, '{0}_subgraph.gml'.format(save_name)))
+                     os.path.join(self.out_dir, 'Network_files',
+                                  '{0}_subgraph.gml'.format(save_name)))
 
         nx.nx.write_dot(graph,
-                        os.path.join(self.out_dir, '{0}.dot'.format(save_name)))
+                        os.path.join(self.out_dir, 'Network_files',
+                                     '{0}.dot'.format(save_name)))
         nx.write_graphml(graph,
-                         os.path.join(self.out_dir, '{0}.graphml'.format(save_name)))
+                         os.path.join(self.out_dir, 'Network_files',
+                                      '{0}.graphml'.format(save_name)))
 
         if draw:
             g = pyg.AGraph()
-            g.read(os.path.join(self.out_dir, '{0}.dot'.format(save_name)))
-            g.draw(os.path.join(self.out_dir, '{0}.pdf'.format(save_name)), prog='dot')
+            g.read(os.path.join(self.out_dir, 'Network_files',
+                                '{0}.dot'.format(save_name)))
+            g.draw(os.path.join(self.out_dir, 'Network_files',
+                                '{0}.pdf'.format(save_name)), prog='dot')
         return graph
 
 
