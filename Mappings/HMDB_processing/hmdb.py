@@ -14,9 +14,18 @@ from Mappings.xml_to_dictionary import XmlDictConfig, XmlListConfig
 
 directory = os.path.dirname(__file__)
 
+categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id',
+              'biocyc_id', 'synonyms', 'pubchem_compound_id',
+              'protein_associations', 'inchikey', 'iupac_name',
+              # 'secondary_accessions',
+
+              # 'normal_concentrations','chemical_formula', 'smiles',
+              # 'drugbank_id', 'average_molecular_weight',
+              # 'pathways', 'metlin_id',
+              ]
 
 class HMDB:
-    """ Downloads and processes HMDB metabolite database
+    """ Downloads and processes HMDB metabolites database
 
     """
 
@@ -26,7 +35,7 @@ class HMDB:
         self.target_file = 'hmdb_metabolites.zip'
 
     def download_hmdb(self):
-        """ Downloads hmdb metabolite xml file
+        """ Downloads hmdb metabolites xml file
 
         :return:
         """
@@ -59,15 +68,15 @@ class HMDB:
         print("Downloaded {} and stored {}".format(hmdb_db_url, out_path))
 
     def unzip_hmdb(self, out_directory):
-        """ unzips hmdb metabolite file
+        """ unzips hmdb metabolites file
 
         :return:
         """
         hmdb_file = os.path.join(self.tmp_dir, self.target_file)
         if not os.path.exists(hmdb_file):
-            print("Downloading metabolite information from HMDB")
+            print("Downloading metabolites information from HMDB")
             self.download_hmdb()
-        print("Unzipping metabolite file")
+        print("Unzipping metabolites file")
         zip_ref = zipfile.ZipFile(hmdb_file, 'r')
         zip_ref.extractall(out_directory)
         zip_ref.close()
@@ -82,18 +91,8 @@ class HMDB:
             self.unzip_hmdb(out_dir)
 
         count = 0
-        categories = ['kegg_id', 'name', 'accession', 'chebi_id',
-                      'chemspider_id',
-                      'biocyc_id', 'synonyms', 'pubchem_compound_id',
-                      'protein_associations',
-                      # 'secondary_accessions',
-                      # 'iupac_name',
-                      # 'normal_concentrations','chemical_formula', 'smiles',
-                      # 'drugbank_id', 'average_molecular_weight',
-                      # 'pathways', 'metlin_id',
-                      'inchikey',
-                      ]
-        print("Parsing metabolite information from files")
+
+        print("Parsing metabolites information from files")
         tmp_all = []
         for i in os.listdir(out_dir):
             if i.startswith('H'):
@@ -106,12 +105,11 @@ class HMDB:
                 tmp = []
                 for cat in categories:
                     info = xmldict[cat]
-                    if info is None:
-                        tmp.append(info)
-                    elif cat == 'protein_associations':
+                    if cat == 'protein_associations':
                         tmp_list = []
                         if type(info) == str:
-                            continue
+
+                            tmp.append([])
                         else:
                             if type(info['protein']) == XmlDictConfig:
                                 tmp_list.append(info['protein']['gene_name'])
@@ -119,10 +117,11 @@ class HMDB:
                             elif type(info['protein']) == XmlListConfig:
                                 for ii in info['protein']:
                                     tmp_list.append(ii['gene_name'])
-                        tmp.append(tmp_list)
+                            tmp.append(tmp_list)
                     elif cat == 'synonyms':
                         tmp_list = []
                         if type(info) == str:
+                            tmp.append([])
                             continue
                         else:
                             if type(info['synonym']) == str:
@@ -132,14 +131,21 @@ class HMDB:
                                     tmp_list.append(each)
                         tmp.append(tmp_list)
                     else:
-                        tmp.append(info.encode('ascii', 'ignore'))
+                        if info is None:
+                            tmp.append([])
+                        else:
+                            tmp.append(info.encode('ascii', 'ignore'))
                 tmp_all.append(tmp)
         df = pd.DataFrame(tmp_all, columns=categories)
         df.to_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'),
-                  compression='gzip')
+                  compression='gzip', index=False)
         print("Done processing HMDB")
 
-
+    def load_db(self):
+        df = pd.read_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'))
+        return df
 if __name__ == '__main__':
     hm = HMDB()
     hm.parse_hmdb()
+    df = hm.load_db()
+    print(df.head(10))
