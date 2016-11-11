@@ -1,4 +1,4 @@
-from Analysis.go_analysis import GoAnalysis
+from magine.ontology.ontology_analysis import GoAnalysis
 
 
 

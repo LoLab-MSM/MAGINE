@@ -1,4 +1,4 @@
-from magine.network_generator import find_kegg_pathways
+from magine.networks.network_generator import find_kegg_pathways
 
 
 def test_find_kegg_pathways():

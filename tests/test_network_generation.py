@@ -1,4 +1,4 @@
-from magine.network_generator import build_network
+from magine.networks.network_generator import build_network, create_all_of_kegg
 
 
 def test_build_network():
@@ -7,3 +7,7 @@ def test_build_network():
     for i in graph.nodes():
         if len(i.split(':')) > 1:
             print(i)
+
+
+# download_all_of_kegg('test')
+create_all_of_kegg('test')

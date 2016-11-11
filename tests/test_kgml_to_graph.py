@@ -1,7 +1,7 @@
 import networkx
 
-from magine.kgml_to_networkx_parser import kgml_to_graph
-from magine.network_generator import download_kegg_pathway
+from magine.networks.kgml_to_networkx_parser import kgml_to_graph
+from magine.networks.network_generator import download_kegg_pathway
 
 
 def test_construction():
