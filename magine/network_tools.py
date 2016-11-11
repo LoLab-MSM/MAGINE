@@ -231,7 +231,7 @@ def get_uniprot_info(name):
 
 def generate_curated_subgraphs(network, i):
     header = 'NetworkName\tEntry name\tGene_names_primary\tFunction\tGO_biological_process\tGO_molecular_function\tGO_cellular_component\tPost-translational_modification'
-    print "generating curated list for %s" % i
+    print("generating curated list for %s" % i)
     size = len(network.nodes())
     file_to_write = open(
             'List_of_species_subgroup_%s_size_%s.txt' % (i + 1, size), 'w')
@@ -327,8 +327,9 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
 def add_reactome(network):
     combined_network = network.copy()
     existing_nodes = set(network.nodes())
-    ddn2 = nx.read_gml(
-            '/home/pinojc/PycharmProjects/Magine/magine/reactome_expansion/reactome_network.gml')
+    ddn2 = nx.read_gml('/home/pinojc/PycharmProjects/Magine/magine/'
+                       'network_database_expansions/reactome_expansion/'
+                       'reactome_network.gml')
     added_nodes = 0
     for i in ddn2.nodes(data=True):
         if i[0] in existing_nodes:
