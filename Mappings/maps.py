@@ -7,7 +7,7 @@ import os
 from sys import modules
 
 import networkx as nx
-from bioservices import UniProt, KEGG, UniChem, HGNC
+from bioservices import HGNC, KEGG, UniChem, UniProt
 
 from chemical_mapper import ChemicalMapper
 
@@ -38,19 +38,20 @@ cm = ChemicalMapper()
 
 # creation of a manual dictionary because of kegg to uniprot errors.
 # These errors are mostly on KEGG sides that link it to an unreviewed Uniprot ID
-manual_dict = {'hsa:857': 'CAV1',
-               'hsa:2250': 'FGF5',
-               'hsa:5337': 'PLD1',
-               'hsa:4312': 'MMP1',
+manual_dict = {'hsa:857'      : 'CAV1',
+               'hsa:2250'     : 'FGF5',
+               'hsa:5337'     : 'PLD1',
+               'hsa:4312'     : 'MMP1',
                'hsa:102723407': 'IGHV4OR15-8',
                'hsa:100132074': 'FOXO6',
-               'hsa:728635': 'DHRS4L1',
-               'hsa:10411': 'RAPGEF3',
+               'hsa:728635'   : 'DHRS4L1',
+               'hsa:10411'    : 'RAPGEF3',
                'hsa:100101267': 'POM121C',
-               'hsa:2768': 'GNA12',
-               'hsa:2044': 'EPHA5',
+               'hsa:2768'     : 'GNA12',
+               'hsa:2044'     : 'EPHA5',
                'hsa:100533467': 'BIVM-ERCC5',
-               'hsa:7403': 'KDM6A'
+               'hsa:7403'     : 'KDM6A',
+               'hsa:1981'     : 'EIF4G1'
                }
 
 compound_manual = {'cpd:C07909': 'HMDB15015',
@@ -92,8 +93,9 @@ def create_gene_dictionaries(network, species='hsa'):
     for n, i in enumerate(unknown_genes):
         search_string += str(i) + '\t'
     search_string = search_string.rstrip('\t')
-    # This is where it gets tricky. Checking to see if there is a uniprot mapping for the species, if not, trying
-    # from KEGG side. Sometimes kegg links to a different uniprot, or uniprot links to a different kegg. Annoying
+    # This is where it gets tricky. Checking to see if there is a uniprot
+    # mapping for the species, if not, trying from KEGG side. Sometimes kegg
+    # links to a different uniprot, or uniprot links to a different kegg.
     uni_dict = dict(uniprot.mapping("KEGG_ID", "GENENAME", query=search_string))
     for i in unknown_genes:
         if i in uni_dict:
