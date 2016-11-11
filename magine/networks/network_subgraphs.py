@@ -10,7 +10,8 @@ class NetworkSubgraphs:
     """ Class to create subgraphs of larger network
 
     """
-    def __init__(self, network, exp_data):
+
+    def __init__(self, network, exp_data=None):
         self.network = network
         self.nodes = self.network.nodes()
         self.exp_data = exp_data
@@ -48,14 +49,16 @@ class NetworkSubgraphs:
         :return: graph
         """
         graph = pyg.AGraph(directed=True)
-        nodes = self.network.nodes()
-        for i in protein_list:
+        nodes = set(self.network.nodes())
+        tmp_protein_list = set(protein_list)
+        for i in tmp_protein_list:
             if i not in nodes:
                 print('{} not in network'.format(i))
-        for protein_1 in protein_list:
+                tmp_protein_list.remove(i)
+        for protein_1 in tmp_protein_list:
             if protein_1 not in nodes:
                 continue
-            for protein_2 in protein_list:
+            for protein_2 in tmp_protein_list:
                 if protein_2 not in nodes:
                     continue
                 if protein_1 == protein_2:
