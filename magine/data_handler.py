@@ -35,14 +35,18 @@ class ExperimentalData:
         self.exp_methods = list(self.data[exp_method].unique())
         self.proteomics = raw_df[raw_df['species_type'] == protein]
         self.proteomics = self.proteomics.dropna(subset=[gene])
-        self.metabolites = raw_df[raw_df['species_type'] == metabolites]
-        self.metabolites = self.metabolites.dropna(subset=['compound'])
+        self.metabolites = []
+        self.list_metabolites = []
+        self.list_sig_metabolites = []
+        if metabolites in self.data.dtypes:
+            self.set_up_metabolites()
+
         self.rna_seq = self.proteomics[self.proteomics[exp_method] == rna]
         self.proteomics_non_rna = self.proteomics[
             self.proteomics[exp_method] != rna]
 
         self.proteomics_sign = self.proteomics[self.proteomics[flag]]
-        self.metabolite_sign = self.metabolites[self.metabolites[flag]]
+
         self.rna_seq_sign = self.rna_seq[self.rna_seq[flag]]
         self.proteomics_non_rna_sig = self.proteomics_non_rna[
             self.proteomics_non_rna[flag]]
@@ -51,14 +55,13 @@ class ExperimentalData:
         self.list_rna = list(self.rna_seq[gene].unique())
         self.list_proteins_non_rna = list(
             self.proteomics_non_rna[gene].unique())
-        self.list_metabolites = list(self.metabolites['compound'].unique())
+
         self.list_species = list(self.list_proteins + self.list_metabolites)
 
         self.list_sig_proteins = list(self.proteomics_sign[gene].unique())
         self.list_sig_rna = self.return_rna(significant=True)
         self.list_sig_proteins_non_rna = self.return_rna(significant=True)
-        self.list_sig_metabolites = list(
-            self.metabolite_sign['compound'].unique())
+
         self.list_sig_species = list(self.list_sig_proteins +
                                      self.list_sig_metabolites)
 
@@ -125,6 +128,14 @@ class ExperimentalData:
             self.rna_over_time.append(self.rna_sign_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
+
+    def set_up_metabolites(self):
+        self.metabolites = self.data[self.data['species_type'] == metabolites]
+        self.metabolites = self.metabolites.dropna(subset=['compound'])
+        self.metabolite_sign = self.metabolites[self.metabolites[flag]]
+        self.list_metabolites = list(self.metabolites['compound'].unique())
+        self.list_sig_metabolites = list(
+            self.metabolite_sign['compound'].unique())
 
     def return_proteomics(self, time=0.0, significant=False,
                           fold_change_value=None):
