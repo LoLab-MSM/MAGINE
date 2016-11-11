@@ -52,8 +52,7 @@ class GoAnalysis:
         self.num_data_sets = 0
         self.save_png = save_png
         self.created_go_pds = set()
-        if not os.path.exists(self.out_dir):
-            os.mkdir(self.out_dir)
+
 
     def create_array_per_time(self, data, aspect='F', num=0):
         """
@@ -89,8 +88,8 @@ class GoAnalysis:
             tmp_entry = []
             if self.slim:
                 pass
-            elif ref < 5.:
-                continue
+            # elif ref < 5.:
+            #     continue
             if p_value > 0.05:
                 continue
             # else:
@@ -275,8 +274,10 @@ class GoAnalysis:
         plt.colorbar(im, cax=axcolor)
         if self.save_png:
             fig.savefig(
-                os.path.join(self.out_dir, '%s_clustered.png' % savename))
-        fig.savefig(os.path.join(self.out_dir, '%s_clustered.pdf' % savename))
+                    os.path.join(self.out_dir, 'Figures',
+                                 '%s_clustered.png' % savename))
+        fig.savefig(os.path.join(self.out_dir, 'Figures',
+                                 '%s_clustered.pdf' % savename))
         plt.close()
 
         self.plot_heatmap(tmp_array, names_sorted, 0, 100,
@@ -290,10 +291,11 @@ class GoAnalysis:
                    '%s_top_clustered' % savename,
                    '%s_bottom_clustered' % savename, ]
         html_pages = []
+
         for i in figures:
             html_pages.append(
-                '<a href="{0}/Figures/{1}.pdf">{2}</a>'.format(self.out_dir, i,
-                                                               i))
+                    '<a href="Figures/{0}.pdf">{0}</a>'.format(i))
+
         self.html_pdfs = pd.DataFrame(html_pages, columns=['Clustered output'])
         self.print_ranked_over_time(savename=savename, labels=labels)
 
@@ -327,9 +329,8 @@ class GoAnalysis:
                 self.plot_heatmap(tmp, names, -1 * number, None
                                   , 'top_hits_entry_%i_%s' % (i, savename), labels)
                 html_pages.append(
-                    '<a href="{0}/Figures/top_hits_entry_{1}_{2}.pdf">{3}</a>'.format(
-                        self.out_dir, i, savename,
-                        labels[i]))
+                        '<a href="Figures/top_hits_entry_{0}_{1}.pdf">{2}</a>'.format(
+                                i, savename, labels[i]))
             terms_dict = {}
             for j in range(number):
                 if j > len(tmp) - 1:
@@ -481,12 +482,17 @@ class GoAnalysis:
                     self.created_go_pds.add(save_name)
                     self.exp_data.plot_list_of_genes(list(gene_set), save_name,
                                                      title=title)
-                real_names.append('<a href="{0}">{1}</a>'.format(save_name, self.global_go[i]))
+                real_names.append(
+                    '<a href="Figures/go_{0}_{1}.pdf">{2}</a>'.format(i,
+                                                                      self.savename,
+                                                                      self.global_go[
+                                                                          i]).replace(
+                        ':', ''))
         # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
         # duplicate the sort table class so we can sort by column
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'html_additions', 'sorttable.js'),
-                  'r') as f:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
+                               'html_additions', 'sorttable.js'), 'r') as f:
             x = f.read()
             with open('{}/Figures/sorttable_tmp.js'.format(self.out_dir),
                       'w') as tmp_file:
