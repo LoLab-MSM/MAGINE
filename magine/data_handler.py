@@ -447,8 +447,77 @@ class ExperimentalData:
         for i in self.exp_methods:
             self.volcano_plot(i, i, out_dir=out_dir)
 
+    def time_series_volcano(self, exp_date_type, save_name, p_value=0.1,
+                            out_dir=None,
+                            fold_change_cutoff=1.5, def_range=None,
+                            bh_critera=False):
+
+        data = self.data[self.data[exp_method] == exp_date_type]
+
+        n_sample = np.sort(data['time'].unique())
+        print(n_sample)
+        if len(n_sample) > 8:
+            n_cols = 3
+        else:
+            n_cols = 2
+        n_rows = len(n_sample) / n_cols
+        print(n_rows, n_cols)
+
+        figure = plt.figure(figsize=(10, 10))
+        for n, i in enumerate(n_sample):
+            sample = data[data['time'] == i]
+            sample = sample.dropna(subset=[p_val])
+            sample = sample[np.isfinite(sample[fold_change])]
+            sample = sample.dropna(subset=[fold_change])
+            tmp = sample.loc[:, (p_val, fold_change, flag)]
+            # convert to log10 scale
+            tmp[p_val] = np.log10(data[p_val]) * -1
+            # convert to log2 space
+            tmp[fold_change] = np.where(tmp[fold_change] > 0,
+                                        np.log2(tmp[fold_change]),
+                                        -np.log2(-tmp[fold_change]))
+            if bh_critera:
+                sec_0 = tmp[tmp[flag]]
+                sec_2 = tmp[~tmp[flag]]
+                sec_1 = None
+                print('{0} : sec0 = {1} , sec1 = {2}'.format(save_name,
+                                                             len(sec_0),
+                                                             len(sec_2)))
+            else:
+                fc = np.log2(fold_change_cutoff)
+                p_value = -1 * np.log10(p_value)
+
+                sec_0 = tmp[
+                    (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) >= fc)]
+                sec_1 = tmp[
+                    (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) < fc)]
+                sec_2 = tmp[(tmp[p_val] < p_value)]
+
+                print('{0} : sec0 = {1} , sec1 = {2} , '
+                      'sec2 = {3}'.format(save_name, len(sec_0), len(sec_1),
+                                          len(sec_2)))
+            ax = figure.add_subplot(n_rows, n_cols, n + 1)
+            ax.set_title(i)
+            self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
+            if not bh_critera:
+                ax.axvline(x=fc, linestyle='--')
+                ax.axvline(x=-1 * fc, linestyle='--')
+                ax.axhline(y=p_value, linestyle='--')
+            if def_range is not None:
+                ax.set_xlim(def_range[0], def_range[1])
+        plt.tight_layout()
+        if out_dir is None:
+            plt.savefig('{0}.pdf'.format(save_name), bbox_inches='tight')
+            plt.savefig('{0}.png'.format(save_name), bbox_inches='tight')
+        else:
+            plt.savefig('{0}/{1}.pdf'.format(out_dir, save_name),
+                        bbox_inches='tight')
+            plt.savefig('{0}/{1}.png'.format(out_dir, save_name),
+                        bbox_inches='tight')
+        plt.close()
+
     def volcano_plot(self, exp_date_type, save_name, p_value=0.1, out_dir=None,
-                     fold_change_cutoff=1.5, def_range=None):
+                     fold_change_cutoff=1.5, def_range=None, bh_critera=False):
         # Create a volcano plot
         # We declare signficant p-values as less than 0.05
         # We declare fold change as  less than -1 or greater than 1
@@ -473,7 +542,7 @@ class ExperimentalData:
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])
-        tmp = data.loc[:, (p_val, fold_change)]
+        tmp = data.loc[:, (p_val, fold_change, flag)]
 
         # convert to log10 scale
         tmp[p_val] = np.log10(data[p_val]) * -1
@@ -494,16 +563,25 @@ class ExperimentalData:
         sec_1 = tmp[(tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) < fc)]
         sec_2 = tmp[(tmp[p_val] < p_value)]
 
-        print('{0} : sec0 = {1} , sec1 = {2} , sec2 = {3}'.format(save_name,
-                                                                  len(sec_0),
-                                                                  len(sec_1),
-                                                                  len(sec_2)))
+        if bh_critera:
+            sec_0 = tmp[tmp[flag]]
+            sec_2 = tmp[~tmp[flag]]
+            sec_1 = None
+            print('{0} : sec0 = {1} , sec1 = {2}'.format(save_name,
+                                                         len(sec_0),
+                                                         len(sec_2)))
+        else:
+            print('{0} : sec0 = {1} , sec1 = {2} , '
+                  'sec2 = {3}'.format(save_name, len(sec_0), len(sec_1),
+                                      len(sec_2)))
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
         self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
-        ax.axvline(x=fc, linestyle='--')
-        ax.axvline(x=-1 * fc, linestyle='--')
-        ax.axhline(y=p_value, linestyle='--')
+        if not bh_critera:
+            ax.axvline(x=fc, linestyle='--')
+            ax.axvline(x=-1 * fc, linestyle='--')
+            ax.axhline(y=p_value, linestyle='--')
         if def_range is not None:
             ax.set_xlim(def_range[0], def_range[1])
         if out_dir is None:
@@ -520,8 +598,9 @@ class ExperimentalData:
 
         fig_axis.scatter(section_0[fold_change], section_0[p_val], marker='.',
                          color='blue')
-        fig_axis.scatter(section_1[fold_change], section_1[p_val], marker='.',
-                         color='red')
+        if section_1 is not None:
+            fig_axis.scatter(section_1[fold_change], section_1[p_val],
+                             marker='.', color='red')
         fig_axis.scatter(section_2[fold_change], section_2[p_val], s=1,
                          marker=',', color='gray')
         fig_axis.set_ylabel('-log10(p-value)', fontsize=16)
