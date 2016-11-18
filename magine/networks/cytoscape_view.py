@@ -60,6 +60,7 @@ class RenderModel:
                    'NETWORK_HEIGHT'           : '2800',
                    'NETWORK_WIDTH'            : '2800',
                    'NODE_FILL_COLOR'          : 'red',
+                   'NETWORK_BACKGROUND_PAINT' : '#ffffff',
                    # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
                    'NETWORK_CENTER_X_LOCATION': 0.0,
                    'NETWORK_CENTER_Y_LOCATION': 0.0,
@@ -75,6 +76,7 @@ class RenderModel:
         self.node_name2id = util.name2suid(self.g_cy, 'node')
         self.edge_name2id = util.name2suid(self.g_cy, 'edge')
         # self.print_options()
+        # quit()
 
     def print_options(self):
         """ print cytoscape options for network, style, nodes, edges
@@ -125,7 +127,7 @@ class RenderModel:
                 min=min(edge_width_values.values()),
                 max=max(edge_width_values.values()),
                 values=(3, 10))
-        print(simple_slope)
+
         self.style.create_continuous_mapping(column='weight',
                                              col_type='Double',
                                              vp='EDGE_WIDTH',
@@ -143,10 +145,20 @@ class RenderModel:
                                                  points=simple_slope)
             self.cy.style.apply(style=self.style, network=self.g_cy)
             self.fit_to_window()
+            x = self.view1.get_network_view_as_dict()
+            # for i in x:
+            #     print(i, x[i])
+            # print('\n')
             self.view1.update_network_view(
-                    visual_property='NETWORK_SCALE_FACTOR', value='.15')
+                    visual_property='NETWORK_SCALE_FACTOR',
+                    value=float(x['NETWORK_SCALE_FACTOR'] * .9))
+
             self.view1.update_network_view(
-                    visual_property='NETWORK_BACKGROUND_PAINT', value='white')
+                    visual_property='NETWORK_BACKGROUND_PAINT',
+                    value='#ffffff')
+            x = self.view1.get_network_view_as_dict()
+            for i in x:
+                print(i, x[i])
             self.view1.update_node_views(visual_property='NODE_LABEL',
                                          values=node_label_values)
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
@@ -169,22 +181,24 @@ class RenderModel:
 
             fig_name = 'go_network_{0}_{1}'.format(prefix, j)
             with open(os.path.join(out_dir, 'Figures',
-                                   '{}.svg'.format(fig_name)),
-                      'wb') as f:
-                network_svg = self.g_cy.get_svg()
-                # network_svg = self.get_svg()
+                                   '{}.png'.format(fig_name)), 'wb') as f:
+                # network_svg = self.g_cy.get_svg()
+                network_svg = self.get_png(2000)
                 f.write(network_svg)
                 f.close()
-                os.system('convert -density 1000 -background White  '
-                          '{0}/Figures/go_network_{1}_{2}.svg'
-                          ' {0}/Figures/go_network_{1}_{2}_wpr.png'
-                          ''.format(out_dir, prefix, j, label=j))
-                os.system('convert -density 1000    '
-                          '{0}/Figures/go_network_{1}_{2}_wpr.png -trim'
-                          ' -background White label:"{label}"  -gravity Center -append'
-                          ' {0}/Figures/go_network_{1}_{2}_wpr.png'
-                          ''.format(out_dir, prefix, j, label=j))
-                # quit()
+
+            # os.system('convert -quality 100 -density 300 -background White  '
+            #           '{0}/Figures/go_network_{1}_{2}.svg -background White '
+            #           ' {0}/Figures/go_network_{1}_{2}_wpr.pdf'
+            #           ''.format(out_dir, prefix, j, label=j))
+            # os.system('pdfcrop {0}/Figures/go_network_{1}_{2}.pdf '
+            #           '{0}/Figures/go_network_{1}_{2}-2.pdf '.format(out_dir, prefix, j,))
+            os.system('convert -quality 100  -density 300 -trim '
+                      '{0}/Figures/go_network_{1}_{2}.png -density 300 -trim '
+                      ' -background White label:"{label}"  -gravity Center -append'
+                      ' {0}/Figures/go_network_{1}_{2}_wpr.png'
+                      ''.format(out_dir, prefix, j, label=j))
+
                 # with open(os.path.join(out_dir, 'Figures', '{}.pdf'.format(fig_name)),
                 #           'wb') as f:
                 #     network_pdf = self.g_cy.get_pdf()
@@ -202,8 +216,7 @@ class RenderModel:
                 #             out_dir, prefix, j))
         os.system('convert -delay 100 -density 500'
                   ' {0}/Figures/go_network_{1}_*_wpr.png '
-                  ' {0}/Figures/go_network_{1}.gif'.format(
-                out_dir, prefix))
+                  ' {0}/Figures/go_network_{1}.gif'.format(out_dir, prefix))
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
