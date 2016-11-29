@@ -27,45 +27,49 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     added_proteins = []
     missing_protein_info = 0
     missing_proteins = set()
+    tmp_nodes = set(tmp_graph.nodes())
     for i in metabolite_list:
-        if i in tmp_graph.nodes():
+        if i in tmp_nodes:
             count_in_network += 1
             if i in cm.hmdb_accession_to_protein:
-                tmp_list = cm.hmdb_accession_to_protein[i][0]
+
+                tmp_list = cm.hmdb_accession_to_protein[i]
                 if tmp_list is None:
                     missing_protein_info += 1
                     continue
-                else:
-                    for each in tmp_list:
-                        if each is None:
-                            continue
-                        elif each not in tmp_graph.nodes():
 
-                            added_proteins.append(each)
-                        missing_edge += 1
-                        tmp_graph.add_node(i, speciesType='gene',
-                                           databaseSource='HMDB')
-                        tmp_graph.add_edge(each, i)
+                for each in tmp_list:
+                    if each is None:
+                        continue
+                    elif each not in tmp_nodes:
+                        added_proteins.append(each)
+                    missing_edge += 1
+                    tmp_graph.add_node(i, speciesType='gene',
+                                       databaseSource='HMDB')
+                    tmp_nodes.add(i)
+                    tmp_graph.add_edge(each, i)
 
         else:
             count_not_in_network += 1
             if i in cm.hmdb_accession_to_protein:
-                tmp_list = cm.hmdb_accession_to_protein[i][0]
+                tmp_list = cm.hmdb_accession_to_protein[i]
                 if tmp_list is None or len(tmp_list) == 0:
                     missing_protein_info += 1
                     continue
-                else:
-                    for each in tmp_list:
-                        if each is None:
-                            pass
-                        elif each in start_nodes:
-                            missing_edge += 1
-                            tmp_graph.add_node(i, speciesType='gene',
-                                               databaseSource='HMDB')
-                            tmp_graph.add_edge(i, each)
-                            protein_hits += 1
-                        else:
-                            missing_proteins.add(each)
+
+                for each in tmp_list:
+                    if each is None:
+                        pass
+                    elif each in start_nodes:
+                        missing_edge += 1
+                        tmp_graph.add_node(each, speciesType='gene',
+                                           databaseSource='HMDB')
+                        tmp_graph.add_node(i, speciesType='metabolite',
+                                           databaseSource='HMDB')
+                        tmp_graph.add_edge(i, each)
+                        protein_hits += 1
+                    else:
+                        missing_proteins.add(each)
     end_nodes = set(tmp_graph.nodes())
     end_edges = tmp_graph.edges()
     metabolites_added = []
