@@ -38,7 +38,8 @@ class ExperimentalData:
         self.metabolites = []
         self.list_metabolites = []
         self.list_sig_metabolites = []
-        if metabolites in self.data.dtypes:
+
+        if metabolites in self.data['species_type'].unique():
             self.set_up_metabolites()
 
         self.rna_seq = self.proteomics[self.proteomics[exp_method] == rna]
@@ -317,32 +318,29 @@ class ExperimentalData:
             plt.close()
 
     def create_table_of_data(self, sig=False, save_name='tmp', unique=False):
-        if sig:
-            proteins = self.proteomics[self.proteomics[flag]]
-            metabolites = self.metabolites[self.metabolites[flag]]
-        else:
-            proteins = self.proteomics
-            metabolites = self.metabolites
+        # if sig:
+        #     proteins = self.proteomics[self.proteomics[flag]]
+        #     metabolites = self.metabolites[self.metabolites[flag]]
+        # else:
+        #     proteins = self.proteomics
+        #     metabolites = self.metabolites
 
-        exp_methods = ['hilic', 'rplc', 'label_free', 'silac', 'ph_silac',
-                       rna]
-        timepoints = ['30s', '30min', '1h', '3h', '6h', '12h', '18h', '24h',
-                      '36h', '48h', '60h', '72h']
+        exp_methods = self.data[exp_method].unique()
+        timepoints = list(self.data['time'].unique())
         measured_table = []
         genes = set()
         meta = set()
         for i in exp_methods:
-            if i in ['hilic', 'rplc']:
-                tmp = metabolites[metabolites[exp_method] == i]
-            else:
-                tmp = proteins[proteins[exp_method] == i]
+            tmp = self.data[self.data[exp_method] == i]
+            if sig:
+                tmp = tmp[tmp[flag]]
             local = set()
             values = []
 
             for j in timepoints:
                 tmp2 = tmp[tmp['time_points'] == j]
                 if unique:
-                    if i in ['hilic', 'rplc']:
+                    if i in ['hilic', 'rplc', 'HILIC', 'C18']:
                         tmp2 = tmp2['compound'].unique()
                         for l in list(tmp2):
                             local.add(l)
@@ -356,11 +354,17 @@ class ExperimentalData:
                     values.append('-')
                 else:
                     values.append(len(tmp2))
+            if unique:
+                values.append(len(local))
             measured_table.append(values)
-            print(i, len(local))
-        print('genes', len(genes))
-        print('meta', len(meta))
+            if unique:
+                print(i, len(local))
+
         measured_table = np.array(measured_table)
+        if unique:
+            print('genes', len(genes))
+            print('meta', len(meta))
+            timepoints.append('Total Unique')
         t = pandas.DataFrame(data=measured_table, index=exp_methods,
                              columns=timepoints)
         filename = '{0}.tex'.format(save_name)
