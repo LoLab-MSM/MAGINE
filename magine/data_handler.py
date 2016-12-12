@@ -1,13 +1,13 @@
 import os
 
 import matplotlib
+import numpy as np
+import pandas
+import subprocess
+from textwrap import wrap
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas
-from textwrap import wrap
-import subprocess
 
 pandas.set_option('display.max_colwidth', -1)
 # column definitions
@@ -19,11 +19,19 @@ rna = 'rna_seq'
 gene = 'gene'
 protein = 'protein'
 metabolites = 'metabolites'
+species_type = 'species_type'
+sample_id = 'time'
+
+
+# sample_id = 'sample_id'
 
 
 class ExperimentalData:
-    def __init__(self, proteomics_file, data_directory, P_VALUE=0.1,
-                 FOLD_CHANGE=.1):
+    """
+    Manages all experimental data
+    """
+
+    def __init__(self, proteomics_file, data_directory):
         raw_df = pandas.read_csv(
                 os.path.join(data_directory, proteomics_file),
                 parse_dates=False, low_memory=False)
@@ -33,14 +41,17 @@ class ExperimentalData:
         raw_df.loc[raw_df[fold_change] == -np.inf, fold_change] = -1000
         self.data = raw_df
         self.exp_methods = list(self.data[exp_method].unique())
-        self.proteomics = raw_df[raw_df['species_type'] == protein]
+        self.proteomics = raw_df[raw_df[species_type] == protein]
         self.proteomics = self.proteomics.dropna(subset=[gene])
         self.metabolites = []
         self.list_metabolites = []
         self.list_sig_metabolites = []
+        self.metabolite_sign = []
+        self.exp_methods = self.data[exp_method].unique()
+        self.timepoints = list(self.data[sample_id].unique())
 
-        if metabolites in self.data['species_type'].unique():
-            self.set_up_metabolites()
+        if metabolites in self.data[species_type].unique():
+            self._set_up_metabolites()
 
         self.rna_seq = self.proteomics[self.proteomics[exp_method] == rna]
         self.proteomics_non_rna = self.proteomics[
@@ -55,7 +66,7 @@ class ExperimentalData:
         self.list_proteins = list(self.proteomics[gene].unique())
         self.list_rna = list(self.rna_seq[gene].unique())
         self.list_proteins_non_rna = list(
-            self.proteomics_non_rna[gene].unique())
+                self.proteomics_non_rna[gene].unique())
 
         self.list_species = list(self.list_proteins + self.list_metabolites)
 
@@ -79,7 +90,7 @@ class ExperimentalData:
                 self.rna_seq[self.rna_seq[flag]][gene].unique())
 
         self.gene_fold_change = {}
-        self.set_up_gene_fold_change_access()
+        self._set_up_gene_fold_change_access()
         self.proteins_measured = self.return_proteomics()
 
         self.prot_up = self.return_proteomics(significant=True,
@@ -92,8 +103,9 @@ class ExperimentalData:
         self.proteomics_up = {}
         self.proteomics_down = {}
         self.proteomics_sign_changed = {}
-        self.protomics_time_points = np.sort(self.proteomics['time'].unique())
-        self.rna_time_points = np.sort(self.rna_seq['time'].unique())
+        self.protomics_time_points = np.sort(self.proteomics[
+                                                 sample_id].unique())
+        self.rna_time_points = np.sort(self.rna_seq[sample_id].unique())
 
         self.proteomics_over_time = []
         self.proteomics_up_over_time = []
@@ -101,56 +113,72 @@ class ExperimentalData:
         self.rna_up = {}
         self.rna_down = {}
         self.rna_sign_changed = {}
-
         self.rna_over_time = []
         self.rna_down_over_time = []
         self.rna_over_time = []
         self.rna_up_over_time = []
         self.rna_down_over_time = []
         for i in self.protomics_time_points:
-            self.proteomics_up[i] = self.return_proteomics(time=i,
+            self.proteomics_up[i] = self.return_proteomics(sample_id_name=i,
                                                            significant=True,
                                                            fold_change_value=1)
-            self.proteomics_down[i] = self.return_proteomics(time=i,
-                                                             significant=True,
-                                                             fold_change_value=-1.)
+            self.proteomics_down[i] = self.return_proteomics(
+                    sample_id_name=i, significant=True, fold_change_value=-1.)
             self.proteomics_sign_changed[i] = list(
                     set(self.proteomics_up[i] + self.proteomics_down[i]))
             self.proteomics_over_time.append(self.proteomics_sign_changed[i])
             self.proteomics_up_over_time.append(self.proteomics_up[i])
             self.proteomics_down_over_time.append(self.proteomics_down[i])
+
         for i in self.rna_time_points:
-            self.rna_up[i] = self.return_rna(time=i, significant=True,
+            self.rna_up[i] = self.return_rna(sample_id_name=i,
+                                             significant=True,
                                              fold_change_value=1)
-            self.rna_down[i] = self.return_rna(time=i, significant=True,
+            self.rna_down[i] = self.return_rna(sample_id_name=i,
+                                               significant=True,
                                                fold_change_value=-1.)
-            self.rna_sign_changed[i] = list(
-                    set(self.rna_up[i] + self.rna_down[i]))
+            self.rna_sign_changed[i] = [set(self.rna_up[i] + self.rna_down[i])]
             self.rna_over_time.append(self.rna_sign_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
 
-    def set_up_metabolites(self):
-        self.metabolites = self.data[self.data['species_type'] == metabolites]
+    def _set_up_metabolites(self):
+        """
+        sets up internal attributes of metabolites
+        Returns
+        -------
+
+        """
+        self.metabolites = self.data[self.data[species_type] == metabolites]
         self.metabolites = self.metabolites.dropna(subset=['compound'])
         self.metabolite_sign = self.metabolites[self.metabolites[flag]]
         self.list_metabolites = list(self.metabolites['compound'].unique())
         self.list_sig_metabolites = list(
-            self.metabolite_sign['compound'].unique())
+                self.metabolite_sign['compound'].unique())
+        self.exp_methods_metabolite = self.metabolites[exp_method].unique()
 
-    def return_proteomics(self, time=0.0, significant=False,
+    def return_proteomics(self, sample_id_name=0.0, significant=False,
                           fold_change_value=None):
-        """ return proteomic data
-
-        Can provide time and/or if significant
-
-        :param fold_change_value:
-        :param significant:
-        :param time:
-        :return:
         """
-        if time == 0.0:
-            time = False
+        Returns list of proteomics species according to criteria
+
+        Parameters
+        ----------
+        sample_id_name: str or float
+            The sample_id which to filter data
+        significant: bool
+            Where you want to return significant data or not
+        fold_change_value: float
+            If you want the positive or negative fold change
+
+        Returns
+        -------
+        proteomics species: list
+            List of all proteomics species that are of provided criteria
+
+        """
+        if sample_id_name == 0.0:
+            sample_id_name = False
         tmp = self.proteomics.dropna(subset=[gene])
         tmp = tmp[tmp[exp_method] != rna]
         if significant:
@@ -160,23 +188,33 @@ class ExperimentalData:
                 tmp = tmp[tmp[fold_change] >= fold_change_value]
             else:
                 tmp = tmp[tmp[fold_change] <= fold_change_value]
-        if time:
-            return list(tmp[tmp['time'] == time][gene].unique())
+        if sample_id_name:
+            return list(tmp[tmp[sample_id] == sample_id_name][gene].unique())
         else:
             return list(tmp[gene].unique())
 
-    def return_rna(self, time=0.0, significant=False, fold_change_value=None):
-        """ return proteomic data
-
-        Can provide time and/or if significant
-
-        :param fold_change_value:
-        :param significant:
-        :param time:
-        :return:
+    def return_rna(self, sample_id_name=None, significant=False,
+                   fold_change_value=None):
         """
-        if time == 0.0:
-            time = False
+        Returns list of rna species according to criteria
+
+        Parameters
+        ----------
+        sample_id_name: str or float
+            The sample_id which to filter data
+        significant: bool
+            Where you want to return significant data or not
+        fold_change_value: float
+            If you want the positive or negative fold change
+
+        Returns
+        -------
+        rna species: list
+            List of all rna species that are of provided criteria
+
+        """
+        if sample_id_name is None:
+            sample_id_name = False
         tmp = self.rna_seq.dropna(subset=[gene])
         if significant:
             tmp = tmp[tmp[flag]]
@@ -185,42 +223,18 @@ class ExperimentalData:
                 tmp = tmp[tmp[fold_change] >= fold_change_value]
             else:
                 tmp = tmp[tmp[fold_change] <= fold_change_value]
-        if time:
-            return list(tmp[tmp['time'] == time][gene].unique())
+        if sample_id_name:
+            return list(tmp[tmp[sample_id] == sample_id_name][gene].unique())
         else:
             return list(tmp[gene].unique())
 
-    def print_info(self):
-        """ Prints summary information about data
-
-        :return:
+    def _set_up_gene_fold_change_access(self):
         """
-        print(
-            "\nNumber of unique genes in measured(non rna seq) = %s" % self.n_sig_proteins_non_rna)
-        print(
-            "\nNumber of unique genes rna seq  = %s" % self.n_sig_rnaseq)
+        sets up easy access to fold change across time per species
+        Returns
+        -------
 
-        print(
-        "\nNumber of significantly changed unique genes (RNA&proteomics) = %s" % self.n_sig_proteins)
-
-        print("\nNumber of proteins")
-        for i in np.sort(self.protomics_time_points):
-            print(
-                "{0} hour = {1}".format(i,
-                                        len(self.proteomics_sign_changed[i])))
-
-            # print('\nStats on upregulated proteins')
-            #
-            # for i in np.sort(self.protomics_time_points):
-            #     print("{0} hour = {1}".format(i, len(self.proteomics_up[i])))
-            #
-            # print("\nNumber of down regulated proteins")
-            #
-            # for i in np.sort(self.protomics_time_points):
-            #     print("{0} hour = {1}".format(i, len(self.proteomics_down[i])))
-
-    def set_up_gene_fold_change_access(self):
-
+        """
         tmp = self.proteomics[self.proteomics[flag]]
         tmp = tmp.dropna(subset=[gene])
         group = tmp.groupby(gene)
@@ -229,108 +243,38 @@ class ExperimentalData:
             tmp_dict = {}
             group2 = j.groupby(protein)
             for n, m in group2:
-                x = np.array(m['time'])
+                x = np.array(m[sample_id])
                 y = np.array(m[fold_change])
                 sig_flag = np.array(m[flag])
                 tmp_dict[n] = [x, y, sig_flag]
             gene_fold_change[i] = tmp_dict
         self.gene_fold_change = gene_fold_change
 
-    def plot_all_proteins(self, out_dir='proteins'):
-        if os.path.exists(out_dir):
-            pass
-        else:
-            os.mkdir(out_dir)
-        html_pages = []
-        # tmp = self.list_sig_proteins
-        # tmp2 = self.lisproteomics_non_rna[gene].unique()
-        genes_to_plot = self.list_sig_proteins
-        for i in np.sort(genes_to_plot):
-            self.create_heat_map_of_gene(out_dir, i)
-            html_pages.append(
-                    '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
-
-        proteins = pandas.DataFrame(html_pages, columns=['Genes'])
-        header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n'
-        footer = "\n\t</body>\n</html>"
-        # write out the html file
-        with open('proteins.html', 'w') as f:
-            f.write(header)
-            f.write('\n<div style="float: left">\n')
-            f.write(proteins.to_html(classes='sortable', escape=False,
-                                     justify='left'))
-            f.write(footer)
-
-    def plot_list_of_genes(self, list_of_genes, save_name, title=None):
-        X = []
-        Y = []
-        sig_flags = []
-        labels = []
-        for i in sorted(list_of_genes):
-            if i in self.gene_fold_change:
-                for each in sorted(self.gene_fold_change[i]):
-                    x, y, sig = self.gene_fold_change[i][each]
-                    if len(x) == 0:
-                        continue
-                    X.append(x)
-                    Y.append(y)
-                    sig_flags.append(sig)
-                    labels.append(str(each))
-
-        cm = plt.get_cmap('jet')
-        num_colors = len(X)
-        if num_colors != 0:
-            ax = plt.subplot(111)
-            ax.set_color_cycle(
-                    [cm(1. * i / num_colors) for i in range(num_colors)])
-            for i in range(num_colors):
-                label = "\n".join(wrap(labels[i], 40))
-                index = np.argsort(X[i])
-                x = X[i][index]
-                y = Y[i][index]
-                s_flag = sig_flags[i][index]
-                y = np.where(y > 0, np.log2(y), -np.log2(-y))
-                p = ax.plot(x, y, '.-', label=label)
-                if len(s_flag) != 0:
-                    color = p[0].get_color()
-                    ax.plot(x[s_flag], y[s_flag], '^', color=color)
-            plt.xlabel('Time(hr)')
-            plt.ylabel('log$_2$ Fold Change')
-            if title is not None:
-                plt.title(title)
-
-            ax.set_xscale('log', basex=2)
-            ax.get_xaxis().get_major_formatter().labelOnlyBase = False
-            ax.set_xticks(self.protomics_time_points)
-            ax.xaxis.set_major_formatter(
-                    matplotlib.ticker.FormatStrFormatter('%.4f'))
-            plt.xlim(min(self.protomics_time_points),
-                     max(self.protomics_time_points))
-            locs, labels = plt.xticks()
-            plt.setp(labels, rotation=90)
-            plt.axhline(y=np.log2(1.5), linestyle='--')
-            plt.axhline(y=-np.log2(1.5), linestyle='--')
-            handles, labels = ax.get_legend_handles_labels()
-            lgd = ax.legend(handles, labels, loc='best',
-                            bbox_to_anchor=(1.01, 1.0))
-            plt.savefig('%s' % save_name, bbox_extra_artists=(lgd,),
-                        bbox_inches='tight')
-            plt.close()
-
     def create_table_of_data(self, sig=False, save_name='tmp', unique=False):
-        # if sig:
-        #     proteins = self.proteomics[self.proteomics[flag]]
-        #     metabolites = self.metabolites[self.metabolites[flag]]
-        # else:
-        #     proteins = self.proteomics
-        #     metabolites = self.metabolites
+        """
+        Creates a summary table of data.
 
-        exp_methods = self.data[exp_method].unique()
-        timepoints = list(self.data['time'].unique())
+
+        Parameters
+        ----------
+        sig: bool
+            Flag to summarize significant species only
+        save_name: str
+            Name to save csv and .tex file
+        unique: bool
+            If you want to only consider unique species
+            ie count gene species rather than PTMs
+
+
+        Returns
+        -------
+
+        """
         measured_table = []
         genes = set()
         meta = set()
-        for i in exp_methods:
+        timepoints = list(self.timepoints)
+        for i in self.exp_methods:
             tmp = self.data[self.data[exp_method] == i]
             if sig:
                 tmp = tmp[tmp[flag]]
@@ -338,9 +282,9 @@ class ExperimentalData:
             values = []
 
             for j in timepoints:
-                tmp2 = tmp[tmp['time_points'] == j]
+                tmp2 = tmp[tmp[sample_id] == j]
                 if unique:
-                    if i in ['hilic', 'rplc', 'HILIC', 'C18']:
+                    if i in self.exp_methods_metabolite:
                         tmp2 = tmp2['compound'].unique()
                         for l in list(tmp2):
                             local.add(l)
@@ -361,79 +305,174 @@ class ExperimentalData:
                 print(i, len(local))
 
         measured_table = np.array(measured_table)
+
         if unique:
-            print('genes', len(genes))
-            print('meta', len(meta))
+            print('Unique genes = {}'.format(len(genes)))
+            print('Unique metabolites = {}'.format(len(meta)))
             timepoints.append('Total Unique')
-        t = pandas.DataFrame(data=measured_table, index=exp_methods,
+
+        t = pandas.DataFrame(data=measured_table,
+                             index=self.exp_methods,
                              columns=timepoints)
+
+        t.to_csv('{0}.csv'.format(save_name))
         filename = '{0}.tex'.format(save_name)
-        pdffile = '{0}.pdf'.format(save_name)
-        outname = '{0}.png'.format(save_name)
 
         with open(filename, 'wb') as f:
             f.write(template.format(t.to_latex(
                     column_format='*{%s}{c}' % str(len(timepoints) + 1))))
 
-        with open(os.devnull, "w") as fnull:
-            subprocess.call(['pdflatex', filename], stderr=subprocess.STDOUT,
-                            stdout=fnull)
-            subprocess.call(['pdfcrop', pdffile, pdffile],
-                            stderr=subprocess.STDOUT, stdout=fnull)
-            subprocess.call(
-                    ['convert', '-density', '300', pdffile, '-quality', '90',
-                     outname],
-                    stderr=subprocess.STDOUT, stdout=fnull)
+        if _which('pdflatex'):
+            print('Compiling table')
+            with open(os.devnull, "w") as fnull:
+                subprocess.call(['pdflatex', filename],
+                                stderr=subprocess.STDOUT,
+                                stdout=fnull)
+                subprocess.call(['rm',
+                                 '{0}.aux'.format(save_name),
+                                 '{0}.log'.format(save_name)],
+                                stderr=subprocess.STDOUT)
+                if _which('pdfcrop'):
+                    pdffile = '{0}.pdf'.format(save_name)
+                    subprocess.call(['pdfcrop', pdffile, pdffile],
+                                    stderr=subprocess.STDOUT, stdout=fnull)
+                    if _which('convert'):
+                        tmp_png_name = '{0}.png'.format(save_name)
+                        subprocess.call(['convert', '-density', '300', pdffile,
+                                         '-quality', '90', tmp_png_name],
+                                        stderr=subprocess.STDOUT, stdout=fnull)
+        else:
+            print('Install pdflatex to compile to pdf or png'
+                  'You can used the csv file for use in outside tools')
 
-    def create_heat_map_of_gene(self, out_dir, gene_name):
-        X = []
-        Y = []
+    def plot_all_proteins(self, out_dir='proteins'):
+        """
+        Creates a plot of all proteins
+
+        Parameters
+        ----------
+        out_dir: str, path
+            Directory that will contain all proteins
+
+        Returns
+        -------
+
+        """
+        if os.path.exists(out_dir):
+            pass
+        else:
+            os.mkdir(out_dir)
+        html_pages = []
+        genes_to_plot = self.list_sig_proteins
+        for i in np.sort(genes_to_plot):
+            self.plot_list_of_genes(list_of_genes=[i], save_name=i,
+                                    out_dir=out_dir, title=i)
+
+            html_pages.append(
+                    '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
+
+        proteins = pandas.DataFrame(html_pages, columns=['Genes'])
+        header = '<script src="http://www.kryogenix.org/code/browser/' \
+                 'sorttable/sorttable.js">\n</script>\n<html>\n\t<body>\n' \
+                 '\n<div style="float: left">\n' \
+                 '{}' \
+                 '\n\t</body>\n</html>'
+        # write out the html file
+        with open('proteins.html', 'w') as f:
+            f.write(header.format(proteins.to_html(classes='sortable',
+                                                   escape=False,
+                                                   justify='left')))
+
+    def plot_list_of_genes(self, list_of_genes, save_name, out_dir='.',
+                           title=None, plot_all_x=False):
+        """
+
+        Parameters
+        ----------
+        list_of_genes: list
+            List of genes to be plotter
+        save_name: str
+            Filename to be saved as
+        out_dir: str
+            Path for output to be saved
+        title: str
+            Title of plot, useful when list of genes corresponds to a GO term
+        plot_all_x: bool
+            Used if data samples is of time. This ensures all plots have same
+            x axis.
+
+        Returns
+        -------
+
+        """
+        x_values = []
+        y_values = []
+
+        try:
+            x_points = np.array(self.timepoints)
+        except:
+            x_points = np.linspace(0, len(self.timepoints),
+                                   len(self.timepoints))
+        x_point_dict = {i: x_points[n] for n, i
+                        in enumerate(self.timepoints)}
         sig_flags = []
         labels = []
-        gene_data = self.proteomics[self.proteomics[gene] == gene_name]
-        grouped = gene_data.groupby(protein)
-        for i, row in grouped:
-            fc = np.array(row[fold_change])
-            sig_flag = np.array(row[flag])
+        for i in sorted(list_of_genes):
+            if i in self.gene_fold_change:
+                for each in sorted(self.gene_fold_change[i]):
+                    x, y, sig = self.gene_fold_change[i][each]
+                    if len(x) == 0:
+                        continue
+                    x_values.append(x)
+                    y_values.append(y)
+                    sig_flags.append(sig)
+                    labels.append(str(each))
 
-            time = np.array(row['time'])
-
-            if len(time) == 0:
-                continue
-            X.append(time)
-            Y.append(fc)
-            sig_flags.append(sig_flag)
-            labels.append(str(i))
         cm = plt.get_cmap('jet')
-        num_colors = len(X)
+        num_colors = len(x_values)
         if num_colors != 0:
-            fig = plt.figure()
             ax = plt.subplot(111)
             ax.set_color_cycle(
                     [cm(1. * i / num_colors) for i in range(num_colors)])
             for i in range(num_colors):
                 label = "\n".join(wrap(labels[i], 40))
-                index = np.argsort(X[i])
-                x = X[i][index]
-                y = Y[i][index]
+                index = np.argsort(x_values[i])
+                x = x_values[i][index]
+                y = y_values[i][index]
                 s_flag = sig_flags[i][index]
                 y = np.where(y > 0, np.log2(y), -np.log2(-y))
+                try:
+                    x = np.array(x).astype(float)
+                    x_labels = x
+                except:
+                    x_labels = x.copy()
+                    x = np.linspace(0, len(x), len(x))
                 p = ax.plot(x, y, '.-', label=label)
                 if len(s_flag) != 0:
                     color = p[0].get_color()
                     ax.plot(x[s_flag], y[s_flag], '^', color=color)
 
-            plt.xlabel('Time(hr)')
-            plt.ylabel('log$_2$ Fold Change')
-            plt.title(gene)
-            ax.set_xscale('log', basex=2)
-            ax.get_xaxis().get_major_formatter().labelOnlyBase = False
-            ax.set_xticks(self.protomics_time_points)
-            ax.xaxis.set_major_formatter(
-                    matplotlib.ticker.FormatStrFormatter('%.4f'))
+            if title is not None:
+                plt.title(title)
 
-            plt.xlim(min(self.protomics_time_points),
-                     max(self.protomics_time_points))
+            if plot_all_x:
+                ax.set_xscale('log', basex=2)
+                ax.get_xaxis().get_major_formatter().labelOnlyBase = False
+                ax.set_xticks(x_points)
+                ax.set_xticklabels(self.timepoints)
+                plt.xlim(min(x_point_dict) - 2, max(x_point_dict) + 2)
+                plt.xlabel('Time(hr)')
+            else:
+                ax.set_xticks(x)
+                ax.set_xticklabels(x_labels)
+                plt.xlim(x.min() - 1, x.max() + 1)
+                plt.xlabel('Sample index')
+
+            if type(x[0]) == float:
+                ax.xaxis.set_major_formatter(
+                        matplotlib.ticker.FormatStrFormatter('%.4f'))
+
+            plt.ylabel('log$_2$ Fold Change')
             locs, labels = plt.xticks()
             plt.setp(labels, rotation=90)
             plt.axhline(y=np.log2(1.5), linestyle='--')
@@ -441,25 +480,72 @@ class ExperimentalData:
             handles, labels = ax.get_legend_handles_labels()
             lgd = ax.legend(handles, labels, loc='best',
                             bbox_to_anchor=(1.01, 1.0))
-            fig.savefig('%s/%s.pdf' % (out_dir, gene_name),
-                        bbox_extra_artists=(lgd,), bbox_inches='tight')
+            tmp_savename = os.path.join(out_dir, "{}.pdf".format(save_name))
+            plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
+                        bbox_inches='tight')
             plt.close()
 
-    def volcano_analysis(self, out_dir):
+    def volcano_analysis(self, out_dir, use_sig_flag=True,
+                         p_value=0.1, fold_change_cutoff=1.5):
+        """
+        Creates a volcano plot for each experimental method
+
+        Parameters
+        ----------
+        out_dir: str, path
+            Path to where the output figures will be saved
+        use_sig_flag: bool
+            Use significant flag of data
+        p_value: float, optional
+            p value criteria for significant
+            Will not be used if use_sig_flag
+        fold_change_cutoff: float, optional
+            fold change criteria for significant
+            Will not be used if use_sig_flag
+
+        Returns
+        -------
+
+        """
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
         for i in self.exp_methods:
-            self.volcano_plot(i, i, out_dir=out_dir)
+            self.volcano_plot(i, i, out_dir=out_dir, bh_critera=use_sig_flag,
+                              p_value=p_value,
+                              fold_change_cutoff=fold_change_cutoff)
 
     def time_series_volcano(self, exp_date_type, save_name, p_value=0.1,
-                            out_dir=None,
-                            fold_change_cutoff=1.5, def_range=None,
-                            bh_critera=False):
+                            out_dir=None, fold_change_cutoff=1.5,
+                            y_range=None, x_range=None, bh_critera=False):
+        """
+        Creates a figure of subplots of provided experimental method
+
+        Parameters
+        ----------
+        exp_date_type: str
+            Type of experimental method for plot
+        save_name: str
+            name to save figure
+        out_dir: str, directory
+            Location to save figure
+        bh_critera: bool, optional
+            If to use significant flags of data
+        p_value: float, optional
+            Criteria for significant
+        fold_change_cutoff: float, optional
+            Criteria for significant
+        y_range: array_like
+            upper and lower bounds of plot in y direction
+        x_range: array_like
+            upper and lower bounds of plot in x direction
+
+        Returns
+        -------
+
+        """
 
         data = self.data[self.data[exp_method] == exp_date_type]
-
-        n_sample = np.sort(data['time'].unique())
-        print(n_sample)
+        n_sample = np.sort(data[sample_id].unique())
         if len(n_sample) > 8:
             n_cols = 3
         else:
@@ -467,93 +553,122 @@ class ExperimentalData:
         n_rows = len(n_sample) / n_cols
         print(n_rows, n_cols)
 
-        figure = plt.figure(figsize=(10, 10))
+        fig = plt.figure(figsize=(10, 10))
         for n, i in enumerate(n_sample):
-            sample = data[data['time'] == i]
+            sample = data[data[sample_id] == i]
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
-            tmp = sample.loc[:, (p_val, fold_change, flag)]
-            # convert to log10 scale
-            tmp[p_val] = np.log10(data[p_val]) * -1
-            # convert to log2 space
-            tmp[fold_change] = np.where(tmp[fold_change] > 0,
-                                        np.log2(tmp[fold_change]),
-                                        -np.log2(-tmp[fold_change]))
-            if bh_critera:
-                sec_0 = tmp[tmp[flag]]
-                sec_2 = tmp[~tmp[flag]]
-                sec_1 = None
-                print('{0} : sec0 = {1} , sec1 = {2}'.format(save_name,
-                                                             len(sec_0),
-                                                             len(sec_2)))
-            else:
-                fc = np.log2(fold_change_cutoff)
-                p_value = -1 * np.log10(p_value)
-
-                sec_0 = tmp[
-                    (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) >= fc)]
-                sec_1 = tmp[
-                    (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) < fc)]
-                sec_2 = tmp[(tmp[p_val] < p_value)]
-
-                print('{0} : sec0 = {1} , sec1 = {2} , '
-                      'sec2 = {3}'.format(save_name, len(sec_0), len(sec_1),
-                                          len(sec_2)))
-            ax = figure.add_subplot(n_rows, n_cols, n + 1)
+            filtered_data = self._filter_data(sample, bh_critera, p_value,
+                                              fold_change_cutoff)
+            sec_0, sec_1, sec_2 = filtered_data
+            ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
             self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
             if not bh_critera:
+                fc = np.log2(fold_change_cutoff)
+                log_p_val = -1 * np.log10(p_value)
                 ax.axvline(x=fc, linestyle='--')
                 ax.axvline(x=-1 * fc, linestyle='--')
-                ax.axhline(y=p_value, linestyle='--')
-            if def_range is not None:
-                ax.set_xlim(def_range[0], def_range[1])
-        plt.tight_layout()
-        if out_dir is None:
-            plt.savefig('{0}.pdf'.format(save_name), bbox_inches='tight')
-            plt.savefig('{0}.png'.format(save_name), bbox_inches='tight')
-        else:
-            plt.savefig('{0}/{1}.pdf'.format(out_dir, save_name),
-                        bbox_inches='tight')
-            plt.savefig('{0}/{1}.png'.format(out_dir, save_name),
-                        bbox_inches='tight')
-        plt.close()
+                ax.axhline(y=log_p_val, linestyle='--')
+            if y_range is not None:
+                ax.set_ylim(y_range[0], y_range[1])
+            if x_range is not None:
+                ax.set_xlim(x_range[0], x_range[1])
 
-    def volcano_plot(self, exp_date_type, save_name, p_value=0.1, out_dir=None,
-                     fold_change_cutoff=1.5, def_range=None, bh_critera=False):
-        # Create a volcano plot
-        # We declare signficant p-values as less than 0.05
-        # We declare fold change as  less than -1 or greater than 1
-        """ create a volcano plot of data
+        self._save_plot(fig, save_name=save_name, out_dir=out_dir)
 
-        :param exp_date_type:
-        :param save_name:
-        :param def_range:
-        :param p_value:
-        :param fold_change:
-        :return:
+    def volcano_plot(self, exp_date_type, save_name, out_dir=None,
+                     bh_critera=False, p_value=0.1, fold_change_cutoff=1.5,
+                     x_range=None, y_range=None):
+        """ Create a volcano plot of data
+        Creates a volcano plot of data type provided
+
+        Parameters
+        ----------
+        exp_date_type: str
+            Type of experimental method for plot
+        save_name: str
+            name to save figure
+        out_dir: str, directory
+            Location to save figure
+        bh_critera: bool, optional
+            If to use significant flags of data
+        p_value: float, optional
+            Criteria for significant
+        fold_change_cutoff: float, optional
+            Criteria for significant
+        y_range: array_like
+            upper and lower bounds of plot in y direction
+        x_range: array_like
+            upper and lower bounds of plot in x direction
+
+        Returns
+        -------
+
+
         """
 
         if exp_date_type not in self.exp_methods:
             print("Must provide experimental method for volcano plot")
             quit()
         data = self.data[self.data[exp_method] == exp_date_type]
-
-        # fold change cutoff
-        fc = np.log2(fold_change_cutoff)
-        p_value = -1 * np.log10(p_value)
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
-        data = data.dropna(subset=[fold_change])
-        tmp = data.loc[:, (p_val, fold_change, flag)]
+        filtered_data = self._filter_data(data, bh_critera, p_value,
+                                          fold_change_cutoff)
+        sec_0, sec_1, sec_2 = filtered_data
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
+        if not bh_critera:
+            fc = np.log2(fold_change_cutoff)
+            log_p_val = -1 * np.log10(p_value)
+            ax.axvline(x=fc, linestyle='--')
+            ax.axvline(x=-1 * fc, linestyle='--')
+            ax.axhline(y=log_p_val, linestyle='--')
+        if y_range is not None:
+            ax.set_ylim(y_range[0], y_range[1])
+        if x_range is not None:
+            ax.set_xlim(x_range[0], x_range[1])
+        self._save_plot(fig, save_name=save_name, out_dir=out_dir)
 
+    @staticmethod
+    def _save_plot(fig, save_name, out_dir):
+        fig.tight_layout()
+        tmp_save_name_pdf = '{0}.pdf'.format(save_name)
+        tmp_save_name_png = '{0}.png'.format(save_name)
+        if out_dir is not None:
+            tmp_save_name_pdf = os.path.join(out_dir, tmp_save_name_pdf)
+            tmp_save_name_png = os.path.join(out_dir, tmp_save_name_png)
+        fig.savefig(tmp_save_name_pdf, bbox_inches='tight')
+        fig.savefig(tmp_save_name_png, bbox_inches='tight')
+        plt.close()
+
+    @staticmethod
+    def _add_volcano_plot(fig_axis, section_0, section_1, section_2):
+
+        fig_axis.scatter(section_0[fold_change], section_0[p_val], marker='.',
+                         color='blue')
+        if section_1 is not None:
+            fig_axis.scatter(section_1[fold_change], section_1[p_val],
+                             marker='.', color='red')
+        fig_axis.scatter(section_2[fold_change], section_2[p_val], s=1,
+                         marker=',', color='gray')
+        fig_axis.set_ylabel('-log$_{10}$ p-value', fontsize=16)
+        fig_axis.set_xlabel('log$_2$ Fold Change', fontsize=16)
+
+    @staticmethod
+    def _filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
+        tmp = data.loc[:, (p_val, fold_change, flag)]
         # convert to log10 scale
         tmp[p_val] = np.log10(data[p_val]) * -1
         # convert to log2 space
         tmp[fold_change] = np.where(tmp[fold_change] > 0,
                                     np.log2(tmp[fold_change]),
                                     -np.log2(-tmp[fold_change]))
+        # Visual example of volcano plot
+        # section 0 are significant criteria
 
         #    0    #    1   #      0     #
         #         #        #            #
@@ -563,58 +678,42 @@ class ExperimentalData:
         #         #        #            #
         #################################
 
-        sec_0 = tmp[(tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) >= fc)]
-        sec_1 = tmp[(tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) < fc)]
-        sec_2 = tmp[(tmp[p_val] < p_value)]
-
-        if bh_critera:
+        if use_sig:
             sec_0 = tmp[tmp[flag]]
             sec_2 = tmp[~tmp[flag]]
             sec_1 = None
-            print('{0} : sec0 = {1} , sec1 = {2}'.format(save_name,
-                                                         len(sec_0),
-                                                         len(sec_2)))
         else:
-            print('{0} : sec0 = {1} , sec1 = {2} , '
-                  'sec2 = {3}'.format(save_name, len(sec_0), len(sec_1),
-                                      len(sec_2)))
+            fc = np.log2(fold_change_cutoff)
+            p_value = -1 * np.log10(p_value)
 
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
-        if not bh_critera:
-            ax.axvline(x=fc, linestyle='--')
-            ax.axvline(x=-1 * fc, linestyle='--')
-            ax.axhline(y=p_value, linestyle='--')
-        if def_range is not None:
-            ax.set_xlim(def_range[0], def_range[1])
-        if out_dir is None:
-            plt.savefig('{0}.pdf'.format(save_name), bbox_inches='tight')
-            plt.savefig('{0}.png'.format(save_name), bbox_inches='tight')
-        else:
-            plt.savefig('{0}/{1}.pdf'.format(out_dir, save_name),
-                        bbox_inches='tight')
-            plt.savefig('{0}/{1}.png'.format(out_dir, save_name),
-                        bbox_inches='tight')
-        plt.close()
+            sec_0 = tmp[
+                (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) >= fc)]
+            sec_1 = tmp[
+                (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) < fc)]
+            sec_2 = tmp[(tmp[p_val] < p_value)]
+        return sec_0, sec_1, sec_2
 
-    def _add_volcano_plot(self, fig_axis, section_0, section_1, section_2):
+    def create_histogram_measurements(self, exp_date_type, save_name,
+                                      y_range=None, out_dir=None):
+        """
+        Plots a histogram of data
 
-        fig_axis.scatter(section_0[fold_change], section_0[p_val], marker='.',
-                         color='blue')
-        if section_1 is not None:
-            fig_axis.scatter(section_1[fold_change], section_1[p_val],
-                             marker='.', color='red')
-        fig_axis.scatter(section_2[fold_change], section_2[p_val], s=1,
-                         marker=',', color='gray')
-        fig_axis.set_ylabel('-log10(p-value)', fontsize=16)
-        fig_axis.set_xlabel('log2(Fold Change)', fontsize=16)
+        Parameters
+        ----------
+        exp_date_type: str
+            Which data to plot
+        save_name: str
+            Name of figure
+        out_dir: str, path
+            Path to location to save figure
+        y_range: array_like
+            range of data
 
-    def create_histogram_measurments(self, exp_date_type, save_name,
-                                     def_range=None):
-        # Create a volcano plot
-        # We declare signficant p-values as less than 0.05
-        # We declare fold change as  less than -1 or greater than 1
+
+        Returns
+        -------
+
+        """
         if exp_date_type not in self.exp_methods:
             print("Must provide experimental method for volcano plot")
             quit()
@@ -625,17 +724,16 @@ class ExperimentalData:
         tmp = np.array(data[fold_change])
 
         tmp = np.where(tmp > 0, np.log2(tmp), -np.log2(-tmp))
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.hist(tmp, 50, color='gray')
+        if y_range is not None:
+            plt.xlim(y_range[0], y_range[1])
 
-        plt.hist(tmp, 50, color='gray')
-        if def_range is not None:
-            plt.xlim(def_range[0], def_range[1])
-
-        plt.yscale('log', base=10)
-        plt.ylabel('Count', fontsize=16)
-        plt.xlabel('log2(Fold Change)', fontsize=16)
-        plt.savefig('{0}.pdf'.format(save_name), bbox_inches='tight')
-        plt.savefig('{0}.png'.format(save_name), bbox_inches='tight')
-        plt.close()
+        ax.yscale('log', base=10)
+        ax.ylabel('Count', fontsize=16)
+        ax.xlabel('log$_2$ Fold Change', fontsize=16)
+        self._save_plot(fig, save_name, out_dir)
 
 
 template = r'''
@@ -653,3 +751,23 @@ template = r'''
 \end{{landscape}}
 \end{{document}}
 '''
+
+
+def _which(program):
+    import os
+
+    def _is_exe(filepath):
+        return os.path.isfile(filepath) and os.access(filepath, os.X_OK)
+
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if _is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            path = path.strip('"')
+            exe_file = os.path.join(path, program)
+            if _is_exe(exe_file):
+                return exe_file
+
+    return None
