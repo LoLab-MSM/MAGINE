@@ -1,0 +1,14 @@
+gene,protein,compound,treated_control_fold_change,species_type,significant_flag,sample_id,data_type,p_value_group_1_and_group_2
+BAX,BAX,,2,protein,TRUE,Time_1,label_free,0.001
+ADORA1,ADORA1,,1,protein,FALSE,Time_1,label_free,0.215
+ADORA2A,ADORA2A,,1.2,protein,FALSE,Time_1,label_free,0.199
+PARP1,PARP1,,1.5,protein,TRUE,Time_1,silac,0.01
+PARP4,PARP4,,4,protein,TRUE,Time_1,silac,0.005
+ADRA1A,ADRA1A,,3,protein,TRUE,Time_1,silac,0.01
+AGTR2,AGTR2,,-2,protein,TRUE,Time_2,ph_silac,0.03
+AHR,AHR,,-1.2,protein,FALSE,Time_2,ph_silac,0.26
+AIF1,AIF1,,-1.5,protein,TRUE,Time_3,rna_seq,0.01
+AKT1,AKT1,,-3.5,protein,TRUE,Time_3,rna_seq,0.06
+AKT2,AKT2,,-1.2,protein,FALSE,Time_3,rna_seq,0.22
+BAX,BAX,,2,protein,TRUE,Time_2,label_free,0.05
+BID,BID_cleavage,test,3,metabolite,TRUE,Time_2,hilic,0.01
