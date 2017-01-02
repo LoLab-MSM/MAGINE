@@ -2,7 +2,6 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
-import pygraphviz as pyg
 from bioservices import KEGG, UniProt
 
 uniprot = UniProt()
@@ -13,10 +12,41 @@ kegg.TIMEOUT = 100
 
 def add_attribute_to_network(graph, list_to_add_attribute, attribute,
                              true_term, false_term='false'):
+    """
+
+    Parameters
+    ----------
+    graph : networkx graph
+    list_to_add_attribute : list
+        list of nodes in graph to add attribute to
+    attribute : str
+        attribute to add to graph
+    true_term : str
+        value to add for the attribute provided True
+    false_term : str
+        value to add if attribute is false
+
+    Returns
+    -------
+    out : networkx graph
+
+
+    >>> from networkx import DiGraph
+    >>> from magine.network_tools import add_attribute_to_network
+    >>> g = DiGraph()
+    >>> g.add_nodes_from(['a', 'b', 'c'])
+    >>> new_g = add_attribute_to_network(g, ['a','b'], 'inTest', 'true')
+    >>> new_g.node['a']
+    {'inTest': 'true'}
+    >>> new_g.node['c']
+    {'inTest': 'false'}
+
+    """
     tmp_g = graph.copy()
-    nodes1 = tmp_g.nodes()
-    for i in nodes1:
-        if i in list_to_add_attribute:
+    nodes = set(tmp_g.nodes())
+    set_of_positive = set(list_to_add_attribute)
+    for i in nodes:
+        if i in set_of_positive:
             tmp_g.node[i][attribute] = true_term
         else:
             tmp_g.node[i][attribute] = false_term
@@ -25,47 +55,79 @@ def add_attribute_to_network(graph, list_to_add_attribute, attribute,
 
 
 def append_attribute_to_network(graph, list_to_add_attribute, attribute,
-                                true_term):
+                                true_term, delimiter=''):
+    """
+
+    Parameters
+    ----------
+    graph : networkx graph
+    list_to_add_attribute : list
+        list of nodes in graph to add attribute to
+    attribute : str
+        attribute to add to graph
+    true_term : str
+        value to add for the attribute provided True
+
+    Returns
+    -------
+    out : networkx graph
+
+
+    >>> from networkx import DiGraph
+    >>> from magine.network_tools import append_attribute_to_network
+    >>> g = DiGraph()
+    >>> g.add_nodes_from(['a'])
+    >>> new_g = append_attribute_to_network(g, ['a'], 'attribute', 'one')
+    >>> new_g.node['a']
+    {'attribute': 'one'}
+    >>> new_g = append_attribute_to_network(new_g, ['a'], 'attribute', 'two', delimiter=',')
+    >>> new_g.node['a']
+    {'attribute': 'one,two'}
+
+    """
     tmp_g = graph.copy()
-    nodes1 = tmp_g.nodes()
-    for i in nodes1:
-        if i in list_to_add_attribute:
+    nodes = set(tmp_g.nodes())
+    set_of_positive = set(list_to_add_attribute)
+    for i in nodes:
+        if i in set_of_positive:
             if attribute in tmp_g.node[i].keys():
-                tmp_g.node[i][attribute] += true_term
+                new_attr = tmp_g.node[i][attribute] + delimiter + true_term
+                tmp_g.node[i][attribute] = new_attr
             else:
                 tmp_g.node[i][attribute] = true_term
 
     return tmp_g
 
 
-def paint_network(graph, list_to_paint, color):
-    """
-    Paints a graph given a list of nodes and a color for that list
-    :param graph: pygraphvix.AGraph
-    :param list_to_paint: list
-    :param color: string
-    :return:
-    """
-    tmp_g = graph.copy()
-    nodes1 = tmp_g.nodes()
-    for i in list_to_paint:
-        if i in nodes1:
-            n = tmp_g.get_node(i)
-            n.attr['measured'] = 'True'
-            n.attr['color'] = 'black'
-            n.attr['fillcolor'] = color
-            n.attr['style'] = 'filled'
-    return tmp_g
+def trim_nodes(network, list_of_nodes):
+    tmp1 = trim(network, list_of_nodes)
+    tmp2 = trim(network, list_of_nodes)
+    while tmp1 != tmp2:
+        tmp2 = tmp1
+        tmp1 = trim(network, list_of_nodes)
 
 
-def subtract_network_from_network(net1, net2):
-    copy_graph1 = net1.copy()
-    nodes1 = net1.nodes()
-    nodes2 = net2.nodes()
-    for i in nodes2:
-        if i in nodes1:
-            copy_graph1.remove_node(i)
-    return copy_graph1
+def trim(network, list_of_nodes):
+    list_of_nodes = set(list_of_nodes)
+    found, not_found = 0., 0.
+    nodes = set(network.nodes())
+    in_dict = network.in_degree(nbunch=nodes)
+    out_dict = network.out_degree(nbunch=nodes)
+    for i in nodes:
+        if i in list_of_nodes:
+            found += 1
+        else:
+            if in_dict[i] == 1 and out_dict[i] == 0:
+                network.remove_node(i)
+            elif in_dict[i] == 0 and out_dict[i] == 1:
+                network.remove_node(i)
+            else:
+                not_found += 1
+
+    len_nodes = len(network.nodes())
+    print("{} found, {} not found".format(found, not_found))
+    print("{}% of {} nodes".format(found / len_nodes * 100, len_nodes))
+    return len_nodes
 
 
 def create_list_of_species(graph, filename, all_prot):
@@ -77,8 +139,8 @@ def create_list_of_species(graph, filename, all_prot):
         list_only += i + ','
         if np.array(all_prot[all_prot['Gene  '] == i]).shape == (1, 5):
             output_measured += str(
-                    np.array(all_prot[all_prot['Gene  '] == i])[0]).strip(
-                    '[').strip(']') + '\n'
+                np.array(all_prot[all_prot['Gene  '] == i])[0]).strip(
+                '[').strip(']') + '\n'
         else:
             output_not_measured += i.replace(" ", "_") + ' nan nan nan nan\n'
     f.write(output_measured.replace("'", ""))
@@ -87,6 +149,16 @@ def create_list_of_species(graph, filename, all_prot):
     f = open('list_' + filename, 'w')
     f.write(list_only)
     f.close()
+
+
+def subtract_network_from_network(net1, net2):
+    copy_graph1 = net1.copy()
+    nodes1 = net1.nodes()
+    nodes2 = net2.nodes()
+    for i in nodes2:
+        if i in nodes1:
+            copy_graph1.remove_node(i)
+    return copy_graph1
 
 
 def return_gml(graph):
@@ -234,7 +306,7 @@ def generate_curated_subgraphs(network, i):
     print("generating curated list for %s" % i)
     size = len(network.nodes())
     file_to_write = open(
-            'List_of_species_subgroup_%s_size_%s.txt' % (i + 1, size), 'w')
+        'List_of_species_subgroup_%s_size_%s.txt' % (i + 1, size), 'w')
     output = header + '\n'
     for j in network.nodes():
         tmp = get_uniprot_info(j)
@@ -242,37 +314,6 @@ def generate_curated_subgraphs(network, i):
     file_to_write.write(output)
     file_to_write.close()
     print "Created curated list for %s", i
-
-
-def trim_nodes(network, list_of_nodes):
-    tmp1 = trim(network, list_of_nodes)
-    tmp2 = trim(network, list_of_nodes)
-    while tmp1 != tmp2:
-        tmp2 = tmp1
-        tmp1 = trim(network, list_of_nodes)
-
-
-def trim(network, list_of_nodes):
-    list_of_nodes = set(list_of_nodes)
-    found, not_found = 0., 0.
-    nodes = set(network.nodes())
-    in_dict = network.in_degree(nbunch=nodes)
-    out_dict = network.out_degree(nbunch=nodes)
-    for i in nodes:
-        if i in list_of_nodes:
-            found += 1
-        else:
-            if in_dict[i] == 1 and out_dict[i] == 0:
-                network.remove_node(i)
-            elif in_dict[i] == 0 and out_dict[i] == 1:
-                network.remove_node(i)
-            else:
-                not_found += 1
-
-    len_nodes = len(network.nodes())
-    print("{} found, {} not found".format(found, not_found))
-    print("{}% of {} nodes".format(found / len_nodes * 100, len_nodes))
-    return len_nodes
 
 
 def create_lists_of_subgraphs(network, save_name, exp_data):
@@ -324,31 +365,5 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     return subgraph_species
 
 
-def add_reactome(network):
-    combined_network = network.copy()
-    existing_nodes = set(network.nodes())
-    ddn2 = nx.read_gml('/home/pinojc/PycharmProjects/Magine/magine/'
-                       'network_database_expansions/reactome_expansion/'
-                       'reactome_network.gml')
-    added_nodes = 0
-    for i in ddn2.nodes(data=True):
-        if i[0] in existing_nodes:
-            continue
-        else:
-            network.add_node(i[0], i[1])
-            added_nodes += 1
-    print("Added {} nodes from REACTOME".format(added_nodes))
-
-    added_edges = 0
-    kegg_edges = set(combined_network.edges())
-    reactome_edges = ddn2.edges(data=True)
-    for i, j, k in reactome_edges:
-        if (i, j) in kegg_edges:
-            continue
-        else:
-            combined_network.add_edge(i, j, k)
-            added_edges += 1
-    print("Added {} edges from REACTOME".format(added_edges))
-    return combined_network
 if __name__ == '__main__':
     test_compress()
