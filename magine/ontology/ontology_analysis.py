@@ -42,8 +42,8 @@ class GoAnalysis:
             self.slim = True
             self.slim_name = slim
             self.savename += '_slim'
-            self.ontology.set_slims_subset(
-                slim)  # goslim_pir goslim_generic goslim_chembl
+            # options can be goslim_pir goslim_generic goslim_chembl
+            self.ontology.set_slims_subset(slim)
         self.annotations = go.Annotations(species, ontology=self.ontology)
         self.number_of_total_reference_genes = len(self.annotations.gene_names)
         self.global_go = {}
@@ -58,7 +58,7 @@ class GoAnalysis:
         self.created_go_pds = set()
 
     def enrichment_analysis_of_single_sample(self, gene_list, aspect='F',
-                                             num=0):
+                                             num=0, slims_only=False):
         """
         Performs enrichment analysis of list of genes
 
@@ -74,6 +74,8 @@ class GoAnalysis:
 
         num : int
             sample number used for pandas dataframe
+        slims_only : bool
+            Use slim terms
         """
         # checks first to see if all genes are annotated in GO
         genes_present = set()
@@ -157,7 +159,7 @@ class GoAnalysis:
         gene_list = pd.DataFrame(sorted_list_2, columns=cols)
         return sorted_list[:n, :], gene_list
 
-    def create_enrichment_array(self, list_of_exp, aspect):
+    def create_enrichment_array(self, list_of_exp, aspect, use_slims=False):
         """
         Performs enrichment analysis of list of list of genes
 
@@ -182,7 +184,7 @@ class GoAnalysis:
         assert self.num_data_sets != 0, "Must provide at least one data list"
         for n, i in enumerate(list_of_exp):
             tmp_array, tmp_array_2 = self.enrichment_analysis_of_single_sample(
-                i, aspect, n)
+                i, aspect, n, slims_only=use_slims)
             results.append(tmp_array)
             if n == 0:
                 data_set_2 = tmp_array_2
@@ -202,7 +204,8 @@ class GoAnalysis:
             for num in range(1, num_of_lists + 1):
                 data_set[n, num] = return_go_number(i, results[num - 1])
         if np.shape(data_set)[0] == 0:
-            print('Warning! No significanance')
+            print('Warning! No significant species!!!')
+            return None
 
         return data_set
 
@@ -267,7 +270,7 @@ class GoAnalysis:
         plt.close()
 
     def analyze_data(self, data, aspect='F', savename='tmp', labels=None,
-                     analyze=True):
+                     analyze=True, slim=None):
         """
 
         Parameters
@@ -288,7 +291,12 @@ class GoAnalysis:
             list of sample labels
 
         """
-        data = self.create_enrichment_array(data, aspect)
+        use_slims = False
+        if slim is not None:
+            self.ontology.set_slims_subset(slim)
+            use_slims = True
+
+        data = self.create_enrichment_array(data, aspect, use_slims)
         if data is None:
             print('No data! Error! Returning nothing')
             return
@@ -496,6 +504,10 @@ class GoAnalysis:
         """
 
         real_names = []
+        if self.array is None:
+            print("Array is empty. This could be due to no signficant species"
+                  "provided in list or because analysis has not been run yet.")
+            return
         html_array = self.array.copy()
 
         # replace GO numbers with GO name
