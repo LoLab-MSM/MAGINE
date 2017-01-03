@@ -1,5 +1,5 @@
 from magine.ontology.ontology_tools import path_to_root, \
-    find_disjunction_common_ancestor
+    find_disjunction_common_ancestor, export_to_dot
 
 
 def test_path_to_root():
@@ -14,8 +14,6 @@ def test_path_to_root():
                   '"GO:0071704"',
                   '"GO:0009987"',
                   '"GO:0044237"'}
-    print(nodes)
-    print(root_nodes)
     assert nodes == root_nodes
 
 
@@ -24,3 +22,26 @@ def test_find_common_ancestor():
     common_graph = find_disjunction_common_ancestor(topolc_example)
     n_nodes = len(common_graph.nodes())
     assert n_nodes == 12
+
+
+def test_find_common_ancestor_3_terms():
+    # This is for the case where one of the terms is in the path to root of
+    # one of the other terms
+    topolc_example = ['GO:0061591', 'GO:0061588', 'GO:0061590']
+    common_graph = find_disjunction_common_ancestor(topolc_example)
+    # n_nodes = len(common_graph.nodes())
+    export_to_dot(common_graph, '3_terms')
+    # assert n_nodes == 12
+
+
+def test_only_one_common():
+    # This is for the case where one of the terms is in the path to root of
+    # one of the other terms
+    topolc_example = ['GO:0071840', 'GO:0009987']
+    common_graph = find_disjunction_common_ancestor(topolc_example)
+    # n_nodes = len(common_graph.nodes())
+    export_to_dot(common_graph, 'single_ancestor')
+    # assert n_nodes == 12
+
+
+test_only_one_common()

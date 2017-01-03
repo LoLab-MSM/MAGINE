@@ -64,7 +64,15 @@ def add_children(go_term, graph, gene_set_of_interest):
     """
     nodes_in_graph = set(graph.nodes())
     for i in go[go_term].children:
-        if i.id not in nodes_in_graph and i.id in gene_set_of_interest:
+        if i.id in gene_set_of_interest:
+            if i.id not in nodes_in_graph:
+                graph.add_node('"{}"'.format(i.id), depth=i.depth,
+                               level=i.level, GOname=i.name)
+            if i.id not in nodes_in_graph:
+                graph.add_node('"{}"'.format(go[go_term].id),
+                               depth=go[go_term].depth,
+                               level=go[go_term].level,
+                               GOname=go[go_term].name)
             edge = ('"{}"'.format(go[go_term].id), '"{}"'.format(i.id))
             graph.add_edge(*edge)
             add_children(i.id, graph, gene_set_of_interest)
@@ -80,7 +88,8 @@ def find_disjunction_common_ancestor(list_of_terms):
 
     Returns
     -------
-
+    graph : networkx.DiGraph
+        containing sources to root, disjunction common ancestor show in red
     """
 
     combined_graph = nx.DiGraph()
@@ -89,8 +98,8 @@ def find_disjunction_common_ancestor(list_of_terms):
     for i in list_of_terms:
         g = path_to_root(i)
         node_list.append(set(g.nodes()))
+        combined_graph.add_nodes_from(g.nodes(data=True))
         combined_graph.add_edges_from(g.edges())
-
     # count the number of times a node is in the list to find nodes that are
     # common to all terms
     term_counter = {}
@@ -103,10 +112,37 @@ def find_disjunction_common_ancestor(list_of_terms):
 
     # find the nodes that are in all terms
     n_terms = len(list_of_terms)
+
+    # For graphiv to recongnize ":" within a name, we must put it in a string
+    # TODO : find a more clever way to go about this
+    formatted_list_of_terms = []
+    for i in list_of_terms:
+        formatted_list_of_terms.append('"{}"'.format(i))
     common_nodes = set()
     for i in term_counter:
         if term_counter[i] == n_terms:
             common_nodes.add(i)
+
+    if len(common_nodes) == 1:
+        for i in common_nodes:
+            level = combined_graph.node[i]['level']
+            depth = combined_graph.node[i]['depth']
+            name = combined_graph.node[i]['GOname']
+        print("Warning : the most common ancestor is {} ({}) with a depth of "
+              "{} and level of {}".format(name, i, depth, level))
+
+    # Check to see if any of the provided terms are in all graphs
+    # This means it was an ancestor node and should be removed from list
+    to_remove = []
+    for each in formatted_list_of_terms:
+        if each in common_nodes:
+            print("Warning : {} term is already in graph! Thus will treat as "
+                  "upstream term and remove from list of terms"
+                  " provided".format(each))
+            to_remove.append(each)
+    for each in to_remove:
+        formatted_list_of_terms.remove(each)
+
     # return subgraph containing only nodes that are in all
     common_graph = combined_graph.subgraph(common_nodes)
 
@@ -121,21 +157,20 @@ def find_disjunction_common_ancestor(list_of_terms):
     for disjun_node in disjunction_nodes:
         common_graph.node[disjun_node]['style'] = 'filled'
         common_graph.node[disjun_node]['fillcolor'] = 'red'
-        for each in list_of_terms:
-            if nx.has_path(combined_graph, disjun_node, '"{}"'.format(each)):
+        for each in formatted_list_of_terms:
+            if nx.has_path(combined_graph, disjun_node, each):
                 sh_paths = [p for p in
                             nx.all_shortest_paths(combined_graph, disjun_node,
-                                                  '"{}"'.format(each))]
+                                                  each)]
                 for path in sh_paths:
-                    print(path)
                     common_graph.add_path(path)
 
     # color source nodes
-    for each in list_of_terms:
-        common_graph.add_node('"{}"'.format(each), style='filled',
+    for each in formatted_list_of_terms:
+        common_graph.add_node(each, style='filled',
                               fillcolor='green')
 
-    export_to_dot(common_graph, 'common', view=True)
+    export_to_dot(common_graph, 'common', view=False)
     return common_graph
 
 
