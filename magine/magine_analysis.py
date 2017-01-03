@@ -1,14 +1,17 @@
 import os
+import warnings
 
 import networkx as nx
+import pandas as pd
 
 from magine.networks.cytoscape_view import RenderModel
-from magine.networks.network_generator import build_network
+from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.ontology.ontology_analysis import GoAnalysis
 
 
 class Analyzer:
-    """ MAGINE analyzer
+    """
+    MAGINE analyzer
     Class to perform entire MAGINE pipeline.
     Creates a network
     Performs gene enrichment analysis
@@ -17,21 +20,28 @@ class Analyzer:
     """
 
     def __init__(self, experimental_data, network=None, species='hsa',
-                 metric='pvalue', output_directory='tmp', save_name='tmp'):
-        self.build_network = build_network
+                 metric='pvalue', output_directory='tmp', save_name='tmp',
+                 build_network=False):
         self.exp_data = experimental_data
         self.species = species
         self.save_name = save_name
         self.out_dir = output_directory
         self.go = GoAnalysis
-        self.render_model = RenderModel
         self.metric = metric
-        # if network is None:
-        #     self.generate_network(save_name)
-        # else:
-        #     self.network = network
-        # self.go_net_gen = GoNetworkGenerator(self.species, self.network,
-        #                                      self.out_dir)
+        if build_network:
+            if network is not None:
+                warnings.warn("Warning : Passing build_network=True "
+                              "and a network file! ", RuntimeWarning)
+            from magine.networks.network_generator import \
+                build_network as network_builder
+            self.build_network = network_builder
+            self.generate_network(save_name)
+        elif network is not None:
+            self.network = network
+            self.go_net_gen = None
+        if self.network is not None:
+            self.go_net_gen = GoNetworkGenerator(self.species, self.network,
+                                                 self.out_dir)
         self.html_names = []
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
@@ -41,26 +51,46 @@ class Analyzer:
             os.mkdir(os.path.join(self.out_dir, 'Network_files'))
 
     def generate_network(self, save_name):
-        """ generates network
-
-        :param save_name:
-        :return:
         """
-        proteins = self.exp_data.sign_changed_proteomics
+        Generates network with default parameters
+
+        Parameters
+        ----------
+        save_name : str
+            name of network to be saved
+
+        Returns
+        -------
+
+        """
+        proteins = self.exp_data.list_sig_proteins
         self.network = self.build_network(proteins, num_overlap=1,
                                           save_name=save_name,
                                           species=self.species)
 
     def run_go(self, data_type='proteomics', slim=False, metric=None,
-               run_type='all', aspect='P', create_networks=False):
-        """ performs GO analysis
+               run_type='all', aspect='P', create_go_networks=False):
+        """
+        Runs enrichment analysis
+        Parameters
+        ----------
+        data_type : str, {'proteomics','rnaseq'}
+            data type to run enrichment analysis
+        slim : bool
+        metric : {'enrichment', 'pvalue', 'fraction'}
+            metric to score by
+        run_type : {'proteomics', 'down', 'changed', 'all'}
+        aspect : {'F','B','C'}
+            Can be any combination of GO aspects.
+            F: Molecular function
+            B: Biological process
+            C: Cellular component
+        create_go_networks: bool
+            create a GO level network
 
-        :param data_type: proteomics or RNAseq (limited to types of genes)
-        :param slim: boolean
-        :param metric: type of scoring function (pvalue, enrichment, fraction)
-        :param run_type: proteomics, rna_seq, or all
-        :param aspect: type of GO analysis (P = biological process, C = cellular component, F = molecular function)
-        :return:
+        Returns
+        -------
+
         """
         if metric is None:
             metric = self.metric
@@ -68,7 +98,6 @@ class Analyzer:
 
         if data_type == 'proteomics':
             up_reg = self.exp_data.proteomics_up_over_time
-
             down_reg = self.exp_data.proteomics_down_over_time
             sig_changes = self.exp_data.proteomics_over_time
             labels = list(self.exp_data.protomics_time_points)
@@ -92,22 +121,22 @@ class Analyzer:
             save_name_up = save_name + '_up' + '_' + aspect
             self.html_names.append(save_name_up)
             # '''
-            go.analysis_data(up_reg, aspect=aspect, savename=save_name_up,
-                             labels=labels, analyze=True)
+            go.analyze_data(up_reg, aspect=aspect, savename=save_name_up,
+                            labels=labels, analyze=True)
             go.export_to_html(labels, html_name=save_name_up)
-            go.print_ranked_over_time(create_plots=False, number=5)
-            if create_networks:
+            # go.print_ranked_over_time(create_plots=False, number=5)
+            if create_go_networks:
                 self.create_go_network_and_render(go, savename=save_name_up)
                 # '''
         if run_type == 'down' or run_type == 'all':
             save_name_down = save_name + '_down' + '_' + aspect
             self.html_names.append(save_name_down)
             # '''
-            go.analysis_data(down_reg, aspect=aspect, savename=save_name_down,
-                             labels=labels, analyze=True)
-            go.export_to_html(labels, html_name=save_name_down)
-            go.print_ranked_over_time(create_plots=False, number=5)
-            if create_networks:
+            go.analyze_data(down_reg, aspect=aspect, savename=save_name_down,
+                            labels=labels, analyze=True)
+            # go.export_to_html(labels, html_name=save_name_down)
+            # go.print_ranked_over_time(create_plots=False, number=5)
+            if create_go_networks:
                 self.create_go_network_and_render(go, savename=save_name_down)
                 # '''
 
@@ -115,32 +144,124 @@ class Analyzer:
             save_name_both = save_name + '_changed' + '_' + aspect
             self.html_names.append(save_name_both)
             # '''
-            go.analysis_data(sig_changes, aspect=aspect,
-                             savename=save_name_both, labels=labels,
-                             analyze=True)
-            go.export_to_html(labels, html_name=save_name_both)
-            go.print_ranked_over_time(create_plots=False, number=5)
-            if create_networks:
+            go.analyze_data(sig_changes, aspect=aspect,
+                            savename=save_name_both, labels=labels,
+                            analyze=True)
+            # go.export_to_html(labels, html_name=save_name_both)
+            # go.print_ranked_over_time(create_plots=False, number=5)
+            if create_go_networks:
                 self.create_go_network_and_render(go, savename=save_name_both)
                 # '''
 
         return go
 
+    def run_single_go(self, data_type='proteomics', fold_change='Up',
+                      slim=False, metric=None, aspect='P',
+                      create_go_networks=False):
+        """
+        Runs enrichment analysis
+        Parameters
+        ----------
+        data_type : str, {'proteomics','rnaseq'}
+            data type to run enrichment analysis
+        slim : bool
+        metric : {'enrichment', 'pvalue', 'fraction'}
+            metric to score by
+        aspect : {'F','B','C'}
+            Can be any combination of GO aspects.
+            F: Molecular function
+            B: Biological process
+            C: Cellular component
+        create_go_networks: bool
+            create a GO level network
+
+        Returns
+        -------
+
+        """
+        if metric is None:
+            metric = self.metric
+            assert metric is not None, 'Must provide metric'
+
+        if data_type == 'proteomics':
+            if fold_change == 'up':
+                data = self.exp_data.proteomics_up_over_time
+            elif fold_change == 'down':
+                data = self.exp_data.proteomics_down_over_time
+            elif fold_change == 'both':
+                data = self.exp_data.proteomics_over_time
+            labels = list(self.exp_data.protomics_time_points)
+        elif data_type == 'rnaseq':
+            if fold_change == 'up':
+                data = self.exp_data.rna_up_over_time
+            elif fold_change == 'down':
+                data = self.exp_data.rna_down_over_time
+            elif fold_change == 'both':
+                data = self.exp_data.rna_over_time
+            labels = list(self.exp_data.rna_time_points)
+        save_name = '_'.join([self.save_name, data_type, fold_change, aspect])
+
+        if slim:
+            save_name += '_slim'
+            slim_name = 'goslim_pir'
+        else:
+            slim_name = None
+
+        filename = '<a href="{}.html">link</a>'.format(
+            self.out_dir + '/' + save_name)
+
+        html_dict = {'DataType': data_type,
+                     'FoldChange': fold_change,
+                     'fileName': filename,
+                     'aspect': aspect,
+                     'slim': slim}
+
+        go = self.go(species=self.species, output_directory=self.out_dir,
+                     metric=metric, slim=slim_name,
+                     experimental_data=self.exp_data)
+
+        go.analyze_data(data, aspect=aspect, savename=save_name,
+                        labels=labels, analyze=True)
+        go.export_to_html(labels, html_name=save_name)
+        # go.print_ranked_over_time(create_plots=False, number=5)
+        if create_go_networks:
+            self.create_go_network_and_render(go, savename=save_name)
+
+        return go, html_dict
+
     def create_go_network_and_render(self, go, savename):
+        """
+        Creates GO level network using provided GO rankings
+
+        Parameters
+        ----------
+        go : list of array_like
+            list of arrays of go rankings per sample
+        savename : str
+            name of file to save GO level network
+
+        Returns
+        -------
+
+        """
 
         all_timepoints = []
         list_of_timepoints = []
-        print(len(go.top_hits))
+
         for n, i in enumerate(go.top_hits):
             remove_zeros(i, n)
             list_of_timepoints.append(i)
             for each in i.keys():
                 all_timepoints.append(each)
-        print(all_timepoints)
+
+        if self.go_net_gen is None:
+            warnings.warn("Warning : You must provide Analyzer with a network "
+                          "or pass the build_network flag"
+                          "or generate a network", RuntimeError)
         tall = self.go_net_gen.create_network_from_list(
-                list_of_go_terms=all_timepoints,
-                save_name='{0}_network'.format(savename),
-                threshold=0)
+            list_of_go_terms=all_timepoints,
+            save_name='{0}_network'.format(savename),
+            threshold=0)
         if len(tall.nodes()) == 0:
             return
         # Do these in reverse so we see where the signal started
@@ -167,8 +288,8 @@ class Analyzer:
                 if each in terms:
                     all_timepoints.append(each)
         tall = self.go_net_gen.create_network_from_list(
-                list_of_go_terms=all_timepoints,
-                save_name='{0}_network'.format(savename), threshold=0)
+            list_of_go_terms=all_timepoints,
+            save_name='{0}_network'.format(savename), threshold=0)
 
         # Do these in reverse so we see where the signal started
         for n, each in enumerate(reversed(list_of_timepoints)):
@@ -176,13 +297,13 @@ class Analyzer:
 
         save_name = os.path.join(self.out_dir, 'Network_files',
                                  '{0}_all_colored_{1}.graphml'.format(
-                                         savename, self.metric))
+                                     savename, self.metric))
         nx.nx.write_graphml(tall, save_name)
         rm = RenderModel(tall)
         rm.visualize_by_list_of_time(
-                create_names(len(self.exp_data.protomics_time_points)),
-                prefix=savename,
-                out_dir='.')
+            create_names(len(self.exp_data.protomics_time_points)),
+            prefix=savename,
+            out_dir='.')
 
     def create_html_report(self, d_type):
         if d_type == 'proteomics':
@@ -207,21 +328,62 @@ class Analyzer:
         """
 
         if data_type == 'proteomics' or data_type == 'all':
-            self.run_go(data_type='proteomics', aspect='P')
-            self.run_go(data_type='proteomics', aspect='F')
-            self.run_go(data_type='proteomics', aspect='C')
-            # self.run_go(data_type='proteomics', slim=True, aspect='P')
+            # self.run_go(data_type='proteomics', aspect='P')
+            # self.run_go(data_type='proteomics', aspect='F')
+            # self.run_go(data_type='proteomics', aspect='C')
+            self.run_go(data_type='proteomics', slim=True, aspect='P')
             # self.run_go(data_type='proteomics', slim=True, aspect='F')
             # self.run_go(data_type='proteomics', slim=True, aspect='C')
-        if data_type == 'rnaseq' or data_type == 'all':
-            self.run_go(data_type='rnaseq', aspect='P')
-            self.run_go(data_type='rnaseq', aspect='F')
-            self.run_go(data_type='rnaseq', aspect='C')
+            # if data_type == 'rnaseq' or data_type == 'all':
+            # self.run_go(data_type='rnaseq', aspect='P')
+            # self.run_go(data_type='rnaseq', aspect='F')
+            # self.run_go(data_type='rnaseq', aspect='C')
             # self.run_go(data_type='rnaseq', slim=True, aspect='P')
             # self.run_go(data_type='rnaseq', slim=True, aspect='F')
             # self.run_go(data_type='rnaseq', slim=True, aspect='C')
 
         self.create_html_report(data_type)
+
+    def run_proteomics_go(self):
+        """
+        Updated function to run all proteomics
+        Returns
+        -------
+
+        """
+        import jinja2
+        print(os.path.join(os.path.dirname(__file__), 'ontology', 'templates'))
+        env = jinja2.Environment(loader=jinja2.FileSystemLoader(
+            searchpath=os.path.join(os.path.dirname(__file__), 'ontology',
+                                    'templates')
+        ))
+        template = env.get_template('view.html')
+        list_of_go_dict = []
+        for i in ['up', 'down', 'both']:
+            go, x = self.run_single_go(data_type='proteomics',
+                                       fold_change=i, slim=True,
+                                       metric='enrichment', aspect='P',
+                                       create_go_networks=False)
+            list_of_go_dict.append(x)
+            go, x = self.run_single_go(data_type='proteomics',
+                                       fold_change=i, slim=False,
+                                       metric='enrichment', aspect='P',
+                                       create_go_networks=False)
+            list_of_go_dict.append(x)
+
+        df = pd.DataFrame(list_of_go_dict)
+
+        template_vars = {"title": "Example data",
+                         "national_pivot_table": df.to_html(escape=False)}
+        html_out = template.render(template_vars)
+        with open('test.html', 'w') as f:
+            f.write(html_out)
+
+
+headers = {'DataType',
+           'FoldChange',
+           'fileName',
+           'aspect'}
 
 
 def remove_zeros(top_hits, value):
