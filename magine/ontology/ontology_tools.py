@@ -3,17 +3,23 @@ import os
 import graphviz as gv
 import networkx as nx
 from goatools import obo_parser
-
+from orangecontrib.bio.utils import serverfiles
 os.environ[
     "PATH"] += os.pathsep + "C:\Users\James Pino\Miniconda2\envs\MAGINE\Library\\bin\graphviz"
 
-# must download this from Gene ontology
-# TODO point to the ontology and annotations from orange.biocontrib
-short_name = 'gene_ontology_edit.obo'
+default_database_path = os.path.join(serverfiles.localpath(), "GO")
 
-short_path = os.path.join(os.path.dirname(__file__),
-                          'ontology_files',
-                          'go-basic.obo')
+short_path = filename = os.path.join(default_database_path,
+                                     "gene_ontology_edit.obo.tar.gz",
+                                     "gene_ontology_edit.obo")
+if not os.path.exists(short_path):
+    from orangecontrib.bio.go import Ontology
+
+    print("Using ontology for first time")
+    print("Downloading files via Orange.bio")
+    ontology = Ontology()
+    assert os.path.exists(short_path)
+
 go = obo_parser.GODag(short_path)
 
 
