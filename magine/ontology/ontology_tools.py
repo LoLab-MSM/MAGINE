@@ -1,9 +1,11 @@
 import os
 
-import graphviz as gv
 import networkx as nx
 from goatools import obo_parser
 from orangecontrib.bio.utils import serverfiles
+
+from magine.network_tools import export_to_dot
+
 os.environ[
     "PATH"] += os.pathsep + "C:\Users\James Pino\Miniconda2\envs\MAGINE\Library\\bin\graphviz"
 
@@ -74,7 +76,7 @@ def add_children(go_term, graph, gene_set_of_interest):
             if i.id not in nodes_in_graph:
                 graph.add_node('"{}"'.format(i.id), depth=i.depth,
                                level=i.level, GOname=i.name)
-            if i.id not in nodes_in_graph:
+            if go[go_term].id not in nodes_in_graph:
                 graph.add_node('"{}"'.format(go[go_term].id),
                                depth=go[go_term].depth,
                                level=go[go_term].level,
@@ -180,28 +182,3 @@ def find_disjunction_common_ancestor(list_of_terms):
     return common_graph
 
 
-def export_to_dot(graph, save_name, format='png', engine='dot', view=False):
-    """
-    Converts networkx graph to graphviz dot
-
-    Parameters
-    ----------
-    graph : networkx.DiGraph
-    save_name : str
-        name of file to save
-    format : str
-        format of output( pdf, png, svg)
-    engine : str
-        graphviz engine
-            dot, twopi,
-    view : bool
-        open up the rendered image
-
-    Returns
-    -------
-
-    """
-    dot_string = nx.nx_pydot.to_pydot(graph).to_string()
-    dot_graph = gv.Source(dot_string, format=format, engine=engine)
-    dot_graph.render('{}'.format(save_name), view=view, cleanup=True)
-    dot_graph.save('{}.dot'.format(save_name))
