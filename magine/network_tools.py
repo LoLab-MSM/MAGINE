@@ -1,13 +1,50 @@
 # -*- coding: utf-8 -*-
+from sys import modules
+
+import graphviz as gv
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from bioservices import KEGG, UniProt
 
-uniprot = UniProt()
-uniprot.TIMEOUT = 100
-kegg = KEGG()
-kegg.TIMEOUT = 100
+try:
+    kegg = modules['kegg']
+except KeyError:
+    kegg = KEGG()
+    kegg.TIMEOUT = 100
+
+try:
+    uniprot = modules['uniprot']
+except KeyError:
+    uniprot = UniProt()
+    uniprot.TIMEOUT = 100
+
+
+def export_to_dot(graph, save_name, format='png', engine='dot', view=False):
+    """
+    Converts networkx graph to graphviz dot
+
+    Parameters
+    ----------
+    graph : networkx.DiGraph
+    save_name : str
+        name of file to save
+    format : str
+        format of output( pdf, png, svg)
+    engine : str
+        graphviz engine
+            dot, twopi,
+    view : bool
+        open up the rendered image
+
+    Returns
+    -------
+
+    """
+    dot_string = nx.nx_pydot.to_pydot(graph).to_string()
+    dot_graph = gv.Source(dot_string, format=format, engine=engine)
+    dot_graph.render('{}'.format(save_name), view=view, cleanup=True)
+    dot_graph.save('{}.dot'.format(save_name))
 
 
 def add_attribute_to_network(graph, list_to_add_attribute, attribute,
@@ -99,15 +136,32 @@ def append_attribute_to_network(graph, list_to_add_attribute, attribute,
     return tmp_g
 
 
-def trim_nodes(network, list_of_nodes):
-    tmp1 = trim(network, list_of_nodes)
-    tmp2 = trim(network, list_of_nodes)
+def trim_sink_source_nodes(network, list_of_nodes):
+    """
+    Trim graph by removing nodes that are not in provided list if source/sink
+
+
+    Parameters
+    ----------
+    network : networkx.DiGraph
+
+    list_of_nodes : list_like
+        list of species that are important if sink/source
+
+    Returns
+    -------
+
+    """
+    tmp_network = network.copy()
+    tmp1 = _trim(tmp_network, list_of_nodes)
+    tmp2 = _trim(tmp_network, list_of_nodes)
     while tmp1 != tmp2:
         tmp2 = tmp1
-        tmp1 = trim(network, list_of_nodes)
+        tmp1 = _trim(tmp_network, list_of_nodes)
+    return tmp_network
 
 
-def trim(network, list_of_nodes):
+def _trim(network, list_of_nodes):
     list_of_nodes = set(list_of_nodes)
     found, not_found = 0., 0.
     nodes = set(network.nodes())
@@ -130,28 +184,22 @@ def trim(network, list_of_nodes):
     return len_nodes
 
 
-def create_list_of_species(graph, filename, all_prot):
-    output_measured = ''
-    output_not_measured = ''
-    list_only = ''
-    f = open(filename, 'w')
-    for i in graph.nodes():
-        list_only += i + ','
-        if np.array(all_prot[all_prot['Gene  '] == i]).shape == (1, 5):
-            output_measured += str(
-                np.array(all_prot[all_prot['Gene  '] == i])[0]).strip(
-                '[').strip(']') + '\n'
-        else:
-            output_not_measured += i.replace(" ", "_") + ' nan nan nan nan\n'
-    f.write(output_measured.replace("'", ""))
-    f.write(output_not_measured)
-    f.close()
-    f = open('list_' + filename, 'w')
-    f.write(list_only)
-    f.close()
-
-
 def subtract_network_from_network(net1, net2):
+    """
+    subtract one network from another
+
+
+    Parameters
+    ----------
+    net1 : networkx.DiGraph
+    net2 : networkx.DiGraph
+
+
+    Returns
+    -------
+    networkx.DiGraph
+
+    """
     copy_graph1 = net1.copy()
     nodes1 = net1.nodes()
     nodes2 = net2.nodes()
@@ -161,20 +209,21 @@ def subtract_network_from_network(net1, net2):
     return copy_graph1
 
 
-def return_gml(graph):
-    newGraph = nx.DiGraph()
-    for node in graph.nodes():
-        newGraph.add_node(str(node))
-    for each in graph.edges():
-        newGraph.add_edge(each[0], each[1], attr_dict=each.attr)
-    return newGraph
+def compress_edges(graph):
+    """
+    compress edges of networks by finding common paths
 
+    Parameters
+    ----------
+    graph: networkx.DiGraph
 
-def compress_edges(graph, networkx=True):
-    if not networkx:
-        graph = nx.from_agraph(graph)
+    Returns
+    -------
+
+    """
+
     g = graph.copy()
-    nodes = g.nodes()
+    nodes = set(g.nodes())
     neighbor_dict = {}
     for n in nodes:
         neigh = tuple(g.neighbors(n))
@@ -231,42 +280,7 @@ def compress_edges(graph, networkx=True):
     return g
 
 
-def test_compress():
-    g = pyg.AGraph()
-    g.add_node('A')
-    g.add_node('B')
-    g.add_node('C')
-    g.add_node('D')
-    g.add_node('E')
-    g.add_edge('A', 'D', dir='both', arrowhead='dot', arrowtail="none", )
-    g.add_edge('B', 'D', dir='both', arrowhead='dot', arrowtail="none", )
-    g.add_edge('C', 'D', dir='both', arrowhead='dot', arrowtail="none", )
-    g.add_edge('E', 'A', dir='both', arrowhead='dot', arrowtail="none", )
-    g.add_edge('E', 'B', dir='both', arrowhead='dot', arrowtail="none", )
-    g.add_edge('E', 'C', dir='both', arrowhead='odot', arrowtail="none", )
-    # g.draw('before.pdf',prog='dot')
-    # g = compress_edges(g)
-    # g.draw('after.pdf',prog='dot')
-    g = nx.from_agraph(g, create_using=nx.DiGraph())
-    nodelist = ['A', 'B', 'C', 'D', 'E']
-    adj = nx.to_numpy_recarray(g, nodelist=['A', 'B', 'C', 'D', 'E'],
-                               dtype=[('arrowhead', 'S50')])
-
-    for n, i in enumerate(range((np.shape(adj)[1]))):
-        to_concate = []
-        for k, j in enumerate(range(n, (np.shape(adj)[1]))):
-            if i == j:
-                continue
-            if (adj[:, i] == adj[:, j]).all():
-                to_concate.append(j)
-                print "here", nodelist[i], nodelist[j]
-        print to_concate
-    print adj
-    test = nx.from_numpy_matrix(adj, create_using=nx.DiGraph())
-    nx.draw_graphviz(test, prog='dot')
-    plt.savefig('test.png')
-
-
+# deprecated
 def get_uniprot_info(name):
     """
 
@@ -275,16 +289,16 @@ def get_uniprot_info(name):
 
     """
 
-    d = uniprot.search('%s+AND+organism:9606+reviewed:yes' % name, \
-                       frmt='tab', \
+    d = uniprot.search('%s+AND+organism:9606+reviewed:yes' % name, frmt='tab',
                        columns="entry name,\
-             genes(PREFERRED),\
-             comment(FUNCTION),\
-             go(biological process),\
-             go(molecular function),\
-             go(cellular component),\
-             comment(PTM)"
-                       , limit=1)
+                                genes(PREFERRED),\
+                                comment(FUNCTION),\
+                                go(biological process),\
+                                go(molecular function),\
+                                go(cellular component),\
+                                comment(PTM)",
+                       limit=1)
+
     output_line = ''
     try:
         d.split('\n')
@@ -301,6 +315,7 @@ def get_uniprot_info(name):
     return output_line + '\n'
 
 
+# deprecated
 def generate_curated_subgraphs(network, i):
     header = 'NetworkName\tEntry name\tGene_names_primary\tFunction\tGO_biological_process\tGO_molecular_function\tGO_cellular_component\tPost-translational_modification'
     print("generating curated list for %s" % i)
@@ -316,6 +331,7 @@ def generate_curated_subgraphs(network, i):
     print "Created curated list for %s", i
 
 
+# deprecated
 def create_lists_of_subgraphs(network, save_name, exp_data):
     G = network.to_undirected()
     sorted_graphs = sorted(nx.connected_component_subgraphs(G), key=len,
@@ -363,7 +379,3 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     plt.show()
     print "Number of subgraphs with 1 node = %s" % counter
     return subgraph_species
-
-
-if __name__ == '__main__':
-    test_compress()
