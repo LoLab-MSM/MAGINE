@@ -1,276 +1,300 @@
+import itertools
 import os
+import warnings
 
 import networkx as nx
-import pygraphviz as pyg
 
-from magine.network_tools import compress_edges
+from magine.network_tools import compress_edges, export_to_dot
 
 
 class NetworkSubgraphs:
-    """ Class to create subgraphs of larger network
-
-    """
-
     def __init__(self, network, exp_data=None):
+        """
+        Generates network subgraphs
+
+        Parameters
+        ----------
+        network : networkx.DiGraph
+        exp_data : magine.data_handler.ExperimentalData
+        """
         self.network = network
-        self.nodes = self.network.nodes()
+        self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
 
-    def generate_shortest_paths_between_two_proteins(self, protein_1, protein_2, draw=False):
+    def _add_edges_from_path(self, graph, path):
         """
-        Generates a graph based on all shortest paths between two proteins
-        :param protein_1:
-        :param protein_2:
-        :return: graph
+        Adds a path to a graph
+
+        Parameters
+        ----------
+        graph : networkx.DiGraph
+            graph to add paths
+        path : list_like
+            list of species that create a path
+
         """
-        graph = pyg.AGraph(directed=True)
-        if not nx.has_path(self.network, protein_1, protein_2):
-            print("Path does NOT exist between %s and %s" % (protein_1, protein_2))
+        previous = None
+        for protein in list(path):
+            if previous is None:
+                previous = protein
+                continue
+            else:
+                graph.add_node(previous, **self.network.node[previous])
+                graph.add_node(protein, **self.network.node[protein])
+                graph.add_edge(previous, protein,
+                               **self.network.edge[previous][protein])
+                previous = protein
+
+    def shortest_paths_between_two_proteins(self, node_1, node_2, draw=False):
+        """
+        Generates a graph based on all shortest paths between two species
+
+
+        Parameters
+        ----------
+        node_1 : str
+            name of first species
+        node_2 : str
+            name of second species
+        draw : bool
+            create an image of returned network
+
+
+        Returns
+        -------
+        graph : networkx.DiGraph
+
+
+        Example
+        -------
+        >>> from networkx import DiGraph
+        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> g = DiGraph()
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> net_sub = NetworkSubgraphs(g)
+        >>> path_a_d = net_sub.shortest_paths_between_two_proteins('a','d')
+        >>> path_a_d.edges()
+        [('a', 'd')]
+        >>> path_a_e = net_sub.shortest_paths_between_two_proteins('a','e')
+
+        """
+        # graph = pyg.AGraph(directed=True)
+        graph = nx.DiGraph()
+        direction_1, direction_2 = True, True
+        if not nx.has_path(self.network, node_1, node_2):
+            direction_1 = False
         else:
-            for path in nx.all_shortest_paths(self.network, protein_1, protein_2):
-                self.add_edges_from_path(graph, path)
-        if not nx.has_path(self.network, protein_2, protein_1):
-            print("Path does NOT exist between %s and %s" % (protein_2, protein_1))
+            for path in nx.all_shortest_paths(self.network, node_1, node_2):
+                self._add_edges_from_path(graph, path)
+        if not nx.has_path(self.network, node_2, node_1):
+            direction_2 = False
         else:
-            for path in nx.all_shortest_paths(self.network, protein_2, protein_1):
-                self.add_edges_from_path(graph, path)
-        #self.create_legend(graph)
-        self.write(graph)
-        graph.write("%s_and_%s.dot" % (protein_1, protein_2))
+            for path in nx.all_shortest_paths(self.network, node_2, node_1):
+                self._add_edges_from_path(graph, path)
+        if not direction_1 and not direction_2:
+            warnings.warn("Warning : No paths between {} and {}. Returning "
+                          "None".format(node_1, node_2), RuntimeWarning)
+            return None
+
+        nx.write_gml(graph, "%s_and_%s.gml" % (node_1, node_2))
         if draw:
-            graph.draw("%s_and_%s.pdf" % (protein_1, protein_2), prog='dot')
+            export_to_dot(graph, format='png', engine='dot', view=False)
+            graph.draw("%s_and_%s.pdf" % (node_1, node_2), prog='dot')
         return graph
 
-    def generate_shortest_paths_between_lists_of_proteins(self, protein_list, savename, draw=False):
+    def shortest_paths_between_lists_of_proteins(self, species_list,
+                                                 save_name='tmp',
+                                                 single_path=False,
+                                                 draw=False):
         """
-        Generates a graph based on all shortest paths between two proteins
-        :param protein_list:
-        :param savename:
-        :return: graph
+
+        Parameters
+        ----------
+        species_list : list_like
+            list of species
+        save_name : str
+            name to save
+        single_path : bool
+            use single shortest path if True, else use all shortest paths
+        draw : bool
+            create a dot generated figure
+
+        Returns
+        -------
+        graph : networkx.DiGraph
+            graph containing paths between species list provided
+
+
+        Example
+        -------
+        >>> from networkx import DiGraph
+        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> g = DiGraph()
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> net_sub = NetworkSubgraphs(g)
+        >>> path_a_d = net_sub.shortest_paths_between_lists_of_proteins(['a','c','d'])
+        Path does NOT exist between c and a
+        Path does NOT exist between d and a
+        Path does NOT exist between d and c
+        >>> path_a_d.edges()
+        [('a', 'b'), ('a', 'd'), ('c', 'd'), ('b', 'c')]
         """
-        graph = pyg.AGraph(directed=True)
-        nodes = set(self.network.nodes())
-        tmp_protein_list = set(protein_list)
-        for i in protein_list:
+
+        graph = nx.DiGraph()
+        nodes = self.nodes
+        tmp_protein_list = set(species_list)
+        for i in species_list:
             if i not in nodes:
                 print('{} not in network'.format(i))
                 tmp_protein_list.remove(i)
-        for protein_1 in tmp_protein_list:
-            if protein_1 not in nodes:
-                continue
-            for protein_2 in tmp_protein_list:
-                if protein_2 not in nodes:
-                    continue
-                if protein_1 == protein_2:
-                    continue
-                else:
-                    if not nx.has_path(self.network, protein_1, protein_2):
-                        print("Path does NOT exist between %s and %s" % (protein_1, protein_2))
-                    else:
-                        # self.add_edges_from_path(graph,nx.shortest_path(self.network, protein_1, protein_2))
-                        for path in nx.all_shortest_paths(self.network, protein_1, protein_2):
-                            self.add_edges_from_path(graph, path)
-                    if not nx.has_path(self.network, protein_2, protein_1):
-                            print("Path does NOT exist between %s and %s" % (protein_2, protein_1))
-                    else:
-                        # self.add_edges_from_path(graph, nx.shortest_path(self.network, protein_2, protein_1))
-                        for path in nx.all_shortest_paths(self.network, protein_2, protein_1):
-                            self.add_edges_from_path(graph, path)
-        # self.create_legend(graph)
-        self.write(graph)
-        graph.write("%s.dot" % savename)
-        if draw:
-            graph.draw("%s.pdf" % savename, prog='dot')
-            graph.draw("%s.png" % savename, prog='dot')
-        g = nx.nx.from_agraph(graph)
-        nx.write_gml(g, "%s.gml" % savename)
-        return graph
-
-    #TODO create a function that finds all neighbors of each proteins and links them
-    # THis would find more than the shortest path
-    def generate_all_paths_between_two_proteins(self, protein_1, protein_2, draw=False):
-        """
-        Generates a graph based on all shortest paths between two proteins
-        :param protein_1:
-        :param protein_2:
-        :return: graph
-        """
-        graph = pyg.AGraph(directed=True)
-        if not nx.has_path(self.network, protein_1, protein_2):
-            print("Path does NOT exist between %s and %s" % (protein_1, protein_2))
-            return graph
-        if not nx.has_path(self.network, protein_2, protein_1):
-            print("Path does NOT exist between %s and %s" % (protein_2, protein_1))
-            return graph
-        graph = pyg.AGraph(directed=True)
-        for path in nx.all_shortest_paths(self.network, protein_1, protein_2):
-            self.add_edges_from_path(graph, path)
-        for path in nx.all_shortest_paths(self.network, protein_2, protein_1):
-            self.add_edges_from_path(graph, path)
-        self.create_legend(graph)
-        graph.write("%s_and_%s.dot" % (protein_1, protein_2))
-        if draw:
-            graph.draw("%s_and_%s.pdf" % (protein_1, protein_2), prog='dot')
-        return graph
-
-    def generate_shortest_paths_from_protein_to_protein(self, protein_1, protein_2, draw=False):
-        """
-        Generates a graph from all the shortests paths FROM protein 1 to protein 2
-        :param protein_1: string
-        :param protein_2: string
-        :return:
-        """
-        graph = pyg.AGraph(directed=True)
-        if not nx.has_path(self.network, protein_1, protein_2):
-            print("Path does NOT exist between %s and %s" % (protein_1, protein_2))
-            return graph
-        short_distance = nx.shortest_path_length(self.network, protein_1, protein_2)
-        print("Shortest path length from %s to %s = %i" % (protein_1, protein_2, short_distance))
-
-        for path in nx.all_shortest_paths(self.network, protein_1, protein_2):
-            self.add_edges_from_path(graph, path)
-        #self.create_legend(graph)
-        graph.write("%s_to_%s.dot" % (protein_1, protein_2))
-        if draw:
-            graph.draw("%s_to_%s.pdf" % (protein_1, protein_2), prog='dot')
-        return graph
-
-    def generate_paths_between_proteins_list(self, protein_list, save_name):
-        """ Generate s graph from paths from a list of pair of proteins
-
-        :param protein_list:
-        :param save_name:
-        :return:
-        """
-        protein_pair_graph = pyg.AGraph(directed=True)
-        for pair in protein_list:
-            print(pair)
-            graph = self.generate_shortest_paths_from_protein_to_protein(pair[0],pair[1])
-            for node in graph.nodes():
-                print(node)
-                protein_pair_graph.add_node(node, **self.network.node[node])
-            for edge in graph.edges():
-                protein_pair_graph.add_edge(edge[0],edge[1],**self.network.edge[edge[0]][edge[1]])
-        protein_pair_graph.draw("%s.pdf" % save_name, prog='dot')
-        return protein_pair_graph
-
-    def generate_upstream_network_of_protein(self, protein_1, savename='test', compress=False, draw=False):
-        """
-        Finds all linear pathways leading up to a protein.
-        :param protein_1: string
-        :param savename: string
-        :return: graph
-        """
-        paths = []
-        for i in self.nodes:
-            if i in self.nodes:
-                if nx.has_path(self.network, i, protein_1):
-                    path = nx.shortest_path(self.network, i, protein_1)
-                    paths.append(path)
-        temporary_graph = pyg.AGraph(directed=True)
-        for path in paths:
-            cont = True
-            for protein in list(path):
-                if protein not in self.exp_data.sign_proteins_omics+self.exp_data.metabolomics:
-                    cont = False
-            if not cont:
-                continue
-            self.add_edges_from_path(temporary_graph, path)
-        if compress:
-            temporary_graph = compress_edges(temporary_graph)
-        #self.create_legend(temporary_graph)
-        temporary_graph.write('%s.dot' % savename)
-        if draw:
-            temporary_graph.draw('%s.pdf' % savename, prog='dot')
-        return temporary_graph
-
-    def generate_downstream_network_of_protein(self, network, protein_1, exp_data, savename='test', compress=False,
-                                               draw=False):
-        """
-        Finds all linear pathways leading up to a protein.
-        :param protein_1: string
-        :param savename: string
-        :return: graph
-        """
-        paths = []
-        nodes = network.nodes()
-        for i in nodes:
-            if i in nodes:
-                if nx.has_path(network, protein_1,i):
-                    path = nx.shortest_path(network, protein_1,i)
-                    paths.append(path)
-        temporary_graph = pyg.AGraph(directed=True)
-        for path in paths:
-            cont = True
-            for protein in list(path):
-                if protein not in self.exp_data.measured:
-                    cont = False
-            if not cont:
-                continue
-            self.add_edges_from_path(temporary_graph, path)
-        if compress:
-            temporary_graph = compress_edges(temporary_graph)
-        #self.create_legend(temporary_graph)
-        temporary_graph.write('%s.dot' % savename)
-        if draw:
-            temporary_graph.draw('%s.pdf' % savename, prog='dot')
-        return temporary_graph
-
-    def write(self,network):
-        dict_of_types = {'activation': 'onormal',
-                         'indirect effect': 'odiamondodiamond',
-                         'expression': 'normal',
-                         'inhibition': 'tee',
-                         'binding/association': 'curve',
-                         'phosphorylation': 'dot',
-                         'missing interaction': 'odiamond',
-                         'compound': 'dotodot',
-                         'dissociation': 'diamond',
-                         'ubiquitination': 'oldiamond',
-                         'state change': 'teetee',
-                         'dephosphorylation': 'onormal',
-                         'repression': 'obox',
-                         'glycosylation': 'dot'}
-        activators = ['activation', 'expression','phosphorylation']
-        inhibitors = ['inhibition','repression','dephosphorylation']
-        physical_contact = ['binding/association','dissociation','state change']
-        chemical = ['compound','glycosylation','ubiquitination']
-        for i in network.edges():
-            n = network.get_edge(i[0],i[1])
-            edge_type = str(i.attr['interactionType'])
-            cont = False
-            for j in activators:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'normal'
-                    cont = True
-            if cont:
-                continue
-            for j in inhibitors:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'tee'
-                    cont = True
-            if cont:
-                continue
-            for j in physical_contact:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'diamond'
-                    cont = True
-            if cont:
-                continue
-            for j in chemical:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'dotodot'
-                    cont = True
-            if cont:
-                continue
+        node_pairs = itertools.combinations(tmp_protein_list, 2)
+        for node_1, node_2 in node_pairs:
+            if not nx.has_path(self.network, node_1, node_2):
+                print(
+                    "Path does NOT exist between %s and %s" % (node_1, node_2))
             else:
-                print(n,n.attr)
+                if single_path:
+                    self._add_edges_from_path(graph, nx.shortest_path(
+                        self.network, node_1, node_2))
+                else:
+                    for path in nx.all_shortest_paths(self.network, node_1,
+                                                      node_2):
+                        self._add_edges_from_path(graph, path)
+            if not nx.has_path(self.network, node_2, node_1):
+                print("Path does NOT exist between %s and %s" % (node_2,
+                                                                 node_1))
+            else:
+                if single_path:
+                    self._add_edges_from_path(graph, nx.shortest_path(
+                        self.network, node_2, node_1))
+                else:
+                    for path in nx.all_shortest_paths(self.network, node_2,
+                                                      node_1):
+                        self._add_edges_from_path(graph, path)
+        if draw:
+            export_to_dot(graph, save_name=save_name)
+        nx.write_gml(graph, "{}.gml".format(save_name))
+        return graph
+
+    def upstream_network_of_specie(self, species_1, include_list=None,
+                                   save_name='test', compress=False,
+                                   draw=False, ):
+        """
+        Generate network of all upstream species of provides species
 
 
+        Parameters
+        ----------
+        species_1 : str
+            species name
+        save_name : str
+            name to save gml file
+        compress : bool
+            compress the graph by making species in linear path a single node
+        draw : bool
+            create figure of graph
+        include_list : list_like
+            list of species that must be in path in order to consider a path
+        Returns
+        -------
+        graph : networkx.DiGraph
 
 
+        Example
+        -------
+        >>> from networkx import DiGraph
+        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> g = DiGraph()
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> net_sub = NetworkSubgraphs(g)
+        >>> upstream_d = net_sub.upstream_network_of_specie('d')
+        >>> upstream_d.edges()
+        [('a', 'd'), ('c', 'd'), ('b', 'c'), ('e', 'd')]
+        >>> upstream_c = net_sub.upstream_network_of_specie('c')
+        >>> upstream_c.edges()
+        [('a', 'b'), ('b', 'c')]
 
-    def paint_network_overtime(self, graph, list_of_lists, color_list,savename):
+        """
+        if include_list is None:
+            include_list = self.nodes
+
+        graph = nx.DiGraph()
+        for i in self.nodes:
+            if i in include_list:
+                if nx.has_path(self.network, i, species_1):
+                    path = nx.shortest_path(self.network, i, species_1)
+                    self._add_edges_from_path(graph, path)
+
+        if compress:
+            graph = compress_edges(graph)
+
+        if draw:
+            export_to_dot(graph, save_name)
+        nx.write_gml(graph, "{}.gml".format(save_name))
+
+        return graph
+
+    def downstream_network_of_specie(self, species_1, include_list=None,
+                                     save_name='test', compress=False,
+                                     draw=False, ):
+        """
+        Generate network of all downstream species of provides species
+
+
+        Parameters
+        ----------
+        species_1 : str
+            species name
+        save_name : str
+            name to save gml file
+        compress : bool
+            compress the graph by making species in linear path a single node
+        draw : bool
+            create figure of graph
+        include_list : list_like
+            list of species that must be in path in order to consider a path
+        Returns
+        -------
+        graph : networkx.DiGraph
+
+
+        Example
+        -------
+        >>> from networkx import DiGraph
+        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> g = DiGraph()
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> net_sub = NetworkSubgraphs(g)
+        >>> upstream_d = net_sub.upstream_network_of_specie('d')
+        >>> upstream_d.edges()
+        [('a', 'd'), ('c', 'd'), ('b', 'c'), ('e', 'd')]
+        >>> upstream_c = net_sub.upstream_network_of_specie('c')
+        >>> upstream_c.edges()
+        [('a', 'b'), ('b', 'c')]
+
+        """
+        if include_list is None:
+            include_list = self.nodes
+
+        graph = nx.DiGraph()
+        for i in self.nodes:
+            if i in include_list:
+                if nx.has_path(self.network, species_1, i):
+                    path = nx.shortest_path(self.network, species_1, i)
+                    self._add_edges_from_path(graph, path)
+
+        if compress:
+            graph = compress_edges(graph)
+
+        if draw:
+            export_to_dot(graph, save_name)
+        nx.write_gml(graph, "{}.gml".format(save_name))
+
+        return graph
+
+    # deprecated function
+    def paint_network_overtime(self, graph, list_of_lists, color_list,
+                               savename):
         """
 
         :param graph:
@@ -284,62 +308,13 @@ class NetworkSubgraphs:
         tmp_graph = graph.copy()
         for n, i in enumerate(list_of_lists):
             graph2 = paint_network(tmp_graph, i, color_list[n])
-            self.write(graph2)
+            write(graph2)
             graph2.draw('%s_%04i.png' % (savename, n), prog='dot')
             string += '%s_%04i.png ' % (savename, n)
         string += '  %s.pdf' % savename
         print(string)
         os.system(string)
 
-    def add_edges_from_path(self, graph, path):
-        """
-        Adds a path to a graph by extracting the edges and edge attributes
-        from the ddn
-        :param graph:
-        :param path:
-        :return: None
-        """
-        previous = None
-        for protein in list(path):
-            if previous is None:
-                previous = protein
-                continue
-            else:
-                graph.add_node(previous, **self.network.node[previous])
-                graph.add_node(protein, **self.network.node[protein])
-                graph.add_edge(previous, protein, **self.network.edge[previous][protein])
-                previous = protein
-
-
-    def create_legend(self, graph):
-        """
-        adds a legend to a graph
-        :param graph:
-        :return:
-        """
-        dict_of_types = {'activation': 'onormal',
-                         'indirect effect': 'odiamondodiamond',
-                         'expression': 'normal',
-                         'inhibition': 'tee',
-                         'binding/association': 'curve',
-                         'phosphorylation': 'dot',
-                         'missing interaction': 'odiamond',
-                         'compound': 'dotodot',
-                         'dissociation': 'diamond',
-                         'ubiquitination': 'oldiamond',
-                         'state change': 'teetee',
-                         'dephosphorylation': 'onormal',
-                         'repression': 'obox',
-                         'glycosylation': 'dot'}
-        subgraph = []
-        len_dic = len(dict_of_types)
-        for n, i in enumerate(dict_of_types):
-            subgraph.append(n)
-            subgraph.append(n + len_dic)
-            graph.add_node(n, label="")
-            graph.add_node(n + len_dic, label="")
-            graph.add_edge(n, n + len_dic, dir='both', arrowhead=dict_of_types[i], arrowtail="none", label=i)
-        graph.add_subgraph(subgraph, name='cluster_legend', rank="LR")
 
 
 def paint_network(graph, list_to_paint, color):
@@ -360,3 +335,86 @@ def paint_network(graph, list_to_paint, color):
             n.attr['fillcolor'] = color
             n.attr['style'] = 'filled'
     return tmp_g
+
+
+def write(network):
+    dict_of_types = {'activation': 'onormal',
+                     'indirect effect': 'odiamondodiamond',
+                     'expression': 'normal',
+                     'inhibition': 'tee',
+                     'binding/association': 'curve',
+                     'phosphorylation': 'dot',
+                     'missing interaction': 'odiamond',
+                     'compound': 'dotodot',
+                     'dissociation': 'diamond',
+                     'ubiquitination': 'oldiamond',
+                     'state change': 'teetee',
+                     'dephosphorylation': 'onormal',
+                     'repression': 'obox',
+                     'glycosylation': 'dot'}
+    activators = ['activation', 'expression', 'phosphorylation']
+    inhibitors = ['inhibition', 'repression', 'dephosphorylation']
+    physical_contact = ['binding/association', 'dissociation', 'state change']
+    chemical = ['compound', 'glycosylation', 'ubiquitination']
+    for i in network.edges():
+        n = network.get_edge(i[0], i[1])
+        edge_type = str(i.attr['interactionType'])
+        cont = False
+        for j in activators:
+            if edge_type.startswith(j):
+                n.attr['arrowhead'] = 'normal'
+                cont = True
+        if cont:
+            continue
+        for j in inhibitors:
+            if edge_type.startswith(j):
+                n.attr['arrowhead'] = 'tee'
+                cont = True
+        if cont:
+            continue
+        for j in physical_contact:
+            if edge_type.startswith(j):
+                n.attr['arrowhead'] = 'diamond'
+                cont = True
+        if cont:
+            continue
+        for j in chemical:
+            if edge_type.startswith(j):
+                n.attr['arrowhead'] = 'dotodot'
+                cont = True
+        if cont:
+            continue
+        else:
+            print(n, n.attr)
+
+
+def create_legend(graph):
+    """
+    adds a legend to a graph
+    :param graph:
+    :return:
+    """
+    dict_of_types = {'activation': 'onormal',
+                     'indirect effect': 'odiamondodiamond',
+                     'expression': 'normal',
+                     'inhibition': 'tee',
+                     'binding/association': 'curve',
+                     'phosphorylation': 'dot',
+                     'missing interaction': 'odiamond',
+                     'compound': 'dotodot',
+                     'dissociation': 'diamond',
+                     'ubiquitination': 'oldiamond',
+                     'state change': 'teetee',
+                     'dephosphorylation': 'onormal',
+                     'repression': 'obox',
+                     'glycosylation': 'dot'}
+    subgraph = []
+    len_dic = len(dict_of_types)
+    for n, i in enumerate(dict_of_types):
+        subgraph.append(n)
+        subgraph.append(n + len_dic)
+        graph.add_node(n, label="")
+        graph.add_node(n + len_dic, label="")
+        graph.add_edge(n, n + len_dic, dir='both', arrowhead=dict_of_types[i],
+                       arrowtail="none", label=i)
+    graph.add_subgraph(subgraph, name='cluster_legend', rank="LR")
