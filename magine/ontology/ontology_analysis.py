@@ -109,10 +109,10 @@ class GoAnalysis:
             tmp_entry = []
             if self.slim:
                 pass
-            elif ref < 5.:
-                continue
-            if p_value > 0.05:
-                continue
+            # elif ref < 5.:
+            #     continue
+            # if p_value > 0.05:
+            #     continue
             if self.metric == 'fraction':
                 score = float(len(genes) / float(ref)) * 100.
             if self.metric == 'pvalue':
@@ -142,7 +142,9 @@ class GoAnalysis:
             tmp_entry.append(self.ontology[go_id].name)
             tmp_entry.append(go_id)
             tmp_entry.append(score)
+            tmp_entry.append(p_value)
             tmp_entry.append(list(np.sort(genes)))
+            tmp_entry.append(len(genes))
             tmp_entry.append(self.ontology.term_depth(go_id))
             tmp_entry.append(ref)
             sorted_list_2.append(tmp_entry)
@@ -155,9 +157,13 @@ class GoAnalysis:
         if n == 0:
             print("No significant p-values")
         cols = ['GO_name', 'GO_id', 'score_{0}'.format(num),
-                'genes_{0}'.format(num), 'num_{0}'.format(num), 'ref']
+                'pvalue_{0}'.format(num), 'genes_{0}'.format(num),
+                'num_{0}'.format(num), 'depth', 'ref']
+        cols2 = ['GO_name', 'GO_id', 'enrichment_score', 'pvalue', 'genes',
+                 'n_genes', 'depth', 'ref']
         gene_list = pd.DataFrame(sorted_list_2, columns=cols)
-        return sorted_list[:n, :], gene_list
+        gene_list2 = pd.DataFrame(sorted_list_2, columns=cols2)
+        return sorted_list[:n, :], gene_list, gene_list2
 
     def create_enrichment_array(self, list_of_exp, aspect, use_slims=False):
         """
@@ -182,16 +188,21 @@ class GoAnalysis:
         results = []
         self.num_data_sets = len(list_of_exp)
         assert self.num_data_sets != 0, "Must provide at least one data list"
+        all_data = []
         for n, i in enumerate(list_of_exp):
-            tmp_array, tmp_array_2 = self.enrichment_analysis_of_single_sample(
+            tmp_array, tmp_array_2, tmp_array_3 = self.enrichment_analysis_of_single_sample(
                 i, aspect, n, slims_only=use_slims)
+            tmp_array_3['sample_index'] = n
             results.append(tmp_array)
+            all_data.append(tmp_array_3)
             if n == 0:
                 data_set_2 = tmp_array_2
             else:
                 data_set_2 = pd.merge(data_set_2, tmp_array_2,
                                       on=['GO_id', 'GO_name'], how='outer')
+
         self.data_2 = data_set_2.fillna(0)
+        self.data_3 = pd.concat(all_data).fillna(0)
 
         all_terms = []
         for each in results:
@@ -301,6 +312,7 @@ class GoAnalysis:
             print('No data! Error! Returning nothing')
             return
         self.data_2.to_csv('{0}.csv'.format(savename))
+        self.data_3.to_csv('{0}_all_data.csv'.format(savename))
         self.data = data
 
         self.names, self.array = self.sort_by_hierarchy(data)
