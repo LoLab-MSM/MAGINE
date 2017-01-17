@@ -4,6 +4,7 @@ import warnings
 import networkx as nx
 import pandas as pd
 
+from magine.html_templates.html_tools import write_single_table
 from magine.networks.cytoscape_view import RenderModel
 from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.ontology.ontology_analysis import GoAnalysis
@@ -28,18 +29,20 @@ class Analyzer:
         self.out_dir = output_directory
         self.go = GoAnalysis
         self.metric = metric
+        self.network = None
         if build_network:
             if network is not None:
                 warnings.warn("Warning : Passing build_network=True "
                               "and a network file! ", RuntimeWarning)
-            from magine.networks.network_generator import \
-                build_network as network_builder
+            import \
+                magine.networks.network_generator.build_network  as network_builder
             self.build_network = network_builder
             self.generate_network(save_name)
         elif network is not None:
             self.network = network
             self.go_net_gen = None
         if self.network is not None:
+
             self.go_net_gen = GoNetworkGenerator(self.species, self.network,
                                                  self.out_dir)
         self.html_names = []
@@ -351,13 +354,7 @@ class Analyzer:
         -------
 
         """
-        import jinja2
-        print(os.path.join(os.path.dirname(__file__), 'ontology', 'templates'))
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            searchpath=os.path.join(os.path.dirname(__file__), 'ontology',
-                                    'templates')
-        ))
-        template = env.get_template('view.html')
+
         list_of_go_dict = []
         for i in ['up', 'down', 'both']:
             go, x = self.run_single_go(data_type='proteomics',
@@ -372,12 +369,7 @@ class Analyzer:
             list_of_go_dict.append(x)
 
         df = pd.DataFrame(list_of_go_dict)
-
-        template_vars = {"title": "Example data",
-                         "national_pivot_table": df.to_html(escape=False)}
-        html_out = template.render(template_vars)
-        with open('test.html', 'w') as f:
-            f.write(html_out)
+        write_single_table(df, 'index.html', 'MAGINE Outpu')
 
 
 headers = {'DataType',
