@@ -1,11 +1,12 @@
 import os
+import subprocess
+from textwrap import wrap
 
 import matplotlib
 import numpy as np
 import pandas
-import subprocess
-from textwrap import wrap
 
+from magine.html_templates.html_tools import write_single_table
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -372,16 +373,7 @@ class ExperimentalData:
                     '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
 
         proteins = pandas.DataFrame(html_pages, columns=['Genes'])
-        header = '<script src="http://www.kryogenix.org/code/browser/' \
-                 'sorttable/sorttable.js">\n</script>\n<html>\n\t<body>\n' \
-                 '\n<div style="float: left">\n' \
-                 '{}' \
-                 '\n\t</body>\n</html>'
-        # write out the html file
-        with open('proteins.html', 'w') as f:
-            f.write(header.format(proteins.to_html(classes='sortable',
-                                                   escape=False,
-                                                   justify='left')))
+        write_single_table(proteins, 'proteins', 'All proteins')
 
     def plot_list_of_genes(self, list_of_genes, save_name, out_dir='.',
                            title=None, plot_all_x=False):
@@ -667,6 +659,8 @@ class ExperimentalData:
         tmp[fold_change] = np.where(tmp[fold_change] > 0,
                                     np.log2(tmp[fold_change]),
                                     -np.log2(-tmp[fold_change]))
+        # tmp.loc[tmp[fold_change] >= 0, fold_change] = np.log2(tmp[tmp[fold_change] >= 0]][fold_change])
+        # tmp.loc[tmp[fold_change] < 0, fold_change] = np.log2(tmp[tmp[fold_change] < 0]][fold_change])
         # Visual example of volcano plot
         # section 0 are significant criteria
 
