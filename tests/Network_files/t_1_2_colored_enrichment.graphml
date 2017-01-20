@@ -1,0 +1,1301 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key attr.name="label" attr.type="string" for="edge" id="d8" />
+  <key attr.name="weight" attr.type="int" for="edge" id="d7" />
+  <key attr.name="go" attr.type="string" for="node" id="d6" />
+  <key attr.name="label" attr.type="string" for="node" id="d5" />
+  <key attr.name="color" attr.type="string" for="node" id="d4" />
+  <key attr.name="time_3" attr.type="double" for="node" id="d3" />
+  <key attr.name="time_2" attr.type="double" for="node" id="d2" />
+  <key attr.name="time_1" attr.type="double" for="node" id="d1" />
+  <key attr.name="time_0" attr.type="double" for="node" id="d0" />
+  <graph edgedefault="directed">
+    <node id="protein depolymerization">
+      <data key="d0">1.87666416034</data>
+      <data key="d1">1.48667862338</data>
+      <data key="d2">0.0</data>
+      <data key="d3">1.68237333715</data>
+      <data key="d4">red</data>
+      <data key="d5">protein depolymerization</data>
+      <data key="d6">GO0051261</data>
+    </node>
+    <node id="nuclear division">
+      <data key="d0">1.35145246707</data>
+      <data key="d1">0.687544208127</data>
+      <data key="d2">1.01735159644</data>
+      <data key="d3">0.778650020621</data>
+      <data key="d4">red</data>
+      <data key="d5">nuclear division</data>
+      <data key="d6">GO0000280</data>
+    </node>
+    <node id="chromosome organization">
+      <data key="d0">1.17007221522</data>
+      <data key="d1">0.950705449869</data>
+      <data key="d2">0.9226910737</data>
+      <data key="d3">0.781694339912</data>
+      <data key="d4">red</data>
+      <data key="d5">chromosome organization</data>
+      <data key="d6">GO0051276</data>
+    </node>
+    <node id="DNA geometric change">
+      <data key="d0">0.0</data>
+      <data key="d1">1.9666056534</data>
+      <data key="d2">1.48638398536</data>
+      <data key="d3">1.85417807181</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">DNA geometric change</data>
+      <data key="d6">GO0032392</data>
+    </node>
+    <node id="RNA processing">
+      <data key="d0">0.869956691488</data>
+      <data key="d1">1.76898462694</data>
+      <data key="d2">1.91436744412</data>
+      <data key="d3">1.77714718616</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">RNA processing</data>
+      <data key="d6">GO0006396</data>
+    </node>
+    <node id="DNA replication">
+      <data key="d0">1.16033833224</data>
+      <data key="d1">1.52593406761</data>
+      <data key="d2">1.33233362572</data>
+      <data key="d3">1.08230057754</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">DNA replication</data>
+      <data key="d6">GO0006260</data>
+    </node>
+    <node id="chromosome segregation">
+      <data key="d0">1.57676237179</data>
+      <data key="d1">0.0</data>
+      <data key="d2">0.931621722418</data>
+      <data key="d3">0.86645640159</data>
+      <data key="d4">red</data>
+      <data key="d5">chromosome segregation</data>
+      <data key="d6">GO0007059</data>
+    </node>
+    <node id="Golgi organization">
+      <data key="d0">0.0</data>
+      <data key="d1">1.71408911948</data>
+      <data key="d2">1.52604820294</data>
+      <data key="d3">1.66877573375</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">Golgi organization</data>
+      <data key="d6">GO0007030</data>
+    </node>
+    <node id="viral process">
+      <data key="d0">1.29600179706</data>
+      <data key="d1">1.31367422901</data>
+      <data key="d2">1.38635385246</data>
+      <data key="d3">1.61628414669</data>
+      <data key="d4">red</data>
+      <data key="d5">viral process</data>
+      <data key="d6">GO0016032</data>
+    </node>
+    <node id="microtubule organizing center organization">
+      <data key="d0">2.20558650184</data>
+      <data key="d1">0.0</data>
+      <data key="d2">0.0</data>
+      <data key="d3">1.28486075197</data>
+      <data key="d4">red</data>
+      <data key="d5">microtubule organizing center organization</data>
+      <data key="d6">GO0031023</data>
+    </node>
+    <node id="programmed DNA elimination">
+      <data key="d0">0.0</data>
+      <data key="d1">3.94235810716</data>
+      <data key="d2">0.0</data>
+      <data key="d3">3.24496802484</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">programmed DNA elimination</data>
+      <data key="d6">GO0031049</data>
+    </node>
+    <node id="protein polymerization">
+      <data key="d0">1.38481106402</data>
+      <data key="d1">0.0</data>
+      <data key="d2">0.894247451755</data>
+      <data key="d3">0.899471458818</data>
+      <data key="d4">red</data>
+      <data key="d5">protein polymerization</data>
+      <data key="d6">GO0051258</data>
+    </node>
+    <node id="cell cycle">
+      <data key="d0">1.19654442658</data>
+      <data key="d1">0.861700443811</data>
+      <data key="d2">1.01706734956</data>
+      <data key="d3">0.819662190111</data>
+      <data key="d4">red</data>
+      <data key="d5">cell cycle</data>
+      <data key="d6">GO0007049</data>
+    </node>
+    <node id="carbohydrate transport">
+      <data key="d0">1.47944793815</data>
+      <data key="d1">1.11860874685</data>
+      <data key="d2">1.18152940384</data>
+      <data key="d3">1.1867534109</data>
+      <data key="d4">red</data>
+      <data key="d5">carbohydrate transport</data>
+      <data key="d6">GO0008643</data>
+    </node>
+    <node id="organelle inheritance">
+      <data key="d0">0.0</data>
+      <data key="d1">3.04189378071</data>
+      <data key="d2">0.0</data>
+      <data key="d3">0.0</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">organelle inheritance</data>
+      <data key="d6">GO0048308</data>
+    </node>
+    <node id="cell division">
+      <data key="d0">1.30570851762</data>
+      <data key="d1">0.0</data>
+      <data key="d2">0.727682064107</data>
+      <data key="d3">0.701197211442</data>
+      <data key="d4">red</data>
+      <data key="d5">cell division</data>
+      <data key="d6">GO0051301</data>
+    </node>
+    <node id="nucleobase-containing compound transport">
+      <data key="d0">0.0</data>
+      <data key="d1">1.87196877926</data>
+      <data key="d2">2.04382380781</data>
+      <data key="d3">1.91154429112</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">nucleobase-containing compound transport</data>
+      <data key="d6">GO0015931</data>
+    </node>
+    <node id="fermentation">
+      <data key="d0">0.0</data>
+      <data key="d1">3.94235810716</data>
+      <data key="d2">3.8247065185</data>
+      <data key="d3">0.0</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">fermentation</data>
+      <data key="d6">GO0006113</data>
+    </node>
+    <node id="ribosome biogenesis">
+      <data key="d0">0.0</data>
+      <data key="d1">2.14880898462</data>
+      <data key="d2">1.92012608358</data>
+      <data key="d3">2.03638140303</data>
+      <data key="d4">lightblue</data>
+      <data key="d5">ribosome biogenesis</data>
+      <data key="d6">GO0042254</data>
+    </node>
+    <edge source="protein depolymerization" target="nuclear division">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="protein depolymerization" target="chromosome organization">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="protein depolymerization" target="RNA processing">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein depolymerization" target="DNA replication">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="protein depolymerization" target="chromosome segregation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="protein depolymerization" target="microtubule organizing center organization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="protein depolymerization" target="viral process">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="protein depolymerization" target="cell division">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="protein depolymerization" target="cell cycle">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="protein depolymerization" target="carbohydrate transport">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="protein depolymerization" target="ribosome biogenesis">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="nuclear division" target="protein depolymerization">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear division" target="protein polymerization">
+      <data key="d7">30</data>
+      <data key="d8">30</data>
+    </edge>
+    <edge source="nuclear division" target="chromosome organization">
+      <data key="d7">166</data>
+      <data key="d8">166</data>
+    </edge>
+    <edge source="nuclear division" target="organelle inheritance">
+      <data key="d7">34</data>
+      <data key="d8">34</data>
+    </edge>
+    <edge source="nuclear division" target="RNA processing">
+      <data key="d7">62</data>
+      <data key="d8">62</data>
+    </edge>
+    <edge source="nuclear division" target="DNA replication">
+      <data key="d7">126</data>
+      <data key="d8">126</data>
+    </edge>
+    <edge source="nuclear division" target="chromosome segregation">
+      <data key="d7">66</data>
+      <data key="d8">66</data>
+    </edge>
+    <edge source="nuclear division" target="Golgi organization">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="nuclear division" target="viral process">
+      <data key="d7">173</data>
+      <data key="d8">173</data>
+    </edge>
+    <edge source="nuclear division" target="microtubule organizing center organization">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="nuclear division" target="programmed DNA elimination">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="nuclear division" target="cell cycle">
+      <data key="d7">367</data>
+      <data key="d8">367</data>
+    </edge>
+    <edge source="nuclear division" target="carbohydrate transport">
+      <data key="d7">88</data>
+      <data key="d8">88</data>
+    </edge>
+    <edge source="nuclear division" target="cell division">
+      <data key="d7">241</data>
+      <data key="d8">241</data>
+    </edge>
+    <edge source="nuclear division" target="nucleobase-containing compound transport">
+      <data key="d7">21</data>
+      <data key="d8">21</data>
+    </edge>
+    <edge source="nuclear division" target="fermentation">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="nuclear division" target="ribosome biogenesis">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="chromosome organization" target="protein depolymerization">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="chromosome organization" target="nuclear division">
+      <data key="d7">143</data>
+      <data key="d8">143</data>
+    </edge>
+    <edge source="chromosome organization" target="organelle inheritance">
+      <data key="d7">26</data>
+      <data key="d8">26</data>
+    </edge>
+    <edge source="chromosome organization" target="RNA processing">
+      <data key="d7">64</data>
+      <data key="d8">64</data>
+    </edge>
+    <edge source="chromosome organization" target="DNA replication">
+      <data key="d7">132</data>
+      <data key="d8">132</data>
+    </edge>
+    <edge source="chromosome organization" target="chromosome segregation">
+      <data key="d7">64</data>
+      <data key="d8">64</data>
+    </edge>
+    <edge source="chromosome organization" target="Golgi organization">
+      <data key="d7">31</data>
+      <data key="d8">31</data>
+    </edge>
+    <edge source="chromosome organization" target="viral process">
+      <data key="d7">215</data>
+      <data key="d8">215</data>
+    </edge>
+    <edge source="chromosome organization" target="microtubule organizing center organization">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="chromosome organization" target="programmed DNA elimination">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="chromosome organization" target="protein polymerization">
+      <data key="d7">43</data>
+      <data key="d8">43</data>
+    </edge>
+    <edge source="chromosome organization" target="cell cycle">
+      <data key="d7">504</data>
+      <data key="d8">504</data>
+    </edge>
+    <edge source="chromosome organization" target="carbohydrate transport">
+      <data key="d7">101</data>
+      <data key="d8">101</data>
+    </edge>
+    <edge source="chromosome organization" target="cell division">
+      <data key="d7">211</data>
+      <data key="d8">211</data>
+    </edge>
+    <edge source="chromosome organization" target="nucleobase-containing compound transport">
+      <data key="d7">25</data>
+      <data key="d8">25</data>
+    </edge>
+    <edge source="chromosome organization" target="fermentation">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="chromosome organization" target="ribosome biogenesis">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="DNA geometric change" target="nuclear division">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="DNA geometric change" target="chromosome organization">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="DNA geometric change" target="DNA replication">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="DNA geometric change" target="chromosome segregation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="DNA geometric change" target="microtubule organizing center organization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="DNA geometric change" target="viral process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="DNA geometric change" target="cell cycle">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="RNA processing" target="protein depolymerization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="RNA processing" target="nuclear division">
+      <data key="d7">32</data>
+      <data key="d8">32</data>
+    </edge>
+    <edge source="RNA processing" target="chromosome organization">
+      <data key="d7">45</data>
+      <data key="d8">45</data>
+    </edge>
+    <edge source="RNA processing" target="programmed DNA elimination">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="RNA processing" target="DNA replication">
+      <data key="d7">26</data>
+      <data key="d8">26</data>
+    </edge>
+    <edge source="RNA processing" target="chromosome segregation">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="RNA processing" target="Golgi organization">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="RNA processing" target="viral process">
+      <data key="d7">69</data>
+      <data key="d8">69</data>
+    </edge>
+    <edge source="RNA processing" target="microtubule organizing center organization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="RNA processing" target="organelle inheritance">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="RNA processing" target="protein polymerization">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="RNA processing" target="cell cycle">
+      <data key="d7">141</data>
+      <data key="d8">141</data>
+    </edge>
+    <edge source="RNA processing" target="carbohydrate transport">
+      <data key="d7">39</data>
+      <data key="d8">39</data>
+    </edge>
+    <edge source="RNA processing" target="cell division">
+      <data key="d7">34</data>
+      <data key="d8">34</data>
+    </edge>
+    <edge source="RNA processing" target="nucleobase-containing compound transport">
+      <data key="d7">76</data>
+      <data key="d8">76</data>
+    </edge>
+    <edge source="RNA processing" target="fermentation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="RNA processing" target="ribosome biogenesis">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="DNA replication" target="protein depolymerization">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="DNA replication" target="nuclear division">
+      <data key="d7">112</data>
+      <data key="d8">112</data>
+    </edge>
+    <edge source="DNA replication" target="chromosome organization">
+      <data key="d7">131</data>
+      <data key="d8">131</data>
+    </edge>
+    <edge source="DNA replication" target="organelle inheritance">
+      <data key="d7">33</data>
+      <data key="d8">33</data>
+    </edge>
+    <edge source="DNA replication" target="RNA processing">
+      <data key="d7">30</data>
+      <data key="d8">30</data>
+    </edge>
+    <edge source="DNA replication" target="nucleobase-containing compound transport">
+      <data key="d7">21</data>
+      <data key="d8">21</data>
+    </edge>
+    <edge source="DNA replication" target="chromosome segregation">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="DNA replication" target="Golgi organization">
+      <data key="d7">34</data>
+      <data key="d8">34</data>
+    </edge>
+    <edge source="DNA replication" target="viral process">
+      <data key="d7">193</data>
+      <data key="d8">193</data>
+    </edge>
+    <edge source="DNA replication" target="microtubule organizing center organization">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="DNA replication" target="programmed DNA elimination">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="DNA replication" target="protein polymerization">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="DNA replication" target="cell cycle">
+      <data key="d7">381</data>
+      <data key="d8">381</data>
+    </edge>
+    <edge source="DNA replication" target="carbohydrate transport">
+      <data key="d7">105</data>
+      <data key="d8">105</data>
+    </edge>
+    <edge source="DNA replication" target="cell division">
+      <data key="d7">203</data>
+      <data key="d8">203</data>
+    </edge>
+    <edge source="DNA replication" target="fermentation">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="DNA replication" target="ribosome biogenesis">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="chromosome segregation" target="protein depolymerization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="chromosome segregation" target="nuclear division">
+      <data key="d7">75</data>
+      <data key="d8">75</data>
+    </edge>
+    <edge source="chromosome segregation" target="chromosome organization">
+      <data key="d7">85</data>
+      <data key="d8">85</data>
+    </edge>
+    <edge source="chromosome segregation" target="organelle inheritance">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="chromosome segregation" target="RNA processing">
+      <data key="d7">25</data>
+      <data key="d8">25</data>
+    </edge>
+    <edge source="chromosome segregation" target="DNA replication">
+      <data key="d7">26</data>
+      <data key="d8">26</data>
+    </edge>
+    <edge source="chromosome segregation" target="Golgi organization">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="chromosome segregation" target="viral process">
+      <data key="d7">40</data>
+      <data key="d8">40</data>
+    </edge>
+    <edge source="chromosome segregation" target="microtubule organizing center organization">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="chromosome segregation" target="programmed DNA elimination">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="chromosome segregation" target="protein polymerization">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="chromosome segregation" target="cell cycle">
+      <data key="d7">137</data>
+      <data key="d8">137</data>
+    </edge>
+    <edge source="chromosome segregation" target="carbohydrate transport">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="chromosome segregation" target="cell division">
+      <data key="d7">86</data>
+      <data key="d8">86</data>
+    </edge>
+    <edge source="chromosome segregation" target="nucleobase-containing compound transport">
+      <data key="d7">18</data>
+      <data key="d8">18</data>
+    </edge>
+    <edge source="chromosome segregation" target="fermentation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="chromosome segregation" target="ribosome biogenesis">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi organization" target="nuclear division">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="Golgi organization" target="chromosome organization">
+      <data key="d7">42</data>
+      <data key="d8">42</data>
+    </edge>
+    <edge source="Golgi organization" target="organelle inheritance">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="Golgi organization" target="RNA processing">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="Golgi organization" target="DNA replication">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="Golgi organization" target="chromosome segregation">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="Golgi organization" target="microtubule organizing center organization">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="Golgi organization" target="viral process">
+      <data key="d7">43</data>
+      <data key="d8">43</data>
+    </edge>
+    <edge source="Golgi organization" target="protein depolymerization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi organization" target="programmed DNA elimination">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi organization" target="protein polymerization">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="Golgi organization" target="cell cycle">
+      <data key="d7">93</data>
+      <data key="d8">93</data>
+    </edge>
+    <edge source="Golgi organization" target="carbohydrate transport">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="Golgi organization" target="cell division">
+      <data key="d7">28</data>
+      <data key="d8">28</data>
+    </edge>
+    <edge source="Golgi organization" target="nucleobase-containing compound transport">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="Golgi organization" target="fermentation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="viral process" target="protein depolymerization">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="viral process" target="nuclear division">
+      <data key="d7">130</data>
+      <data key="d8">130</data>
+    </edge>
+    <edge source="viral process" target="chromosome organization">
+      <data key="d7">207</data>
+      <data key="d8">207</data>
+    </edge>
+    <edge source="viral process" target="organelle inheritance">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="viral process" target="RNA processing">
+      <data key="d7">98</data>
+      <data key="d8">98</data>
+    </edge>
+    <edge source="viral process" target="DNA replication">
+      <data key="d7">135</data>
+      <data key="d8">135</data>
+    </edge>
+    <edge source="viral process" target="chromosome segregation">
+      <data key="d7">29</data>
+      <data key="d8">29</data>
+    </edge>
+    <edge source="viral process" target="Golgi organization">
+      <data key="d7">18</data>
+      <data key="d8">18</data>
+    </edge>
+    <edge source="viral process" target="microtubule organizing center organization">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="viral process" target="programmed DNA elimination">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="viral process" target="protein polymerization">
+      <data key="d7">95</data>
+      <data key="d8">95</data>
+    </edge>
+    <edge source="viral process" target="cell cycle">
+      <data key="d7">542</data>
+      <data key="d8">542</data>
+    </edge>
+    <edge source="viral process" target="carbohydrate transport">
+      <data key="d7">161</data>
+      <data key="d8">161</data>
+    </edge>
+    <edge source="viral process" target="cell division">
+      <data key="d7">269</data>
+      <data key="d8">269</data>
+    </edge>
+    <edge source="viral process" target="nucleobase-containing compound transport">
+      <data key="d7">74</data>
+      <data key="d8">74</data>
+    </edge>
+    <edge source="viral process" target="fermentation">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="viral process" target="ribosome biogenesis">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="nuclear division">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="chromosome organization">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="RNA processing">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="DNA replication">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="chromosome segregation">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="viral process">
+      <data key="d7">16</data>
+      <data key="d8">16</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="protein depolymerization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="programmed DNA elimination">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="cell cycle">
+      <data key="d7">46</data>
+      <data key="d8">46</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="carbohydrate transport">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="cell division">
+      <data key="d7">26</data>
+      <data key="d8">26</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="nucleobase-containing compound transport">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="fermentation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="microtubule organizing center organization" target="ribosome biogenesis">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="nuclear division">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="chromosome organization">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="cell division">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="DNA replication">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="chromosome segregation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="microtubule organizing center organization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="viral process">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="protein polymerization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="cell cycle">
+      <data key="d7">25</data>
+      <data key="d8">25</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="carbohydrate transport">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="fermentation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="programmed DNA elimination" target="ribosome biogenesis">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein polymerization" target="protein depolymerization">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein polymerization" target="nuclear division">
+      <data key="d7">35</data>
+      <data key="d8">35</data>
+    </edge>
+    <edge source="protein polymerization" target="chromosome organization">
+      <data key="d7">48</data>
+      <data key="d8">48</data>
+    </edge>
+    <edge source="protein polymerization" target="RNA processing">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="protein polymerization" target="DNA replication">
+      <data key="d7">40</data>
+      <data key="d8">40</data>
+    </edge>
+    <edge source="protein polymerization" target="chromosome segregation">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="protein polymerization" target="Golgi organization">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="protein polymerization" target="viral process">
+      <data key="d7">85</data>
+      <data key="d8">85</data>
+    </edge>
+    <edge source="protein polymerization" target="microtubule organizing center organization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="protein polymerization" target="organelle inheritance">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="protein polymerization" target="cell cycle">
+      <data key="d7">111</data>
+      <data key="d8">111</data>
+    </edge>
+    <edge source="protein polymerization" target="carbohydrate transport">
+      <data key="d7">33</data>
+      <data key="d8">33</data>
+    </edge>
+    <edge source="protein polymerization" target="cell division">
+      <data key="d7">59</data>
+      <data key="d8">59</data>
+    </edge>
+    <edge source="protein polymerization" target="nucleobase-containing compound transport">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="cell cycle" target="protein depolymerization">
+      <data key="d7">30</data>
+      <data key="d8">30</data>
+    </edge>
+    <edge source="cell cycle" target="nuclear division">
+      <data key="d7">378</data>
+      <data key="d8">378</data>
+    </edge>
+    <edge source="cell cycle" target="chromosome organization">
+      <data key="d7">573</data>
+      <data key="d8">573</data>
+    </edge>
+    <edge source="cell cycle" target="organelle inheritance">
+      <data key="d7">102</data>
+      <data key="d8">102</data>
+    </edge>
+    <edge source="cell cycle" target="RNA processing">
+      <data key="d7">182</data>
+      <data key="d8">182</data>
+    </edge>
+    <edge source="cell cycle" target="DNA replication">
+      <data key="d7">386</data>
+      <data key="d8">386</data>
+    </edge>
+    <edge source="cell cycle" target="chromosome segregation">
+      <data key="d7">122</data>
+      <data key="d8">122</data>
+    </edge>
+    <edge source="cell cycle" target="Golgi organization">
+      <data key="d7">112</data>
+      <data key="d8">112</data>
+    </edge>
+    <edge source="cell cycle" target="viral process">
+      <data key="d7">659</data>
+      <data key="d8">659</data>
+    </edge>
+    <edge source="cell cycle" target="microtubule organizing center organization">
+      <data key="d7">46</data>
+      <data key="d8">46</data>
+    </edge>
+    <edge source="cell cycle" target="programmed DNA elimination">
+      <data key="d7">18</data>
+      <data key="d8">18</data>
+    </edge>
+    <edge source="cell cycle" target="protein polymerization">
+      <data key="d7">120</data>
+      <data key="d8">120</data>
+    </edge>
+    <edge source="cell cycle" target="carbohydrate transport">
+      <data key="d7">371</data>
+      <data key="d8">371</data>
+    </edge>
+    <edge source="cell cycle" target="cell division">
+      <data key="d7">652</data>
+      <data key="d8">652</data>
+    </edge>
+    <edge source="cell cycle" target="nucleobase-containing compound transport">
+      <data key="d7">67</data>
+      <data key="d8">67</data>
+    </edge>
+    <edge source="cell cycle" target="fermentation">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="cell cycle" target="ribosome biogenesis">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="carbohydrate transport" target="protein depolymerization">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="carbohydrate transport" target="nuclear division">
+      <data key="d7">57</data>
+      <data key="d8">57</data>
+    </edge>
+    <edge source="carbohydrate transport" target="chromosome organization">
+      <data key="d7">79</data>
+      <data key="d8">79</data>
+    </edge>
+    <edge source="carbohydrate transport" target="organelle inheritance">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="carbohydrate transport" target="RNA processing">
+      <data key="d7">35</data>
+      <data key="d8">35</data>
+    </edge>
+    <edge source="carbohydrate transport" target="DNA replication">
+      <data key="d7">78</data>
+      <data key="d8">78</data>
+    </edge>
+    <edge source="carbohydrate transport" target="chromosome segregation">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="carbohydrate transport" target="Golgi organization">
+      <data key="d7">30</data>
+      <data key="d8">30</data>
+    </edge>
+    <edge source="carbohydrate transport" target="viral process">
+      <data key="d7">147</data>
+      <data key="d8">147</data>
+    </edge>
+    <edge source="carbohydrate transport" target="microtubule organizing center organization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="carbohydrate transport" target="programmed DNA elimination">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="carbohydrate transport" target="protein polymerization">
+      <data key="d7">39</data>
+      <data key="d8">39</data>
+    </edge>
+    <edge source="carbohydrate transport" target="cell cycle">
+      <data key="d7">302</data>
+      <data key="d8">302</data>
+    </edge>
+    <edge source="carbohydrate transport" target="ribosome biogenesis">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="carbohydrate transport" target="cell division">
+      <data key="d7">118</data>
+      <data key="d8">118</data>
+    </edge>
+    <edge source="carbohydrate transport" target="nucleobase-containing compound transport">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="carbohydrate transport" target="fermentation">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="organelle inheritance" target="protein depolymerization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="organelle inheritance" target="nuclear division">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="organelle inheritance" target="chromosome organization">
+      <data key="d7">32</data>
+      <data key="d8">32</data>
+    </edge>
+    <edge source="organelle inheritance" target="RNA processing">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="organelle inheritance" target="DNA replication">
+      <data key="d7">17</data>
+      <data key="d8">17</data>
+    </edge>
+    <edge source="organelle inheritance" target="chromosome segregation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="organelle inheritance" target="Golgi organization">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="organelle inheritance" target="viral process">
+      <data key="d7">33</data>
+      <data key="d8">33</data>
+    </edge>
+    <edge source="organelle inheritance" target="microtubule organizing center organization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="organelle inheritance" target="programmed DNA elimination">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="organelle inheritance" target="protein polymerization">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="organelle inheritance" target="cell cycle">
+      <data key="d7">76</data>
+      <data key="d8">76</data>
+    </edge>
+    <edge source="organelle inheritance" target="carbohydrate transport">
+      <data key="d7">16</data>
+      <data key="d8">16</data>
+    </edge>
+    <edge source="organelle inheritance" target="cell division">
+      <data key="d7">21</data>
+      <data key="d8">21</data>
+    </edge>
+    <edge source="organelle inheritance" target="nucleobase-containing compound transport">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="organelle inheritance" target="fermentation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="cell division" target="protein depolymerization">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="cell division" target="nuclear division">
+      <data key="d7">295</data>
+      <data key="d8">295</data>
+    </edge>
+    <edge source="cell division" target="chromosome organization">
+      <data key="d7">220</data>
+      <data key="d8">220</data>
+    </edge>
+    <edge source="cell division" target="organelle inheritance">
+      <data key="d7">44</data>
+      <data key="d8">44</data>
+    </edge>
+    <edge source="cell division" target="RNA processing">
+      <data key="d7">61</data>
+      <data key="d8">61</data>
+    </edge>
+    <edge source="cell division" target="DNA replication">
+      <data key="d7">230</data>
+      <data key="d8">230</data>
+    </edge>
+    <edge source="cell division" target="chromosome segregation">
+      <data key="d7">74</data>
+      <data key="d8">74</data>
+    </edge>
+    <edge source="cell division" target="Golgi organization">
+      <data key="d7">50</data>
+      <data key="d8">50</data>
+    </edge>
+    <edge source="cell division" target="viral process">
+      <data key="d7">325</data>
+      <data key="d8">325</data>
+    </edge>
+    <edge source="cell division" target="microtubule organizing center organization">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="cell division" target="programmed DNA elimination">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="cell division" target="protein polymerization">
+      <data key="d7">61</data>
+      <data key="d8">61</data>
+    </edge>
+    <edge source="cell division" target="cell cycle">
+      <data key="d7">713</data>
+      <data key="d8">713</data>
+    </edge>
+    <edge source="cell division" target="carbohydrate transport">
+      <data key="d7">197</data>
+      <data key="d8">197</data>
+    </edge>
+    <edge source="cell division" target="nucleobase-containing compound transport">
+      <data key="d7">21</data>
+      <data key="d8">21</data>
+    </edge>
+    <edge source="cell division" target="fermentation">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="cell division" target="ribosome biogenesis">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="nuclear division">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="chromosome organization">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="RNA processing">
+      <data key="d7">62</data>
+      <data key="d8">62</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="DNA replication">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="chromosome segregation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="microtubule organizing center organization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="viral process">
+      <data key="d7">51</data>
+      <data key="d8">51</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="cell division">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="cell cycle">
+      <data key="d7">53</data>
+      <data key="d8">53</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="carbohydrate transport">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="fermentation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="nucleobase-containing compound transport" target="ribosome biogenesis">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="fermentation" target="nuclear division">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="fermentation" target="chromosome organization">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="fermentation" target="cell division">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="fermentation" target="DNA replication">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="fermentation" target="chromosome segregation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="fermentation" target="microtubule organizing center organization">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="fermentation" target="viral process">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="fermentation" target="protein polymerization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="fermentation" target="cell cycle">
+      <data key="d7">26</data>
+      <data key="d8">26</data>
+    </edge>
+    <edge source="fermentation" target="carbohydrate transport">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="fermentation" target="ribosome biogenesis">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="nuclear division">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="chromosome organization">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="RNA processing">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="DNA replication">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="microtubule organizing center organization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="viral process">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="protein depolymerization">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="programmed DNA elimination">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="cell cycle">
+      <data key="d7">16</data>
+      <data key="d8">16</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="carbohydrate transport">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="cell division">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="nucleobase-containing compound transport">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="ribosome biogenesis" target="fermentation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+  </graph>
+</graphml>
