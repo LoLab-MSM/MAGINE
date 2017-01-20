@@ -1,26 +1,27 @@
 import os
 
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import requests
+
+from magine.networks.cytoscape_mod_layout import LayoutClient
 from py2cytoscape.data.cyrest_client import CyRestClient
 from py2cytoscape.data.style import StyleUtil
 from py2cytoscape.data.util_network import NetworkUtil as util
 
-from magine.networks.cytoscape_mod_layout import LayoutClient
-
-
 class RenderModel:
-    def __init__(self, graph, layout="attributes-layout", style='Directed',
-                 name='From MAGINE'):
+    def __init__(self, graph, layout="attributes-layout", style='Directed'):
+        # name='FromMAGINE'):
         # force-directed
         # attributes-layout
+
         self.graph = graph
         self.cy = CyRestClient()
         self.cy.session.delete()
-        self.cy.layout = LayoutClient()
-
+        self.cy.layout2 = LayoutClient()
         self.style = None
         self.edge_name2id = None
         self.node_name2id = None
@@ -28,10 +29,11 @@ class RenderModel:
         self.view1 = None
         for n, i in enumerate(self.graph.edges()):
             self.graph[i[0]][i[1]]['name'] = str(i[0]) + ',' + str(i[1])
-
-        self.g_cy = self.cy.network.create_from_networkx(self.graph, name=name,
-                                                         collection=name)
-        # time.sleep(10)
+        self.g_cy = self.cy.network.create_from_networkx(
+            self.graph, )  # name=name,
+        # collection=name)
+        import time
+        time.sleep(2)
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], format='view')
 
@@ -49,6 +51,7 @@ class RenderModel:
                    u'value'      : 50.0,
                    u'description': u'Scale of the radius of the partition:'}]
 
+
         # Marquee Directed Simple
         self.style = self.cy.style.create(style)
 
@@ -57,10 +60,11 @@ class RenderModel:
         options = {'NODE_LABEL_FONT_SIZE'     : 24,
                    'EDGE_WIDTH'               : 2,
                    'EDGE_TRANSPARENCY'        : '150',
-                   'NETWORK_HEIGHT'           : '2800',
-                   'NETWORK_WIDTH'            : '2800',
-                   'NODE_FILL_COLOR'          : 'red',
+                   # 'NETWORK_HEIGHT'           : '2800',
+                   # 'NETWORK_WIDTH'            : '2800',
+                   'NODE_FILL_COLOR': 'red',
                    'NETWORK_BACKGROUND_PAINT' : '#ffffff',
+                   'NODE_SIZE' : 80,
                    # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
                    'NETWORK_CENTER_X_LOCATION': 0.0,
                    'NETWORK_CENTER_Y_LOCATION': 0.0,
@@ -68,11 +72,11 @@ class RenderModel:
 
         self.style.update_defaults(options)
         if layout == 'attributes-layout':
-            self.cy.layout.update(name=layout, parameters=params)
-            self.cy.layout.apply(name=layout, network=self.g_cy,
-                                 params={'column': 'color'})
+            self.cy.layout2.update(name=layout, parameters=params)
+            self.cy.layout2.apply(name=layout, network=self.g_cy,
+                                  params={'column': 'color'})
         else:
-            self.cy.layout.apply(name=layout, network=self.g_cy)
+            self.cy.layout2.apply(name=layout, network=self.g_cy)
         self.node_name2id = util.name2suid(self.g_cy, 'node')
         self.edge_name2id = util.name2suid(self.g_cy, 'edge')
         # self.print_options()
@@ -111,6 +115,7 @@ class RenderModel:
         """
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
+        if not os.path.exists(os.path.join(out_dir, 'Figures')):
             os.mkdir(os.path.join(out_dir, 'Figures'))
         node_label_values = {self.node_name2id[i[0]]: i[1]['label'] for i in
                              self.graph.nodes(data=True)}
@@ -121,8 +126,8 @@ class RenderModel:
             edge_color_values[self.edge_name2id[i]] = 'gray'
         edge_width_values = {}
         for i in self.graph.edges(data=True):
-            edge_width_values[self.edge_name2id[str(i[0]) + ',' + str(i[1])]] = \
-                i[2]['weight']
+            edge_width_values[self.edge_name2id[str(i[0]) + ',' + str(i[1])]] \
+                = i[2]['weight']
         simple_slope = StyleUtil.create_slope(
                 min=min(edge_width_values.values()),
                 max=max(edge_width_values.values()),
@@ -133,6 +138,22 @@ class RenderModel:
                                              vp='EDGE_WIDTH',
                                              points=simple_slope)
         # self.style.create_passthrough_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH')
+        self.cy.style.apply(style=self.style, network=self.g_cy)
+        self.cy.layout.fit(network=self.g_cy)
+        x = self.view1.get_network_view_as_dict()
+        self.view1.update_network_view(
+            visual_property='NETWORK_SCALE_FACTOR',
+            value=float(x['NETWORK_SIZE'] / x['NETWORK_WIDTH']))
+        x = self.view1.get_network_view_as_dict()
+
+        # have to do this twice to format the size of the image correctly
+        self.g_cy.get_png(int(x['NETWORK_WIDTH']))
+        x = self.view1.get_network_view_as_dict()
+        self.view1.update_network_view(
+            visual_property='NETWORK_SCALE_FACTOR',
+            value=float(x['NETWORK_SIZE'] / x['NETWORK_WIDTH']))
+        # second time, this makes sure that things are same shape
+        self.g_cy.get_png(int(x['NETWORK_WIDTH']))
 
         for j in list_of_time:
             size = np.array(
@@ -144,79 +165,39 @@ class RenderModel:
                                                  vp='NODE_SIZE',
                                                  points=simple_slope)
             self.cy.style.apply(style=self.style, network=self.g_cy)
-            self.fit_to_window()
             x = self.view1.get_network_view_as_dict()
-            # for i in x:
-            #     print(i, x[i])
-            # print('\n')
-            self.view1.update_network_view(
-                    visual_property='NETWORK_SCALE_FACTOR',
-                    value=float(x['NETWORK_SCALE_FACTOR'] * .9))
 
-            self.view1.update_network_view(
-                    visual_property='NETWORK_BACKGROUND_PAINT',
-                    value='#ffffff')
-            x = self.view1.get_network_view_as_dict()
-            for i in x:
-                print(i, x[i])
             self.view1.update_node_views(visual_property='NODE_LABEL',
                                          values=node_label_values)
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
                                          values=node_label_values)
-            # self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
-            #                              values=node_color_values)
-            # self.view1.update_node_views(visual_property='NODE_BORDER_PAINT',
-            #                              values=node_color_values)
+            self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
+                                         values=node_color_values)
+            self.view1.update_node_views(visual_property='NODE_BORDER_PAINT',
+                                         values=node_color_values)
             self.view1.update_edge_views(visual_property='EDGE_LABEL_COLOR',
                                          values=edge_color_values)
             self.view1.update_edge_views(
-                    visual_property='EDGE_STROKE_UNSELECTED_PAINT',
-                    values=edge_color_values)
+                visual_property='EDGE_STROKE_UNSELECTED_PAINT',
+                values=edge_color_values)
             self.view1.update_edge_views(
-                    visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
-                    values=edge_color_values)
+                visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
+                values=edge_color_values)
             self.view1.update_edge_views(
-                    visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
-                    values=edge_color_values)
+                visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
+                values=edge_color_values)
+            x = self.view1.get_network_view_as_dict()
 
             fig_name = 'go_network_{0}_{1}'.format(prefix, j)
-            with open(os.path.join(out_dir, 'Figures',
-                                   '{}.png'.format(fig_name)), 'wb') as f:
-                # network_svg = self.g_cy.get_svg()
-                network_svg = self.get_png(2000)
-                f.write(network_svg)
-                f.close()
+            print("Saving {}".format(fig_name))
 
-            # os.system('convert -quality 100 -density 300 -background White  '
-            #           '{0}/Figures/go_network_{1}_{2}.svg -background White '
-            #           ' {0}/Figures/go_network_{1}_{2}_wpr.pdf'
-            #           ''.format(out_dir, prefix, j, label=j))
-            # os.system('pdfcrop {0}/Figures/go_network_{1}_{2}.pdf '
-            #           '{0}/Figures/go_network_{1}_{2}-2.pdf '.format(out_dir, prefix, j,))
-            os.system('convert -quality 100  -density 300 -trim '
-                      '{0}/Figures/go_network_{1}_{2}.png -density 300 -trim '
-                      ' -background White label:"{label}"  -gravity Center -append'
-                      ' {0}/Figures/go_network_{1}_{2}_wpr.png'
-                      ''.format(out_dir, prefix, j, label=j))
+            out_file = os.path.join(out_dir, 'Figures',
+                                    '{}.png'.format(fig_name))
+            if os.path.exists(out_file):
+                os.remove(out_file)
 
-                # with open(os.path.join(out_dir, 'Figures', '{}.pdf'.format(fig_name)),
-                #           'wb') as f:
-                #     network_pdf = self.g_cy.get_pdf()
-                #     f.write(network_pdf)
-                #     f.close()
-
-                # with open(os.path.join(out_dir,'Figures', '{}.png'.format(fig_name)),
-                #           'wb') as f:
-                #     network_png = self.g_cy.get_png()
-                #     f.write(network_png)
-                #     f.close()
-                #
-                # os.system(
-                #     'pdfcrop {0}/Figures/go_network_{1}_{2}.pdf {0}/Figures/go_network_{1}_{2}_wpr.pdf'.format(
-                #             out_dir, prefix, j))
-        os.system('convert -delay 100 -density 500'
-                  ' {0}/Figures/go_network_{1}_*_wpr.png '
-                  ' {0}/Figures/go_network_{1}.gif'.format(out_dir, prefix))
+            self.create_png(out_file, int(x['NETWORK_WIDTH']))
+            trip_photo(out_file, j)
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
@@ -237,17 +218,58 @@ class RenderModel:
             f.write(network_pdf)
             f.close()
 
-    def fit_to_window(self):
-        url = self.cy._CyRestClient__url + 'apply/fit/%s' % self.g_cy.get_id()
-        return requests.get(url).content
-
-    def get_png(self, height=2000):
-        url = '%sviews/first.png?h=%d' % (self.g_cy._CyNetwork__url, height)
-        return requests.get(url).content
+    def create_png(self, out_file, width):
+        with open(out_file, 'wb') as f:
+            network_svg = self.g_cy.get_png(width)
+            f.write(network_svg)
 
     def get_svg(self, height=2000):
         url = '%sviews/first.svg?h=%d' % (self.g_cy._CyNetwork__url, height)
         return requests.get(url).content
+
+
+def trip_photo(im_location, title):
+    """
+    Removes whitespace and adds title to image
+
+
+    Parameters
+    ----------
+    im_location: str
+        location of file, will be used for output as well
+    title : str
+        title to provide to add to image
+        Will be the sample id
+
+    Returns
+    -------
+
+    """
+
+    img = mpimg.imread(im_location)
+    to_remove_x = set()
+    to_remove_y = set()
+    x_dim = img.shape[0]
+    y_dim = img.shape[1]
+    for i in range(x_dim):
+        if img[i, :, 0].sum() != y_dim:
+            to_remove_x.add(i)
+    for i in range(y_dim):
+        if img[:, i, 0].sum() != x_dim:
+            to_remove_y.add(i)
+
+    img = img[min(to_remove_x):max(to_remove_x), :, :]
+    img = img[:, min(to_remove_y):max(to_remove_y), :]
+
+    plt.imshow(img)
+    plt.xticks([])
+    plt.yticks([])
+    plt.title(title)
+    out = im_location.replace('.png', '_formatted.png')
+    plt.savefig(out, dpi=300, bbox_inches='tight')
+    plt.close()
+    # plt.show()
+
 
 if __name__ == '__main__':
     ddn = nx.nx.read_graphml('t_all_colored_pvalue_2.graphml')
