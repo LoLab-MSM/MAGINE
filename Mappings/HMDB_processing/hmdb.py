@@ -1,14 +1,15 @@
 """
 HMDB database download and processing
 """
-import czipfile as zipfile
+
 import os
+import tempfile
+import xml.etree.cElementTree as ElementTree
+import zipfile
 
 import numpy as np
 import pandas as pd
-import tempfile
-import urllib2
-import xml.etree.cElementTree as ElementTree
+import requests
 
 from Mappings.xml_to_dictionary import XmlDictConfig, XmlListConfig
 
@@ -41,31 +42,33 @@ class HMDB:
         """
 
         hmdb_db_url = 'http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip'
-        u = urllib2.urlopen(hmdb_db_url)
+
         out_path = os.path.join(self.tmp_dir, self.target_file)
-        f = open(out_path, 'wb')
-        meta = u.info()
-        file_size = int(meta.getheaders("Content-Length")[0])
+
+        r = requests.get(hmdb_db_url, stream=True)
+        response = requests.head(hmdb_db_url)
+        file_size = int(response.headers['content-length'])
         print("Downloading: %s Bytes: %s" % (self.target_file, file_size))
         file_size_dl = 0
         block_sz = 8192
         v = set()
-        while True:
-            buffer = u.read(block_sz)
-            if not buffer:
-                break
-            file_size_dl += len(buffer)
-            f.write(buffer)
-            percent_download = np.floor(file_size_dl * 100. / file_size)
-            if percent_download % 10 == 0:
-                status = r"%10d  [%3.2f%%]" % (
-                    file_size_dl, file_size_dl * 100. / file_size)
-                status += chr(8) * (len(status) + 1)
-                if percent_download not in v:
-                    print(status)
-                    v.add(percent_download)
-        f.close()
+        milestone_markers = range(0, 101, 10)
+
+        with open(out_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=block_sz):
+                file_size_dl += len(chunk)
+                percent_download = int(
+                    np.floor(file_size_dl * 100. / file_size))
+
+                if percent_download in milestone_markers:
+                    if percent_download not in v:
+                        print("{}%".format(percent_download))
+                        v.add(percent_download)
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+
         print("Downloaded {} and stored {}".format(hmdb_db_url, out_path))
+        return
 
     def unzip_hmdb(self, out_directory):
         """ unzips hmdb metabolites file
@@ -80,6 +83,7 @@ class HMDB:
         zip_ref = zipfile.ZipFile(hmdb_file, 'r')
         zip_ref.extractall(out_directory)
         zip_ref.close()
+        print("Done unzipping metabolites file")
 
     def parse_hmdb(self):
         """ parse HMDB to Pandas.DataFrame
@@ -146,6 +150,7 @@ class HMDB:
         return df
 if __name__ == '__main__':
     hm = HMDB()
+    hm.download_hmdb()
     hm.parse_hmdb()
     df = hm.load_db()
     print(df.head(10))

@@ -1,4 +1,7 @@
-import cPickle
+try:
+    import cPickle
+except:  # python3 doesnt have cPickle
+    import pickle as cPickle
 import os
 
 import pandas as pd
@@ -6,11 +9,16 @@ import pandas as pd
 directory = os.path.dirname(__file__)
 
 
-class ChemicalMapper:
+class ChemicalMapper(object):
     """
     converts chemical species
     Datbase was creating by pulling down everything from HMDB
     """
+    __slots__ = ('database', 'hmdb_accession_to_chemical_name',
+                 'chemical_name_to_hmdb_accession', 'hmdb_accession_to_kegg',
+                 'kegg_to_hmdb_accession', 'hmdb_accession_to_protein',
+                 'synonyms_to_hmdb', '__dict__'
+                 )
 
     def __init__(self):
         self.database = None
@@ -115,8 +123,14 @@ class ChemicalMapper:
 
 
 if __name__ == '__main__':
+    import timeit
+
+    # cm = ChemicalMapper()
+    x = timeit.timeit(ChemicalMapper().load)
+    print(x)
+    quit()
     cm = ChemicalMapper()
-    cm.load()
+
     count = 0
     # for k, v in cm.database.groupby('accession')['protein_associations']:
     #     v= v.tolist()[0]
