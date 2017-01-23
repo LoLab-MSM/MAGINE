@@ -1,7 +1,10 @@
 import os
 import warnings
+from ast import literal_eval
 
+import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import pandas as pd
 
 from magine.html_templates.html_tools import write_single_table
@@ -34,9 +37,8 @@ class Analyzer:
             if network is not None:
                 warnings.warn("Warning : Passing build_network=True "
                               "and a network file! ", RuntimeWarning)
-            import \
-                magine.networks.network_generator.build_network  as network_builder
-            self.build_network = network_builder
+            from magine.networks.network_generator import build_network
+            self.build_network = build_network
             self.generate_network(save_name)
         elif network is not None:
             self.network = network
@@ -100,7 +102,8 @@ class Analyzer:
             assert metric is not None, 'Must provide metric'
 
         if data_type == 'proteomics':
-            up_reg = self.exp_data.proteomics_up_over_time
+            up_reg = list(self.exp_data.proteomics_up_over_time[0:2])
+            print(up_reg)
             down_reg = self.exp_data.proteomics_down_over_time
             sig_changes = self.exp_data.proteomics_over_time
             labels = list(self.exp_data.protomics_time_points)
@@ -158,9 +161,9 @@ class Analyzer:
 
         return go
 
-    def run_single_go(self, data_type='proteomics', fold_change='Up',
+    def run_single_go(self, data_type='proteomics', fold_change='up',
                       slim=False, metric=None, aspect='P',
-                      create_go_networks=False):
+                      create_go_networks=True):
         """
         Runs enrichment analysis
         Parameters
@@ -260,7 +263,9 @@ class Analyzer:
         if self.go_net_gen is None:
             warnings.warn("Warning : You must provide Analyzer with a network "
                           "or pass the build_network flag"
-                          "or generate a network", RuntimeError)
+                          "or generate a network in order to generate"
+                          " a go network", RuntimeError)
+
         tall = self.go_net_gen.create_network_from_list(
             list_of_go_terms=all_timepoints,
             save_name='{0}_network'.format(savename),
@@ -356,22 +361,141 @@ class Analyzer:
         """
 
         list_of_go_dict = []
+
         for i in ['up', 'down', 'both']:
             go, x = self.run_single_go(data_type='proteomics',
                                        fold_change=i, slim=True,
                                        metric='enrichment', aspect='P',
-                                       create_go_networks=False)
+                                       create_go_networks=True)
             list_of_go_dict.append(x)
             go, x = self.run_single_go(data_type='proteomics',
                                        fold_change=i, slim=False,
                                        metric='enrichment', aspect='P',
                                        create_go_networks=False)
             list_of_go_dict.append(x)
+            go, x = self.run_single_go(data_type='rnaseq',
+                                       fold_change=i, slim=False,
+                                       metric='enrichment', aspect='P',
+                                       create_go_networks=False)
+            list_of_go_dict.append(x)
+
+        # self.create_selected_go_network(
+        #     '20161026_enrichment_proteomics_up_P_all_data.csv',
+        #     'proteomics_up')
+        # self.create_selected_go_network(
+        #     '20161026_enrichment_rnaseq_up_P_all_data.csv',
+        #     'rnaseq_up')
 
         df = pd.DataFrame(list_of_go_dict)
-        write_single_table(df, 'index.html', 'MAGINE Outpu')
+        write_single_table(df, 'index.html', 'MAGINE Output')
 
+    def create_selected_go_network(self, file_name, save_name):
+        data = pd.read_csv(file_name, converters={"genes": literal_eval},
+                           index_col=0)
+        data['genes'] = data['genes'].astype(set)
+        labels = self.exp_data.timepoints
+        data = data[data['ref'] > 6]
 
+        # data = data[data['depth'] < 10]
+        data = data.sort_values('enrichment_score', ascending=False)
+        tmp = data[data['pvalue'] < 0.05]
+
+        tmp = pd.pivot_table(tmp, index=['GO_id', ], columns='sample_index')
+        n_samples = range(len(labels))
+        list_all_go = set()
+        for i in n_samples:
+            tmp = tmp.sort_values(by=('enrichment_score', i), ascending=False)
+            list_of_go = set(tmp.head(8).index)
+            # list_of_go = check_term_list(list_of_go)
+            list_all_go.update(list_of_go)
+            # g = find_disjunction_common_ancestor(list_of_terms=list_of_go)
+            # export_to_dot(g, save_name='{}_graph'.format(i), view=False)
+
+        # g = find_disjunction_common_ancestor(list_of_terms=list_all_go)
+        # export_to_dot(g, save_name='all_go_graph', view=False)
+        # trim_nodes = True
+        trim_nodes = True
+        if trim_nodes:
+            from magine.ontology.ontology_tools import check_term_list
+            list_all_go = check_term_list(list_all_go)
+            data = data[data['GO_id'].isin(list_all_go)]
+
+        data.loc[data['enrichment_score'] > 20, 'enrichment_score'] = 20
+
+        tmp = pd.pivot_table(data, index=['GO_id', 'GO_name'],
+                             columns='sample_index')
+        tmp2 = pd.pivot_table(data, index=['GO_id'], columns='sample_index')
+        enrichment_list = [('enrichment_score', i) for i in n_samples]
+        tmp = tmp.sort_values(by=enrichment_list, ascending=False)
+
+        # Want to show both enrichment as a panel as pvalie
+        pvalue = tmp['pvalue'].fillna(1).as_matrix()
+        enrichment_value = tmp['enrichment_score'].as_matrix()
+        fig = plt.figure(figsize=(12, 6))
+
+        # Enrichment panel
+        ax1 = fig.add_subplot(111)
+        plt.imshow(enrichment_value, aspect='auto',
+                   interpolation='nearest', cmap=plt.get_cmap('Blues'))
+
+        # text portion
+        y_array = range(0, len(tmp.index), 1)
+        x_array = range(0, len(labels), 1)
+
+        x, y = np.meshgrid(x_array, y_array)
+
+        for x_val, y_val in zip(x.flatten(), y.flatten()):
+            if pvalue[y_val, x_val] < 0.05:
+                ax1.text(x_val, y_val, '*', va='center', ha='center')
+
+        ax1.tick_params(axis='both', direction='out')
+        ax1.set_xticks(range(len(labels)))
+        ax1.set_xticklabels(labels, fontsize=16)
+
+        ax1.set_yticks(range(len(tmp.index)))
+        ax1.set_yticklabels(tmp.index, fontsize=16)
+        plt.colorbar()
+        plt.tight_layout(w_pad=2.8, h_pad=.6)
+        plt.savefig('{}_heatplot.png'.format(save_name), bbox_inches='tight')
+        plt.close()
+
+        if self.go_net_gen is None:
+            warnings.warn("Warning : You must provide Analyzer with a network "
+                          "or pass the build_network flag"
+                          "or generate a network in order to generate"
+                          " a go network", RuntimeError)
+        tall = self.go_net_gen.create_network_from_list(
+            list_of_go_terms=list_all_go,
+            save_name='{0}_network'.format(save_name),
+            threshold=0)
+        if len(tall.nodes()) == 0:
+            print('No nodes')
+            quit()
+
+        score_array = tmp2.copy()
+
+        x = score_array['enrichment_score'].fillna(0)
+
+        for i in tall.nodes():
+            tmp = tall.node[i]['go']
+            tmp = tmp[:2] + ':' + tmp[2:]
+            values = x.loc[tmp]
+            tall.node[i]['color'] = 'red'
+            for n, time in enumerate(n_samples):
+                t = 'time_{0:04d}'.format(n)
+                tall.node[i][t] = float(values[time])
+
+        savename = os.path.join(self.out_dir, 'Network_files',
+                                '{0}_all_colored_{1}.graphml'.format(
+                                    save_name, self.metric))
+
+        nx.nx.write_graphml(tall, savename)
+        size_of_data = len(n_samples)
+        rm = RenderModel(tall)
+        rm.visualize_by_list_of_time(create_names(size_of_data),
+                                     prefix=save_name,
+                                     labels=self.exp_data.timepoints,
+                                     out_dir=self.out_dir)
 headers = {'DataType',
            'FoldChange',
            'fileName',
