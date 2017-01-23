@@ -366,7 +366,7 @@ class Analyzer:
             go, x = self.run_single_go(data_type='proteomics',
                                        fold_change=i, slim=True,
                                        metric='enrichment', aspect='P',
-                                       create_go_networks=True)
+                                       create_go_networks=False)
             list_of_go_dict.append(x)
             go, x = self.run_single_go(data_type='proteomics',
                                        fold_change=i, slim=False,
