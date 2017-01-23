@@ -1,4 +1,4 @@
-gene,protein,compound,treated_control_fold_change,species_type,significant_flag,sample_id,data_type,p_value_group_1_and_group_2
+gene,protein,compound,treated_control_fold_change,species_type,significant_flag,time,data_type,p_value_group_1_and_group_2
 BAX,BAX,,2,protein,TRUE,Time_1,label_free,0.001
 ADORA1,ADORA1,,1,protein,FALSE,Time_1,label_free,0.215
 ADORA2A,ADORA2A,,1.2,protein,FALSE,Time_1,label_free,0.199
@@ -11,4 +11,7 @@ AIF1,AIF1,,-1.5,protein,TRUE,Time_3,rna_seq,0.01
 AKT1,AKT1,,-3.5,protein,TRUE,Time_3,rna_seq,0.06
 AKT2,AKT2,,-1.2,protein,FALSE,Time_3,rna_seq,0.22
 BAX,BAX,,2,protein,TRUE,Time_2,label_free,0.05
+BAX,BAX,,4,protein,TRUE,Time_3,label_free,0.05
+BAX,BAX_T,,-24,protein,TRUE,Time_3,label_free,0.05
+TP53,TP53,,4,protein,TRUE,Time_3,label_free,0.05
 BID,BID_cleavage,test,3,metabolite,TRUE,Time_2,hilic,0.01
