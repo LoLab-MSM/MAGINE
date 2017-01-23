@@ -163,7 +163,7 @@ class Analyzer:
 
     def run_single_go(self, data_type='proteomics', fold_change='up',
                       slim=False, metric=None, aspect='P',
-                      create_go_networks=True):
+                      create_go_networks=False):
         """
         Runs enrichment analysis
         Parameters
