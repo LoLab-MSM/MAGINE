@@ -227,8 +227,8 @@ class GoNetworkGenerator:
 
 
 if __name__ == '__main__':
-    ddn = nx.read_gml(
-        'C:\Users\James Pino\PycharmProjects\Network_projects\Cisplatin_project\Network_files\ddn3.gml')
+#    ddn = nx.read_gml(
+#        'C:\Users\James Pino\PycharmProjects\Network_projects\Cisplatin_project\Network_files\ddn3.gml')
     # test_list = ['GO:0008219', 'GO:0006281', 'GO:0008283', 'GO:0043066', 'GO:0043065', 'GO:1902175', 'GO:0006805',
     #              'GO:0006766']
     test_list = ['GO:1902175', 'GO:0006805', 'GO:0006766', 'GO:0015893',
