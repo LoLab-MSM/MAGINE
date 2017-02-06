@@ -23,7 +23,7 @@ def test_print_hit_by_index():
     :return None
     """
     go = GoAnalysis(species='hsa', output_directory='tmp', verbose=True)
-    go.analysize_data([
+    go.analyze_data([
         ['BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2', 'MCL1', 'BAD', 'BID', 'BBC3']],
         aspect='P', labels=['1', '2'], savename='test_11', analyze=False)
     go.retrieve_top_ranked(0, number=10)
