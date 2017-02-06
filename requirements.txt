@@ -3,6 +3,6 @@ jinja2
 networkx
 requests
 py2cytoscape
-orange-bioinformatics
+orange-bioinformatics==2.6.19
 graphviz
 bioservices
