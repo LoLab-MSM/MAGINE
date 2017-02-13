@@ -180,6 +180,9 @@ class GoAnalysis:
                 P : Biological Process
                 C : Cellular Component
 
+        use_slims : bool
+            Use slim terms from GO
+
         Returns
         -------
 
@@ -313,6 +316,7 @@ class GoAnalysis:
             return
         self.data_2.to_csv('{0}.csv'.format(savename))
         self.data_3.to_csv('{0}_all_data.csv'.format(savename))
+        self._savename = savename
         self.data = data
 
         self.names, self.array = self.sort_by_hierarchy(data)
@@ -524,6 +528,8 @@ class GoAnalysis:
 
         # replace GO numbers with GO name
         # create plot of genes over time
+        # processes = []
+        print("Starting to create plots for each GO term")
         for n, i in enumerate(self.names):
 
             gene_set = set()
@@ -545,26 +551,21 @@ class GoAnalysis:
             else:
                 if save_name not in self.created_go_pds:
                     self.created_go_pds.add(save_name)
+                    # processes.append((list(gene_set), save_name, '.', title, False, True))
+
                     # self.exp_data.plot_list_of_genes(list(gene_set), save_name,
                     #                                  title=title)
                 real_names.append(
-                    '<a href="Figures/go_{0}_{1}.pdf">{2}</a>'.format(i,
-                                                                      self.savename,
-                                                                      self.global_go[
-                                                                          i]).replace(
-                        ':', ''))
+                    '<a href="Figures/go_{0}_{1}.pdf">{2} ({0})</a>'.format(i,
+                        self.savename, self.global_go[i]).replace(':', ''))
+        print("Done creating plots for each GO term")
+        # pool = mp.Pool(4)
+        # pool.map(self.exp_data.plot_list_of_genes, processes)
+        # pool.close()
+        # pool.join()
         # turn it into a pandas dataframe
         d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
-        # duplicate the sort table class so we can sort by column
-        # with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),
-        #                        'html_additions', 'sorttable.js'), 'r') as f:
-        #     x = f.read()
-        #     with open('{}/Figures/sorttable_tmp.js'.format(self.out_dir),
-        #               'w') as tmp_file:
-        #         tmp_file.write(x)
 
-        # header = '<script src="sorttable_tmp.js"></script>\n<html>\n\t<body>\n\n<div style="float: left">\n'
-        # header = '<link rel="stylesheet" href="//cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css"/>' \
         header = """
                   <html>
                   <head>
@@ -589,14 +590,117 @@ class GoAnalysis:
         # write out the html file
         with open(os.path.join(self.out_dir, '%s.html' % html_name), 'w') as f:
             f.write(header)
-            f.write(self.html_pdfs.to_html(classes='sortable', escape=False,
-                                           justify='left'))
-            f.write('\n</div>\n')
-            f.write(self.html_pdfs2.to_html(classes='sortable', escape=False,
-                                            justify='left'))
+            # f.write(self.html_pdfs.to_html(classes='sortable', escape=False,
+            #                                justify='left'))
+            # f.write('\n</div>\n')
+            # f.write(self.html_pdfs2.to_html(classes='sortable', escape=False,
+            #                                 justify='left'))
             f.write(d.to_html(classes='sortable', float_format='{0:.4}'.format,
                               escape=False, justify='left'))
             f.write(footer)
+
+    def export_to_html_2(self, labels, html_name='tmp'):
+        """
+
+        Parameters
+        ----------
+        labels : list
+            list of sample labels for html table
+        html_name : str
+            name of html page to save as
+
+        Returns
+        -------
+
+        """
+
+        real_names = []
+        if self.array is None:
+            print("Array is empty. This could be due to no signficant species"
+                  "provided in list or because analysis has not been run yet.")
+            return
+
+        data = self.data_3
+        tmp = pd.pivot_table(data, index=['GO_id', 'GO_name'],
+                             columns='sample_index')
+        list_of_sig_go_all = data['GO_id'].unique()
+        data = data[data['ref'] >= 5]
+        data = data[data['pvalue'] < 0.05]
+        list_of_sig_go = data['GO_id'].unique()
+
+        processes = []
+        # create plot of genes over time
+        for n, i in enumerate(list_of_sig_go_all):
+            # want to only plot significant species
+            if i not in list_of_sig_go:
+                real_names.append('<a>{0}</a>'.format(self.global_go[i]))
+                continue
+
+            # want to plot all species over time
+            gene_set = set()
+            for k in range(self.num_data_sets):
+                genes = list(self.data_2[self.data_2['GO_id'] == i][
+                                 'genes_{0}'.format(k)])
+                # can return a list of lists...
+                for g in genes:
+                    if type(g) == list:
+                        for e in g:
+                            gene_set.add(e)
+
+            # too many genes isn't helpful on plots, so skip them
+            if len(gene_set) > 50:
+                real_names.append('<a>{0}</a>'.format(self.global_go[i]))
+                continue
+
+            save_name = '{0}/Figures/go_{1}_{2}'.format(self.out_dir, i,
+                self.savename).replace(':', '')
+            title = "{0} : {1}".format(str(i), self.global_go[i])
+
+            if save_name not in self.created_go_pds:
+                self.created_go_pds.add(save_name)
+                processes.append(
+                    (list(gene_set), save_name, '.', title, True, True))
+            real_names.append(
+                '<a href="Figures/go_{0}_{1}.pdf">{2} ({0})</a>'.format(i,
+                    self.savename, self.global_go[i]).replace(':', ''))
+        # 95.6470000744 for parallel, 4 processors
+        # 200.871999979 for sequential, 4 processors
+        print(len(processes))
+        print("Starting to create plots for each GO term")
+        # st1 = time.time()
+        # for i in processes:
+        #     self.exp_data.plot_list_of_genes(i)
+        # end1 = time.time()
+        # print("sequential time = {}".format(end1 - st1))
+        st2 = time.time()
+        # pool = mp.Pool(8)
+        # pool.map(self.exp_data.plot_list_of_genes, processes)
+        # pool.close()
+        # pool.join()
+        end2 = time.time()
+        print("parallel time = {}".format(end2 - st2))
+        print("Done creating plots for each GO term")
+        # turn it into a pandas dataframe
+        # d = pd.DataFrame(data=html_array, index=real_names, columns=labels)
+
+        print(np.shape(tmp))
+        print(np.shape(real_names))
+        tmp['GO_id'] = real_names
+
+        def color_negative_red(val):
+            """
+            Takes a scalar and returns a string with
+            the css property `'color: red'` for negative
+            strings, black otherwise.
+            """
+            color = 'red' if val < 0 else 'black'
+            return 'color: %s' % color
+
+        # html = (tmp.style.applymap(color_negative_red).render())
+        # print(html)
+        html_out = os.path.join(self.out_dir, '%s.html' % html_name)
+        write_single_table(tmp, html_out, 'MAGINE GO analysis')
+
 
     def get_parents(self, term, data):
         """
