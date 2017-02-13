@@ -6,9 +6,8 @@ from orangecontrib.bio.utils import serverfiles
 
 from goatools import obo_parser
 from goatools.associations import read_gaf
-from goatools.semantic import TermCounts, ic, resnik_sim
-from goatools.semantic import semantic_similarity, deepest_common_ancestor
-from magine.network_tools import export_to_dot
+from goatools.semantic import TermCounts, deepest_common_ancestor, resnik_sim, \
+    semantic_similarity
 
 # sys.setrecursionlimit(100000)
 os.environ[
@@ -156,27 +155,27 @@ def check_term_list(list_of_terms):
             else:
                 to_remove.add(j)
         # remove if deepest common ancestor has at least 4 IC
-        elif sim > 4:
+                # elif sim > 4:
             # if go[dca].depth < 3:
             #     continue
-            if dca in to_remove or dca in list_of_terms:
-                continue
-            list_of_terms.add(dca)
-            to_remove.add(i)
-            to_remove.add(j)
+                # if dca in to_remove or dca in list_of_terms:
+                #     continue
+                # list_of_terms.add(dca)
+                # to_remove.add(i)
+                # to_remove.add(j)
             # print('Removing')
             # print('-' * 20)
             # print(i, j, dca, go[i].depth, go[j].depth, go[dca].depth)
             # print(go[i].name, go[j].name, go[dca].name, sim, sim2)
             # print('-' * 20)
-        else:
+                # else:
             # I was thinking I could compare IC for regulators,
             # but it doesn't really provide much
-            ic_i = ic(i, termcounts)
-            ic_j = ic(j, termcounts)
-            print("GO\t\t{}\t\t{}".format(go[i].name, go[j].name))
-            print("IC\t\t{}\t\t\t{}".format(ic_i, ic_j))
-            print("Score = {}\n".format(sim2))
+                # ic_i = ic(i, termcounts)
+                # ic_j = ic(j, termcounts)
+                # print("GO\t\t{}\t\t{}".format(go[i].name, go[j].name))
+                # print("IC\t\t{}\t\t\t{}".format(ic_i, ic_j))
+                # print("Score = {}\n".format(sim2))
             # if go[dca].depth > 3:
             #     print("Depth\t{}\t\t\t{}".format(go[i].depth, go[j].depth))
             #     print("DCA\tID\tDepth\tIC")
@@ -191,6 +190,35 @@ def check_term_list(list_of_terms):
 
     print('Number of term after = {}'.format(len(list_of_terms)))
     return list_of_terms
+
+
+def create_graph_to_root_from_list_terms(list_of_terms):
+    list_of_terms = set(list_of_terms)
+    for i in list_of_terms:
+        # print(go[i].depth)
+        if go[i].depth > 10:
+            print("Depth of {} is greater than 10.".format(i),
+                  "Removing from list for now as path to root is VAST")
+            to_remove.add(i)
+    list_of_terms = list_of_terms.difference(to_remove)
+    combined_graph = nx.DiGraph()
+
+    node_list = []
+    # list_of_terms = check_term_list(list_of_terms)
+    for i in list_of_terms:
+        g = path_to_root(i)
+        node_list.append(set(g.nodes()))
+        combined_graph.add_nodes_from(g.nodes(data=True))
+        combined_graph.add_edges_from(g.edges(data=True))
+    formatted_list_of_terms = []
+    for i in list_of_terms:
+        formatted_list_of_terms.append('"{}"'.format(i))
+    for each in formatted_list_of_terms:
+        combined_graph.add_node(each, style='filled', fillcolor='green',
+                                **combined_graph[each])
+    # gonames = nx.get_node_attributes(combined_graph, 'GOname')
+    # nx.set_node_attributes(combined_graph, 'label', gonames)
+    return combined_graph
 
 
 def find_disjunction_common_ancestor(list_of_terms):
@@ -285,8 +313,14 @@ def find_disjunction_common_ancestor(list_of_terms):
     for each in formatted_list_of_terms:
         common_graph.add_node(each, style='filled',
                               fillcolor='green', **combined_graph[each])
-    gonames = nx.get_node_attributes(common_graph, 'GOname')
-    print(gonames)
-    nx.set_node_attributes(common_graph, 'label', gonames)
-    export_to_dot(common_graph, 'common', view=False)
+    gonames = nx.get_node_attributes(combined_graph, 'GOname')
+    nodes_in_graph = common_graph.nodes()
+    to_remove = set()
+    for i in gonames:
+        if i not in nodes_in_graph:
+            to_remove.add(i)
+    for i in to_remove:
+        gonames.pop(i)
+    # nx.set_node_attributes(common_graph, 'label', gonames)
+    # export_to_dot(common_graph, 'common', view=False)
     return common_graph
