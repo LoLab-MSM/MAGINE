@@ -100,7 +100,7 @@ class GoAnalysis:
                                                   # evidence_codes=evidence_codes,
                                                   reference=self.reference)
 
-        sorted_list = np.ones((len(res.items()), 4), dtype='S50')
+        sorted_list = np.ones((len(res.items()), 4), dtype='U50')
         sorted_list[:, 2].astype('float')
 
         n = 0
@@ -212,7 +212,7 @@ class GoAnalysis:
             all_terms.extend(list(each[:, 1]))
         all_terms = set(all_terms)
         num_of_lists = len(list_of_exp)
-        data_set = np.zeros((len(all_terms), num_of_lists + 1), dtype='S50')
+        data_set = np.zeros((len(all_terms), num_of_lists + 1), dtype='U50')
         for n, i in enumerate(all_terms):
             data_set[n, 0] = i
             for num in range(1, num_of_lists + 1):

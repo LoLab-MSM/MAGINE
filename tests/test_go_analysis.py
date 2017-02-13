@@ -9,7 +9,7 @@ def test_go_heatmap():
     :return None
     """
     go = GoAnalysis(species='hsa', output_directory='tmp', slim='goslim_pir')
-    go.analysis_data([['BAX', 'BAK1', 'BOK'],
+    go.analyze_data([['BAX', 'BAK1', 'BOK'],
                       ['BCL2L1', 'BCL2', 'MCL1'],],
                       #['BAD', 'BID', 'BBC3'],
                       #['BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2','MCL1', 'BAD', 'BID', 'BBC3']],
@@ -23,7 +23,7 @@ def test_print_hit_by_index():
     :return None
     """
     go = GoAnalysis(species='hsa', output_directory='tmp', verbose=True)
-    go.analysis_data([
+    go.analyze_data([
         ['BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2', 'MCL1', 'BAD', 'BID', 'BBC3']],
         aspect='P', labels=['1', '2'], savename='test_11', analyze=False)
     go.retrieve_top_ranked(0, number=10)
@@ -35,10 +35,10 @@ def test_print_top_hits():
     :return None
     """
     go = GoAnalysis(species='hsa', output_directory='tmp2', verbose=False, save_png=True)
-    # go.analysis_data([['ATR', 'CHEK1', 'CHEK2', 'ATM', 'TP53', 'BAX', 'CYCS', 'CASP3', 'CASP8','FAS']],
+    # go.analyze_data([['ATR', 'CHEK1', 'CHEK2', 'ATM', 'TP53', 'BAX', 'CYCS', 'CASP3', 'CASP8','FAS']],
     #                 aspect='P', labels=['1'], savename='test_11', analyze=False)
 
-    go.analysis_data([['BAX', 'BAK1', 'BOK',
+    go.analyze_data([['BAX', 'BAK1', 'BOK',
                        'BCL2L1', 'BCL2', 'MCL1',
                        'BAX', 'BAK1', 'BOK', 'BCL2L1', 'BCL2', 'MCL1', 'BAD',
                        'BID', 'BBC3']],

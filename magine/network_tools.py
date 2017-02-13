@@ -235,7 +235,7 @@ def compress_edges(graph):
 
     for i in neighbor_dict:
         neigh = neighbor_dict[i]
-        # print i,neigh
+        # print(i,neigh)
         if len(i) != 1:
             continue
         if len(neigh) == 1:
@@ -256,12 +256,12 @@ def compress_edges(graph):
                 interaction_types[edge_type + direction].append(j)
         for k in interaction_types:
             if len(interaction_types[k]) > 1:
-                # print i[0],'->',
+                # print(i[0],'->',)
                 to_join = []
                 for each in interaction_types[k]:
                     if len(g.neighbors(each)) == 1:
                         to_join.append(each)
-                # print to_join,k
+                # print(to_join,k)
                 if len(to_join) > 1:
                     label = "{"
                     for node in to_join:
@@ -269,7 +269,7 @@ def compress_edges(graph):
                         label += ' %s |' % str(node)
                     label = label[:-1]
                     label += "}"
-                    # print label
+                    # print(label)
                     g.add_node(label, shape='record', label=label)
                     if k.endswith('type2'):
                         g.add_edge(label, i[0], dir='both', arrowhead=k[:-5],
@@ -328,7 +328,7 @@ def generate_curated_subgraphs(network, i):
         output += str(j) + '\t' + tmp
     file_to_write.write(output)
     file_to_write.close()
-    print "Created curated list for %s", i
+    print("Created curated list for %s", i)
 
 
 # deprecated
@@ -377,5 +377,5 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     plt.ylabel("Count")
     plt.savefig("histogram_mega_minus_canonical_subgraphs.png", dpi=200)
     plt.show()
-    print "Number of subgraphs with 1 node = %s" % counter
+    print("Number of subgraphs with 1 node = %s" % counter)
     return subgraph_species
