@@ -9,6 +9,9 @@ from sys import modules
 import networkx as nx
 from bioservices import KEGG
 
+import Mappings.maps as mapper
+from magine.network_database_expansions.expansion_network import \
+    load_reactome_fi
 from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:
@@ -107,7 +110,7 @@ def download_kegg_pathway(pathway, overwrite=True):
 
 
 def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
-                  overwrite=True):
+                  overwrite=True, all_measured_list=None):
     """ Construct a network from a list of gene names.
     build_network_kegg_ids(gene_list, num_overlap ,save_name )
     :param gene_list: List of genes to construct network
@@ -145,6 +148,8 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                     end_network.node[i]['drug'] = split_name[0]
     end_network = nx.relabel_nodes(end_network, drug_dict)
     end_network = mapper.convert_all(end_network, species=species)
+    if all_measured_list is not None:
+        add_reactome(end_network, all_measured_list)
     delete_disconnected_network(end_network)
     print('Number of edges', len(end_network.edges()))
     print('Number of nodes', len(end_network.nodes()))
@@ -154,11 +159,40 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     return end_network
 
 
-import cPickle as pickle
+def add_reactome(network, measured_list):
+    combined_network = network.copy()
+    existing_nodes = set(network.nodes())
 
-directory = '/home/pinojc/PycharmProjects/Magine/Mappings'
-human_kegg_to_uniprot = pickle.load(
-        open(os.path.join(directory, 'human_kegg_mapper.p'), 'rb'))
+    fi_network = load_reactome_fi()
+    added_nodes = 0
+    measured_species_in_network = set()
+
+    for i in fi_network.nodes(data=True):
+        if i[0] in existing_nodes:
+            continue
+        elif i in measured_list:
+            measured_species_in_network.add(i)
+
+    print("Found {} nodes in REACTOME not in KEGG".format(added_nodes))
+
+    added_edges = 0
+    kegg_edges = set(combined_network.edges())
+    reactome_edges = fi_network.edges(data=True)
+    for i, j, k in reactome_edges:
+        if (i, j) in kegg_edges:
+            continue
+        else:
+            combined_network.add_edge(i, j, k)
+            added_edges += 1
+    print("Added {} edges from REACTOME".format(added_edges))
+    return combined_network
+
+
+# import cPickle as pickle
+
+# directory = '/home/pinojc/PycharmProjects/Magine/Mappings'
+# human_kegg_to_uniprot = pickle.load(
+#         open(os.path.join(directory, 'human_kegg_mapper.p'), 'rb'))
 
 
 def download_all_of_kegg(output_dir):
