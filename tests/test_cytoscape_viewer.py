@@ -6,10 +6,12 @@ from magine.networks.cytoscape_view import RenderModel
 
 
 def test_by_time():
-    ddn = nx.nx.read_graphml('Network_files/t_1_2_colored_enrichment.graphml')
+    ddn = nx.nx.read_graphml(
+        'Network_files/test_all_colored_enrichment.graphml')
     rm = RenderModel(ddn, style='Directed', )  # layout='force-directed')
     rm.visualize_by_list_of_time(
-        ['time_0', 'time_1', 'time_2', 'time_3'])
+        ['time_0000', 'time_0001', 'time_0002', 'time_0003'],
+        labels=[0, 2, 3, 4])
     files_that_should_exist = [
         'tmp/Figures/go_network_tmp_time_0_formatted.png',
         'tmp/Figures/go_network_tmp_time_1_formatted.png',

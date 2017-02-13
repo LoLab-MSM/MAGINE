@@ -1,0 +1,1759 @@
+<?xml version='1.0' encoding='utf-8'?>
+<graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd">
+  <key attr.name="label" attr.type="string" for="edge" id="d8" />
+  <key attr.name="weight" attr.type="int" for="edge" id="d7" />
+  <key attr.name="label" attr.type="string" for="node" id="d6" />
+  <key attr.name="go" attr.type="string" for="node" id="d5" />
+  <key attr.name="time_0000" attr.type="double" for="node" id="d4" />
+  <key attr.name="time_0001" attr.type="double" for="node" id="d3" />
+  <key attr.name="time_0002" attr.type="double" for="node" id="d2" />
+  <key attr.name="time_0003" attr.type="double" for="node" id="d1" />
+  <key attr.name="color" attr.type="string" for="node" id="d0" />
+  <graph edgedefault="directed">
+    <node id="regulation of mRNA polyadenylation">
+      <data key="d0">red</data>
+      <data key="d1">2.21530289331</data>
+      <data key="d2">7.76174762408</data>
+      <data key="d3">16.2618915929</data>
+      <data key="d4">19.8390688259</data>
+      <data key="d5">GO1900363</data>
+      <data key="d6">regulation of mRNA polyadenylation</data>
+    </node>
+    <node id="negative regulation of mRNA processing">
+      <data key="d0">red</data>
+      <data key="d1">6.86029283089</data>
+      <data key="d2">9.34748100964</data>
+      <data key="d3">9.79210676563</data>
+      <data key="d4">5.11975969701</data>
+      <data key="d5">GO0050686</data>
+      <data key="d6">negative regulation of mRNA processing</data>
+    </node>
+    <node id="negative regulation of ubiquitin protein ligase activity">
+      <data key="d0">red</data>
+      <data key="d1">0.824298750999</data>
+      <data key="d2">2.88809213919</data>
+      <data key="d3">2.01697880222</data>
+      <data key="d4">7.38197909801</data>
+      <data key="d5">GO1904667</data>
+      <data key="d6">negative regulation of ubiquitin protein ligase activity</data>
+    </node>
+    <node id="nuclear pore complex assembly">
+      <data key="d0">red</data>
+      <data key="d1">12.6588736761</data>
+      <data key="d2">8.87056871323</data>
+      <data key="d3">6.19500632111</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0051292</data>
+      <data key="d6">nuclear pore complex assembly</data>
+    </node>
+    <node id="cap-independent translational initiation">
+      <data key="d0">red</data>
+      <data key="d1">6.64590867993</data>
+      <data key="d2">10.3489968321</data>
+      <data key="d3">10.8412610619</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0002190</data>
+      <data key="d6">cap-independent translational initiation</data>
+    </node>
+    <node id="positive regulation of glucose transport">
+      <data key="d0">red</data>
+      <data key="d1">1.2364481265</data>
+      <data key="d2">1.92539475946</data>
+      <data key="d3">5.04244700556</data>
+      <data key="d4">7.38197909801</data>
+      <data key="d5">GO0010828</data>
+      <data key="d6">positive regulation of glucose transport</data>
+    </node>
+    <node id="nuclear envelope reassembly">
+      <data key="d0">red</data>
+      <data key="d1">7.08896925859</data>
+      <data key="d2">10.3489968321</data>
+      <data key="d3">0.0</data>
+      <data key="d4">7.93562753036</data>
+      <data key="d5">GO0031468</data>
+      <data key="d6">nuclear envelope reassembly</data>
+    </node>
+    <node id="protein transport within lipid bilayer">
+      <data key="d0">red</data>
+      <data key="d1">10.1270989408</data>
+      <data key="d2">0.0</data>
+      <data key="d3">0.0</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0032594</data>
+      <data key="d6">protein transport within lipid bilayer</data>
+    </node>
+    <node id="positive regulation of striated muscle cell apoptotic process">
+      <data key="d0">red</data>
+      <data key="d1">2.21530289331</data>
+      <data key="d2">10.3489968321</data>
+      <data key="d3">10.8412610619</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0010663</data>
+      <data key="d6">positive regulation of striated muscle cell apoptotic process</data>
+    </node>
+    <node id="nuclear pore organization">
+      <data key="d0">red</data>
+      <data key="d1">10.6334538879</data>
+      <data key="d2">8.27919746568</data>
+      <data key="d3">4.33650442478</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0006999</data>
+      <data key="d6">nuclear pore organization</data>
+    </node>
+    <node id="mitotic spindle assembly checkpoint">
+      <data key="d0">red</data>
+      <data key="d1">0.824298750999</data>
+      <data key="d2">2.88809213919</data>
+      <data key="d3">2.01697880222</data>
+      <data key="d4">7.38197909801</data>
+      <data key="d5">GO0007094</data>
+      <data key="d6">mitotic spindle assembly checkpoint</data>
+    </node>
+    <node id="pore complex assembly">
+      <data key="d0">red</data>
+      <data key="d1">10.3380801688</data>
+      <data key="d2">8.62416402675</data>
+      <data key="d3">7.22750737463</data>
+      <data key="d4">6.61302294197</data>
+      <data key="d5">GO0046931</data>
+      <data key="d6">pore complex assembly</data>
+    </node>
+    <node id="dendritic spine maintenance">
+      <data key="d0">red</data>
+      <data key="d1">9.84579063693</data>
+      <data key="d2">9.1991082952</data>
+      <data key="d3">19.273352999</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0097062</data>
+      <data key="d6">dendritic spine maintenance</data>
+    </node>
+    <node id="establishment of endothelial intestinal barrier">
+      <data key="d0">red</data>
+      <data key="d1">6.64590867993</data>
+      <data key="d2">7.76174762408</data>
+      <data key="d3">16.2618915929</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0090557</data>
+      <data key="d6">establishment of endothelial intestinal barrier</data>
+    </node>
+    <node id="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d0">red</data>
+      <data key="d1">9.28317402911</data>
+      <data key="d2">10.8418062051</data>
+      <data key="d3">6.19500632111</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0048025</data>
+      <data key="d6">negative regulation of mRNA splicing, via spliceosome</data>
+    </node>
+    <node id="mitotic nuclear envelope reassembly">
+      <data key="d0">red</data>
+      <data key="d1">7.08896925859</data>
+      <data key="d2">10.3489968321</data>
+      <data key="d3">0.0</data>
+      <data key="d4">7.93562753036</data>
+      <data key="d5">GO0007084</data>
+      <data key="d6">mitotic nuclear envelope reassembly</data>
+    </node>
+    <node id="regulation of relaxation of muscle">
+      <data key="d0">red</data>
+      <data key="d1">0.0</data>
+      <data key="d2">2.06979936642</data>
+      <data key="d3">13.0095132743</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO1901077</data>
+      <data key="d6">regulation of relaxation of muscle</data>
+    </node>
+    <node id="spindle checkpoint">
+      <data key="d0">red</data>
+      <data key="d1">0.68163165948</data>
+      <data key="d2">3.18430671757</data>
+      <data key="d3">2.50182947583</data>
+      <data key="d4">7.63041108689</data>
+      <data key="d5">GO0031577</data>
+      <data key="d6">spindle checkpoint</data>
+    </node>
+    <node id="interkinetic nuclear migration">
+      <data key="d0">red</data>
+      <data key="d1">11.0765144665</data>
+      <data key="d2">7.76174762408</data>
+      <data key="d3">20.0</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0022027</data>
+      <data key="d6">interkinetic nuclear migration</data>
+    </node>
+    <node id="negative regulation of mRNA polyadenylation">
+      <data key="d0">red</data>
+      <data key="d1">2.53177473521</data>
+      <data key="d2">8.87056871323</data>
+      <data key="d3">18.5850189633</data>
+      <data key="d4">20.0</data>
+      <data key="d5">GO1900364</data>
+      <data key="d6">negative regulation of mRNA polyadenylation</data>
+    </node>
+    <node id="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d0">red</data>
+      <data key="d1">2.21530289331</data>
+      <data key="d2">10.3489968321</data>
+      <data key="d3">10.8412610619</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO0010666</data>
+      <data key="d6">positive regulation of cardiac muscle cell apoptotic process</data>
+    </node>
+    <node id="positive regulation of DNA-templated transcription, elongation">
+      <data key="d0">red</data>
+      <data key="d1">4.83338813086</data>
+      <data key="d2">3.76327157531</data>
+      <data key="d3">0.0</data>
+      <data key="d4">10.8213102687</data>
+      <data key="d5">GO0032786</data>
+      <data key="d6">positive regulation of DNA-templated transcription, elongation</data>
+    </node>
+    <node id="histone H2B ubiquitination">
+      <data key="d0">red</data>
+      <data key="d1">0.0</data>
+      <data key="d2">4.13959873284</data>
+      <data key="d3">13.0095132743</data>
+      <data key="d4">20.0</data>
+      <data key="d5">GO0033523</data>
+      <data key="d6">histone H2B ubiquitination</data>
+    </node>
+    <node id="sterol import">
+      <data key="d0">red</data>
+      <data key="d1">10.1270989408</data>
+      <data key="d2">2.95685623774</data>
+      <data key="d3">0.0</data>
+      <data key="d4">11.3366107577</data>
+      <data key="d5">GO0035376</data>
+      <data key="d6">sterol import</data>
+    </node>
+    <node id="negative regulation of mRNA 3'-end processing">
+      <data key="d0">red</data>
+      <data key="d1">1.96915812739</data>
+      <data key="d2">6.8993312214</data>
+      <data key="d3">19.273352999</data>
+      <data key="d4">17.6347278453</data>
+      <data key="d5">GO0031441</data>
+      <data key="d6">negative regulation of mRNA 3'-end processing</data>
+    </node>
+    <node id="regulation of hexokinase activity">
+      <data key="d0">red</data>
+      <data key="d1">7.08896925859</data>
+      <data key="d2">10.3489968321</data>
+      <data key="d3">0.0</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO1903299</data>
+      <data key="d6">regulation of hexokinase activity</data>
+    </node>
+    <node id="negative regulation of phosphatase activity">
+      <data key="d0">red</data>
+      <data key="d1">1.74728115529</data>
+      <data key="d2">3.20673141276</data>
+      <data key="d3">4.27542689767</data>
+      <data key="d4">7.82385812853</data>
+      <data key="d5">GO0010923</data>
+      <data key="d6">negative regulation of phosphatase activity</data>
+    </node>
+    <node id="protein localization to membrane raft">
+      <data key="d0">red</data>
+      <data key="d1">11.8149487643</data>
+      <data key="d2">2.2997770738</data>
+      <data key="d3">0.0</data>
+      <data key="d4">0.0</data>
+      <data key="d5">GO1903044</data>
+      <data key="d6">protein localization to membrane raft</data>
+    </node>
+    <node id="Golgi to plasma membrane transport">
+      <data key="d0">red</data>
+      <data key="d1">3.297195004</data>
+      <data key="d2">1.92539475946</data>
+      <data key="d3">0.0</data>
+      <data key="d4">7.38197909801</data>
+      <data key="d5">GO0006893</data>
+      <data key="d6">Golgi to plasma membrane transport</data>
+    </node>
+    <edge source="regulation of mRNA polyadenylation" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">55</data>
+      <data key="d8">55</data>
+    </edge>
+    <edge source="regulation of mRNA polyadenylation" target="negative regulation of mRNA processing">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="regulation of mRNA polyadenylation" target="negative regulation of mRNA polyadenylation">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="regulation of mRNA polyadenylation" target="negative regulation of phosphatase activity">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="regulation of mRNA polyadenylation" target="histone H2B ubiquitination">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="regulation of mRNA polyadenylation" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">94</data>
+      <data key="d8">94</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="regulation of mRNA polyadenylation">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="negative regulation of mRNA polyadenylation">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="spindle checkpoint">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="regulation of hexokinase activity">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="mitotic spindle assembly checkpoint">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="pore complex assembly">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="nuclear pore complex assembly">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="negative regulation of phosphatase activity">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">96</data>
+      <data key="d8">96</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="histone H2B ubiquitination">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="mitotic nuclear envelope reassembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="nuclear envelope reassembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of mRNA processing" target="nuclear pore organization">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="regulation of mRNA polyadenylation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="negative regulation of mRNA processing">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="nuclear pore complex assembly">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="positive regulation of glucose transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="protein transport within lipid bilayer">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="nuclear pore organization">
+      <data key="d7">58</data>
+      <data key="d8">58</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="mitotic spindle assembly checkpoint">
+      <data key="d7">528</data>
+      <data key="d8">528</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="pore complex assembly">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="mitotic nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="spindle checkpoint">
+      <data key="d7">573</data>
+      <data key="d8">573</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="interkinetic nuclear migration">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="histone H2B ubiquitination">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="regulation of hexokinase activity">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="negative regulation of phosphatase activity">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="protein localization to membrane raft">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of ubiquitin protein ligase activity" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="mitotic spindle assembly checkpoint">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="negative regulation of mRNA processing">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="regulation of hexokinase activity">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="spindle checkpoint">
+      <data key="d7">46</data>
+      <data key="d8">46</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="pore complex assembly">
+      <data key="d7">34</data>
+      <data key="d8">34</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="protein localization to membrane raft">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="mitotic nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="protein transport within lipid bilayer">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="nuclear pore complex assembly" target="nuclear pore organization">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="spindle checkpoint">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="mitotic spindle assembly checkpoint">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="negative regulation of phosphatase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="sterol import">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="cap-independent translational initiation" target="positive regulation of glucose transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="spindle checkpoint">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="regulation of hexokinase activity">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="mitotic spindle assembly checkpoint">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="regulation of relaxation of muscle">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="establishment of endothelial intestinal barrier">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="dendritic spine maintenance">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="negative regulation of phosphatase activity">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="protein localization to membrane raft">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="cap-independent translational initiation">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="Golgi to plasma membrane transport">
+      <data key="d7">17</data>
+      <data key="d8">17</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="mitotic nuclear envelope reassembly">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="sterol import">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="protein transport within lipid bilayer">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="pore complex assembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of glucose transport" target="nuclear envelope reassembly">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="mitotic spindle assembly checkpoint">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="interkinetic nuclear migration">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="regulation of hexokinase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="negative regulation of mRNA processing">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="pore complex assembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="nuclear pore complex assembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="negative regulation of phosphatase activity">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="establishment of endothelial intestinal barrier">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="mitotic nuclear envelope reassembly">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="positive regulation of glucose transport">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="spindle checkpoint">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="nuclear pore organization">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="nuclear envelope reassembly" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="spindle checkpoint">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="regulation of hexokinase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="mitotic spindle assembly checkpoint">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="pore complex assembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="nuclear pore complex assembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="positive regulation of glucose transport">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="sterol import">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="dendritic spine maintenance">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein transport within lipid bilayer" target="nuclear pore organization">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="mitotic spindle assembly checkpoint">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="negative regulation of mRNA processing">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="regulation of hexokinase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="spindle checkpoint">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="pore complex assembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="establishment of endothelial intestinal barrier">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="positive regulation of glucose transport">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="protein transport within lipid bilayer">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of striated muscle cell apoptotic process" target="regulation of relaxation of muscle">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="nuclear pore organization" target="mitotic spindle assembly checkpoint">
+      <data key="d7">58</data>
+      <data key="d8">58</data>
+    </edge>
+    <edge source="nuclear pore organization" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">58</data>
+      <data key="d8">58</data>
+    </edge>
+    <edge source="nuclear pore organization" target="negative regulation of mRNA processing">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="nuclear pore organization" target="regulation of hexokinase activity">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="nuclear pore organization" target="spindle checkpoint">
+      <data key="d7">73</data>
+      <data key="d8">73</data>
+    </edge>
+    <edge source="nuclear pore organization" target="pore complex assembly">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="nuclear pore organization" target="nuclear pore complex assembly">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="nuclear pore organization" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="nuclear pore organization" target="protein localization to membrane raft">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="nuclear pore organization" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="nuclear pore organization" target="mitotic nuclear envelope reassembly">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="nuclear pore organization" target="nuclear envelope reassembly">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="nuclear pore organization" target="protein transport within lipid bilayer">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="regulation of mRNA polyadenylation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="negative regulation of mRNA processing">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">528</data>
+      <data key="d8">528</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="nuclear pore complex assembly">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="positive regulation of glucose transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="protein transport within lipid bilayer">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="nuclear pore organization">
+      <data key="d7">58</data>
+      <data key="d8">58</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="spindle checkpoint">
+      <data key="d7">573</data>
+      <data key="d8">573</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="pore complex assembly">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="mitotic nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="interkinetic nuclear migration">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="histone H2B ubiquitination">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="regulation of hexokinase activity">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="negative regulation of phosphatase activity">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="protein localization to membrane raft">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="mitotic spindle assembly checkpoint" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="pore complex assembly" target="mitotic spindle assembly checkpoint">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="pore complex assembly" target="negative regulation of mRNA processing">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="pore complex assembly" target="regulation of hexokinase activity">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="pore complex assembly" target="spindle checkpoint">
+      <data key="d7">50</data>
+      <data key="d8">50</data>
+    </edge>
+    <edge source="pore complex assembly" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">37</data>
+      <data key="d8">37</data>
+    </edge>
+    <edge source="pore complex assembly" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="pore complex assembly" target="nuclear pore complex assembly">
+      <data key="d7">34</data>
+      <data key="d8">34</data>
+    </edge>
+    <edge source="pore complex assembly" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="pore complex assembly" target="protein localization to membrane raft">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="pore complex assembly" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="pore complex assembly" target="mitotic nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="pore complex assembly" target="positive regulation of glucose transport">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="pore complex assembly" target="nuclear envelope reassembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="pore complex assembly" target="protein transport within lipid bilayer">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="pore complex assembly" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="pore complex assembly" target="nuclear pore organization">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="dendritic spine maintenance" target="sterol import">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="dendritic spine maintenance" target="protein transport within lipid bilayer">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="dendritic spine maintenance" target="Golgi to plasma membrane transport">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="dendritic spine maintenance" target="positive regulation of glucose transport">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="negative regulation of phosphatase activity">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="Golgi to plasma membrane transport">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="positive regulation of glucose transport">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="sterol import">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="establishment of endothelial intestinal barrier" target="regulation of relaxation of muscle">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">39</data>
+      <data key="d8">39</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="mitotic spindle assembly checkpoint">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="negative regulation of mRNA processing">
+      <data key="d7">96</data>
+      <data key="d8">96</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="regulation of hexokinase activity">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="spindle checkpoint">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="pore complex assembly">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="nuclear pore complex assembly">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="negative regulation of phosphatase activity">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="mitotic nuclear envelope reassembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="nuclear envelope reassembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA splicing, via spliceosome" target="nuclear pore organization">
+      <data key="d7">54</data>
+      <data key="d8">54</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="mitotic spindle assembly checkpoint">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="interkinetic nuclear migration">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="regulation of hexokinase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="negative regulation of mRNA processing">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="pore complex assembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="nuclear pore complex assembly">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="negative regulation of phosphatase activity">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="establishment of endothelial intestinal barrier">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="positive regulation of glucose transport">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="nuclear envelope reassembly">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="spindle checkpoint">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="nuclear pore organization">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="mitotic nuclear envelope reassembly" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="regulation of relaxation of muscle" target="positive regulation of glucose transport">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="regulation of relaxation of muscle" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="regulation of relaxation of muscle" target="establishment of endothelial intestinal barrier">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="regulation of relaxation of muscle" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="regulation of relaxation of muscle" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="spindle checkpoint" target="regulation of mRNA polyadenylation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="spindle checkpoint" target="negative regulation of mRNA processing">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="spindle checkpoint" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">573</data>
+      <data key="d8">573</data>
+    </edge>
+    <edge source="spindle checkpoint" target="nuclear pore complex assembly">
+      <data key="d7">46</data>
+      <data key="d8">46</data>
+    </edge>
+    <edge source="spindle checkpoint" target="positive regulation of glucose transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="spindle checkpoint" target="nuclear envelope reassembly">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="spindle checkpoint" target="protein transport within lipid bilayer">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="spindle checkpoint" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="spindle checkpoint" target="nuclear pore organization">
+      <data key="d7">73</data>
+      <data key="d8">73</data>
+    </edge>
+    <edge source="spindle checkpoint" target="mitotic spindle assembly checkpoint">
+      <data key="d7">573</data>
+      <data key="d8">573</data>
+    </edge>
+    <edge source="spindle checkpoint" target="pore complex assembly">
+      <data key="d7">50</data>
+      <data key="d8">50</data>
+    </edge>
+    <edge source="spindle checkpoint" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="spindle checkpoint" target="mitotic nuclear envelope reassembly">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="spindle checkpoint" target="interkinetic nuclear migration">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="spindle checkpoint" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="spindle checkpoint" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="spindle checkpoint" target="histone H2B ubiquitination">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="spindle checkpoint" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="spindle checkpoint" target="regulation of hexokinase activity">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="spindle checkpoint" target="negative regulation of phosphatase activity">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="spindle checkpoint" target="protein localization to membrane raft">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="spindle checkpoint" target="Golgi to plasma membrane transport">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="spindle checkpoint">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="mitotic spindle assembly checkpoint">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="negative regulation of phosphatase activity">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="mitotic nuclear envelope reassembly">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="interkinetic nuclear migration" target="nuclear envelope reassembly">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of mRNA polyadenylation" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">55</data>
+      <data key="d8">55</data>
+    </edge>
+    <edge source="negative regulation of mRNA polyadenylation" target="regulation of mRNA polyadenylation">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA polyadenylation" target="negative regulation of mRNA processing">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA polyadenylation" target="negative regulation of phosphatase activity">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="negative regulation of mRNA polyadenylation" target="histone H2B ubiquitination">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="negative regulation of mRNA polyadenylation" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="mitotic spindle assembly checkpoint">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="negative regulation of mRNA processing">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="regulation of hexokinase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="spindle checkpoint">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="pore complex assembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="establishment of endothelial intestinal barrier">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="Golgi to plasma membrane transport">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="regulation of relaxation of muscle">
+      <data key="d7">7</data>
+      <data key="d8">7</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="positive regulation of glucose transport">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="protein transport within lipid bilayer">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of cardiac muscle cell apoptotic process" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="regulation of mRNA polyadenylation">
+      <data key="d7">55</data>
+      <data key="d8">55</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="mitotic spindle assembly checkpoint">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="negative regulation of mRNA polyadenylation">
+      <data key="d7">55</data>
+      <data key="d8">55</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="negative regulation of mRNA processing">
+      <data key="d7">93</data>
+      <data key="d8">93</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="regulation of hexokinase activity">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="spindle checkpoint">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="pore complex assembly">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="nuclear pore complex assembly">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="negative regulation of phosphatase activity">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="cap-independent translational initiation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">38</data>
+      <data key="d8">38</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="histone H2B ubiquitination">
+      <data key="d7">52</data>
+      <data key="d8">52</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">55</data>
+      <data key="d8">55</data>
+    </edge>
+    <edge source="positive regulation of DNA-templated transcription, elongation" target="nuclear pore organization">
+      <data key="d7">36</data>
+      <data key="d8">36</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">52</data>
+      <data key="d8">52</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="regulation of mRNA polyadenylation">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="mitotic spindle assembly checkpoint">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="spindle checkpoint">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="negative regulation of mRNA processing">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="negative regulation of mRNA polyadenylation">
+      <data key="d7">23</data>
+      <data key="d8">23</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">22</data>
+      <data key="d8">22</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="negative regulation of phosphatase activity">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="histone H2B ubiquitination" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="sterol import" target="establishment of endothelial intestinal barrier">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="sterol import" target="dendritic spine maintenance">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="sterol import" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="sterol import" target="cap-independent translational initiation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="sterol import" target="Golgi to plasma membrane transport">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="sterol import" target="positive regulation of glucose transport">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="sterol import" target="protein transport within lipid bilayer">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">55</data>
+      <data key="d8">55</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="regulation of mRNA polyadenylation">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="mitotic spindle assembly checkpoint">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="spindle checkpoint">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="negative regulation of mRNA processing">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="negative regulation of mRNA polyadenylation">
+      <data key="d7">20</data>
+      <data key="d8">20</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="negative regulation of phosphatase activity">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="histone H2B ubiquitination">
+      <data key="d7">24</data>
+      <data key="d8">24</data>
+    </edge>
+    <edge source="negative regulation of mRNA 3'-end processing" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="mitotic spindle assembly checkpoint">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">11</data>
+      <data key="d8">11</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="negative regulation of mRNA processing">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="spindle checkpoint">
+      <data key="d7">14</data>
+      <data key="d8">14</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="pore complex assembly">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="nuclear pore complex assembly">
+      <data key="d7">13</data>
+      <data key="d8">13</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="mitotic nuclear envelope reassembly">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="positive regulation of glucose transport">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="nuclear envelope reassembly">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="protein transport within lipid bilayer">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="regulation of hexokinase activity" target="nuclear pore organization">
+      <data key="d7">19</data>
+      <data key="d8">19</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="regulation of mRNA polyadenylation">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="mitotic spindle assembly checkpoint">
+      <data key="d7">8</data>
+      <data key="d8">8</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="interkinetic nuclear migration">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="negative regulation of mRNA processing">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="establishment of endothelial intestinal barrier">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="negative regulation of mRNA polyadenylation">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="positive regulation of DNA-templated transcription, elongation">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="cap-independent translational initiation">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="mitotic nuclear envelope reassembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="negative regulation of mRNA splicing, via spliceosome">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="histone H2B ubiquitination">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="positive regulation of glucose transport">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="nuclear envelope reassembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="protein transport within lipid bilayer">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="spindle checkpoint">
+      <data key="d7">10</data>
+      <data key="d8">10</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="negative regulation of mRNA 3'-end processing">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="negative regulation of phosphatase activity" target="Golgi to plasma membrane transport">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="spindle checkpoint">
+      <data key="d7">12</data>
+      <data key="d8">12</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="regulation of hexokinase activity">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="mitotic spindle assembly checkpoint">
+      <data key="d7">9</data>
+      <data key="d8">9</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="pore complex assembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="nuclear pore complex assembly">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="Golgi to plasma membrane transport">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="positive regulation of glucose transport">
+      <data key="d7">3</data>
+      <data key="d8">3</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="sterol import">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="protein localization to membrane raft" target="nuclear pore organization">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="mitotic spindle assembly checkpoint">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="negative regulation of ubiquitin protein ligase activity">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="interkinetic nuclear migration">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="spindle checkpoint">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="regulation of relaxation of muscle">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="establishment of endothelial intestinal barrier">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="positive regulation of cardiac muscle cell apoptotic process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="dendritic spine maintenance">
+      <data key="d7">5</data>
+      <data key="d8">5</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="negative regulation of phosphatase activity">
+      <data key="d7">4</data>
+      <data key="d8">4</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="protein localization to membrane raft">
+      <data key="d7">1</data>
+      <data key="d8">1</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="mitotic nuclear envelope reassembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="positive regulation of glucose transport">
+      <data key="d7">15</data>
+      <data key="d8">15</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="sterol import">
+      <data key="d7">6</data>
+      <data key="d8">6</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="positive regulation of striated muscle cell apoptotic process">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+    <edge source="Golgi to plasma membrane transport" target="nuclear envelope reassembly">
+      <data key="d7">2</data>
+      <data key="d8">2</data>
+    </edge>
+  </graph>
+</graphml>
