@@ -41,105 +41,75 @@ def parse_reactome_protein_protein():
 parse_reactome_protein_protein()
 quit()
 
-interaction_dictionary = {}
-interaction_dictionary['inhibited by, dephosphorylation'] = {'action': 'dephosphorylation',
-                                                             'effect': 'inhibition',
-                                                             'direct': 'True'}
-
-interaction_dictionary['inhibition, phosphorylation'] = {'action': 'phosphorylation',
-                                                         'effect': 'inhibition',
-                                                         'direct': 'True'}
-
-interaction_dictionary['inhibition, dephosphorylation'] = {'action': 'dephosphorylation',
-                                                           'effect': 'inhibition',
-                                                           'direct': 'True'}
-
-interaction_dictionary['inhibited by, phosphorylated by'] = {'action': 'phosphorylation',
-                                                             'effect': 'inhibition',
-                                                             'direct': 'True'}
-interaction_dictionary['inhibition, ubiquitination'] = {'action': 'ubiquitination',
-                                                        'effect': 'inhibition',
-                                                        'direct': 'True'}
-interaction_dictionary['inhibited by'] = {'action': 'notSpecified',
-                                          'effect': 'inhibition',
-                                          'direct': 'True'}
-interaction_dictionary['inhibition'] = {'action': 'notSpecified',
+interaction_dictionary = {
+    'inhibited by, dephosphorylation': {'action': 'dephosphorylation',
                                         'effect': 'inhibition',
-                                        'direct': 'True'}
-
-interaction_dictionary['indirect effect; activated by'] = {'action': 'notSpecified',
+                                        'direct': 'True'},
+    'inhibition, phosphorylation': {'action': 'phosphorylation',
+                                    'effect': 'inhibition', 'direct': 'True'},
+    'inhibition, dephosphorylation': {'action': 'dephosphorylation',
+                                      'effect': 'inhibition',
+                                      'direct': 'True'},
+    'inhibited by, phosphorylated by': {'action': 'phosphorylation',
+                                        'effect': 'inhibition',
+                                        'direct': 'True'},
+    'inhibition, ubiquitination': {'action': 'ubiquitination',
+                                   'effect': 'inhibition', 'direct': 'True'},
+    'inhibited by': {'action': 'notSpecified', 'effect': 'inhibition',
+                     'direct': 'True'},
+    'inhibition': {'action': 'notSpecified', 'effect': 'inhibition',
+                   'direct': 'True'},
+    'indirect effect; activated by': {'action': 'notSpecified',
+                                      'effect': 'activation',
+                                      'direct': 'False'},
+    'inhibition, indirect effect': {'action': 'notSpecified',
+                                    'effect': 'inhibition', 'direct': 'False'},
+    'phosphorylation': {'action': 'phosphorylation', 'effect': 'notSpecified',
+                        'direct': 'True'},
+    'state change': {'action': 'stateChange', 'effect': 'notSpecified',
+                     'direct': 'True'},
+    'activation, phosphorylation': {'action': 'phosphorylation',
+                                    'effect': 'activation', 'direct': 'True'},
+    'activation, phosphorylation, binding/association': {
+        'action': 'phosphorylation', 'effect': 'activation', 'direct': 'True'},
+    'activated by, phosphorylation': {'action': 'phosphorylation',
+                                      'effect': 'activation',
+                                      'direct': 'True'},
+    'activated by, dephosphorylation': {'action': 'dephosphorylation',
                                         'effect': 'activation',
-                                        'direct': 'False'}
+                                        'direct': 'True'},
+    'activation, indirect effect': {'action': 'indirect',
+                                    'effect': 'activation', 'direct': 'False'},
+    'activated by, indirect effect': {'action': 'indirect',
+                                      'effect': 'activation',
+                                      'direct': 'False'},
+    'activated, indirect effect': {'action': 'indirect',
+                                   'effect': 'activation', 'direct': 'False'},
+    'activation': {'action': 'notSpecified', 'effect': 'activation',
+                   'direct': 'True'},
+    'activated by': {'action': 'notSpecified', 'effect': 'activation',
+                     'direct': 'True'},
+    'phosphorylated by': {'action': 'phosphorylation',
+                          'effect': 'notSpecified', 'direct': 'True'},
+    'binding/association': {'action': 'binding/association',
+                            'effect': 'notSpecified', 'direct': 'True'},
+    'indirect effect': {'action': 'notSpecified', 'effect': 'notSpecified',
+                        'direct': 'False'},
+    'dissociation': {'action': 'dissociation', 'effect': 'notSpecified',
+                     'direct': 'True'},
+    'compound': {'action': 'dissociation', 'effect': 'notSpecified',
+                 'direct': 'True'},
+    'activated by; activated by, phosphorylation; activated, phosphorylation, indirect effect': {
+        'action': 'phosphorylation', 'effect': 'activation',
+        'direct': 'False'},
+    'activated by; activated, indirect effect; binding/association': {
+        'action': 'binding/association', 'effect': 'activation',
+        'direct': 'False'}, 'activated, indirect effect; activated by': {
+        'action': 'binding/association', 'effect': 'activation',
+        'direct': 'False'},
+    'expression by; activated, indirect effect; expression regulated by': {
+        'action': 'expression', 'effect': 'activation', 'direct': 'False'}}
 
-interaction_dictionary['inhibition, indirect effect'] = {'action': 'notSpecified',
-                                                         'effect': 'inhibition',
-                                                         'direct': 'False'}
-
-interaction_dictionary['phosphorylation'] = {'action': 'phosphorylation',
-                                             'effect': 'notSpecified',
-                                             'direct': 'True'}
-interaction_dictionary['state change'] = {'action': 'stateChange',
-                                          'effect': 'notSpecified',
-                                          'direct': 'True'}
-
-interaction_dictionary['activation, phosphorylation'] = {'action': 'phosphorylation',
-                                                         'effect': 'activation',
-                                                         'direct': 'True'}
-interaction_dictionary['activation, phosphorylation, binding/association'] = {'action': 'phosphorylation',
-                                                                              'effect': 'activation',
-                                                                              'direct': 'True'}
-interaction_dictionary['activated by, phosphorylation'] = {'action': 'phosphorylation',
-                                                           'effect': 'activation',
-                                                           'direct': 'True'}
-interaction_dictionary['activated by, dephosphorylation'] = {'action': 'dephosphorylation',
-                                                           'effect': 'activation',
-                                                           'direct': 'True'}
-interaction_dictionary['activation, indirect effect'] = {'action': 'indirect',
-                                                         'effect': 'activation',
-                                                         'direct': 'False'}
-interaction_dictionary['activated by, indirect effect'] = {'action': 'indirect',
-                                                           'effect': 'activation',
-                                                           'direct': 'False'}
-interaction_dictionary['activated, indirect effect'] = {'action': 'indirect',
-                                                        'effect': 'activation',
-                                                        'direct': 'False'}
-interaction_dictionary['activation'] = {'action': 'notSpecified',
-                                        'effect': 'activation',
-                                        'direct': 'True'}
-interaction_dictionary['activated by'] = {'action': 'notSpecified',
-                                          'effect': 'activation',
-                                          'direct': 'True'}
-
-interaction_dictionary['phosphorylated by'] = {'action': 'phosphorylation',
-                                               'effect': 'notSpecified',
-                                               'direct': 'True'}
-interaction_dictionary['binding/association'] = {'action': 'binding/association',
-                                                 'effect': 'notSpecified',
-                                                 'direct': 'True'}
-interaction_dictionary['indirect effect'] = {'action': 'notSpecified',
-                                             'effect': 'notSpecified',
-                                             'direct': 'False'}
-interaction_dictionary['dissociation'] = {'action': 'dissociation',
-                                          'effect': 'notSpecified',
-                                          'direct': 'True'}
-interaction_dictionary['compound'] = {'action': 'dissociation',
-                                          'effect': 'notSpecified',
-                                          'direct': 'True'}
-interaction_dictionary['compound'] = {'action': 'dissociation',
-                                          'effect': 'notSpecified',
-                                          'direct': 'True'}
-interaction_dictionary['activated by; activated by, phosphorylation; activated, phosphorylation, indirect effect'] = {'action': 'phosphorylation',
-                                          'effect': 'activation',
-                                          'direct': 'False'}
-interaction_dictionary['activated by; activated, indirect effect; binding/association'] = {'action': 'binding/association',
-                                          'effect': 'activation',
-                                          'direct': 'False'}
-interaction_dictionary['activated, indirect effect; activated by'] = {'action': 'binding/association',
-                                          'effect': 'activation',
-                                          'direct': 'False'}
-interaction_dictionary['expression by; activated, indirect effect; expression regulated by'] = {'action': 'expression',
-                                          'effect': 'activation',
-                                          'direct': 'False'}
 edge_dict = {'-': 'not directed',
              '->': 'activate',
              '<-': 'activated',
@@ -148,9 +118,7 @@ edge_dict = {'-': 'not directed',
              '<->': 'activate',
              '|-|': 'inhibit',}
 def get_interaction_type(row, graph):
-
-    edge = {}
-    edge['score'] = str(row['Score'])
+    edge = {'score': str(row['Score'])}
     annotation = str(row['Annotation'])
     annotation = annotation.replace('PPrel: ','')
     annotation = annotation.replace('PCrel: ', '')
