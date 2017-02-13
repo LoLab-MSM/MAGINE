@@ -105,7 +105,8 @@ class RenderModel:
         for i in style_opts:
             print(i)
 
-    def visualize_by_list_of_time(self, list_of_time, prefix='tmp',
+    def visualize_by_list_of_time(self, list_of_time, labels=None,
+                                  prefix='tmp',
                                   out_dir='tmp'):
         """ create sequences of pdfs and svgs based on list of attributes
         list_of_time should point to attributes of the network. This attribute will update the network accordingly.
@@ -140,22 +141,20 @@ class RenderModel:
         # self.style.create_passthrough_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH')
         self.cy.style.apply(style=self.style, network=self.g_cy)
         self.cy.layout.fit(network=self.g_cy)
+        self.create_png('out.png', 2400)
+        trip_photo('out.png', 'x')
         x = self.view1.get_network_view_as_dict()
+        # for i in x:
+        #     print(i, x[i])
         self.view1.update_network_view(
             visual_property='NETWORK_SCALE_FACTOR',
-            value=float(x['NETWORK_SIZE'] / x['NETWORK_WIDTH']))
-        x = self.view1.get_network_view_as_dict()
+            value=0.8 * x['NETWORK_SCALE_FACTOR'])
 
-        # have to do this twice to format the size of the image correctly
-        self.g_cy.get_png(int(x['NETWORK_WIDTH']))
-        x = self.view1.get_network_view_as_dict()
-        self.view1.update_network_view(
-            visual_property='NETWORK_SCALE_FACTOR',
-            value=float(x['NETWORK_SIZE'] / x['NETWORK_WIDTH']))
-        # second time, this makes sure that things are same shape
-        self.g_cy.get_png(int(x['NETWORK_WIDTH']))
+        # self.create_png('out.png', 2400)
+        # trip_photo('out.png', 'x')
 
-        for j in list_of_time:
+        for ind, j in enumerate(list_of_time):
+
             size = np.array(
                     [self.graph.node[n][j] for n in self.graph.nodes()])
             simple_slope = StyleUtil.create_slope(min=size.min(),
@@ -165,7 +164,6 @@ class RenderModel:
                                                  vp='NODE_SIZE',
                                                  points=simple_slope)
             self.cy.style.apply(style=self.style, network=self.g_cy)
-            x = self.view1.get_network_view_as_dict()
 
             self.view1.update_node_views(visual_property='NODE_LABEL',
                                          values=node_label_values)
@@ -197,7 +195,10 @@ class RenderModel:
                 os.remove(out_file)
 
             self.create_png(out_file, int(x['NETWORK_WIDTH']))
-            trip_photo(out_file, j)
+            if labels is None:
+                trip_photo(out_file, j)
+            else:
+                trip_photo(out_file, labels[ind])
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
@@ -257,14 +258,16 @@ def trip_photo(im_location, title):
     for i in range(y_dim):
         if img[:, i, 0].sum() != x_dim:
             to_remove_y.add(i)
-
-    img = img[min(to_remove_x):max(to_remove_x), :, :]
-    img = img[:, min(to_remove_y):max(to_remove_y), :]
+    if len(to_remove_x) > 2:
+        img = img[min(to_remove_x):max(to_remove_x), :, :]
+    if len(to_remove_y) > 2:
+        img = img[:, min(to_remove_y):max(to_remove_y), :]
 
     plt.imshow(img)
     plt.xticks([])
     plt.yticks([])
     plt.title(title)
+    plt.axis('off')
     out = im_location.replace('.png', '_formatted.png')
     plt.savefig(out, dpi=300, bbox_inches='tight')
     plt.close()
