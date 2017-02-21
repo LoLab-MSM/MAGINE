@@ -26,7 +26,6 @@ pd.set_option('display.max_colwidth', -1)
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
 
 
-# noinspection PyUnresolvedReferences
 class GoAnalysis:
     """
     Go analysis class.
@@ -63,8 +62,6 @@ class GoAnalysis:
         self.top_hits = []
         self.num_data_sets = 0
         self.created_go_pds = set()
-        self.names = None
-        self.array = None
 
     def enrichment_analysis_of_single_sample(self, gene_list):
         """
@@ -190,7 +187,7 @@ class GoAnalysis:
             print('No data! Error! Returning nothing')
             return
         if save_name:
-            results.to_csv('{0}_all_data.csv'.format(save_name))
+            results.to_csv('{0}_all_data.csv'.format(save_name), index=False)
         self.data = results
         return results
 
@@ -220,9 +217,10 @@ class GoAnalysis:
                   "provided in list or because analysis has not been run yet.")
             return
 
-        if data is None:
+        elif data is None:
             data = self.data.copy()
-
+        elif isinstance(data, str):
+            data = pd.read_csv(data)
         # get list of all terms
         list_of_go_terms = data['GO_id'].unique()
 
@@ -323,17 +321,17 @@ class GoAnalysis:
         write_single_table(tmp, html_out, 'MAGINE GO analysis')
 
     # TODO remove and replace with updated heatplots
-    def create_heatmaps(self):
+    def create_heatmaps(self, labels, savename):
 
         # depracated
-
-        self.names, self.array = self.sort_by_hierarchy(data)
+        data = self.data
+        names, array = self.sort_by_hierarchy(data)
         # creats plots of top and bottom of hierarchy sorted arrays
-        plot_heatmap(self.array, self.names, labels, start=0, stop=100,
+        plot_heatmap(array, names, labels, start=0, stop=100,
                      savename='%s_top' % savename, )
-        plot_heatmap(self.array, self.names, labels, start=-100, stop=None,
+        plot_heatmap(array, names, labels, start=-100, stop=None,
                      savename='%s_bottom' % savename)
-        tmp_array = self.array[:, :].copy()
+        tmp_array = array[:, :].copy()
 
         # Centroid clustering of data
         # Creates dendrogram plots
@@ -341,7 +339,8 @@ class GoAnalysis:
 
         plot_heatmap(clustered_array, clustered_names, labels, start=0,
                      stop=100, savename='%s_top_clustered' % savename)
-        plot_heatmap(tmp_array, names_sorted, labels, start=-100, stop=None,
+        plot_heatmap(clustered_array, clustered_names, labels, start=-100,
+                     stop=None,
                      savename='%s_bottom_clustered' % savename)
 
         figures = ['%s_top' % savename,
@@ -480,7 +479,6 @@ class GoAnalysis:
         for j in range(number):
             points.append(go_terms[j])
         return points
-
 
     def get_parents(self, term, data):
         """
