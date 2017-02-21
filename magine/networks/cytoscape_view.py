@@ -63,8 +63,8 @@ class RenderModel:
                    # 'NETWORK_HEIGHT'           : '2800',
                    # 'NETWORK_WIDTH'            : '2800',
                    'NODE_FILL_COLOR': 'red',
-                   'NETWORK_BACKGROUND_PAINT' : '#ffffff',
-                   'NODE_SIZE' : 80,
+                   'NETWORK_BACKGROUND_PAINT':  '#00FFFFFF',
+                   'NODE_SIZE' :                80,
                    # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
                    'NETWORK_CENTER_X_LOCATION': 0.0,
                    'NETWORK_CENTER_Y_LOCATION': 0.0,
@@ -152,14 +152,17 @@ class RenderModel:
 
         # self.create_png('out.png', 2400)
         # trip_photo('out.png', 'x')
+        all_node_size = []
+        for ind, j in enumerate(list_of_time):
+            size = np.array(
+                    [self.graph.node[n][j] for n in self.graph.nodes()])
+            all_node_size.append(size)
+        size = np.array(all_node_size).flatten()
+        simple_slope = StyleUtil.create_slope(min=size.min(), max=size.max(),
+                                              values=(10, 50))
 
         for ind, j in enumerate(list_of_time):
 
-            size = np.array(
-                    [self.graph.node[n][j] for n in self.graph.nodes()])
-            simple_slope = StyleUtil.create_slope(min=size.min(),
-                                                  max=size.max(),
-                                                  values=(10, 50))
             self.style.create_continuous_mapping(column=j, col_type='Double',
                                                  vp='NODE_SIZE',
                                                  points=simple_slope)
@@ -167,6 +170,9 @@ class RenderModel:
 
             self.view1.update_node_views(visual_property='NODE_LABEL',
                                          values=node_label_values)
+            self.view1.update_network_view(
+                visual_property='NETWORK_BACKGROUND_PAINT',
+                value='rgba(0, 0, 0, 0)', )
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
                                          values=node_label_values)
             self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
@@ -248,10 +254,16 @@ def trip_photo(im_location, title):
     """
 
     img = mpimg.imread(im_location)
-    to_remove_x = set()
-    to_remove_y = set()
     x_dim = img.shape[0]
     y_dim = img.shape[1]
+    alpha = np.ones((x_dim, y_dim, 1))
+    mask = (img[:, :, 0] == 1.) & (img[:, :, 1] == 1.)
+
+    alpha[mask] = 0
+    img = np.append(img, alpha, axis=2)
+    to_remove_x = set()
+    to_remove_y = set()
+
     for i in range(x_dim):
         if img[i, :, 0].sum() != y_dim:
             to_remove_x.add(i)
@@ -259,23 +271,29 @@ def trip_photo(im_location, title):
         if img[:, i, 0].sum() != x_dim:
             to_remove_y.add(i)
     if len(to_remove_x) > 2:
-        img = img[min(to_remove_x):max(to_remove_x), :, :]
+        img = img[min(to_remove_x) - int((.05 * x_dim)):max(to_remove_x) + int(
+                (.05 * x_dim)), :, :]
     if len(to_remove_y) > 2:
-        img = img[:, min(to_remove_y):max(to_remove_y), :]
+        img = img[:,
+              min(to_remove_y) - int((.05 * y_dim)):max(to_remove_y) + int(
+                      (.05 * y_dim)), :]
 
-    plt.imshow(img)
+    plt.imshow(img, interpolation='none')
     plt.xticks([])
     plt.yticks([])
-    plt.title(title)
+    # plt.title(title)
     plt.axis('off')
     out = im_location.replace('.png', '_formatted.png')
-    plt.savefig(out, dpi=300, bbox_inches='tight')
+    out2 = im_location.replace('.png', '_formatted.svg')
+    plt.savefig(out, dpi=300, bbox_inches='tight', transparent=True)
+    plt.savefig(out2, bbox_inches='tight', transparent=True)
     plt.close()
     # plt.show()
 
 
 if __name__ == '__main__':
-    ddn = nx.nx.read_graphml('t_all_colored_pvalue_2.graphml')
+    # ddn = nx.nx.read_graphml('t_all_colored_pvalue_2.graphml')
+    ddn = nx.DiGraph()
     rm = RenderModel(ddn, style='Marquee')
     rm.visualize_by_list_of_time(
             ['time_0', 'time_1', 'time_2', 'time_3', 'time_4', ])
