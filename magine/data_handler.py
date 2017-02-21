@@ -32,10 +32,17 @@ class ExperimentalData:
     Manages all experimental data
     """
 
-    def __init__(self, proteomics_file, data_directory):
-        raw_df = pandas.read_csv(
+    def __init__(self, proteomics_file, data_directory, file_object=None):
+        if file_object:
+            raw_df = pandas.read_csv(
+                file_object,
+                parse_dates=False, low_memory=False
+                )
+        else:
+            raw_df = pandas.read_csv(
                 os.path.join(data_directory, proteomics_file),
-                parse_dates=False, low_memory=False)
+                parse_dates=False, low_memory=False
+                )
 
         raw_df = raw_df[raw_df[fold_change].notnull()]
         raw_df.loc[raw_df[fold_change] == np.inf, fold_change] = 1000

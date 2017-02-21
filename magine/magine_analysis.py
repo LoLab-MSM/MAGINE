@@ -173,10 +173,10 @@ class Analyzer:
         slim : bool
         metric : {'enrichment', 'pvalue', 'fraction'}
             metric to score by
-        aspect : {'F','B','C'}
+        aspect : {'F','P','C'}
             Can be any combination of GO aspects.
             F: Molecular function
-            B: Biological process
+            P: Biological process
             C: Cellular component
         create_go_networks: bool
             create a GO level network
