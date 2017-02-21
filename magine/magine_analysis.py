@@ -11,7 +11,6 @@ from magine.html_templates.html_tools import write_single_table
 from magine.networks.cytoscape_view import RenderModel
 from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.ontology.ontology_analysis import GoAnalysis
-from magine.plotting.heatmaps import create_heatmaps_pvalue_xs
 
 
 class Analyzer:
@@ -163,7 +162,7 @@ class Analyzer:
 
     def create_selected_go_network(self, file_name, save_name):
         data = pd.read_csv(file_name, converters={"genes": literal_eval}, )
-        create_heatmaps_pvalue_xs(file_name, labels=self.exp_data.timepoints)
+        # create_heatmaps_pvalue_xs(file_name, labels=self.exp_data.timepoints)
         labels = self.exp_data.timepoints
         data = data[data['ref'] >= 5]
 

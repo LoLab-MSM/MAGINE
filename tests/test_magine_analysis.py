@@ -9,9 +9,10 @@ exp_data = ExperimentalData('example_apoptosis.csv', data_directory)
 
 def test_html_array():
     go_analyzer = Analyzer(exp_data, network=None, species='hsa',
-                           metric='pvalue', output_directory='test_html',
+                           output_directory='test_html',
                            save_name='test')
-    go_analyzer.run_proteomics_go()
+    go_analyzer.run_go_and_create_html('html_df_test')
 
 
-test_html_array()
+if __name__ == '__main__':
+    test_html_array()
