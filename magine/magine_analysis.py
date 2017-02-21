@@ -85,20 +85,7 @@ class Analyzer:
         ----------
         data_type : str, {'proteomics','rnaseq'}
             data type to run enrichment analysis
-<<<<<<< HEAD
-        slim : bool
-        metric : {'enrichment', 'pvalue', 'fraction'}
-            metric to score by
-        aspect : {'F','P','C'}
-            Can be any combination of GO aspects.
-            F: Molecular function
-            P: Biological process
-            C: Cellular component
-        create_go_networks: bool
-            create a GO level network
-=======
         fold_change: str {'up', 'down', 'both'}
->>>>>>> origin/master
 
         Returns
         -------
