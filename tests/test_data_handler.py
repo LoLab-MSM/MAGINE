@@ -50,6 +50,10 @@ def test_html_output():
     exp_data.plot_all_proteins()
 
 
+def test_plot_list_of_species():
+    species = ['ADORA1', 'PARP1', 'BAX']
+    exp_data.plot_list_of_genes_plotly(species, save_name='test2', out_dir='.')
+
 # cProfile.run('test_plot_list()', sort=1)
 if __name__ == '__main__':
-    test_plot_list()
+    test_plot_list_of_species()
