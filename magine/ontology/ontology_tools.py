@@ -1,45 +1,10 @@
 import itertools
-import os
 
 import networkx as nx
-from orangecontrib.bio.utils import serverfiles
 
-from goatools import obo_parser
-from goatools.associations import read_gaf
-from goatools.semantic import TermCounts, deepest_common_ancestor, resnik_sim, \
+from go_from_goatools import go, termcounts
+from goatools.semantic import deepest_common_ancestor, resnik_sim, \
     semantic_similarity
-
-# sys.setrecursionlimit(100000)
-os.environ[
-    "PATH"] += os.pathsep + "C:\Users\James Pino\Miniconda2\envs\MAGINE\Library\\bin\graphviz"
-
-default_database_path = os.path.join(serverfiles.localpath(), "GO")
-
-short_path = filename = os.path.join(default_database_path,
-                                     "gene_ontology_edit.obo.tar.gz",
-                                     "gene_ontology_edit.obo")
-if not os.path.exists(short_path):
-    from orangecontrib.bio.go import Ontology
-
-    print("Using ontology for first time")
-    print("Downloading files via Orange.bio")
-    ontology = Ontology()
-    assert os.path.exists(short_path)
-
-go = obo_parser.GODag(short_path)
-associations = read_gaf(
-    "http://geneontology.org/gene-associations/goa_human.gaf.gz")
-
-to_remove = set()
-for gene, terms in associations.items():
-    terms_copy = terms.copy()
-    for go_id in terms:
-        if go_id not in go:
-            terms_copy.remove(go_id)
-    associations[gene] = terms_copy
-associations = {key: value for key, value in associations.items()
-                if value is not to_remove}
-termcounts = TermCounts(go, associations)
 
 
 def path_to_root(go_term):
@@ -194,6 +159,7 @@ def check_term_list(list_of_terms):
 
 def create_graph_to_root_from_list_terms(list_of_terms):
     list_of_terms = set(list_of_terms)
+    to_remove = set()
     for i in list_of_terms:
         # print(go[i].depth)
         if go[i].depth > 10:
