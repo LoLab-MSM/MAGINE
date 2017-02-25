@@ -400,6 +400,34 @@ class Reactome(REST):
         # data = {'compartment': compartment, 'input':input, 'output':output}
         return res
 
+    def get_entity_info(self, entity):
+        """Fetch information from the reaction HTML page
+
+        .. note:: draft version
+        """
+        res = self.http_get(
+                'http://reactome.org/ContentService/data/query/%s/extended' % entity,
+                frmt='xml')
+        # compartment = ''
+        # if 'compartment' in res:
+        #     compartment = res['compartment']
+        # input = res['input']
+        # output= res['output']
+        # data = {'compartment': compartment, 'input':input, 'output':output}
+        return res
+
+    def get_entity_attribute(self, entity, attribute):
+        """Fetch information from the reaction HTML page
+
+        .. note:: draft version
+        """
+        res = self.http_get(
+                'http://reactome.org/ContentService/data/query/%s/%s' % (
+                entity, attribute),
+                frmt='string')
+
+        return res
+
     def get_event_participants(self, event):
         res = self.http_get(
                 'http://reactome.org/ContentService/data/event/%s/participants' % event,
