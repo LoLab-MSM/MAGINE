@@ -11,6 +11,10 @@ from magine.html_templates.html_tools import write_single_table
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+from matplotlib.pyplot import cm
+import matplotlib.cm as cmx
+import matplotlib.colors as colors
+
 pandas.set_option('display.max_colwidth', -1)
 # column definitions
 fold_change = 'treated_control_fold_change'
@@ -517,13 +521,14 @@ class ExperimentalData:
             plt.close()
 
     def plot_list_of_genes_plotly(self, list_of_genes, save_name='test',
-                                  out_dir='.',
-                                  title=None, plot_all_x=False,
-                                  log_scale=False):
+                                  out_dir='.', title=None):
 
         from plotly.offline import plot
+        import plotly.graph_objs  as plotly_graph
+        import plotly.tools as tls
+        tls.set_credentials_file(username='james.ch.pino',
+                                 api_key='BnUcJSpmPcMKZg0yEFaL')
 
-        from matplotlib.pyplot import cm
         if os.path.exists(out_dir):
             pass
         else:
@@ -588,22 +593,23 @@ class ExperimentalData:
 
                 x_index = np.array(x_index)
 
-                plotly_list.append(go.Scatter(x=x_index,
-                                              y=y,
-                                              hoveron='points',
-                                              name=label,
-                                              mode='lines+markers',
-                                              legendgroup='group_{}'.format(i),
+                plotly_list.append(plotly_graph.Scatter(x=x_index,
+                                                        y=y,
+                                                        hoveron='points',
+                                                        name=label,
+                                                        mode='lines+markers',
+                                                        legendgroup='group_{}'.format(i),
 
-                                              marker=dict(symbol='circle',
+                                                        marker=dict(symbol='circle',
                                                           color=l_color,
                                                           line=dict(
                                                               color=l_color), ),
 
-                                              )
+                                                        )
                                    )
                 if len(s_flag) != 0:
-                    plotly_list.append(go.Scatter(
+                    plotly_list.append(
+                            plotly_graph.Scatter(
                             x=x_index[s_flag],
                             y=y[s_flag],
                             hoveron='points',
@@ -621,8 +627,13 @@ class ExperimentalData:
             layout = dict(title=title,
                           # yaxis=dict(title='$\\text{log}_2 \\text{Fold Change}$'),
                           xaxis=dict(title='Sample index'))
-            fig = dict(data=plotly_list, layout=layout)
-            plot(fig, filename='{}.html'.format(save_name), image='png')
+            fig = plotly_graph.Figure(data=plotly_list, layout=layout)
+            # plot(fig, filename='{}.html'.format(save_name))
+            s_name = '{}.html'.format(save_name)
+            # plot_url = py.plot(fig, filename=save_name, sharing='public')
+            plot(fig, filename=s_name, auto_open=False)
+
+            # print(plot_url)
 
 
 

@@ -1,13 +1,12 @@
 import os
-import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import pathos.multiprocessing as mp
+
 from magine.data_handler import ExperimentalData
 
 data_directory = os.path.join(os.path.dirname(__file__), 'Data')
-# data_directory = os.path.join(os.path.dirname(__file__), 'magine')
-exp_data = ExperimentalData('example_apoptosis.csv', data_directory)
+
+exp_data = ExperimentalData('large_example.csv', data_directory)
 
 
 def test_table():
@@ -51,9 +50,13 @@ def test_html_output():
 
 
 def test_plot_list_of_species():
-    species = ['ADORA1', 'PARP1', 'BAX']
+    species = ['CAV1', 'GPRC5A', 'HIST1H3A']
+    # species = exp_data.list_proteins[:10]
+    print(species)
+
     exp_data.plot_list_of_genes_plotly(species, save_name='test2', out_dir='.')
 
-# cProfile.run('test_plot_list()', sort=1)
+
 if __name__ == '__main__':
+
     test_plot_list_of_species()
