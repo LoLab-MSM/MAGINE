@@ -6,60 +6,38 @@ import pandas as pd
 import scipy.cluster.hierarchy as sch
 
 
-def create_heatmaps_pvalue_xs(data, save_name, labels=None, mark_pvalues=False,
-                              trim_nodes=False, n_hits_per_time=None):
-    from magine.ontology.ontology_tools import check_term_list
+def create_heatmaps_pvalue_xs(data, save_name, mark_pvalues=False):
+    """
 
-    if isinstance(data, str):
-        data = pd.read_csv(data, index_col=0)
-    assert 'pvalue' in data.columns
-    assert 'enrichment_score' in data.columns
-    data['genes'] = data['genes'].astype(set)
+    Parameters
+    ----------
+    data :  pandas.DataFrame or str
+        output from magine.ontology_analysis.create_enrichment_array
+    save_name : str
+        prefix of figure to save
+    mark_pvalues : bool, optionl, default=False
+        add * to heatplot of significantly enriched values
 
-    data = data[data['ref'] >= 5]
-    data.loc[data['enrichment_score'] > 20, 'enrichment_score'] = 20
 
-    n_samples = range(len(labels))
-    tmp = data[data['pvalue'] < 0.05]
+    Returns
+    -------
 
-    def find_n_go_terms(n_terms):
-        terms = set(tmp.head(n_terms).index)
-        terms = check_term_list(terms)
-        return terms
+    """
 
-    if n_hits_per_time is not None:
-        tmp = pd.pivot_table(tmp, index=['GO_id', ], columns='sample_index')
-        list_all_go = set()
-        for i in n_samples:
-            tmp = tmp.sort_values(by=('enrichment_score', i), ascending=False)
-            list_of_go = find_n_go_terms(n_hits_per_time)
-            count = 1
-            while len(list_of_go) < n_hits_per_time:
-                list_of_go = find_n_go_terms(n_hits_per_time + count)
-                count += 1
-
-            if trim_nodes:
-                list_all_go = check_term_list(list_all_go)
-            print(list_of_go)
-            list_all_go.update(list_of_go)
-
-        if trim_nodes:
-            list_all_go = check_term_list(list_all_go)
-        data = data[data['GO_id'].isin(list_all_go)]
-
-    tmp2 = pd.pivot_table(data, index=['GO_id', 'GO_name'],
-                          columns='sample_index',
-                          aggfunc=lambda gene: ' '.join(gene))
-
+    labels = data['sample_index'].unique()
+    enrichment_list = [('enrichment_score', i) for i in labels]
+    # pivot the data to have it in form
+    # GO_id vs (sample_index x ( each column))
     tmp = pd.pivot_table(data, index=['GO_id', 'GO_name'],
                          columns='sample_index', )
-    # print(tmp2.head(10))
-    enrichment_list = [('enrichment_score', i) for i in n_samples]
+
+    # sort based on each column
     tmp = tmp.sort_values(by=enrichment_list, ascending=False)
 
-    # Want to show both enrichment as a panel as pvalie
-    pvalue = tmp['pvalue'].fillna(1).as_matrix()
-    enrichment_value = tmp['enrichment_score'].as_matrix()
+    # turn into a matrix and fill nans with 0
+    enrichment_value = tmp['enrichment_score'].fillna(0).as_matrix()
+
+    # create a figure
     fig = plt.figure(figsize=(14, 7))
 
     # Enrichment panel
@@ -71,6 +49,7 @@ def create_heatmaps_pvalue_xs(data, save_name, labels=None, mark_pvalues=False,
     y_array = np.arange(0, len(tmp.index), 1)
     x_array = np.arange(0, len(labels), 1)
     if mark_pvalues:
+        pvalue = tmp['pvalue'].fillna(1).as_matrix()
         # text portion
         x, y = np.meshgrid(x_array, y_array)
 
@@ -87,7 +66,7 @@ def create_heatmaps_pvalue_xs(data, save_name, labels=None, mark_pvalues=False,
     ax1.set_xticks(x_array)
     ax1.set_xticklabels(labels, fontsize=16)
 
-    if n_hits_per_time is not None:
+    if mark_pvalues is not None:
         ax1.set_yticks(y_array)
         ax1.set_yticklabels(tmp.index, fontsize=16)
     else:

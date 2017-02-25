@@ -1,3 +1,4 @@
+import pickle
 from sys import modules
 
 try:
@@ -9,11 +10,6 @@ except KeyError:
     from goatools import obo_parser
     from orangecontrib.bio.utils import serverfiles
     import os
-    from goatools.associations import read_gaf
-    from goatools.semantic import TermCounts
-
-    os.environ[
-        "PATH"] += os.pathsep + "C:\Users\James Pino\Miniconda2\envs\MAGINE\Library\\bin\graphviz"
 
     default_database_path = os.path.join(serverfiles.localpath(), "GO")
 
@@ -30,9 +26,19 @@ except KeyError:
         assert os.path.exists(short_path)
 
     go = obo_parser.GODag(short_path)
-    associations = read_gaf(
-            "http://geneontology.org/gene-associations/goa_human.gaf.gz")
 
+
+def load_termcount():
+    from goatools.associations import read_gaf
+    from goatools.semantic import TermCounts
+    association_file = os.path.join(os.path.dirname(__file__),
+                                    "associations.p")
+    if os.path.exists(association_file):
+        associations = pickle.load(open(association_file, "rb"))
+    else:
+        associations = read_gaf(
+                "http://geneontology.org/gene-associations/goa_human.gaf.gz")
+        pickle.dump(associations, open(association_file, "wb"))
     to_remove = set()
     for gene, terms in associations.items():
         terms_copy = terms.copy()
@@ -43,3 +49,4 @@ except KeyError:
     associations = {key: value for key, value in associations.items()
                     if value is not to_remove}
     termcounts = TermCounts(go, associations)
+    return termcounts

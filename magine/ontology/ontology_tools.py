@@ -1,11 +1,20 @@
 import itertools
+from sys import modules
 
 import networkx as nx
+import pandas as pd
 
-from go_from_goatools import go, termcounts
+from go_from_goatools import go
 from goatools.semantic import deepest_common_ancestor, resnik_sim, \
     semantic_similarity
 
+try:
+    termcounts = modules['termcounts']
+except:
+    from go_from_goatools import load_termcount
+
+    print("Loading termcounts")
+    termcounts = load_termcount()
 
 def path_to_root(go_term):
     """
@@ -90,6 +99,7 @@ def check_if_children(list_of_terms):
 
 
 def check_term_list(list_of_terms):
+
     list_of_terms = set(list_of_terms)
 
     to_remove = set()
@@ -290,3 +300,88 @@ def find_disjunction_common_ancestor(list_of_terms):
     # nx.set_node_attributes(common_graph, 'label', gonames)
     # export_to_dot(common_graph, 'common', view=False)
     return common_graph
+
+
+def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
+                       trim_nodes=False, additional_ids_to_include=None):
+    """
+
+    Parameters
+    ----------
+    data :  pandas.DataFrame or str
+        output from magine.ontology_analysis.create_enrichment_array
+    trim_nodes : bool, optional, default=False
+        remove GO terms that are similar
+    n_hits_per_time : int, optional
+        number of terms for each sample
+    go_aspects : list, optional
+        aspects to plots, options are
+        {"biological_process", "cellular_compartment", "molecular_function"}
+
+    Returns
+    -------
+
+    """
+
+    if isinstance(data, str):
+        data = pd.read_csv(data)
+
+    # make sure all columns we need are defined
+    for i in ['GO_id', 'pvalue', 'enrichment_score', 'sample_index', 'aspect']:
+        assert i in data.columns
+
+    data['genes'] = data['genes'].astype(set)
+
+    # removes aspects of GO that are not wanted
+    if go_aspects is None:
+        go_aspects = ['biological_process']
+    data = data[data['aspect'].isin(go_aspects)]
+    print(data.head(10))
+
+    # remove terms with reference smaller than 5
+    data = data[data['ref'] >= 5]
+
+    # normalize maximum enrichment to 20
+    # done for simplicity, may not be desired
+    data.loc[data['enrichment_score'] > 20, 'enrichment_score'] = 20
+
+    # filter out non-signficant terms
+    tmp = data[data['pvalue'] < 0.05]
+
+    # create sample labels
+    labels = tmp['sample_index'].unique()
+
+    def find_n_go_terms(n_terms):
+        terms = set(tmp.head(n_terms).index)
+        terms = check_term_list(terms)
+        return terms
+
+    enrichment_list = [('enrichment_score', i) for i in labels]
+    list_all_go = None
+    if n_hits_per_time is not None:
+        tmp = pd.pivot_table(tmp, index=['GO_id', ], columns='sample_index')
+        list_all_go = set()
+        for i in enrichment_list:
+            tmp = tmp.sort_values(by=i, ascending=False)
+            list_of_go = find_n_go_terms(n_hits_per_time)
+            count = 1
+            while len(list_of_go) < n_hits_per_time:
+                list_of_go = find_n_go_terms(n_hits_per_time + count)
+                count += 1
+            list_all_go.update(list_of_go)
+
+        if trim_nodes:
+            list_all_go = check_term_list(list_all_go)
+
+    if additional_ids_to_include is not None:
+        assert isinstance(additional_ids_to_include, list)
+        additional_ids_to_include = set(additional_ids_to_include)
+        if n_hits_per_time is not None:
+            additional_ids_to_include.update(list_all_go)
+        trimmed_included_go_ids = check_term_list(additional_ids_to_include)
+        data = data[data['GO_id'].isin(trimmed_included_go_ids)]
+
+    elif list_all_go is not None:
+        data = data[data['GO_id'].isin(list_all_go)]
+
+    return data
