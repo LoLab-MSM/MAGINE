@@ -122,8 +122,7 @@ class GoAnalysis:
         cols2 = ['GO_id', 'enrichment_score', 'pvalue', 'genes', 'n_genes']
         return pd.DataFrame(all_go_rows, columns=cols2)
 
-    def create_enrichment_array(self, list_of_exp, labels=None,
-                                save_name=False):
+    def create_enrichment_array(self, list_of_exp, labels=None):
         """
         Performs enrichment analysis of list of list of genes
 
@@ -134,8 +133,6 @@ class GoAnalysis:
             species names
         labels: list_like
             list of labels for each sample
-        save_name: str, bool
-            if you want to dump the resulting file to csv
 
         Returns
         -------
@@ -179,8 +176,6 @@ class GoAnalysis:
         if results is None:
             print('No data! Error! Returning nothing')
             return
-        if save_name:
-            results.to_csv('{0}_all_data.csv'.format(save_name), index=False)
         self.data = results
         return results
 
