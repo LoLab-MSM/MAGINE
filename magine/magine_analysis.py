@@ -81,7 +81,7 @@ class Analyzer:
         data_type : str, {'proteomics','rnaseq'}
             data type to run enrichment analysis
         fold_change: str {'up', 'down', 'both'}
-        boolean: boolean, saves enrichment array to file
+        save: boolean, saves enrichment array to file
 
         Returns
         -------
