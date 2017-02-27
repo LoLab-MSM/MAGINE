@@ -8,18 +8,11 @@ import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
 from orangecontrib.bio import go
-from orangecontrib.bio.utils import serverfiles
 
-from goatools.obo_parser import GODag
 from magine.html_templates.html_tools import write_single_table
 from magine.plotting.heatmaps import plot_heatmap, plot_heatmap_cluster
 
-default_database_path = os.path.join(serverfiles.localpath(), "GO")
-
-short_path = filename = os.path.join(default_database_path,
-                                     "gene_ontology_edit.obo.tar.gz",
-                                     "gene_ontology_edit.obo")
-goa_tools = GODag(short_path)
+from magine.ontology.go_from_goatools import go as goa_tools
 
 pd.set_option('display.max_colwidth', -1)
 
