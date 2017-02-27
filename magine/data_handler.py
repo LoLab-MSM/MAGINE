@@ -3,14 +3,12 @@ import subprocess
 from textwrap import wrap
 
 import matplotlib
-import numpy as np
-import pandas
-
-from magine.html_templates.html_tools import write_single_table
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
+import numpy as np
+import pandas
+from magine.html_templates.html_tools import write_single_table
 from matplotlib.pyplot import cm
 import matplotlib.cm as cmx
 import matplotlib.colors as colors
@@ -102,8 +100,8 @@ class ExperimentalData:
         self.total_sign_rna = len(
                 self.rna_seq[self.rna_seq[flag]][gene].unique())
 
-        self.gene_fold_change = {}
-        self._set_up_gene_fold_change_access()
+        self.gene_fold_change = None
+
         self.proteins_measured = self.return_proteomics()
 
         self.prot_up = self.return_proteomics(significant=True,
@@ -128,7 +126,6 @@ class ExperimentalData:
         self.rna_sign_changed = {}
         self.rna_over_time = []
         self.rna_down_over_time = []
-        self.rna_over_time = []
         self.rna_up_over_time = []
         self.rna_down_over_time = []
         for i in self.protomics_time_points:
@@ -150,7 +147,8 @@ class ExperimentalData:
             self.rna_down[i] = self.return_rna(sample_id_name=i,
                                                significant=True,
                                                fold_change_value=-1.)
-            self.rna_sign_changed[i] = [set(self.rna_up[i] + self.rna_down[i])]
+            self.rna_sign_changed[i] = list(
+                set(self.rna_up[i] + self.rna_down[i]))
             self.rna_over_time.append(self.rna_sign_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
@@ -435,6 +433,8 @@ class ExperimentalData:
                             in enumerate(self.timepoints)}
         sig_flags = []
         labels = []
+        if self.gene_fold_change is None:
+            self._set_up_gene_fold_change_access()
         for i in sorted(list_of_genes):
             if i in self.gene_fold_change:
                 for each in sorted(self.gene_fold_change[i]):
@@ -524,6 +524,7 @@ class ExperimentalData:
                                   out_dir='.', title=None):
 
         from plotly.offline import plot
+        import plotly.plotly as ply
         import plotly.graph_objs  as plotly_graph
         import plotly.tools as tls
         tls.set_credentials_file(username='james.ch.pino',
@@ -607,35 +608,30 @@ class ExperimentalData:
 
                                                         )
                                    )
-                if len(s_flag) != 0:
-                    plotly_list.append(
-                            plotly_graph.Scatter(
-                            x=x_index[s_flag],
-                            y=y[s_flag],
-                            hoveron='points',
-                            name=label,
-                            legendgroup='group_{}'.format(i),
-                            mode='markers',
-                            marker=dict(symbol='triangle-up',
-                                        size=10,
-                                        color=l_color),
-                    )
-                    )
+                # if len(s_flag) != 0:
+                #     plotly_list.append(
+                #             plotly_graph.Scatter(
+                #             x=x_index[s_flag],
+                #             y=y[s_flag],
+                #             hoveron='points',
+                #             name=label,
+                #             legendgroup='group_{}'.format(i),
+                #             mode='markers',
+                #             marker=dict(symbol='triangle-up',
+                #                         size=10,
+                #                         color=l_color)))
 
-            if title is not None:
-                title = None
             layout = dict(title=title,
                           # yaxis=dict(title='$\\text{log}_2 \\text{Fold Change}$'),
                           xaxis=dict(title='Sample index'))
             fig = plotly_graph.Figure(data=plotly_list, layout=layout)
+
             # plot(fig, filename='{}.html'.format(save_name))
             s_name = '{}.html'.format(save_name)
-            # plot_url = py.plot(fig, filename=save_name, sharing='public')
+            plot_url = ply.plot(plotly_graph.Data(plotly_list),
+                                filename=save_name)
+            print(plot_url)
             plot(fig, filename=s_name, auto_open=False)
-
-            # print(plot_url)
-
-
 
     def volcano_analysis(self, out_dir, use_sig_flag=True,
                          p_value=0.1, fold_change_cutoff=1.5):
