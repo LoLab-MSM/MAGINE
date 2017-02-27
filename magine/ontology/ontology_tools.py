@@ -4,14 +4,14 @@ from sys import modules
 import networkx as nx
 import pandas as pd
 
-from go_from_goatools import go
+from magine.ontology.go_from_goatools import go
 from goatools.semantic import deepest_common_ancestor, resnik_sim, \
     semantic_similarity
 
 try:
     termcounts = modules['termcounts']
 except:
-    from go_from_goatools import load_termcount
+    from magine.ontology.go_from_goatools import load_termcount
 
     print("Loading termcounts")
     termcounts = load_termcount()
@@ -44,7 +44,20 @@ def path_to_root(go_term):
     return graph
 
 
-# def dendrogram(graph):
+def print_path_to_root(go_term):
+    paths = go.paths_to_top(go_term)
+    all_terms = set()
+    for i in paths:
+        print('\n')
+        for j in i:
+            all_terms.add(j.id)
+            print("GO id = {}, GO name = {}".format(j.id, j.name))
+
+
+def print_children(go_term):
+    print("({}) {} has children of :".format(go[go_term].id, go[go_term].name))
+    for i in go[go_term].children:
+        print("\t({}) {}".format(i.id, i.name))
 # number of edges between each pair of nodes
 
 
@@ -328,7 +341,7 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
 
     # make sure all columns we need are defined
     for i in ['GO_id', 'pvalue', 'enrichment_score', 'sample_index', 'aspect']:
-        assert i in data.columns
+        assert i in data.columns, "Must have {} in df".format(i)
 
     data['genes'] = data['genes'].astype(set)
 
