@@ -71,7 +71,9 @@ class Analyzer:
         self.network = build_network(proteins, num_overlap=1,
                                      save_name=save_name, species=self.species)
 
-    def run_single_go(self, data_type='proteomics', fold_change='up'):
+    def run_single_go(
+            self, data_type='proteomics', fold_change='up', save=True
+            ):
         """
         Runs enrichment analysis
         Parameters
@@ -79,6 +81,7 @@ class Analyzer:
         data_type : str, {'proteomics','rnaseq'}
             data type to run enrichment analysis
         fold_change: str {'up', 'down', 'both'}
+        boolean: boolean, saves enrichment array to file
 
         Returns
         -------
@@ -106,20 +109,24 @@ class Analyzer:
             warnings.warn("Must provide proteomics or rnaseq for GO analysis")
             quit()
 
-        save_name = '_'.join([self.save_name, data_type, fold_change])
+        print("Creating enrichment array")
+        enrich_array = self.go.create_enrichment_array(data, labels=labels)
 
+        save_name = '_'.join([self.save_name, data_type, fold_change])
         filename = '<a href="{}.html">link</a>'.format(
                 self.out_dir + '/' + save_name)
-
         html_dict = {'DataType':   data_type,
                      'FoldChange': fold_change,
                      'fileName':   filename,
                      'save_name':  save_name
                      }
-        print("Running and saving to {}".format(save_name))
-        enrich_array = self.go.create_enrichment_array(data, labels=labels,
-                                                       save_name=save_name)
+        if save:
+            print("Saving enrichment array to {}".format(save_name))
+            enrich_array.to_csv(
+                '{0}_all_data.csv'.format(save_name), index=False
+                )
         return enrich_array, html_dict
+
 
     def run_proteomics_go(self):
         """
