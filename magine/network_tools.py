@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 from sys import modules
 
-import graphviz as gv
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from bioservices import KEGG, UniProt
+
 
 try:
     kegg = modules['kegg']
@@ -20,7 +20,8 @@ except KeyError:
     uniprot.TIMEOUT = 100
 
 
-def export_to_dot(graph, save_name, format='png', engine='dot', view=False):
+def export_to_dot(graph, save_name, image_format='png', engine='dot',
+                  dpi=200):
     """
     Converts networkx graph to graphviz dot
 
@@ -29,22 +30,22 @@ def export_to_dot(graph, save_name, format='png', engine='dot', view=False):
     graph : networkx.DiGraph
     save_name : str
         name of file to save
-    format : str
+    image_format : str
         format of output( pdf, png, svg)
     engine : str
         graphviz engine
             dot, twopi,
-    view : bool
-        open up the rendered image
+    dpi: int
+        resolution of figure
 
     Returns
     -------
 
     """
-    dot_string = nx.nx_pydot.to_pydot(graph).to_string()
-    dot_graph = gv.Source(dot_string, format=format, engine=engine)
-    dot_graph.render('{}'.format(save_name), view=view, cleanup=True)
-    dot_graph.save('{}.dot'.format(save_name))
+    py_dot = nx.nx_agraph.to_agraph(graph)
+    py_dot.write('{}.dot'.format(save_name))
+    py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
+                args='-Gdpi={}'.format(dpi))
 
 
 def add_attribute_to_network(graph, list_to_add_attribute, attribute,
