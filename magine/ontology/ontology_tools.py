@@ -6,15 +6,15 @@ import pandas as pd
 
 from magine.ontology.go_from_goatools import go
 from goatools.semantic import deepest_common_ancestor, resnik_sim, \
-    semantic_similarity
+    semantic_similarity, ic
 
 try:
     termcounts = modules['termcounts']
 except:
     from magine.ontology.go_from_goatools import load_termcount
-
     print("Loading termcounts")
     termcounts = load_termcount()
+    print("Loaded termcounts")
 
 def path_to_root(go_term):
     """
@@ -58,7 +58,32 @@ def print_children(go_term):
     print("({}) {} has children of :".format(go[go_term].id, go[go_term].name))
     for i in go[go_term].children:
         print("\t({}) {}".format(i.id, i.name))
+
+
 # number of edges between each pair of nodes
+def common_parent_go_ids(terms):
+    """ Find common parents of list of GO terms
+
+    Parameters
+    ----------
+    terms: list
+    """
+    # Find candidates from first
+    terms = list(terms)
+    rec = go[terms[0]]
+    candidates = rec.get_all_parents()
+    candidates.update({terms[0]})
+
+    # Find intersection with second to nth term
+    for term in terms[1:]:
+        rec = go[term]
+        parents = rec.get_all_parents()
+        parents.update({term})
+
+        # Find the intersection with the candidates, and update.
+        candidates.intersection_update(parents)
+
+    return candidates
 
 
 def add_children(go_term, graph, gene_set_of_interest):
@@ -79,18 +104,20 @@ def add_children(go_term, graph, gene_set_of_interest):
 
     """
     nodes_in_graph = set(graph.nodes())
+    graph.add_node(go[go_term].id,
+                   depth=go[go_term].depth,
+                   level=go[go_term].level,
+                   GOname=go[go_term].name,
+                   ic=ic(go[go_term].id, termcounts))
     for i in go[go_term].children:
         if i.id in gene_set_of_interest:
             if i.id not in nodes_in_graph:
-                graph.add_node('"{}"'.format(i.id), depth=i.depth,
-                               level=i.level, GOname=i.name)
-            # if go[go_term].id not in nodes_in_graph:
-            graph.add_node('"{}"'.format(go[go_term].id),
-                           depth=go[go_term].depth,
-                           level=go[go_term].level,
-                           GOname=go[go_term].name)
-            edge = ('"{}"'.format(go[go_term].id), '"{}"'.format(i.id))
-            graph.add_edge(*edge)
+                graph.add_node(i.id,
+                               depth=i.depth,
+                               level=i.level,
+                               GOname=i.name,
+                               ic=ic(i.id, termcounts))
+            graph.add_edge(go[go_term].id, i.id)
             add_children(i.id, graph, gene_set_of_interest)
 
 
@@ -111,10 +138,8 @@ def check_if_children(list_of_terms):
     return list_of_terms.difference(to_remove)
 
 
-def check_term_list(list_of_terms):
-
+def check_depth(list_of_terms):
     list_of_terms = set(list_of_terms)
-
     to_remove = set()
     for i in list_of_terms:
         # print(go[i].depth)
@@ -122,9 +147,18 @@ def check_term_list(list_of_terms):
             print("Depth of {} is greater than 10.".format(i),
                   "Removing from list for now as path to root is VAST")
             to_remove.add(i)
-    list_of_terms = list_of_terms.difference(to_remove)
-    list_of_terms = check_if_children(list_of_terms)
+    return list_of_terms.difference(to_remove)
+
+
+def check_depth_and_children(list_of_terms):
+    set_of_terms = set(list_of_terms)
+    return check_if_children(check_depth(set_of_terms))
+
+
+def check_term_list(list_of_terms):
+    list_of_terms = check_depth_and_children(list_of_terms)
     combos = itertools.combinations(list_of_terms, 2)
+    to_remove = set()
     for i, j in combos:
         sim2 = semantic_similarity(i, j, go)
         dca = deepest_common_ancestor([i, j], go)
@@ -133,8 +167,17 @@ def check_term_list(list_of_terms):
         # this is the IC for biological_process,
         # subtracting it to normalize to 0
         sim -= 4.175976034663472
-        # print(i, j, dca, go[i].depth, go[j].depth, go[dca].depth)
-        # print(go[i].name, go[j].name, go[dca].name, sim, sim2)
+
+        print("\nGO 1\t\t GO 2\t\t GO3")
+        print("{}\t{}\t{}".format(i, j, dca))
+        print("{}\t{}\t{}".format(go[i].name, go[j].name, go[dca].name))
+        print("{}\t{}\t{}".format(go[i].depth, go[j].depth, go[dca].depth))
+        print("Resnik\tSemantic")
+        print("{}\t{}\n".format(sim, sim2))
+        ic_i = ic(i, termcounts)
+        ic_j = ic(j, termcounts)
+        ic_dca = ic(dca, termcounts)
+        print("IC\t\t{}\t\t\t{}\t\t\t{}".format(ic_i, ic_j, ic_dca))
 
         # remove if two terms of similar by distance in graph
         if sim2 > .5:
@@ -143,70 +186,68 @@ def check_term_list(list_of_terms):
             else:
                 to_remove.add(j)
         # remove if deepest common ancestor has at least 4 IC
-                # elif sim > 4:
-            # if go[dca].depth < 3:
-            #     continue
-                # if dca in to_remove or dca in list_of_terms:
-                #     continue
-                # list_of_terms.add(dca)
-                # to_remove.add(i)
-                # to_remove.add(j)
-            # print('Removing')
-            # print('-' * 20)
-            # print(i, j, dca, go[i].depth, go[j].depth, go[dca].depth)
-            # print(go[i].name, go[j].name, go[dca].name, sim, sim2)
-            # print('-' * 20)
+        elif sim > 4:
+            if go[dca].depth < 3:
+                continue
+            if dca in to_remove or dca in list_of_terms:
+                list_of_terms.add(dca)
+                to_remove.add(i)
+                to_remove.add(j)
+            print('Removing')
+            print('-' * 20)
+            print(i, j, dca, go[i].depth, go[j].depth, go[dca].depth)
+            print(go[i].name, go[j].name, go[dca].name, sim, sim2)
+            print('-' * 20)
                 # else:
             # I was thinking I could compare IC for regulators,
             # but it doesn't really provide much
                 # ic_i = ic(i, termcounts)
                 # ic_j = ic(j, termcounts)
                 # print("GO\t\t{}\t\t{}".format(go[i].name, go[j].name))
-                # print("IC\t\t{}\t\t\t{}".format(ic_i, ic_j))
+            #
                 # print("Score = {}\n".format(sim2))
             # if go[dca].depth > 3:
             #     print("Depth\t{}\t\t\t{}".format(go[i].depth, go[j].depth))
             #     print("DCA\tID\tDepth\tIC")
             #     print("{}\t{}\t{}\t{}\t".format(go[dca].name, dca, go[dca].depth, sim))
 
-    # quit()
     print(to_remove)
     print('Number of term before = {}'.format(len(list_of_terms)))
     list_of_terms = list_of_terms.difference(to_remove)
-    # list_of_terms = [i for i in list_of_terms if i not in to_remove]
-
-
     print('Number of term after = {}'.format(len(list_of_terms)))
     return list_of_terms
 
 
 def create_graph_to_root_from_list_terms(list_of_terms):
-    list_of_terms = set(list_of_terms)
-    to_remove = set()
-    for i in list_of_terms:
-        # print(go[i].depth)
-        if go[i].depth > 10:
-            print("Depth of {} is greater than 10.".format(i),
-                  "Removing from list for now as path to root is VAST")
-            to_remove.add(i)
-    list_of_terms = list_of_terms.difference(to_remove)
-    combined_graph = nx.DiGraph()
+    """ calculate a path to root for a list of terms
 
-    node_list = []
-    # list_of_terms = check_term_list(list_of_terms)
+    Parameters
+    ----------
+    list_of_terms: list
+
+    Returns
+    -------
+
+    networkx.DiGraph
+    """
+
+    list_of_terms = check_depth_and_children(list_of_terms)
+    combined_graph = nx.DiGraph()
     for i in list_of_terms:
         g = path_to_root(i)
-        node_list.append(set(g.nodes()))
+        comb_nodes = set(combined_graph.nodes())
         combined_graph.add_nodes_from(g.nodes(data=True))
         combined_graph.add_edges_from(g.edges(data=True))
-    formatted_list_of_terms = []
-    for i in list_of_terms:
-        formatted_list_of_terms.append('"{}"'.format(i))
-    for each in formatted_list_of_terms:
+        for i in g.nodes():
+            if i in comb_nodes:
+                if 'counter' in combined_graph.node[i]:
+                    combined_graph.node[i]['counter'] += 1
+            else:
+                combined_graph.node[i]['counter'] = 1
+    for each in list_of_terms:
         combined_graph.add_node(each, style='filled', fillcolor='green',
                                 **combined_graph[each])
-    # gonames = nx.get_node_attributes(combined_graph, 'GOname')
-    # nx.set_node_attributes(combined_graph, 'label', gonames)
+
     return combined_graph
 
 
@@ -223,34 +264,12 @@ def find_disjunction_common_ancestor(list_of_terms):
     graph : networkx.DiGraph
         containing sources to root, disjunction common ancestor show in red
     """
-
-    combined_graph = nx.DiGraph()
-
-    node_list = []
-    # list_of_terms = check_term_list(list_of_terms)
-    for i in list_of_terms:
-        g = path_to_root(i)
-        node_list.append(set(g.nodes()))
-        combined_graph.add_nodes_from(g.nodes(data=True))
-        combined_graph.add_edges_from(g.edges())
-    # count the number of times a node is in the list to find nodes that are
-    # common to all terms
-    term_counter = {}
-    for i in node_list:
-        for j in i:
-            if j in term_counter:
-                term_counter[j] += 1
-            else:
-                term_counter[j] = 1
+    list_of_terms = check_depth_and_children(list_of_terms)
+    combined_graph = create_graph_to_root_from_list_terms(list_of_terms)
 
     # find the nodes that are in all terms
     n_terms = len(list_of_terms)
-
-    # For graphiv to recongnize ":" within a name, we must put it in a string
-    # TODO : find a more clever way to go about this
-    formatted_list_of_terms = []
-    for i in list_of_terms:
-        formatted_list_of_terms.append('"{}"'.format(i))
+    term_counter = nx.get_node_attributes(combined_graph, 'counter')
     common_nodes = set()
     for i in term_counter:
         print(i, term_counter[i], go[i.replace('"', '')].depth)
@@ -258,27 +277,28 @@ def find_disjunction_common_ancestor(list_of_terms):
             common_nodes.add(i)
 
     if len(common_nodes) == 1:
-        for i in common_nodes:
-            level = combined_graph.node[i]['level']
-            depth = combined_graph.node[i]['depth']
-            name = combined_graph.node[i]['GOname']
+        node_0 = combined_graph.nodes()[0]
+        level = combined_graph.node[node_0]['level']
+        depth = combined_graph.node[node_0]['depth']
+        name = combined_graph.node[node_0]['GOname']
         print("Warning : the most common ancestor is {} ({}) with a depth of "
-              "{} and level of {}".format(name, i, depth, level))
+              "{} and level of {}".format(name, node_0, depth, level))
 
     # Check to see if any of the provided terms are in all graphs
     # This means it was an ancestor node and should be removed from list
     to_remove = []
-    for each in formatted_list_of_terms:
+    for each in list_of_terms:
         if each in common_nodes:
             print("Warning : {} term is already in graph! Thus will treat as "
                   "upstream term and remove from list of terms"
                   " provided".format(each))
             to_remove.append(each)
     for each in to_remove:
-        formatted_list_of_terms.remove(each)
+        list_of_terms.remove(each)
 
     # return subgraph containing only nodes that are in all
     common_graph = combined_graph.subgraph(common_nodes)
+
     # find the common dijunction nodes and shortest paths between
     disjunction_nodes = set()
     for i in common_graph.nodes():
@@ -290,18 +310,20 @@ def find_disjunction_common_ancestor(list_of_terms):
     for disjun_node in disjunction_nodes:
         common_graph.node[disjun_node]['style'] = 'filled'
         common_graph.node[disjun_node]['fillcolor'] = 'red'
-        for each in formatted_list_of_terms:
+        for each in list_of_terms:
             if nx.has_path(combined_graph, disjun_node, each):
                 sh_paths = [p for p in
                             nx.all_shortest_paths(combined_graph, disjun_node,
                                                   each)]
                 for path in sh_paths:
+                    for g in path:
+                        common_graph.add_node(g, **combined_graph.node[g])
                     common_graph.add_path(path)
 
     # color source nodes
-    for each in formatted_list_of_terms:
+    for each in list_of_terms:
         common_graph.add_node(each, style='filled',
-                              fillcolor='green', **combined_graph[each])
+                              fillcolor='green', **combined_graph.node[each])
     gonames = nx.get_node_attributes(combined_graph, 'GOname')
     nodes_in_graph = common_graph.nodes()
     to_remove = set()
@@ -330,6 +352,8 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     go_aspects : list, optional
         aspects to plots, options are
         {"biological_process", "cellular_compartment", "molecular_function"}
+    additional_ids_to_include: list
+        list of additional GO ids to keep
 
     Returns
     -------
@@ -349,10 +373,10 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     if go_aspects is None:
         go_aspects = ['biological_process']
     data = data[data['aspect'].isin(go_aspects)]
-    print(data.head(10))
 
     # remove terms with reference smaller than 5
-    data = data[data['ref'] >= 5]
+    data = data[data['ref'] >= 10]
+    data = data[data['ref'] <= 300]
 
     # normalize maximum enrichment to 20
     # done for simplicity, may not be desired
@@ -370,7 +394,7 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         return terms
 
     enrichment_list = [('enrichment_score', i) for i in labels]
-    list_all_go = None
+    list_all_go = tmp['GO_id'].unique()
     if n_hits_per_time is not None:
         tmp = pd.pivot_table(tmp, index=['GO_id', ], columns='sample_index')
         list_all_go = set()
@@ -383,16 +407,15 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
                 count += 1
             list_all_go.update(list_of_go)
 
-        if trim_nodes:
-            list_all_go = check_term_list(list_all_go)
+    if trim_nodes:
+        list_all_go = check_term_list(list_all_go)
 
     if additional_ids_to_include is not None:
         assert isinstance(additional_ids_to_include, list)
         additional_ids_to_include = set(additional_ids_to_include)
         if n_hits_per_time is not None:
             additional_ids_to_include.update(list_all_go)
-        trimmed_included_go_ids = check_term_list(additional_ids_to_include)
-        data = data[data['GO_id'].isin(trimmed_included_go_ids)]
+        data = data[data['GO_id'].isin(additional_ids_to_include)]
 
     elif list_all_go is not None:
         data = data[data['GO_id'].isin(list_all_go)]
