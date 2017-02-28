@@ -6,3 +6,6 @@ py2cytoscape
 orange-bioinformatics==2.6.19
 graphviz
 bioservices
+pathos
+goatools
+plotly
