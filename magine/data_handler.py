@@ -9,9 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 from magine.html_templates.html_tools import write_single_table
-from matplotlib.pyplot import cm
-import matplotlib.cm as cmx
-import matplotlib.colors as colors
+
 
 pandas.set_option('display.max_colwidth', -1)
 # column definitions
@@ -30,7 +28,7 @@ sample_id = 'time'
 # sample_id = 'sample_id'
 
 
-class ExperimentalData:
+class ExperimentalData(object):
     """
     Manages all experimental data
     """
@@ -52,17 +50,18 @@ class ExperimentalData:
         raw_df.loc[raw_df[fold_change] == -np.inf, fold_change] = -1000
         self.data = raw_df
         self.exp_methods = list(self.data[exp_method].unique())
+
+        self.metabolites = []
+        if metabolites in self.data[species_type].unique():
+            self._set_up_metabolites()
+        # return
         self.proteomics = raw_df[raw_df[species_type] == protein]
         self.proteomics = self.proteomics.dropna(subset=[gene])
-        self.metabolites = []
         self.list_metabolites = []
         self.list_sig_metabolites = []
         self.metabolite_sign = []
         self.exp_methods = self.data[exp_method].unique()
         self.timepoints = sorted(list(self.data[sample_id].unique()))
-
-        if metabolites in self.data[species_type].unique():
-            self._set_up_metabolites()
 
         self.rna_seq = self.proteomics[self.proteomics[exp_method] == rna]
         self.proteomics_non_rna = self.proteomics[
@@ -326,13 +325,13 @@ class ExperimentalData:
         t = pandas.DataFrame(data=measured_table,
                              index=self.exp_methods,
                              columns=timepoints)
-        from pandas.tools.plotting import table
+
         ax = plt.subplot(111, frame_on=False)
-        table(ax, t, loc='center')
+        pandas.tools.plotting.table(ax, t, loc='center')
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
         # plt.tight_layout()
-        plt.savefig('test_table.png')
+        plt.savefig('{}.png'.format(save_name))
         t.to_csv('{0}.csv'.format(save_name))
         filename = '{0}.tex'.format(save_name)
 
@@ -360,8 +359,8 @@ class ExperimentalData:
                                          '-quality', '90', tmp_png_name],
                                         stderr=subprocess.STDOUT, stdout=fnull)
         else:
-            print('Install pdflatex to compile to pdf or png'
-                  'You can used the csv file for use in outside tools')
+            print('Install pdflatex to compile to pdf or png\n'
+                  'You can use the csv file for use in outside tools')
 
     def plot_all_proteins(self, out_dir='proteins'):
         """
@@ -419,8 +418,10 @@ class ExperimentalData:
             pass
         else:
             os.mkdir(out_dir)
+
         if type(list_of_genes) in (list, tuple) and save_name == 'test':
             list_of_genes, save_name, out_dir, title, plot_all_x, log_scale = list_of_genes
+
         x_values = []
         y_values = []
         x_points = np.array(self.timepoints)
@@ -429,7 +430,7 @@ class ExperimentalData:
             x_point_dict = {i: x_points[n] for n, i
                             in enumerate(self.timepoints)}
         else:
-            x_point_dict = {i: 2 ** n + 1 for n, i
+            x_point_dict = {i: 2 ** (n + 1) for n, i
                             in enumerate(self.timepoints)}
         sig_flags = []
         labels = []
@@ -458,21 +459,17 @@ class ExperimentalData:
                              range(num_colors)]))
             for i in range(num_colors):
                 x_index = []
-                x_labels = []
                 label = "\n".join(wrap(labels[i], 40))
                 index = np.argsort(x_values[i])
                 x = x_values[i][index]
                 y = y_values[i][index]
                 s_flag = sig_flags[i][index]
 
-                # y = np.where(y > 0, np.log2(y), -np.log2(-y))
-
                 y[y > 0] = np.log2(y[y > 0])
                 y[y < 0] = -np.log2(-y[y < 0])
 
                 for i in x:
                     x_index.append(x_point_dict[i])
-                    x_labels.append(i)
 
                 x_index = np.array(x_index)
                 p = ax.plot(x_index, y, '.-', label=label)
@@ -486,23 +483,21 @@ class ExperimentalData:
             if plot_all_x:
                 plt.xlim(min(x_point_dict.values()) - 2,
                          max(x_point_dict.values()) + 2)
-                if log_scale:
-                    ax.set_xscale('log', basex=2)
+                # if log_scale:
+                #     ax.set_xscale('log', basex=2)
                 ax.get_xaxis().get_major_formatter().labelOnlyBase = False
                 ax.set_xticks(sorted(x_point_dict.values()))
-                ax.set_xticklabels(x_points)
+                ax.set_xticklabels(x_point_dict.keys())
                 plt.xlabel('Time(hr)')
             else:
                 plt.xlim(min(x_point_dict.values()) - 2,
                          max(x_point_dict.values()) + 2)
-                if log_scale:
-                    ax.set_xscale('log', basex=2)
-                    ax.get_xaxis().get_major_formatter().labelOnlyBase = False
-
-                ax.set_xticks(x_index)
-                ax.set_xticklabels(x_labels)
+                # if log_scale:
+                #     ax.set_xscale('log', basex=2)
+                ax.get_xaxis().get_major_formatter().labelOnlyBase = False
+                ax.set_xticks(sorted(x_point_dict.values()))
+                ax.set_xticklabels(x_point_dict.keys())
                 plt.xlabel('Sample index')
-
             if type(x[0]) == float:
                 ax.xaxis.set_major_formatter(
                         matplotlib.ticker.FormatStrFormatter('%.4f'))
@@ -516,122 +511,11 @@ class ExperimentalData:
             lgd = ax.legend(handles, labels, loc='best',
                             bbox_to_anchor=(1.01, 1.0))
             tmp_savename = os.path.join(out_dir, "{}.pdf".format(save_name))
+
             plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
                         bbox_inches='tight')
             plt.close()
 
-    def plot_list_of_genes_plotly(self, list_of_genes, save_name='test',
-                                  out_dir='.', title=None):
-
-        from plotly.offline import plot
-        import plotly.plotly as ply
-        import plotly.graph_objs  as plotly_graph
-        import plotly.tools as tls
-        tls.set_credentials_file(username='james.ch.pino',
-                                 api_key='BnUcJSpmPcMKZg0yEFaL')
-
-        if os.path.exists(out_dir):
-            pass
-        else:
-            os.mkdir(out_dir)
-        if type(list_of_genes) in (list, tuple) and save_name == 'test':
-            list_of_genes, save_name, out_dir, title, plot_all_x, log_scale = list_of_genes
-        x_values = []
-        y_values = []
-        x_points = np.array(self.timepoints)
-
-        if isinstance(x_points[0], np.float):
-            x_point_dict = {i: x_points[n] for n, i
-                            in enumerate(self.timepoints)}
-        else:
-            x_point_dict = {i: 2 ** (n + 1) for n, i
-                            in enumerate(self.timepoints)}
-        sig_flags = []
-        labels = []
-        for i in sorted(list_of_genes):
-            if i in self.gene_fold_change:
-                for each in sorted(self.gene_fold_change[i]):
-                    x, y, sig = self.gene_fold_change[i][each]
-                    if len(x) == 0:
-                        continue
-                    x_values.append(x)
-                    y_values.append(y)
-                    sig_flags.append(sig)
-                    labels.append(str(each))
-        num_colors = len(x_values)
-        jet = plt.get_cmap('jet')
-        cNorm = colors.Normalize(vmin=0, vmax=num_colors)
-        scalarMap = cmx.ScalarMappable(norm=cNorm, cmap=jet)
-
-        plotly_list = []
-        if num_colors != 0:
-            color = cm.rainbow(np.linspace(0, 1, num_colors))
-            for i in range(num_colors):
-                print(color[i])
-                colorVal = scalarMap.to_rgba(i)
-                l_color = (
-                    'rgba(%4.2f,%4.2f,%4.2f)' % (
-                        colorVal[0], colorVal[1], colorVal[2])
-                )
-
-                print(l_color)
-                x_index = []
-                x_labels = []
-                label = "\n".join(wrap(labels[i], 40))
-                index = np.argsort(x_values[i])
-                x = x_values[i][index]
-                y = y_values[i][index]
-                s_flag = sig_flags[i][index]
-
-                # y = np.where(y > 0, np.log2(y), -np.log2(-y))
-
-                y[y > 0] = np.log2(y[y > 0])
-                y[y < 0] = -np.log2(-y[y < 0])
-
-                for k in x:
-                    x_index.append(x_point_dict[k])
-                    x_labels.append(k)
-
-                x_index = np.array(x_index)
-
-                plotly_list.append(plotly_graph.Scatter(x=x_index,
-                                                        y=y,
-                                                        hoveron='points',
-                                                        name=label,
-                                                        mode='lines+markers',
-                                                        legendgroup='group_{}'.format(i),
-
-                                                        marker=dict(symbol='circle',
-                                                          color=l_color,
-                                                          line=dict(
-                                                              color=l_color), ),
-
-                                                        )
-                                   )
-                # if len(s_flag) != 0:
-                #     plotly_list.append(
-                #             plotly_graph.Scatter(
-                #             x=x_index[s_flag],
-                #             y=y[s_flag],
-                #             hoveron='points',
-                #             name=label,
-                #             legendgroup='group_{}'.format(i),
-                #             mode='markers',
-                #             marker=dict(symbol='triangle-up',
-                #                         size=10,
-                #                         color=l_color)))
-
-            layout = dict(title=title,
-                          # yaxis=dict(title='$\\text{log}_2 \\text{Fold Change}$'),
-                          xaxis=dict(title='Sample index'))
-            fig = plotly_graph.Figure(data=plotly_list, layout=layout)
-
-            # plot(fig, filename='{}.html'.format(save_name))
-            s_name = '{}.html'.format(save_name)
-            plot_url = ply.plot(plotly_graph.Data(plotly_list),
-                                filename=save_name)
-            print(plot_url)
-            plot(fig, filename=s_name, auto_open=False)
 
     def volcano_analysis(self, out_dir, use_sig_flag=True,
                          p_value=0.1, fold_change_cutoff=1.5):
@@ -812,9 +696,13 @@ class ExperimentalData:
         # convert to log10 scale
         tmp[p_val] = np.log10(data[p_val]) * -1
         # convert to log2 space
-        tmp[fold_change] = np.where(tmp[fold_change] > 0,
-                                    np.log2(tmp[fold_change]),
-                                    -np.log2(-tmp[fold_change]))
+        # tmp[fold_change] = np.where(tmp[fold_change] > 0,
+        #                             np.log2(tmp[fold_change]),
+        #                             -np.log2(-tmp[fold_change]))
+        tmp[fold_change][tmp[fold_change] > 0] = np.log2(
+                tmp[fold_change][tmp[fold_change] > 0])
+        tmp[fold_change][tmp[fold_change] < 0] = -np.log2(
+            -tmp[fold_change][tmp[fold_change] < 0])
         # tmp.loc[tmp[fold_change] >= 0, fold_change] = np.log2(tmp[tmp[fold_change] >= 0]][fold_change])
         # tmp.loc[tmp[fold_change] < 0, fold_change] = np.log2(tmp[tmp[fold_change] < 0]][fold_change])
         # Visual example of volcano plot
@@ -864,6 +752,7 @@ class ExperimentalData:
         -------
 
         """
+        print(exp_date_type, self.exp_methods)
         if exp_date_type not in self.exp_methods:
             print("Must provide experimental method for volcano plot")
             quit()
@@ -873,16 +762,20 @@ class ExperimentalData:
         data = data.dropna(subset=[fold_change])
         tmp = np.array(data[fold_change])
 
-        tmp = np.where(tmp > 0, np.log2(tmp), -np.log2(-tmp))
+        # tmp = np.where(tmp > 0, np.log2(tmp), -np.log2(-tmp))
+
+        tmp[tmp > 0] = np.log2(tmp[tmp > 0])
+        tmp[tmp < 0] = -np.log2(-tmp[tmp < 0])
+
         fig = plt.figure()
         ax = fig.add_subplot(111)
         ax.hist(tmp, 50, color='gray')
         if y_range is not None:
             plt.xlim(y_range[0], y_range[1])
 
-        ax.yscale('log', base=10)
-        ax.ylabel('Count', fontsize=16)
-        ax.xlabel('log$_2$ Fold Change', fontsize=16)
+        ax.set_yscale('log', base=10)
+        ax.set_ylabel('Count', fontsize=16)
+        ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
         self._save_plot(fig, save_name, out_dir)
 
 

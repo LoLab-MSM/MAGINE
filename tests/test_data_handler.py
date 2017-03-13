@@ -19,44 +19,16 @@ def test_time_series_volcano():
 
 
 def test_plot_list():
-    l = ['ADORA1', 'PARP1', 'BAX']
-    x = list(exp_data.list_proteins)
-    processes = []
-    import time
-    st = time.time()
-    for i in x:
-        # p = mp.Process(target=exp_data.plot_list_of_genes,
-        #                args=(list(x), i, 'proteins', i, False, True))
-        processes.append((list(x), 'out', 'proteins', i, False, True))
-        # processes.append(p)
-        # p.start()
-        # exp_data.plot_list_of_genes(list_of_genes=list(x), save_name=i,
-        #                             out_dir='proteins', title=i,
-        #                             plot_all_x=False, log_scale=False)
-    # [x.start() for x in processes]
-    # """
-    pool = mp.Pool(4)
-    # for task in processes:
-    #     pool.apply(exp_data.plot_list_of_genes, args=(task,))
-    pool.map(exp_data.plot_list_of_genes, processes)
-    pool.close()
-    pool.join()
-    # """
-    print(time.time() - st)
-
+    # x = list(exp_data.list_proteins)
+    x = ['CAV1', 'SRSF5', 'H2AFV', 'TPR', 'HIST1H2AA', 'GPRC5A']
+    exp_data.plot_list_of_genes(x, 'del_test', 'DELETE', 'test')
 
 def test_html_output():
     exp_data.plot_all_proteins()
 
 
-def test_plot_list_of_species():
-    species = ['CAV1', 'GPRC5A', 'HIST1H3A']
-    # species = exp_data.list_proteins[:10]
-    print(species)
-
-    exp_data.plot_list_of_genes_plotly(species, save_name='test2', out_dir='.')
-
 
 if __name__ == '__main__':
-
-    test_plot_list_of_species()
+    # test_plot_list()
+    test_table()
+    # test_plot_list_of_species()
