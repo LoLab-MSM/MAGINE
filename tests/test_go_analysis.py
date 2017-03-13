@@ -1,3 +1,7 @@
+import sys
+
+sys.path.append(".")
+
 from magine.ontology.ontology_analysis import GoAnalysis
 from sample_experimental_data import exp_data
 
@@ -9,7 +13,7 @@ def test_html():
 
     df = go.create_enrichment_array(exp_data.proteomics_up_over_time,
                                     exp_data.timepoints,
-                                    save_name='test_enrichment_array')
+                                    )
     quit()
     go.write_table_to_html(save_name='index')
 
