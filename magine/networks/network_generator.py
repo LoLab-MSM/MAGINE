@@ -149,7 +149,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     end_network = nx.relabel_nodes(end_network, drug_dict)
     end_network = mapper.convert_all(end_network, species=species)
     if all_measured_list is not None:
-        add_reactome(end_network, all_measured_list)
+        end_network = add_reactome(end_network, all_measured_list)
     delete_disconnected_network(end_network)
     print('Number of edges', len(end_network.edges()))
     print('Number of nodes', len(end_network.nodes()))
