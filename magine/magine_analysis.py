@@ -3,6 +3,7 @@ import warnings
 
 import networkx as nx
 import pandas as pd
+from magine.html_templates.html_tools import write_table_to_html_with_figures
 
 from magine.html_templates.html_tools import write_single_table
 from magine.networks.cytoscape_view import RenderModel
@@ -111,7 +112,7 @@ class Analyzer:
 
         print("Creating enrichment array")
         enrich_array = self.go.create_enrichment_array(data, labels=labels)
-
+        # enrich_array = None
         save_name = '_'.join([self.save_name, data_type, fold_change])
         filename = '<a href="{}.html">link</a>'.format(
                 self.out_dir + '/' + save_name)
@@ -121,10 +122,9 @@ class Analyzer:
                      'save_name':  save_name
                      }
         if save:
-            print("Saving enrichment array to {}".format(save_name))
-            enrich_array.to_csv(
-                '{0}_all_data.csv'.format(save_name), index=False
-                )
+            print("Saving enrischment array to {}".format(save_name))
+            enrich_array.to_csv('{0}_all_data.csv'.format(save_name),
+                                index=False)
         return enrich_array, html_dict
 
 
@@ -139,6 +139,7 @@ class Analyzer:
         list_of_go_dict = []
 
         for i in ['up', 'down', 'both']:
+            # for i in ['up']:
             e_array, att_dict = self.run_single_go(data_type='proteomics',
                                                    fold_change=i)
             list_of_go_dict.append(att_dict)
@@ -150,12 +151,16 @@ class Analyzer:
         return list_of_go_dict
 
     def run_go_and_create_html(self, html_name):
+
         list_of_go_dict = self.run_proteomics_go()
         for i in list_of_go_dict:
             file_name = '{}_all_data.csv'.format(i['save_name'])
-            save_name = "{}".format(i['DataType'], i['FoldChange'])
-            self.go.create_gene_plots_per_go(file_name)
-            self.create_selected_go_network(file_name, save_name)
+            save_name = "{}_{}_{}".format(self.save_name, i['DataType'],
+                                          i['FoldChange'])
+
+            write_table_to_html_with_figures(file_name, self.exp_data,
+                                             save_name, out_dir=self.out_dir)
+            # self.create_selected_go_network(file_name, save_name)
 
         df = pd.DataFrame(list_of_go_dict)
         df.drop('save_name', axis=1, inplace=True)

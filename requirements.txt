@@ -5,6 +5,9 @@ requests
 py2cytoscape
 orange-bioinformatics==2.6.19
 graphviz
+pandas
+xlrd
+matplotlib-venn
 bioservices
 pathos
 goatools
