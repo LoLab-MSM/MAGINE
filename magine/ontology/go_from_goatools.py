@@ -49,4 +49,4 @@ def load_termcount():
     associations = {key: value for key, value in associations.items()
                     if value is not to_remove}
     termcounts = TermCounts(go, associations)
-    return termcounts
+    return termcounts, associations
