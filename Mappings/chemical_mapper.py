@@ -5,7 +5,7 @@ except:  # python3 doesnt have cPickle
 import os
 
 import pandas as pd
-
+from ast import literal_eval
 directory = os.path.dirname(__file__)
 
 
@@ -14,11 +14,12 @@ class ChemicalMapper(object):
     converts chemical species
     Datbase was creating by pulling down everything from HMDB
     """
-    __slots__ = ('database', 'hmdb_accession_to_chemical_name',
-                 'chemical_name_to_hmdb_accession', 'hmdb_accession_to_kegg',
-                 'kegg_to_hmdb_accession', 'hmdb_accession_to_protein',
-                 'synonyms_to_hmdb', '__dict__'
-                 )
+
+    # __slots__ = ('database', 'hmdb_accession_to_chemical_name',
+    #              'chemical_name_to_hmdb_accession', 'hmdb_accession_to_kegg',
+    #              'kegg_to_hmdb_accession', 'hmdb_accession_to_protein',
+    #              'synonyms_to_hmdb', '__dict__', 'filename'
+    #              )
 
     def __init__(self):
         self.database = None
@@ -30,6 +31,9 @@ class ChemicalMapper(object):
         self.synonyms_to_hmdb = {}
         try:
             self.reload()
+            filename = os.path.join(directory, 'HMDB_processing',
+                                    'hmdb_dataframe.csv.gz')
+            self.database = pd.read_csv(filename)
             print('Loading class data')
         except:
             print('Initializing Chemical mapping')
@@ -83,8 +87,11 @@ class ChemicalMapper(object):
         """
         for index, row in self.database.iterrows():
             each = row.synonyms
-            if type(each) == list:
+            if each.startswith("['"):
+                each = literal_eval(each)
+            if isinstance(each, list):
                 if term in each:
+                    print(each)
                     return self.database.iloc[index][format_name]
         return None
 
@@ -123,27 +130,12 @@ class ChemicalMapper(object):
 
 
 if __name__ == '__main__':
-    import timeit
 
-    # cm = ChemicalMapper()
-    x = timeit.timeit(ChemicalMapper().load)
-    print(x)
-    quit()
     cm = ChemicalMapper()
+    cm.load()
 
     count = 0
-    # for k, v in cm.database.groupby('accession')['protein_associations']:
-    #     v= v.tolist()[0]
-    #     print(1, v,len(v))
-    #     v = v.strip("[]").replace(' ', '').replace('\'', '').split(',')
-    #     print(2, v, len(v))
-    #     print(k,':',v, len(v))
-    # if count == 3:
-    #     quit()
-    # count+=1
 
-    # cm.print_info()
-    # print(cm.hmdb_accession_to_kegg.keys())
     print('HMDB43286', cm.hmdb_accession_to_protein['HMDB43286'])
     quit()
     print(cm.hmdb_accession_to_kegg['HMDB06070'])

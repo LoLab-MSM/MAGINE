@@ -6,18 +6,20 @@ import os
 import tempfile
 import xml.etree.cElementTree as ElementTree
 import zipfile
-
 import numpy as np
 import pandas as pd
 import requests
+import sys
 
-from Mappings.xml_to_dictionary import XmlDictConfig, XmlListConfig
+from xml_to_dictionary import XmlDictConfig, XmlListConfig
 
 directory = os.path.dirname(__file__)
 
 categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id',
               'biocyc_id', 'synonyms', 'pubchem_compound_id',
               'protein_associations', 'inchikey', 'iupac_name',
+              'ontology'
+              # 'cellular_location', 'biofunction', 'molecular_framework'
               # 'secondary_accessions',
 
               # 'normal_concentrations','chemical_formula', 'smiles',
@@ -25,13 +27,15 @@ categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id',
               # 'pathways', 'metlin_id',
               ]
 
-class HMDB:
+
+class HMDB(object):
     """ Downloads and processes HMDB metabolites database
 
     """
 
     def __init__(self):
         self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_dir = 'C:\Users\James Pino\AppData\Local\Temp\\tmpnq_qpf'
         self.out_dir = directory
         self.target_file = 'hmdb_metabolites.zip'
 
@@ -99,58 +103,105 @@ class HMDB:
         print("Parsing metabolites information from files")
         tmp_all = []
         for i in os.listdir(out_dir):
-            if i.startswith('H'):
+            print(i)
+            # if i.startswith('H'):
                 # if count > 100:
                 #     continue
-                count += 1
-                filename = os.path.join(out_dir, i)
-                tree = ElementTree.parse(filename)
-                xmldict = XmlDictConfig(tree.getroot())
-                tmp = []
-                for cat in categories:
-                    info = xmldict[cat]
-                    if cat == 'protein_associations':
-                        tmp_list = []
-                        if type(info) == str:
+            count += 1
+            filename = os.path.join(out_dir, i)
 
-                            tmp.append([])
-                        else:
-                            if type(info['protein']) == XmlDictConfig:
-                                tmp_list.append(info['protein']['gene_name'])
+            # get an iterable
+            context = ElementTree.iterparse(filename, events=("start", "end"))
 
-                            elif type(info['protein']) == XmlListConfig:
-                                for ii in info['protein']:
-                                    tmp_list.append(ii['gene_name'])
-                            tmp.append(tmp_list)
-                    elif cat == 'synonyms':
-                        tmp_list = []
-                        if type(info) == str:
-                            tmp.append([])
-                            continue
-                        else:
-                            if type(info['synonym']) == str:
-                                tmp_list.append(info['synonym'])
-                            else:
-                                for each in info['synonym']:
-                                    tmp_list.append(each)
-                        tmp.append(tmp_list)
-                    else:
-                        if info is None:
-                            tmp.append([])
-                        else:
-                            tmp.append(info.encode('ascii', 'ignore'))
-                tmp_all.append(tmp)
+            # turn it into an iterator
+            context = iter(context)
+
+            # get the root element
+            event, root = context.next()
+            for event, elem in context:
+                if '}' in elem.tag:
+                    elem.tag = elem.tag.split('}', 1)[1]
+                if elem.tag == 'metabolite' and event == 'end':
+                    xmldict = XmlDictConfig(elem)
+
+                    count += 1
+                    # if count> 100:
+                    #     print tmp_all
+                    #     import pandas as pd
+                    #     df = pd.DataFrame(tmp_all)
+                    #     print(df.head(10))
+                    #     print(df.dtypes)
+                    #     quit()
+                    template = {}
+                    for i in categories:
+                        check_and_add_to_dict(i, reference_dict=xmldict,
+                                              template_dict=template)
+                    # for i in template:
+                    #     print(i, template[i])
+
+                    tmp_all.append(template)
         df = pd.DataFrame(tmp_all, columns=categories)
+        print(df.dtypes)
         df.to_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'),
                   compression='gzip', index=False)
+        df.to_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv'),
+                  index=False)
         print("Done processing HMDB")
 
     def load_db(self):
         df = pd.read_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'))
         return df
+
+
+def check_and_add_to_dict(key, reference_dict, template_dict):
+    if key in reference_dict:
+        if isinstance(reference_dict[key], str):
+            template_dict[key] = reference_dict[key].encode('ascii', 'ignore')
+        elif key == 'protein_associations':
+            tmp_list = []
+            ref_2 = reference_dict[key]
+            if isinstance(ref_2, dict):
+                if 'protein' in ref_2:
+                    ref_3 = ref_2['protein']
+                    if isinstance(ref_3, XmlListConfig):
+                        for i in ref_3:
+                            if 'gene_name' in i:
+                                tmp_list.append(i['gene_name'])
+                    elif isinstance(ref_3, XmlDictConfig):
+                        tmp_list.append(ref_3['gene_name'])
+            template_dict[key] = tmp_list
+        elif key == 'synonyms':
+            ref_2 = reference_dict[key]
+            if 'synonym' in ref_2:
+                template_dict[key] = ref_2['synonym']
+            else:
+                print(ref_2)
+        elif key == 'ontology':
+            ref_2 = reference_dict[key]
+            if 'biofunctions' in ref_2:
+                ref_3 = ref_2['biofunctions']
+                if isinstance(ref_3, str):
+                    pass
+                if isinstance(ref_3, dict):
+                    biofunction = ref_3['biofunction']
+                    if isinstance(biofunction, str):
+                        template_dict['biofunction'] = biofunction.encode(
+                                'ascii', 'ignore')
+                    elif isinstance(biofunction, XmlListConfig):
+                        template_dict['biofunction'] = list(biofunction)
+                    if 'cellular_locations' in ref_2:
+                        ref_3 = ref_2['cellular_locations']
+                        if 'cellular_location' in ref_3:
+                            template_dict['cellular_location'] = ref_3[
+                                'cellular_location']
+        elif isinstance(reference_dict[key], dict):
+            print("{} is of type {}".format(key, type(reference_dict[key])))
+    else:
+        template_dict[key] = None
 if __name__ == '__main__':
+
     hm = HMDB()
-    hm.download_hmdb()
+    # hm.download_hmdb()
     hm.parse_hmdb()
     df = hm.load_db()
     print(df.head(10))
