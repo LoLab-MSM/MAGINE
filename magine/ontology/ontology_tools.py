@@ -13,8 +13,9 @@ try:
 except:
     from magine.ontology.go_from_goatools import load_termcount
     print("Loading termcounts")
-    termcounts = load_termcount()
+    termcounts, associations = load_termcount()
     print("Loaded termcounts")
+
 
 def path_to_root(go_term):
     """
@@ -198,14 +199,14 @@ def check_term_list(list_of_terms):
             print(i, j, dca, go[i].depth, go[j].depth, go[dca].depth)
             print(go[i].name, go[j].name, go[dca].name, sim, sim2)
             print('-' * 20)
-                # else:
+            # else:
             # I was thinking I could compare IC for regulators,
             # but it doesn't really provide much
-                # ic_i = ic(i, termcounts)
-                # ic_j = ic(j, termcounts)
-                # print("GO\t\t{}\t\t{}".format(go[i].name, go[j].name))
+            # ic_i = ic(i, termcounts)
+            # ic_j = ic(j, termcounts)
+            # print("GO\t\t{}\t\t{}".format(go[i].name, go[j].name))
             #
-                # print("Score = {}\n".format(sim2))
+            # print("Score = {}\n".format(sim2))
             # if go[dca].depth > 3:
             #     print("Depth\t{}\t\t\t{}".format(go[i].depth, go[j].depth))
             #     print("DCA\tID\tDepth\tIC")
@@ -421,3 +422,29 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         data = data[data['GO_id'].isin(list_all_go)]
 
     return data
+
+
+def get_go_compartments():
+    nuc = 'GO:0005634'
+    cyt = 'GO:0005737'
+    pm = 'GO:0005886'
+    nuc_set = set()
+    pm_set = set()
+    cyt_set = set()
+    for i in associations:
+        l_ass = associations[i]
+        if nuc in l_ass:
+            nuc_set.add(i)
+        if cyt in l_ass:
+            cyt_set.add(i)
+        if pm in l_ass:
+            pm_set.add(i)
+    print(len(nuc_set))
+    print(len(cyt_set))
+    print(len(nuc_set.intersection(cyt_set)))
+    from magine.plotting.venn_diagram_maker import create_venn3
+    create_venn3(nuc_set, cyt_set, pm_set, 'Nuclear', 'Cyto', 'PlasmaMembrane',
+                 'go_overlap')
+
+
+get_go_compartments()

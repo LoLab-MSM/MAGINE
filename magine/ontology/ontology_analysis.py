@@ -2,24 +2,25 @@
 GO analysis function using orange bioinformatics
 """
 import os
-import time
-
 import numpy as np
 import pandas as pd
-import pathos.multiprocessing as mp
 from orangecontrib.bio import go
 
 from magine.html_templates.html_tools import write_single_table
-from magine.plotting.heatmaps import plot_heatmap, plot_heatmap_cluster
-
 from magine.ontology.go_from_goatools import go as goa_tools
+import warnings
+from orangecontrib.bio.go import evidenceDict
+from statsmodels.sandbox.stats.multicomp import fdrcorrection0
+from statsmodels.stats.proportion import binom_test
+from collections import defaultdict
+
 
 pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
 
 
-class GoAnalysis:
+class GoAnalysis(object):
     """
     Go analysis class.
     Uses the orangecontrib.bio package
@@ -35,7 +36,6 @@ class GoAnalysis:
         self.out_dir = output_directory
         self.ontology = go.Ontology()
         self.annotations = go.Annotations(species, ontology=self.ontology)
-
         self.reference = reference
         self.verbose = verbose
 
@@ -78,15 +78,11 @@ class GoAnalysis:
                     for n in split_name:
                         if n in self.gene_annotations:
                             genes_present.add(n)
-        number_of_genes = len(genes_present)
+        n_genes = len(genes_present)
         print("Number of genes given = {0}."
-              " Number of genes in GO = {1}".format(len(gene_list),
-                                                    number_of_genes))
+              " Number of genes in GO = {1}".format(len(gene_list), n_genes))
 
-        res = self.annotations.get_enriched_terms(genes_present,
-                                                  aspect=['F', 'P', 'C'],
-                                                  # evidence_codes=evidence_codes,
-                                                  reference=self.reference)
+        res = self.calculate_enrichment(genes_present, aspect=['F', 'P', 'C'])
 
         n = 0
         column_names = dict(GO_id=None, enrichment_score=None, pvalue=None,
@@ -97,7 +93,7 @@ class GoAnalysis:
             n += 1
             go_row = column_names.copy()
 
-            expected_value = number_of_genes * float(
+            expected_value = n_genes * float(
                     ref) / self.number_of_total_reference_genes
             enrichment = float(len(genes)) / expected_value
             score = enrichment
@@ -143,9 +139,9 @@ class GoAnalysis:
         assert self.num_data_sets != 0, "Must provide at least one data list"
 
         if isinstance(labels, list):
-            assert (len(labels) == self.num_data_sets,
-                    "If you provide a list, must be the same length"
-                    " as list_of_exp", AttributeError)
+            assert len(labels) == self.num_data_sets, \
+                "If you provide a list, must be the same length" \
+                " as list_of_exp"
 
         if labels is None:
             labels = range(0, self.num_data_sets)
@@ -179,111 +175,6 @@ class GoAnalysis:
         self.data = results
         return results
 
-    def create_gene_plots_per_go(self, data=None):
-        """ Creates a figure for each GO term in data
-
-        Data should be a result of running create_enrichment_array.
-        This function creates a plot of all proteins per term if a term is
-        significant and the number of the reference set is larger than 5 and
-        the total number of species measured is less than 50.
-
-
-
-        Parameters
-        ----------
-        data : pandas.DataFrame, optional
-            previously ran enrichment analysis
-
-        Returns
-        -------
-        out_array : dict
-            dict where keys are pointers to figure locations
-        """
-
-        if data is None and self.data is None:
-            print("Array is empty. This could be due to no significant species"
-                  "provided in list or because analysis has not been run yet.")
-            return
-
-        elif data is None:
-            data = self.data.copy()
-        elif isinstance(data, str):
-            data = pd.read_csv(data)
-        # get list of all terms
-        list_of_go_terms = data['GO_id'].unique()
-
-        # filter data by significance and number of references
-        data = data[data['ref'] >= 5]
-        data = data[data['pvalue'] < 0.05]
-
-        # create filtered list of species
-        list_of_sig_go = data['GO_id'].unique()
-
-        # here we are going to iterate through all sig GO terms and create
-        # a list of plots to create. For the HTML side, we need to point to
-        # a location
-        figure_locations = {}
-        plots_to_create = []
-        # create plot of genes over time
-        for n, i in enumerate(list_of_go_terms):
-
-            # want to plot all species over time
-            index = data['GO_id'] == i
-            name = data[index]['GO_name'].unique()
-            if len(name) > 0:
-                name = name[0]
-            # want to only plot significant species
-            if i not in list_of_sig_go:
-                figure_locations[i] = '<a>{0}</a>'.format(name)
-                continue
-
-            gene_set = set()
-            genes = data[index]['genes']
-            for g in genes:
-                for j in g:
-                    gene_set.add(j)
-
-            # too many genes isn't helpful on plots, so skip them
-            if len(gene_set) > 50:
-                figure_locations[i] = '<a>{0}</a>'.format(name)
-                continue
-
-            save_name = '{0}/Figures/go_{1}_{2}'.format(self.out_dir, i,
-                                                        self.savename)
-            save_name = save_name.replace(':', '')
-            title = "{0} : {1}".format(str(i), name)
-
-            plots_to_create.append(
-                    (list(gene_set), save_name, '.', title, True, True))
-            out_point = '<a href="Figures/go_{0}_{1}.pdf">{2} ({0})</a>'
-            out_point = out_point.format(i, self.savename, name).replace(':',
-                                                                         '')
-            figure_locations[i] = out_point
-
-        print("Starting to create plots for each GO term")
-        # just keeping this code just in case using pathos is a bad idea
-        # ultimately, using matplotlib is slow.
-        run_seq = False
-        run_par = True
-        if run_seq:
-            st1 = time.time()
-            for i in plots_to_create:
-                self.exp_data.plot_list_of_genes(i)
-            end1 = time.time()
-            print("sequential time = {}".format(end1 - st1))
-
-        if run_par:
-            st2 = time.time()
-            pool = mp.Pool(8)
-            pool.map(self.exp_data.plot_list_of_genes, plots_to_create)
-            pool.close()
-            pool.join()
-            end2 = time.time()
-            print("parallel time = {}".format(end2 - st2))
-        print("Done creating plots for each GO term")
-
-        return figure_locations
-
     def write_table_to_html(self, data=None, save_name='index'):
         # create plots of everything
 
@@ -294,8 +185,11 @@ class GoAnalysis:
 
         if data is None:
             data = self.data.copy()
-
-        fig_dict = self.create_gene_plots_per_go()
+        elif isinstance(data, str):
+            data = pd.read_csv(data)
+        from magine.plotting.species_plotting import create_gene_plots_per_go
+        fig_dict = create_gene_plots_per_go(data, self.savename, self.out_dir,
+                                            self.exp_data)
 
         for i in fig_dict:
             data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
@@ -306,11 +200,98 @@ class GoAnalysis:
                              columns='sample_index')
 
         html_out = os.path.join(self.out_dir, save_name)
+        print("Saving to : {}".format(html_out))
         write_single_table(tmp, html_out, 'MAGINE GO analysis')
+
+    def calculate_enrichment(self, genes, reference=None, evi_codes=None,
+                             aspect=None, use_fdr=True, ):
+        rev_genes_dict = self.annotations.get_gene_names_translator(genes)
+        genes = set(rev_genes_dict.keys())
+        if reference:
+            ref_genes_dict = self.annotations.get_gene_names_translator(
+                    reference)
+            reference = set(ref_genes_dict.keys())
+        else:
+            reference = self.annotations.gene_names
+
+        if aspect is None:
+            aspects_set = set(["P", "C", "F"])
+        elif isinstance(aspect, basestring):
+            aspects_set = set([aspect])
+        else:
+            aspects_set = aspect
+
+        evi_codes = set(evi_codes or evidenceDict.keys())
+
+        annotations_dict = defaultdict(set)
+        # for gene in genes:
+        #     print("Gene = {}".format(gene))
+        #     for ann in self.annotations.gene_annotations[gene]:
+        #
+        #         if ann.Evidence_Code in evi_codes and ann.Aspect in aspects_set:
+        #             annotations_dict[ann.GO_ID].add(ann)
+        #     print(annotations_dict)
+        #     print(len(annotations_dict))
+        #
+        #     quit()
+        ref_annotations = set([ann for gene in reference for ann in
+                               self.annotations.gene_annotations[gene] if
+                               ann.Evidence_Code in evi_codes and ann.Aspect in aspects_set])
+
+        terms = annotations_dict.keys()
+        filtered_terms = [term for term in terms if
+                          term in self.annotations.ontology]
+
+        if len(terms) != len(filtered_terms):
+            term_diff = set(terms) - set(filtered_terms)
+            warnings.warn(
+                    "%s terms in the annotations were not found in the "
+                    "ontology." % ",".join(map(repr, term_diff)),
+                    UserWarning)
+
+        terms = self.annotations.ontology.extract_super_graph(filtered_terms)
+        n_genes = len(genes)
+        n_ref = float(len(reference))
+
+        res = {}
+        for i, term in enumerate(terms):
+            # all_annotated_genes = self.annotations.get_all_genes(term)
+            # 46 % of time is all_annotations
+            all_annotations = self.annotations.get_all_annotations(
+                term).intersection(ref_annotations)
+            # 39.1 % of time is all_annotated_genes
+            all_annotated_genes = set(
+                    [ann.geneName for ann in all_annotations])
+
+            mapped_genes = genes.intersection(all_annotated_genes)
+            n_mapped_genes = len(mapped_genes)
+            if len(reference) > len(all_annotated_genes):
+                mapped_reference_genes = reference.intersection(
+                        all_annotated_genes)
+            else:
+                mapped_reference_genes = all_annotated_genes.intersection(
+                        reference)
+            n_mapped_ref = len(mapped_reference_genes)
+            prob = float(n_mapped_ref) / n_ref
+
+            p_value = binom_test(n_mapped_genes, n_genes, prob, 'larger')
+
+            res[term] = ([rev_genes_dict[g] for g in mapped_genes],
+                         p_value, n_mapped_ref)
+        if use_fdr:
+            res = sorted(res.items(), key=lambda x: x[1][1])
+            fdr = fdrcorrection0([p for _, (_, p, _) in res],
+                                 is_sorted=True)
+            values = fdr[1]
+            res = dict([(index, (genes, p, ref))
+                        for (index, (genes, _, ref)), p in
+                        zip(res, values)])
+
+        return res
 
     # TODO remove and replace with updated heatplots
     def create_heatmaps(self, labels, savename):
-
+        from magine.plotting.heatmaps import plot_heatmap, plot_heatmap_cluster
         # depracated
         data = self.data
         names, array = self.sort_by_hierarchy(data)
@@ -364,6 +345,7 @@ class GoAnalysis:
         -------
 
         """
+        from magine.plotting.heatmaps import plot_heatmap
         html_pages = []
         self.html_pdfs2 = []
         self.top_hits = []
