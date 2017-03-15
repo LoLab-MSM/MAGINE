@@ -122,8 +122,7 @@ def process_metabolites(data):
     data = data.drop_duplicates(subset=['compound_id'])
     names = data.apply(merge_metabolite_row, axis=1)
     data['name'] = names
-    idx = data.groupby(['compound'])['score'].transform(max) == data[
-        'score']
+    idx = data.groupby(['compound'])['score'].transform(max) == data['score']
 
     data.loc[:, 'top_score'] = False
     data.loc[idx, 'top_score'] = True
@@ -251,9 +250,23 @@ def check_data(data, keyword):
     return data
 
 
+def load_metabolite_dir(dirname):
+    cols = ['compound', 'compound_id', 'name', 'formula',
+            'score', 'top_score', 'treated_control_fold_change',
+            'p_value_group_1_and_group_2', 'significant_flag', 'data_type',
+            'time', 'time_points', 'species_type'
+            # 'origin_endogenous', 'origin_food',
+            # 'origin_drug', 'description_food', 'description_drug',
+            ]
+
+    return load_directory(dirname)[cols]
+
+
+
 def load_label_free(directory):
     data = load_directory(dir_name=directory)
     label_free = process_label_free(data)
+    return label_free
 
 
 def process_label_free(data):
@@ -316,15 +329,23 @@ def _process_phsilac(data):
     for i, row in mod_sites.iterrows():
         seq = row['modified_sequence'].strip('_')
         aa = row['phosphorylated_amino_acid']
+        loc = row['modified_seq_location']
+
         if aa == 'nan':
-            protein_names.append('_phsilac')
+            reg = '_'.join(loc.split(','))
+            reg = reg.replace(' ', '')
+
+            out_string = ''
+            for word in ['(ca)', '(ox)']:
+                if word in seq:
+                    out_string += '_' + word
+            protein_names.append("{}_{}_phsilac".format(out_string, reg))
             continue
         aa = aa.split(',')
-        loc = row['modified_seq_location']
-        if loc == 'NA, NA':
-            protein_names.append('_phsilac')
-            continue
 
+        if loc == 'NA, NA':
+            protein_names.append("_{}_phsilac".format(seq))
+            continue
         start_loc = int(loc.split(',')[0])
         s = '_'
         for word in ['(ca)', '(ox)']:
