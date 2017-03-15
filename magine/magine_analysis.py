@@ -11,7 +11,7 @@ from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.ontology.ontology_analysis import GoAnalysis
 
 
-class Analyzer:
+class Analyzer(object):
     """
     MAGINE analyzer
     Class to perform entire MAGINE pipeline.
@@ -39,13 +39,13 @@ class Analyzer:
                 warnings.warn("Warning : Passing build_network=True "
                               "and a network file! ", RuntimeWarning)
             self.generate_network(save_name)
-        elif network is not None:
-            self.network = network
-            self.go_net_gen = None
-        if self.network is not None:
-
             self.go_net_gen = GoNetworkGenerator(self.species, self.network,
                                                  self.out_dir)
+        elif network is not None:
+            self.network = network
+            self.go_net_gen = GoNetworkGenerator(self.species, self.network,
+                                                 self.out_dir)
+
         self.html_names = []
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
@@ -72,9 +72,8 @@ class Analyzer:
         self.network = build_network(proteins, num_overlap=1,
                                      save_name=save_name, species=self.species)
 
-    def run_single_go(
-            self, data_type='proteomics', fold_change='up', save=True
-            ):
+    def run_single_go(self, data_type='proteomics', fold_change='up',
+                      save=True):
         """
         Runs enrichment analysis
         Parameters
@@ -122,11 +121,10 @@ class Analyzer:
                      'save_name':  save_name
                      }
         if save:
-            print("Saving enrischment array to {}".format(save_name))
+            print("Saving enrichment array to {}".format(save_name))
             enrich_array.to_csv('{0}_all_data.csv'.format(save_name),
                                 index=False)
         return enrich_array, html_dict
-
 
     def run_proteomics_go(self):
         """
@@ -160,7 +158,8 @@ class Analyzer:
 
             write_table_to_html_with_figures(file_name, self.exp_data,
                                              save_name, out_dir=self.out_dir)
-            # self.create_selected_go_network(file_name, save_name)
+            self.create_selected_go_network(file_name, save_name,
+                                            visualize=True)
 
         df = pd.DataFrame(list_of_go_dict)
         df.drop('save_name', axis=1, inplace=True)
@@ -187,10 +186,11 @@ class Analyzer:
         """
 
         if self.go_net_gen is None:
-            warnings.warn("Warning : You must provide Analyzer with a network "
-                          "or pass the build_network flag"
-                          "or generate a network in order to generate"
-                          " a go network", RuntimeError)
+            warnings.warn("Warning : A molecular network is required to "
+                          "generate a GO level network!.\n"
+                          "You must provide Analyzer with a network "
+                          "or pass the build_network flag", RuntimeWarning)
+            quit()
 
         from magine.ontology.ontology_tools import filter_ontology_df
 
@@ -227,10 +227,11 @@ class Analyzer:
         """
 
         if self.go_net_gen is None:
-            warnings.warn("Warning : You must provide Analyzer with a network "
-                          "or pass the build_network flag"
-                          "or generate a network in order to generate"
-                          " a go network", RuntimeError)
+            warnings.warn("Warning : A molecular network is required to "
+                          "generate a GO level network!.\n"
+                          "You must provide Analyzer with a network "
+                          "or pass the build_network flag", RuntimeWarning)
+            quit()
 
         data = pd.read_csv(file_name)
         data = data[data['GO_id'].isin(go_ids)]

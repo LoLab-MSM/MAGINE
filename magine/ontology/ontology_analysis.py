@@ -83,6 +83,10 @@ class GoAnalysis(object):
               " Number of genes in GO = {1}".format(len(gene_list), n_genes))
 
         res = self.calculate_enrichment(genes_present, aspect=['F', 'P', 'C'])
+        # res = self.calculate_enrichment(genes_present, aspect=['P'])
+
+        # res = self.annotations.get_enriched_terms(genes_present, aspect=['P'])
+        # res = self.annotations.get_enriched_terms(genes_present, aspect=['F', 'P', 'C'])
 
         n = 0
         column_names = dict(GO_id=None, enrichment_score=None, pvalue=None,
@@ -216,7 +220,7 @@ class GoAnalysis(object):
 
         if aspect is None:
             aspects_set = set(["P", "C", "F"])
-        elif isinstance(aspect, basestring):
+        elif isinstance(aspect, str):
             aspects_set = set([aspect])
         else:
             aspects_set = aspect
@@ -224,16 +228,10 @@ class GoAnalysis(object):
         evi_codes = set(evi_codes or evidenceDict.keys())
 
         annotations_dict = defaultdict(set)
-        # for gene in genes:
-        #     print("Gene = {}".format(gene))
-        #     for ann in self.annotations.gene_annotations[gene]:
-        #
-        #         if ann.Evidence_Code in evi_codes and ann.Aspect in aspects_set:
-        #             annotations_dict[ann.GO_ID].add(ann)
-        #     print(annotations_dict)
-        #     print(len(annotations_dict))
-        #
-        #     quit()
+        for gene in genes:
+            for ann in self.annotations.gene_annotations[gene]:
+                if ann.Evidence_Code in evi_codes and ann.Aspect in aspects_set:
+                    annotations_dict[ann.GO_ID].add(ann)
         ref_annotations = set([ann for gene in reference for ann in
                                self.annotations.gene_annotations[gene] if
                                ann.Evidence_Code in evi_codes and ann.Aspect in aspects_set])
