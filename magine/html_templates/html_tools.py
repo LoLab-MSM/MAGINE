@@ -11,8 +11,23 @@ def write_single_table(table, save_name, title):
     template = env.get_template('single_table_view.html')
     tmp_table = table.copy()
     tmp_table = tmp_table.fillna(0)
+
+    format_dict = {}
+    for i in tmp_table.columns:
+        if i[0] == 'enrichment_score':
+            format_dict[i] = '{:.2f}'.format
+        elif i[0] == 'pvalue':
+            format_dict[i] = '{:.2g}'.format
+        elif i[0] == 'n_genes':
+            format_dict[i] = '{:,d}'.format
+            tmp_table[i] = tmp_table[i].astype(int)
+    html_table = tmp_table.to_html(escape=False,
+                                   na_rep='-',
+                                   formatters=format_dict,
+                                   justify='left',
+                                   )
     template_vars = {"title":      title,
-                     "table_name": tmp_table.to_html(escape=False)
+                     "table_name": html_table
                      }
 
     html_out = template.render(template_vars)
