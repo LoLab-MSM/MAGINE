@@ -9,7 +9,7 @@ import networkx as nx
 import pandas as pd
 import pygraphviz as pyg
 
-from bioservices_local.reactome_changes import Reactome
+from magine.bioservices_local.reactome_changes import Reactome
 
 pd.set_option('expand_frame_repr', False)
 pd.set_option('display.width', 10000)
@@ -34,7 +34,6 @@ reaction
     Complex
         Protein, Chemical Compound
 """
-
 
 
 def shorten_compartment_name(string):
