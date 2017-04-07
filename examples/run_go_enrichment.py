@@ -29,3 +29,8 @@ sig_results = slim_ontology(results,
                             n_top_hits=10)
 sig_results.sort_values(by='enrichment_score', ascending=False, inplace=True)
 print(sig_results.head(10))
+
+
+# from magine.networks.network_generator import build_network
+
+# build_network(list_of_proteins, save_name='earm_species')
