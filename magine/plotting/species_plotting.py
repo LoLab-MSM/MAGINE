@@ -90,23 +90,21 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
         if len(gene_set) > 50:
             figure_locations[i] = '<a>{0}</a>'.format(name)
             continue
+        out_point = '<a href="Figures/go_{0}_{1}.html">{2} ({0})</a>'
+        out_point = out_point.format(i, save_name, name).replace(':', '')
+
+        figure_locations[i] = out_point
 
         local_save_name = '{0}/Figures/go_{1}_{2}'.format(out_dir, i,
                                                           save_name)
         local_save_name = local_save_name.replace(':', '')
         title = "{0} : {1}".format(str(i), name)
         local_df = exp_data.data[exp_data.data[gene].isin(list(gene_set))]
-        plots_to_create.append(
-                (local_df, list(gene_set), local_save_name, '.', title, True,
-                 True))
-        # out_point = '<a href="Figures/go_{0}_{1}.pdf">{2} ({0})</a>'
-        out_point = '<a href="Figures/go_{0}_{1}.html">{2} ({0})</a>'
-        out_point = out_point.format(i,
-                                     save_name,
-                                     name).replace(':', '')
-        figure_locations[i] = out_point
-    return figure_locations, to_remove
-    print(sys.getsizeof(plots_to_create))
+        p_input = (local_df, list(gene_set), local_save_name, '.', title,)
+        plots_to_create.append(p_input)
+
+    # return figure_locations, to_remove
+
     print("Starting to create plots for each GO term")
     # just keeping this code just in case using pathos is a bad idea
     # ultimately, using matplotlib is slow.
@@ -118,7 +116,6 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
     if run_seq:
         st1 = time.time()
         for i in plots_to_create:
-            # exp_data.plot_list_of_genes_plotly(i)
             plot_list_of_genes2(i)
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
@@ -126,7 +123,6 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
     if run_par:
         st2 = time.time()
         pool = mp.Pool(4)
-        # pool.map(exp_data.plot_list_of_genes, plots_to_create)
         pool.map(plot_list_of_genes2, plots_to_create)
         pool.close()
         pool.join()
@@ -139,9 +135,7 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
 
 # @profile
 def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
-                        out_dir='.',
-                        title=None, plot_all_x=False, log_scale=False,
-                        plot_type='plotly'):
+                        out_dir='.', title=None, plot_type='plotly'):
     """
 
     Parameters
@@ -154,9 +148,8 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         Path for output to be saved
     title: str
         Title of plot, useful when list of genes corresponds to a GO term
-    plot_all_x: bool
-        Used if data samples is of time. This ensures all plots have same
-        x axis.
+    plot_type : str
+        Use plotly to generate html output or matplotlib to generate pdf
 
     Returns
     -------
