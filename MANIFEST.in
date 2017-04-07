@@ -1,0 +1,2 @@
+include README.md
+include magine/html_templates/*.html
