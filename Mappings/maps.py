@@ -190,6 +190,8 @@ def create_compound_dictionary(network):
 
     """
     cm = ChemicalMapper()
+
+    cm.reload()
     cpd_to_hmdb = {}  # he
     still_unknown = []
     nodes = set(network.nodes())
