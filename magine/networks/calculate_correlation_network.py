@@ -1,7 +1,14 @@
+try:
+    import bottleneck as bn
+except ImportError:
+    print("Must install bottleneck to calculate correlation network")
+try:
+    from rpy2.robjects.packages import importr
+    from rpy2.robjects.vectors import FloatVector
+except ImportError:
+    print("Must install R and rpy2 to calculate correlation network")
 import time
 from itertools import combinations
-
-import bottleneck as bn
 import matplotlib.pyplot
 import multiprocessing as mp
 import numpy as np
@@ -11,8 +18,6 @@ import scipy.special as special
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numba import float64, jit
-from rpy2.robjects.packages import importr
-from rpy2.robjects.vectors import FloatVector
 from scipy.stats.stats import distributions
 
 matplotlib.use('Agg')
