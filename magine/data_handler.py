@@ -52,14 +52,16 @@ class ExperimentalData(object):
         self.exp_methods = list(self.data[exp_method].unique())
 
         self.metabolites = []
+        self.list_metabolites = []
+        self.list_sig_metabolites = []
+        self.metabolite_sign = []
+
         if metabolites in self.data[species_type].unique():
             self._set_up_metabolites()
         # return
         self.proteomics = raw_df[raw_df[species_type] == protein]
         self.proteomics = self.proteomics.dropna(subset=[gene])
-        self.list_metabolites = []
-        self.list_sig_metabolites = []
-        self.metabolite_sign = []
+
         self.exp_methods = self.data[exp_method].unique()
         self.timepoints = sorted(list(self.data[sample_id].unique()))
 
@@ -161,10 +163,12 @@ class ExperimentalData(object):
         """
         self.metabolites = self.data[self.data[species_type] == metabolites]
         self.metabolites = self.metabolites.dropna(subset=['compound'])
+        if 'compound_id' not in self.metabolites.dtypes:
+            self.metabolites['compound_id'] = self.metabolites['compound']
         self.metabolite_sign = self.metabolites[self.metabolites[flag]]
-        self.list_metabolites = list(self.metabolites['compound'].unique())
+        self.list_metabolites = list(self.metabolites['compound_id'].unique())
         self.list_sig_metabolites = list(
-                self.metabolite_sign['compound'].unique())
+                self.metabolite_sign['compound_id'].unique())
         self.exp_methods_metabolite = self.metabolites[exp_method].unique()
 
     def return_proteomics(self, sample_id_name=0.0, significant=False,
@@ -806,6 +810,8 @@ def _which(program):
     if fpath:
         if _is_exe(program):
             return program
+        elif _is_exe(program + '.exe'):
+            return program + '.exe'
     else:
         for path in os.environ["PATH"].split(os.pathsep):
             path = path.strip('"')
