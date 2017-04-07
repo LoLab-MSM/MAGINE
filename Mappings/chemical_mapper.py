@@ -15,12 +15,6 @@ class ChemicalMapper(object):
     Datbase was creating by pulling down everything from HMDB
     """
 
-    # __slots__ = ('database', 'hmdb_accession_to_chemical_name',
-    #              'chemical_name_to_hmdb_accession', 'hmdb_accession_to_kegg',
-    #              'kegg_to_hmdb_accession', 'hmdb_accession_to_protein',
-    #              'synonyms_to_hmdb', '__dict__', 'filename'
-    #              )
-
     def __init__(self):
         self.database = None
         self.hmdb_accession_to_chemical_name = {}
