@@ -1,4 +1,7 @@
 import os
+import matplotlib
+
+matplotlib.use('Agg')
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -6,7 +9,8 @@ import pandas as pd
 import scipy.cluster.hierarchy as sch
 
 
-def create_heatmaps_pvalue_xs(data, save_name, mark_pvalues=False):
+def create_heatmaps_pvalue_xs(data, save_name, x_labels=None,
+                              mark_pvalues=False, metric='enrichment_score'):
     """
 
     Parameters
@@ -15,27 +19,51 @@ def create_heatmaps_pvalue_xs(data, save_name, mark_pvalues=False):
         output from magine.ontology_analysis.create_enrichment_array
     save_name : str
         prefix of figure to save
-    mark_pvalues : bool, optionl, default=False
+    x_labels : list
+        list of labels for samples
+    mark_pvalues : bool, optional, default=False
         add * to heatplot of significantly enriched values
+    metric : str
+        metric to sort heatplot 
+        {'enrichment_score', 'pvalues"}
 
 
     Returns
     -------
 
     """
-
+    if isinstance(data, str):
+        data = pd.read_csv(data)
     labels = data['sample_index'].unique()
-    enrichment_list = [('enrichment_score', i) for i in labels]
+
+    enrichment_list = [(metric, i) for i in labels]
     # pivot the data to have it in form
     # GO_id vs (sample_index x ( each column))
+
     tmp = pd.pivot_table(data, index=['GO_id', 'GO_name'],
                          columns='sample_index', )
+    """
+    max_col = tmp[metric].sum(axis=0)
+    print(max_col)
+    max_col = max_col.max()
+    print(max_col)
 
-    # sort based on each column
-    tmp = tmp.sort_values(by=enrichment_list, ascending=False)
+    for i in enrichment_list:
+        print(max_col/tmp[i].sum(axis=0))
+        tmp[i] = tmp[i] *(max_col/tmp[i].sum(axis=0))
+    """
 
-    # turn into a matrix and fill nans with 0
-    enrichment_value = tmp['enrichment_score'].fillna(0).as_matrix()
+    # sort based on each column and
+    # turn into a matrix and fill nans with 0 or 1s
+    if metric == 'enrichment_score':
+        tmp = tmp.sort_values(by=enrichment_list, ascending=False)
+        enrichment_value = tmp['enrichment_score'].fillna(0).as_matrix()
+    elif metric == 'pvalue':
+        tmp = tmp.sort_values(by=enrichment_list, ascending=True)
+        enrichment_value = np.log10(tmp['pvalue'].fillna(1).as_matrix()) * -1
+    else:
+        print("Metric must be 'enrichment_score' or 'pvalue' ")
+        quit()
 
     # create a figure
     fig = plt.figure(figsize=(14, 7))
@@ -48,6 +76,7 @@ def create_heatmaps_pvalue_xs(data, save_name, mark_pvalues=False):
                )
     y_array = np.arange(0, len(tmp.index), 1)
     x_array = np.arange(0, len(labels), 1)
+
     if mark_pvalues:
         pvalue = tmp['pvalue'].fillna(1).as_matrix()
         # text portion
@@ -64,9 +93,12 @@ def create_heatmaps_pvalue_xs(data, save_name, mark_pvalues=False):
 
     ax1.tick_params(axis='both', direction='out')
     ax1.set_xticks(x_array)
-    ax1.set_xticklabels(labels, fontsize=16)
+    if x_labels is not None:
+        ax1.set_xticklabels(x_labels, fontsize=16)
+    else:
+        ax1.set_xticklabels(labels, fontsize=16)
 
-    if mark_pvalues is not None:
+    if mark_pvalues:
         ax1.set_yticks(y_array)
         ax1.set_yticklabels(tmp.index, fontsize=16)
     else:
@@ -83,7 +115,7 @@ def create_heatmaps_pvalue_xs(data, save_name, mark_pvalues=False):
 
 
 def plot_heatmap(enrichment_array, names_col, labels, global_go,
-                 start=0, stop=None, savename='tmp', out_dir='.'):
+                 start=0, stop=None, save_name='tmp', out_dir='.'):
     """
     General function to create a heatmap of enrichment array data
 
@@ -99,7 +131,7 @@ def plot_heatmap(enrichment_array, names_col, labels, global_go,
         starting index for size of array to be shown
     stop : int or None
         stopping index for size of array to be shown
-    savename : str
+    save_name : str
         name of figure to be saved as
 
     Returns
@@ -134,7 +166,7 @@ def plot_heatmap(enrichment_array, names_col, labels, global_go,
     else:
         print("Provide labels")
     plt.colorbar(im, fraction=0.046, pad=0.04)
-    plt.savefig(os.path.join(out_dir, 'Figures', '%s.pdf' % savename),
+    plt.savefig(os.path.join(out_dir, 'Figures', '%s.pdf' % save_name),
                 dpi=150, bbox_inches='tight')
     plt.close()
 
