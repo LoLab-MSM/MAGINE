@@ -362,17 +362,14 @@ def _process_phsilac(data):
     data['treated_control_fold_change'] = data['both_fold_change_mean']
 
     data['p_value_group_1_and_group_2'] = 1.0
-    data.loc[data['overall_significance'] == 'significant',
-             'p_value_group_1_and_group_2'] = 0.049
-
-    data.loc[data['overall_significance'] == 'SIGNIFICANT',
-             'p_value_group_1_and_group_2'] = 0.049
-
     data['significant_flag'] = False
-    data.loc[data['overall_significance'] == 'significant',
-             'significant_flag'] = True
-    data.loc[data['overall_significance'] == 'SIGNIFICANT',
-             'significant_flag'] = True
+
+    criteria = (data['overall_significance'].isin(['SIGNIFICANT',
+                                                   'significant']))
+
+    data.loc[criteria, 'p_value_group_1_and_group_2'] = 0.049
+    data.loc[criteria, 'significant_flag'] = True
+
 
     data['data_type'] = 'ph_silac'
     data['species_type'] = 'protein'
@@ -381,3 +378,43 @@ def _process_phsilac(data):
                'time_points', 'significant_flag', 'species_type']
     data = data[headers]
     return data
+
+
+def pivot_table_for_export(data):
+    """
+    creates a pivot table of combined data that is in MAGINE format
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+
+    Returns
+    -------
+
+    """
+    index = ['GO_id', 'GO_name', 'depth', 'ref', 'slim', 'aspect']
+    tmp = pd.pivot_table(data, index=index, columns='sample_index',
+                         aggfunc='first')
+    return tmp
+
+
+def pivot_raw_gene_data(data):
+    headers1 = ['gene', 'treated_control_fold_change', 'protein',
+                'p_value_group_1_and_group_2', 'time', 'data_type',
+                'time_points', 'significant_flag']
+    cols = ['compound', 'compound_id',
+            'treated_control_fold_change',
+            'p_value_group_1_and_group_2', 'significant_flag',
+            'data_type', 'time', 'time_points',
+            ]
+    prot = data[data['species_type'] == 'protein'][headers1]
+    meta = data[data['species_type'] == 'metabolites'][cols]
+    tmp = pd.pivot_table(prot, index=['gene', 'protein', 'data_type'],
+                         columns='time', aggfunc='first')
+
+    tmp.to_csv('protein_data_pivot.csv', index=True)
+
+    tmp = pd.pivot_table(meta, index=['compound', 'compound_id'],
+                         columns='time', aggfunc='first')
+
+    tmp.to_csv('metabolomics_data_pivot.csv', index=True)
