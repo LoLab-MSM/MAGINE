@@ -10,6 +10,8 @@ from magine.networks.cytoscape_view import RenderModel
 from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.ontology.ontology_analysis import GoAnalysis
 
+from magine.data_merge import pivot_table_for_export
+
 
 class Analyzer(object):
     """
@@ -124,6 +126,8 @@ class Analyzer(object):
             print("Saving enrichment array to {}".format(save_name))
             enrich_array.to_csv('{0}_all_data.csv'.format(save_name),
                                 index=False)
+            pt = pivot_table_for_export(enrich_array)
+            pt.to_csv('{0}_all_data_pivot.csv'.format(save_name))
         return enrich_array, html_dict
 
     def run_proteomics_go(self):
@@ -146,6 +150,7 @@ class Analyzer(object):
             e_array, att_dict = self.run_single_go(data_type='rnaseq',
                                                    fold_change=i)
             list_of_go_dict.append(att_dict)
+
         return list_of_go_dict
 
     def run_go_and_create_html(self, html_name):
