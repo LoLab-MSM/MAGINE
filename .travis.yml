@@ -1,0 +1,32 @@
+language: python
+sudo: required
+dist: trusty
+python:
+- '2.7'
+- '3.5'
+cache: pip
+before_install:
+- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    -O miniconda.sh
+- chmod +x miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- conda update --yes conda
+- conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
+    nose h5py pexpect pandas
+- pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
+- pip install python-coveralls
+
+install:
+  python setup.py build --build-lib=build/lib
+script:
+  nosetests build/lib/pysb --with-coverage --cover-inclusive
+  --cover-package=build/lib/pysb -a '!gpu'
+after_success:
+  coveralls
+
+
+install:
+  - pip install -r requirements.txt
+script:
+  - py.test --cov-report term-missing --cov app -v
