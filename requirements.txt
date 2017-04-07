@@ -1,12 +1,13 @@
-matplotlib
 jinja2
 networkx
 requests
 py2cytoscape
 orange-bioinformatics==2.6.19
-graphviz
+scipy
+numpy
 pandas
 xlrd
+matplotlib
 matplotlib-venn
 bioservices
 pathos

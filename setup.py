@@ -49,7 +49,7 @@ setup(
                           'requests',
                           'py2cytoscape',
                           'orange-bioinformatics==2.6.19',
-                          'graphviz',
+                          'pygraphviz',
                           'pandas',
                           'xlrd',
                           'matplotlib',
