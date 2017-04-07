@@ -3,7 +3,6 @@ sudo: required
 dist: trusty
 python:
 - '2.7'
-- '3.5'
 cache: pip
 before_install:
 - wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
@@ -20,8 +19,7 @@ before_install:
 install:
   python setup.py build --build-lib=build/lib
 script:
-  nosetests build/lib/pysb --with-coverage --cover-inclusive
-  --cover-package=build/lib/pysb -a '!gpu'
+  nosetests build/lib/magine --with-coverage --cover-inclusive  --cover-package=build/lib/magine -a '!gpu'
 after_success:
   coveralls
 

@@ -10,4 +10,5 @@ d = pd.read_csv(d_name)
 # list_species = ['CAV1', 'GPRC5A', 'PLEC']
 list_species = ['PARP1', 'TP53']
 plot_list_of_genes2(d, list_of_genes=list_species,
-                    out_dir='DELETE', save_name='test_me', log_scale=True)
+                    out_dir='DELETE', save_name='test_me',
+                    plot_type='matplotlib')

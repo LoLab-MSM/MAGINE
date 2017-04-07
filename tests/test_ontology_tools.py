@@ -30,7 +30,9 @@ def test_find_common_ancestor():
     topolc_example = ['GO:0044260', 'GO:0006139']
     common_graph = ot.find_disjunction_common_ancestor(topolc_example)
     n_nodes = len(common_graph.nodes())
-    assert n_nodes == 12
+    print(n_nodes)
+    # assert n_nodes == 12
+    pretty_format(common_graph, 'go_find_common')
 
 
 def test_find_common_ancestor_3_terms():
@@ -86,20 +88,57 @@ def test_get_common_ancestors():
 
 
 def cisplatin_example():
+    common_graph = ot.create_graph_to_root_from_list_terms(example_cisplatin)
+    print("Number of nodes = {}".format(len(common_graph.nodes())))
+    export_to_dot(common_graph, 'cisplatin_example')
 
-    x = ot.create_graph_to_root_from_list_terms(example_cisplatin)
-    export_to_dot(x, 'cisplatin_example')
-    # common_graph = ot.find_disjunction_common_ancestor(example_cisplatin)
-    # export_to_dot(common_graph, 'cisplatin_example_painted')
-    # example_cisplatin = ot.check_term_list(example_cisplatin)
-    # common_graph = ot.find_disjunction_common_ancestor(example_cisplatin)
-    # export_to_dot(common_graph, 'cisplatin_example_painted2')
+    pretty_format(common_graph, 'cisplatin_all_to_top')
+
+    list_of_terms = ot.check_term_list(example_cisplatin)
+    common_graph = ot.find_disjunction_common_ancestor(list_of_terms)
+    print("Number of nodes = {}".format(len(common_graph.nodes())))
+
+    export_to_dot(common_graph, 'common_graph_test')
+    pretty_format(common_graph, 'cisplatin_term_list_check')
+
+
+def pretty_format(graph, save_name):
+    ic = nx.get_node_attributes(graph, 'ic')
+    go_name = nx.get_node_attributes(graph, 'GOname')
+    new_label = dict()
+    for i in ic:
+        new_label[i] = textwrap.fill("{}\n{}".format(go_name[i], ic[i]), 20)
+
+    nx.set_node_attributes(graph, 'label', new_label)
+    export_to_dot(graph, save_name)
+
+
+def slimmed_cisplatin_example():
+    example_cisplatin = [
+        'GO:0031441',
+        'GO:0048025',
+        'GO:0050686',
+        'GO:1900363',
+    ]
+
+    common_graph = ot.create_graph_to_root_from_list_terms(example_cisplatin)
+    pretty_format(common_graph, 'cisplatin_rna_example_path_to_top')
+
+    list_of_terms = ot.check_term_list(example_cisplatin)
+    common_graph = ot.create_graph_to_root_from_list_terms(example_cisplatin)
+    pretty_format(common_graph, 'cisplatin_rna_example_checked_list')
+
+    common_graph = ot.find_disjunction_common_ancestor(list_of_terms)
+    pretty_format(common_graph, 'cisplatin_rna_example_checked_list_compress')
 
 
 if __name__ == "__main__":
     # test_path_to_root()
-    test_get_common_ancestors()
-    test_hard_example()
+    # test_find_common_ancestor()
+    # test_get_common_ancestors()
+    # test_hard_example()
+    cisplatin_example()
+    # slimmed_cisplatin_example()
     # test_create_graph_from_list()
     # test_find_common_ancestor_3_terms()
     # cisplatin_example()

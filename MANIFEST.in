@@ -1,2 +1,3 @@
 include README.md
 include magine/html_templates/*.html
+include tests/Data/*
