@@ -154,6 +154,11 @@ def trim_sink_source_nodes(network, list_of_nodes):
 
     """
     tmp_network = network.copy()
+    edges = set(tmp_network.edges())
+    for i, j in edges:
+        if i == j:
+            tmp_network.remove_edge(i, j)
+            print("removed {} {}".format(i, j))
     tmp1 = _trim(tmp_network, list_of_nodes)
     tmp2 = _trim(tmp_network, list_of_nodes)
     while tmp1 != tmp2:
