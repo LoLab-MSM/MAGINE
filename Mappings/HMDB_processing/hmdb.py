@@ -9,7 +9,7 @@ import zipfile
 import numpy as np
 import pandas as pd
 import requests
-import sys
+
 
 from xml_to_dictionary import XmlDictConfig, XmlListConfig
 
@@ -35,7 +35,6 @@ class HMDB(object):
 
     def __init__(self):
         self.tmp_dir = tempfile.mkdtemp()
-        self.tmp_dir = 'C:\Users\James Pino\AppData\Local\Temp\\tmpnq_qpf'
         self.out_dir = directory
         self.target_file = 'hmdb_metabolites.zip'
 
@@ -201,7 +200,7 @@ def check_and_add_to_dict(key, reference_dict, template_dict):
 if __name__ == '__main__':
 
     hm = HMDB()
-    # hm.download_hmdb()
+    hm.download_hmdb()
     hm.parse_hmdb()
     df = hm.load_db()
     print(df.head(10))
