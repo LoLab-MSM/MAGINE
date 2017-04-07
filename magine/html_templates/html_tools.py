@@ -1,7 +1,33 @@
 import os
 import pandas as pd
-
 import jinja2
+
+range_number = """column_number:{},
+filter_type: "range_number" """
+
+auto_complete = """column_number:{},
+    filter_type: "auto_complete",
+    text_data_delimiter: "," """
+
+chosen = """column_number:{},
+    filter_type: "chosen"
+     """  # text_data_delimiter: ","
+"""
+multi_select
+range_number
+filter_type:'select'
+select_type: 'chosen',
+"""
+dict_of_templates = dict()
+dict_of_templates['GO_id'] = range_number
+dict_of_templates['GO_name'] = auto_complete
+dict_of_templates['slim'] = auto_complete
+dict_of_templates['aspect'] = auto_complete
+dict_of_templates['ref'] = range_number
+dict_of_templates['depth'] = range_number
+dict_of_templates['enrichment_score'] = range_number
+dict_of_templates['pvalue'] = range_number
+dict_of_templates['n_genes'] = range_number
 
 
 def write_single_table(table, save_name, title):
@@ -9,22 +35,12 @@ def write_single_table(table, save_name, title):
         searchpath=os.path.dirname(__file__))
     )
     template = env.get_template('single_table_view.html')
-    tmp_table = table.copy()
-    tmp_table = tmp_table.fillna(0)
 
-    format_dict = {}
-    for i in tmp_table.columns:
-        if i[0] == 'enrichment_score':
-            format_dict[i] = '{:.2f}'.format
-        elif i[0] == 'pvalue':
-            format_dict[i] = '{:.2g}'.format
-        elif i[0] == 'n_genes':
-            format_dict[i] = '{:,d}'.format
-            tmp_table[i] = tmp_table[i].astype(int)
+    # formats output to less precision and ints rather than floats
+    tmp_table, format_dict = format_data_table(table)
     html_table = tmp_table.to_html(escape=False,
-                                   na_rep='-',
+                                   # na_rep='-',
                                    formatters=format_dict,
-                                   justify='left',
                                    )
     template_vars = {"title":      title,
                      "table_name": html_table
@@ -41,6 +57,7 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     if isinstance(data, str):
         data = pd.read_csv(data)
     from magine.plotting.species_plotting import create_gene_plots_per_go
+    from magine.data_merge import pivot_table_for_export
 
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
                                                    out_dir, exp_data)
@@ -49,14 +66,15 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
 
     data = data[~data['GO_id'].isin(to_remove)]
 
-    tmp = pd.pivot_table(data,
-                         index=['GO_id', 'GO_name', 'depth', 'ref', 'slim',
-                                'aspect'],
-                         columns='sample_index')
+    tmp = pivot_table_for_export(data)
 
     html_out = os.path.join(out_dir, save_name)
     print("Saving to : {}".format(html_out))
+
     write_single_table(tmp, html_out, 'MAGINE GO analysis')
+
+    html_out = os.path.join(out_dir, save_name + '_filter')
+    write_filter_table(tmp, html_out, 'MAGINE GO analysis')
 
 
 def write_filter_table(table, save_name, title):
@@ -75,34 +93,57 @@ def write_filter_table(table, save_name, title):
         filter_default_label: "Select tag"
         }"""
 
-    tem = """
-    column_number:{},
-         filter_type:"{}" """
-    tem2 = """
-    column_number:{},
-         filter_type:"{}",
-          text_data_delimiter: ','"""
     out_string = ''
+    leave = ['GO_id', 'genes']
     for n, i in enumerate(table.index.names):
-        new_string = tem2.format(n, 'auto_complete')
+        if i in leave:
+            continue
+        new_string = dict_of_templates[i].format(n)
         out_string += '{' + new_string + '},\n'
 
     for m, i in enumerate(table.columns):
-        new_string = tem.format(n + m + 1, 'range_number_slider')
+        if i[0] in leave:
+            continue
+        new_string = dict_of_templates[i[0]].format(n + m + 1)
         out_string += '{' + new_string + '},\n'
     print(out_string)
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-            searchpath=os.path.dirname(__file__))
-    )
-    template = env.get_template('filter_table.html')
-    table = table.fillna(0)
-
+    # formats output to less precision and ints rather than floats
+    tmp_table, format_dict = format_data_table(table)
+    html_table = tmp_table.to_html(escape=False,
+                                   # na_rep='-',
+                                   formatters=format_dict
+                                   )
     template_vars = {
         "title":        title,
-        "table_name":   table.to_html(escape=False),
+        "table_name":   html_table,
         "filter_table": out_string
         }
+
+    env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(
+                    searchpath=os.path.dirname(__file__))
+    )
+    template = env.get_template('filter_table.html')
 
     html_out = template.render(template_vars)
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
+
+
+def format_data_table(data):
+    tmp_table = data.copy()
+    format_dict = {}
+    for i in tmp_table.columns:
+        if i[0] == 'enrichment_score':
+            # format_dict[i] = '{:.2f}'.format
+            tmp_table[i] = tmp_table[i].fillna(0)
+            tmp_table[i] = tmp_table[i].round(2)
+        elif i[0] == 'pvalue':
+            format_dict[i] = '{:.2g}'.format
+            tmp_table[i] = tmp_table[i].fillna(1)
+            # tmp_table[i] = tmp_table[i].round(4)
+        elif i[0] == 'n_genes':
+            format_dict[i] = '{:,d}'.format
+            tmp_table[i] = tmp_table[i].fillna(0)
+            tmp_table[i] = tmp_table[i].astype(int)
+    return tmp_table, format_dict
