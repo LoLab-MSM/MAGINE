@@ -4,16 +4,17 @@ GO analysis function using orange bioinformatics
 import os
 import numpy as np
 import pandas as pd
-from orangecontrib.bio import go
 
 from magine.html_templates.html_tools import write_single_table
-from magine.ontology.go_from_goatools import go as goa_tools
+# from magine.ontology.go_from_goatools import go as goa_tools
+# from orangecontrib.bio import go
+
 import warnings
 from orangecontrib.bio.go import evidenceDict
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
 from collections import defaultdict
-
+from enrichment_calculation import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
 
@@ -32,21 +33,25 @@ class GoAnalysis(object):
 
         self.exp_data = experimental_data
         self.data = None
+        self.magine_go = MagineGO(species)
         self.savename = save_name
         self.out_dir = output_directory
-        self.ontology = go.Ontology()
-        self.annotations = go.Annotations(species, ontology=self.ontology)
         self.reference = reference
         self.verbose = verbose
 
         # options can be goslim_pir goslim_generic goslim_chembl
         self.slim_name = slim_name
 
-        self.gene_annotations = set(self.annotations.gene_names)
-        self.number_of_total_reference_genes = len(self.annotations.gene_names)
-        self.slim_set = self.ontology.named_slims_subset(self.slim_name)
-
-        self.global_go = {}
+        # self.ontology = go.Ontology()
+        # self.annotations = go.Annotations(species, ontology=self.ontology)
+        # self.gene_annotations = set(self.annotations.gene_names)
+        # self.slim_set = self.ontology.named_slims_subset(self.slim_name)
+        if reference is not None:
+            self.gene_annotations = \
+                set(reference).intersection(self.magine_go.gene_to_go.keys())
+        else:
+            self.gene_annotations = set(self.magine_go.gene_to_go.keys())
+        self.number_of_total_reference_genes = len(self.gene_annotations)
 
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
@@ -67,30 +72,33 @@ class GoAnalysis(object):
         """
         # checks first to see if all genes are annotated in GO
         genes_present = set()
+        genes_missing = set()
         for i in gene_list:
             if type(i) != str:
                 continue
             elif i in self.gene_annotations:
                 genes_present.add(i)
             else:
+                genes_missing.add(i)
                 split_name = i.split(',')
                 if len(split_name) > 1:
                     for n in split_name:
                         if n in self.gene_annotations:
                             genes_present.add(n)
         n_genes = len(genes_present)
+        if len(genes_missing) > 0:
+            print("Genes not in GO = {}".format(genes_missing))
         print("Number of genes given = {0}."
               " Number of genes in GO = {1}".format(len(gene_list), n_genes))
 
-        res = self.calculate_enrichment(genes_present, aspect=['F', 'P', 'C'])
-        # res = self.calculate_enrichment(genes_present, aspect=['P'])
-
-        # res = self.annotations.get_enriched_terms(genes_present, aspect=['P'])
-        # res = self.annotations.get_enriched_terms(genes_present, aspect=['F', 'P', 'C'])
-
+        # res = self.calculate_enrichment(genes_present,
+        # aspect=['F', 'P', 'C'])
+        res = self.magine_go.calculate_enrichment(genes_present,
+                                                  reference=self.reference)
         n = 0
         column_names = dict(GO_id=None, enrichment_score=None, pvalue=None,
-                            genes=None, n_genes=None, )
+                            genes=None, n_genes=None, aspect=None,
+                            ref=None, depth=None, GO_name=None, slim=None)
 
         all_go_rows = []
         for go_id, (genes, p_value, ref) in res.items():
@@ -98,29 +106,43 @@ class GoAnalysis(object):
             go_row = column_names.copy()
 
             expected_value = n_genes * float(
-                    ref) / self.number_of_total_reference_genes
+                ref) / self.number_of_total_reference_genes
             enrichment = float(len(genes)) / expected_value
-            score = enrichment
 
-            self.global_go[go_id] = self.ontology[go_id].name
+            # using Orange.bioinformatics way
+
+            # go_name = self.ontology[go_id].name
+            # aspect_name = goa_tools[go_id].namespace
+            # n_reference_genes = len(self.annotations.get_all_genes(go_id))
+            # depth = self.ontology.term_depth(go_id)
+
+            go_name = self.magine_go.go_to_name[go_id]
+            aspect_name = self.magine_go.go_aspect[go_id]
+            n_reference_genes = len(self.magine_go.go_to_gene[go_id])
+            depth = self.magine_go.go_depth[go_id]
 
             go_row['GO_id'] = go_id
-            go_row['enrichment_score'] = score
+            go_row['enrichment_score'] = enrichment
             go_row['pvalue'] = p_value
             go_row['genes'] = list(np.sort(genes))
             go_row['n_genes'] = len(genes)
+            go_row['aspect'] = aspect_name
+            go_row['ref'] = n_reference_genes
+            go_row['depth'] = depth
+            go_row['GO_name'] = go_name
+            go_row['slim'] = go_id in self.magine_go.go_slim
 
             all_go_rows.append(go_row)
             if self.verbose:
                 print(go_id, float(len(genes) / float(ref)) * 100,
-                      self.ontology[go_id].name, p_value, len(genes), ref,
-                      score)
+                      self.magine_go.go_to_name[go_id],
+                      p_value, len(genes), ref,
+                      enrichment)
 
         if n == 0:
             print("No significant p-values")
 
-        cols2 = ['GO_id', 'enrichment_score', 'pvalue', 'genes', 'n_genes']
-        return pd.DataFrame(all_go_rows, columns=cols2)
+        return pd.DataFrame(all_go_rows, columns=column_names.keys())
 
     def create_enrichment_array(self, list_of_exp, labels=None):
         """
@@ -136,6 +158,7 @@ class GoAnalysis(object):
 
         Returns
         -------
+        pandas.DataFrame
 
         """
         self.num_data_sets = len(list_of_exp)
@@ -158,21 +181,6 @@ class GoAnalysis(object):
 
         results = pd.concat(all_data)
 
-        # add aspect, n_ref, depth, and if in a slim to dataset
-        for go_id in results['GO_id'].unique():
-            index = results['GO_id'] == go_id
-            go_name = self.ontology[go_id].name
-            aspect_name = goa_tools[go_id].namespace
-            n_reference_genes = len(self.annotations.get_all_genes(go_id))
-            depth = self.ontology.term_depth(go_id)
-            results.loc[index, 'aspect'] = aspect_name
-            results.loc[index, 'ref'] = n_reference_genes
-            results.loc[index, 'depth'] = depth
-            results.loc[index, 'GO_name'] = go_name
-            if go_id in self.slim_set:
-                results.loc[index, 'slim'] = True
-            else:
-                results.loc[index, 'slim'] = False
         if results is None:
             print('No data! Error! Returning nothing')
             return
@@ -294,20 +302,23 @@ class GoAnalysis(object):
         data = self.data
         names, array = self.sort_by_hierarchy(data)
         # creats plots of top and bottom of hierarchy sorted arrays
-        plot_heatmap(array, names, labels, start=0, stop=100,
-                     savename='%s_top' % savename, )
-        plot_heatmap(array, names, labels, start=-100, stop=None,
-                     savename='%s_bottom' % savename)
+        plot_heatmap(array, names, labels, self.magine_go.go_to_name, start=0,
+                     stop=100, savename='%s_top' % savename, )
+        plot_heatmap(array, names, labels, self.magine_go.go_to_name,
+                     start=-100, stop=None, savename='%s_bottom' % savename)
         tmp_array = array[:, :].copy()
 
         # Centroid clustering of data
         # Creates dendrogram plots
-        clustered_array, clustered_names = plot_heatmap_cluster(tmp_array)
+        clustered_array, clustered_names = plot_heatmap_cluster(
+                tmp_array, names, savename="{}_dendrogram".format(savename),
+                out_dir=self.out_dir)
 
-        plot_heatmap(clustered_array, clustered_names, labels, start=0,
-                     stop=100, savename='%s_top_clustered' % savename)
-        plot_heatmap(clustered_array, clustered_names, labels, start=-100,
-                     stop=None,
+        plot_heatmap(clustered_array, clustered_names, labels,
+                     self.magine_go.go_to_name, start=0, stop=100,
+                     savename='%s_top_clustered' % savename)
+        plot_heatmap(clustered_array, clustered_names, labels,
+                     self.magine_go.go_to_name, start=-100, stop=None,
                      savename='%s_bottom_clustered' % savename)
 
         figures = ['%s_top' % savename,
