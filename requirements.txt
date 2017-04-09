@@ -3,6 +3,7 @@ networkx
 requests
 py2cytoscape
 orange-bioinformatics==2.6.19
+pygraphviz
 scipy
 numpy
 pandas
