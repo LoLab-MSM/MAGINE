@@ -23,10 +23,13 @@ class ChemicalMapper(object):
         self.kegg_to_hmdb_accession = {}
         self.hmdb_accession_to_protein = {}
         self.synonyms_to_hmdb = {}
+        filename = os.path.join(directory, 'HMDB_processing',
+                                'hmdb_dataframe.csv.gz')
+        if not os.path.exists(filename):
+            from Mappings.HMDB_processing.hmdb import HMDB
+            HMDB().setup()
         try:
             self.reload()
-            filename = os.path.join(directory, 'HMDB_processing',
-                                    'hmdb_dataframe.csv.gz')
             self.database = pd.read_csv(filename)
             print('Loading class data')
         except:
@@ -34,8 +37,10 @@ class ChemicalMapper(object):
             self.load()
 
     def load(self):
+
         filename = os.path.join(directory, 'HMDB_processing',
                                 'hmdb_dataframe.csv.gz')
+
         hmdb_database = pd.read_csv(filename)
 
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
