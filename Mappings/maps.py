@@ -109,10 +109,9 @@ def create_gene_dictionaries(network, species='hsa'):
     # create string to call uniprot for mapping
     search_string = ''
     for n, i in enumerate(unknown_genes):
-        # x=dict(uniprot.mapping("KEGG_ID", "ACC", query=i))
-        # print(i, x)
         search_string += str(i) + '\t'
     search_string = search_string.rstrip('\t')
+
     # This is where it gets tricky. Checking to see if there is a uniprot
     # mapping for the species, if not, trying from KEGG side. Sometimes kegg
     # links to a different uniprot, or uniprot links to a different kegg.
@@ -130,33 +129,12 @@ def create_gene_dictionaries(network, species='hsa'):
                 if n != entry:
                     print(i, n, entry, x, "dont match")
                 elif review == 'reviewed':
-                    # print("reviewed")
                     kegg_to_gene_name[i] = name
-                    # else:
-                    #     print("Not reviewed")
 
-                    # x = dict(uniprot.mapping("ACC", "GENENAME", query=uni_dict[i]))
-                    # print(i, uni_dict[i], x)
-                    # kegg_to_gene_name[uni_dict[i][0]] = i
         else:
-            print("Who the fuck knows then...", i)
             still_missing.add(i)
-    """
-            uniprot_tmp = kegg.conv("uniprot", i)
-            if uniprot_tmp == '\n':
-                continue
-            if type(uniprot_tmp) == int:
-                continue
-            if len(uniprot_tmp) > 0:
-                uniprot_tmp = str(dict(uniprot_tmp)[i].lstrip('up:'))
-            else:
-                continue
-            tmp_dict = dict(uniprot.mapping(fr="ACC", to="GENENAME", query=[uniprot_tmp + '\t']))
-            if uniprot_tmp in tmp_dict:
-                kegg_to_gene_name[i] = tmp_dict[uniprot_tmp][0]
-            else:
-                print("Who the fuck knows then...", i)
-    """
+    print("{} mappings not found from kegg to"
+          " gene name".format(len(still_missing)))
     return kegg_to_gene_name
 
 
@@ -168,17 +146,30 @@ def hugo_mapper(network, species='hsa'):
     :return:
 
     """
-    # TODO Broken since bioservices update
-    nodes = network.nodes()
+    prefix = species+':'
+    nodes = set(network.nodes())
     hugo_dict = {}
+    not_found = set()
     for i in nodes:
-        if str(i).startswith(species):
-            out = hugo.mapping("entrez_id", i.lstrip(species), frmt='json')
-            if 'response' in out:
-                if 'docs' in out['response']:
-                    if len(out['response']['docs']) > 0:
-                        if 'symbol' in out['response']['docs'][0]:
-                            hugo_dict[i] = out['response']['docs'][0]['symbol']
+        if str(i).startswith(prefix):
+            tmp_name = str(i).replace(prefix, '')
+            mapping = hugo.search(tmp_name)
+            if 'response' in mapping:
+                response = mapping['response']
+                if 'numFound' in response:
+                    if response['numFound'] == 0:
+                        not_found.add(i)
+                        continue
+                    elif response['numFound'] == 1:
+                        docs = response['docs'][0]
+                        hugo_dict[i] = docs['symbol']
+                        continue
+                    else:
+                        if 'symbol' in response['docs'][0]:
+                            hugo_dict[i] = response['docs'][0]['symbol']
+            else:
+                not_found.add(i)
+    print("{} mappings not found after HGNC mapping".format(len(not_found)))
     return hugo_dict
 
 
@@ -249,9 +240,9 @@ def convert_all(network, species='hsa'):
     print('Started converting kegg genes to HGNC')
     dict2 = create_gene_dictionaries(renamed_network, species=species)
     renamed_network = nx.relabel_nodes(renamed_network, dict2)
-    # print('Started to check for miRNAs')
-    # dict3 = hugo_mapper(renamed_network, species=species)
-    # renamed_network = nx.relabel_nodes(renamed_network, dict3)
+    print('Started to check for miRNAs')
+    dict3 = hugo_mapper(renamed_network, species=species)
+    renamed_network = nx.relabel_nodes(renamed_network, dict3)
 
     return renamed_network
 
