@@ -4,3 +4,21 @@ Python package that integrates omic style data.
 
 #Requirments
 Graphviz (http://www.graphviz.org)
+
+#Installation
+## For people new to python enviroment creation
+## Anaconda is a great easy way to get you up and running.
+## Open a terminal
+wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh
+bash ./Miniconda2-latest-Linux-x86_64.sh
+## follow prompts to install miniconda
+## source ~/.bashrc if you added it to your path
+conda create -n magine_env python=2
+source activate magine_env
+conda config --add channels conda-forge
+conda install orange
+conda install jinja2
+conda install statsmodels
+conda install networkx
+conda install graphviz
+pip install -r requirments.txt
