@@ -98,8 +98,8 @@ class NetworkSubgraphs:
 
         nx.write_gml(graph, "%s_and_%s.gml" % (node_1, node_2))
         if draw:
-            export_to_dot(graph, format='png', engine='dot', view=False)
-            graph.draw("%s_and_%s.pdf" % (node_1, node_2), prog='dot')
+            export_to_dot(graph, save_name="%s_and_%s.pdf" % (node_1, node_2),
+                          image_format='pdf', engine='dot')
         return graph
 
     def shortest_paths_between_lists_of_proteins(self, species_list,
@@ -205,7 +205,8 @@ class NetworkSubgraphs:
         >>> from networkx import DiGraph
         >>> from magine.networks.network_subgraphs import NetworkSubgraphs
         >>> g = DiGraph()
-        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), \
+        ('e', 'd')])
         >>> net_sub = NetworkSubgraphs(g)
         >>> upstream_d = net_sub.upstream_network_of_specie('d')
         >>> upstream_d.edges()
@@ -263,7 +264,8 @@ class NetworkSubgraphs:
         >>> from networkx import DiGraph
         >>> from magine.networks.network_subgraphs import NetworkSubgraphs
         >>> g = DiGraph()
-        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'),\
+         ('e', 'd')])
         >>> net_sub = NetworkSubgraphs(g)
         >>> upstream_d = net_sub.upstream_network_of_specie('d')
         >>> upstream_d.edges()
