@@ -151,6 +151,9 @@ class HMDB(object):
         df = pd.read_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'))
         return df
 
+    def setup(self):
+        self.download_hmdb()
+        self.parse_hmdb()
 
 def check_and_add_to_dict(key, reference_dict, template_dict):
     if key in reference_dict:
