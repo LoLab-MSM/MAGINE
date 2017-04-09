@@ -194,18 +194,14 @@ class GoNetworkGenerator:
             #     pass
 
             if a_to_b > threshold:
-                go_graph.add_node(label_1, go=go_1,
-                                  label=label_1, )  # proteins=','.join(n for n in term_1))
-                go_graph.add_node(label_2, go=go_2,
-                                  label=label_2, )  # proteins=','.join(n for n in term_2))
+                go_graph.add_node(label_1, go=go_1, label=label_1, )
+                go_graph.add_node(label_2, go=go_2, label=label_2, )
                 go_graph.add_edge(label_1, label_2, label=str(a_to_b),
                                   weight=a_to_b)
 
             if b_to_a > threshold:
-                go_graph.add_node(label_1, go=go_1,
-                                  label=label_1, )  # proteins=','.join(n for n in term_1))
-                go_graph.add_node(label_2, go=go_2,
-                                  label=label_2, )  # proteins=','.join(n for n in term_2))
+                go_graph.add_node(label_1, go=go_1, label=label_1, )
+                go_graph.add_node(label_2, go=go_2, label=label_2, )
                 go_graph.add_edge(label_2, label_1, label=str(b_to_a),
                                   weight=b_to_a)
 
@@ -222,7 +218,7 @@ class GoNetworkGenerator:
         if draw:
             s_name = os.path.join(self.out_dir, 'Network_files',
                                   '{0}'.format(save_name))
-            export_to_dot(go_graph, s_name, view=True)
+            export_to_dot(go_graph, s_name)
         return go_graph
 
 
