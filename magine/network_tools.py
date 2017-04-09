@@ -21,7 +21,7 @@ except KeyError:
 
 
 def export_to_dot(graph, save_name, image_format='png', engine='dot',
-                  dpi=200):
+                  dpi=200, concentrate=False):
     """
     Converts networkx graph to graphviz dot
 
@@ -45,7 +45,7 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
     py_dot = nx.nx_agraph.to_agraph(graph)
     py_dot.write('{}.dot'.format(save_name))
     py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
-                args='-Gdpi={}'.format(dpi))
+                args='-Gdpi={} -Gconcentrate={}'.format(dpi, 'true' if concentrate else 'false'))
 
 
 def add_attribute_to_network(graph, list_to_add_attribute, attribute,
