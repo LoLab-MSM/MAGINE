@@ -8,9 +8,10 @@ import pandas as pd
 from magine.html_templates.html_tools import write_single_table
 # from magine.ontology.go_from_goatools import go as goa_tools
 # from orangecontrib.bio import go
+# from orangecontrib.bio.go import evidenceDict
 
 import warnings
-from orangecontrib.bio.go import evidenceDict
+
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
 from collections import defaultdict
