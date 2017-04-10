@@ -16,4 +16,3 @@ def load_reactome_fi():
         print('Failed!')
         quit()
     return nx.read_gml(path)
-load_reactome_fi()
