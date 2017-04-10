@@ -29,7 +29,7 @@ tls.set_credentials_file(username='james.ch.pino',
 def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
     """ Creates a figure for each GO term in data
 
-    Data should be a result of running create_enrichment_array.
+    Data should be a result of running calculate_enrichment.
     This function creates a plot of all proteins per term if a term is
     significant and the number of the reference set is larger than 5 and
     the total number of species measured is less than 50.
