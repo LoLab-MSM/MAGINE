@@ -1,4 +1,4 @@
-from Mappings.chemical_mapper import ChemicalMapper
+from magine.mappings.chemical_mapper import ChemicalMapper
 
 cm = ChemicalMapper()
 

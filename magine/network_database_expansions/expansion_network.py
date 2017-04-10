@@ -1,6 +1,7 @@
 import networkx as nx
 import os
-from reactome_expansion.download_reactome_functional_interaction import ReactomeFunctionalInteraction
+from reactome_expansion.reactome_functional_interaction import \
+    ReactomeFunctionalInteraction
 
 
 def load_reactome_fi():
