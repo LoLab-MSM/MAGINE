@@ -1,3 +1,5 @@
 include README.md
 include magine/html_templates/*.html
 include tests/Data/*
+include magine/mapping/human_kegg_mapper.p
+include magine/mapping/mouse_kegg_mapper.p

@@ -23,14 +23,19 @@ class ChemicalMapper(object):
         self.kegg_to_hmdb_accession = {}
         self.hmdb_accession_to_protein = {}
         self.synonyms_to_hmdb = {}
-        filename = os.path.join(directory, 'HMDB_processing',
+        self.filename = os.path.join(directory, 'data',
                                 'hmdb_dataframe.csv.gz')
-        if not os.path.exists(filename):
+
+        if not os.path.exists(self.filename):
             from magine.mappings.HMDB_processing import HMDB
             HMDB().setup()
+        hmdb_database = pd.read_csv(self.filename)
+        self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
+        self._instance_filename = os.path.join(directory, 'data',
+                                               'hmdb_instance.p')
         try:
             self.reload()
-            self.database = pd.read_csv(filename)
+
             print('Loading class data')
         except:
             print('Initializing Chemical mapping')
@@ -38,12 +43,6 @@ class ChemicalMapper(object):
 
     def load(self):
 
-        filename = os.path.join(directory, 'HMDB_processing',
-                                'hmdb_dataframe.csv.gz')
-
-        hmdb_database = pd.read_csv(filename)
-
-        self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
         self.hmdb_accession_to_chemical_name = self.convert_to_dict(
                 "accession", "name")
         self.chemical_name_to_hmdb_accession = self.convert_to_dict(
@@ -90,7 +89,6 @@ class ChemicalMapper(object):
                 each = literal_eval(each)
             if isinstance(each, list):
                 if term in each:
-                    print(each)
                     return self.database.iloc[index][format_name]
         return None
 
@@ -113,7 +111,7 @@ class ChemicalMapper(object):
         :return:
         """
         print('Saving class data')
-        with open(os.path.join(directory, 'hmdb_instance.txt'), 'w') as f:
+        with open(self._instance_filename, 'w') as f:
             f.write(cPickle.dumps(self.__dict__))
 
     def reload(self):
@@ -122,7 +120,7 @@ class ChemicalMapper(object):
         :return:
         """
 
-        with open(os.path.join(directory, 'hmdb_instance.txt'), 'r') as f:
+        with open(self._instance_filename, 'r') as f:
             data = f.read()
             f.close()
         self.__dict__ = cPickle.loads(data)

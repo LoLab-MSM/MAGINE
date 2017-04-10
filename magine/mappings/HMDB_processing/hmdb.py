@@ -37,6 +37,8 @@ class HMDB(object):
         self.tmp_dir = tempfile.mkdtemp()
         self.out_dir = directory
         self.target_file = 'hmdb_metabolites.zip'
+        self.out_name = os.path.join(self.out_dir, '..', 'data',
+                                     'hmdb_dataframe.csv.gz')
 
     def download_hmdb(self):
         """ Downloads hmdb metabolites xml file
@@ -140,17 +142,18 @@ class HMDB(object):
 
                     tmp_all.append(template)
         df = pd.DataFrame(tmp_all, columns=categories)
-        df.to_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'),
+        df.to_csv(self.out_name,
                   compression='gzip', index=False)
         print("Done processing HMDB")
 
     def load_db(self):
-        df = pd.read_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'))
+        df = pd.read_csv(self.out_name)
         return df
 
     def setup(self):
         self.download_hmdb()
         self.parse_hmdb()
+
 
 def check_and_add_to_dict(key, reference_dict, template_dict):
     if key in reference_dict:
