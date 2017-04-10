@@ -106,7 +106,7 @@ def write_filter_table(table, save_name, title):
             continue
         new_string = dict_of_templates[i[0]].format(n + m + 1)
         out_string += '{' + new_string + '},\n'
-    print(out_string)
+    # print(out_string)
     # formats output to less precision and ints rather than floats
     tmp_table, format_dict = format_data_table(table)
     html_table = tmp_table.to_html(escape=False,
