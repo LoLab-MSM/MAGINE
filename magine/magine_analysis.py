@@ -112,7 +112,7 @@ class Analyzer(object):
             quit()
 
         print("Creating enrichment array")
-        enrich_array = self.go.create_enrichment_array(data, labels=labels)
+        enrich_array = self.go.calculate_enrichment(data, labels=labels)
         # enrich_array = None
         save_name = '_'.join([self.save_name, data_type, fold_change])
         filename = '<a href="{}.html">link</a>'.format(
@@ -257,7 +257,7 @@ class Analyzer(object):
         go_network : networkx.DiGraph
             GO network created with GoNetworkGenerator
         data : pd.Dataframe
-            enrichment data from GOAnalysis.create_enrichment_array
+            enrichment data from GOAnalysis.calculate_enrichment
         save_name: str
             prefix to save images of GO network
 

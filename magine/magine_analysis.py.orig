@@ -137,7 +137,7 @@ class Analyzer:
                      'save_name':  save_name
                      }
 
-        enrich_array = self.go.create_enrichment_array(data, labels=labels,
+        enrich_array = self.go.calculate_enrichment(data, labels=labels,
                                                        save_name=save_name)
         return enrich_array, html_dict
 

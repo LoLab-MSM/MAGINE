@@ -62,7 +62,7 @@ class GoAnalysis(object):
         self.num_data_sets = 0
         self.created_go_pds = set()
 
-    def enrichment_analysis_of_single_sample(self, gene_list):
+    def _calculate_enrichment_single_sample(self, gene_list):
         """
         Performs enrichment analysis of list of genes
 
@@ -92,7 +92,7 @@ class GoAnalysis(object):
         print("Number of genes given = {0}."
               " Number of genes in GO = {1}".format(len(gene_list), n_genes))
 
-        # res = self.calculate_enrichment(genes_present,
+        # res = self.__calculate_enrichment(genes_present,
         # aspect=['F', 'P', 'C'])
         res = self.magine_go.calculate_enrichment(genes_present,
                                                   reference=self.reference)
@@ -145,15 +145,15 @@ class GoAnalysis(object):
 
         return pd.DataFrame(all_go_rows, columns=column_names.keys())
 
-    def create_enrichment_array(self, list_of_exp, labels=None):
+    def calculate_enrichment(self, list_of_exp, labels=None):
         """
         Performs enrichment analysis of list of list of genes
 
         Parameters
         ----------
-        list_of_exp: list_of_list
-            A list of samples, where each sample is a list that contains
-            species names
+        list_of_exp: list_of_list or list
+            Can be a single list of genes or a list of lists, where each sample
+             is a list that contains species names.
         labels: list_like
             list of labels for each sample
 
@@ -163,6 +163,10 @@ class GoAnalysis(object):
 
         """
         self.num_data_sets = len(list_of_exp)
+
+        if not all(isinstance(el, list) for el in list_of_exp):
+            print("Running single GO enrichment since single list provided.")
+            return self._calculate_enrichment_single_sample(list_of_exp)
 
         assert self.num_data_sets != 0, "Must provide at least one data list"
 
@@ -176,7 +180,7 @@ class GoAnalysis(object):
 
         all_data = []
         for n, i in enumerate(list_of_exp):
-            tmp_array_3 = self.enrichment_analysis_of_single_sample(i)
+            tmp_array_3 = self._calculate_enrichment_single_sample(i)
             tmp_array_3['sample_index'] = labels[n]
             all_data.append(tmp_array_3)
 
@@ -216,8 +220,8 @@ class GoAnalysis(object):
         print("Saving to : {}".format(html_out))
         write_single_table(tmp, html_out, 'MAGINE GO analysis')
 
-    def calculate_enrichment(self, genes, reference=None, evi_codes=None,
-                             aspect=None, use_fdr=True, ):
+    def __calculate_enrichment(self, genes, reference=None, evi_codes=None,
+                               aspect=None, use_fdr=True, ):
         rev_genes_dict = self.annotations.get_gene_names_translator(genes)
         genes = set(rev_genes_dict.keys())
         if reference:
@@ -297,11 +301,11 @@ class GoAnalysis(object):
         return res
 
     # TODO remove and replace with updated heatplots
-    def create_heatmaps(self, labels, savename):
+    def __create_heatmaps(self, labels, savename):
         from magine.plotting.heatmaps import plot_heatmap, plot_heatmap_cluster
         # depracated
         data = self.data
-        names, array = self.sort_by_hierarchy(data)
+        names, array = self.__sort_by_hierarchy(data)
         # creats plots of top and bottom of hierarchy sorted arrays
         plot_heatmap(array, names, labels, self.magine_go.go_to_name, start=0,
                      stop=100, savename='%s_top' % savename, )
@@ -334,10 +338,10 @@ class GoAnalysis(object):
                 '<a href="Figures/{0}.pdf">{0}</a>'.format(i))
 
         self.html_pdfs = pd.DataFrame(html_pages, columns=['Clustered output'])
-        self.print_ranked_over_time(savename=savename, labels=labels)
+        self.__print_ranked_over_time(savename=savename, labels=labels)
 
-    def print_ranked_over_time(self, savename=None, labels=None, number=10,
-                               create_plots=True):
+    def __print_ranked_over_time(self, savename=None, labels=None, number=10,
+                                 create_plots=True):
         """
         Order array by each sample and print information
         Parameters
@@ -368,7 +372,7 @@ class GoAnalysis(object):
             score_names.append('score_{0}'.format(i))
 
         for i in range(0, np.shape(self.data)[1] - 1):
-            terms = self.retrieve_top_ranked(i, number)
+            terms = self.__retrieve_top_ranked(i, number)
             tmp = []
             names = []
             for t in terms:
@@ -402,7 +406,7 @@ class GoAnalysis(object):
             self.html_pdfs2 = pd.DataFrame(html_pages,
                                            columns=['Top hits per time'])
 
-    def retrieve_top_ranked(self, index, number=20):
+    def __retrieve_top_ranked(self, index, number=20):
         """
         Sorts array by column while excluding similar related GO terms
         Parameters
@@ -417,7 +421,7 @@ class GoAnalysis(object):
 
         """
 
-        names, tmp = sort_data_by_index(self.data, index)
+        names, tmp = _sort_data_by_index(self.data, index)
 
         if len(names) < number:
             number = len(names)
@@ -434,14 +438,14 @@ class GoAnalysis(object):
         term_to_add = -1 * number
         while counter < number:
             parents = dict(
-                [(term, self.get_parents(term, go_terms)) for term in
-                 go_terms])
+                    [(term, self.__get_parents(term, go_terms)) for term in
+                     go_terms])
             top_level_terms = [id for id in parents if not parents[id]]
 
             terms_to_remove = []
             index_to_add = []
             for term in top_level_terms:
-                child = get_children(term, go_terms, parents)
+                child = _get_children(term, go_terms, parents)
                 if len(child) == 0:
                     counter += 1
                 else:
@@ -460,7 +464,7 @@ class GoAnalysis(object):
             points.append(go_terms[j])
         return points
 
-    def get_parents(self, term, data):
+    def __get_parents(self, term, data):
         """
         Get parents of GO term from provided lsit
         Parameters
@@ -483,7 +487,7 @@ class GoAnalysis(object):
         parents = [t for t in parents if t not in c]
         return parents
 
-    def sort_by_hierarchy(self, data):
+    def __sort_by_hierarchy(self, data):
         """
         Returns numpy array of GO terms by GO hierarchy
         Parameters
@@ -499,7 +503,7 @@ class GoAnalysis(object):
         names = data[:, 0].copy()
         array = data[:, 1:].astype(np.float32).copy()
         parents = dict(
-            [(term, self.get_parents(term, names)) for term in names])
+                [(term, self.__get_parents(term, names)) for term in names])
         top_level_terms = [id for id in parents if not parents[id]]
         term_list = []
         visited = []
@@ -522,7 +526,7 @@ class GoAnalysis(object):
             """
             term_list.append((go_term, self.global_go[go_term], parent))
             parent = len(term_list) - 1
-            for c in get_children(go_term, names, parents):
+            for c in _get_children(go_term, names, parents):
                 if c in visited:
                     continue
                 else:
@@ -542,7 +546,7 @@ class GoAnalysis(object):
         return names, array
 
 
-def get_children(term, data, parents):
+def _get_children(term, data, parents):
     """
 
     Parameters
@@ -563,22 +567,7 @@ def get_children(term, data, parents):
     return [id for id in data if term in parents[id]]
 
 
-def return_go_number(go_term, go_array):
-    """
-
-    :param go_term:
-    :param go_array:
-    :return:
-    """
-    if go_term in list(go_array[:, 1]):
-        for i in range(len(go_array[:, 0])):
-            if go_term == go_array[i, 1]:
-                return go_array[i, 2]
-    else:
-        return 0
-
-
-def sort_data_by_index(data, index=0):
+def _sort_data_by_index(data, index=0):
     """
 
     :param index:
