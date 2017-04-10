@@ -289,11 +289,15 @@ def check_term_list(list_of_terms, verbose=False):
                 list_of_terms.add(dca)
                 to_remove.add(i)
                 to_remove.add(j)
+    if verbose:
+        print(to_remove)
+        print('Number of term before = {}'.format(len(list_of_terms)))
 
-    print(to_remove)
-    print('Number of term before = {}'.format(len(list_of_terms)))
     list_of_terms = list_of_terms.difference(to_remove)
-    print('Number of term after = {}'.format(len(list_of_terms)))
+
+    if verbose:
+        print('Number of term after = {}'.format(len(list_of_terms)))
+
     return list_of_terms
 
 
@@ -397,7 +401,7 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     Parameters
     ----------
     data :  pandas.DataFrame 
-        output from magine.ontology_analysis.create_enrichment_array
+        output from magine.ontology_analysis.calculate_enrichment
     trim_nodes : bool, optional, default=False
         remove GO terms that are similar
     n_hits_per_time : int, optional
@@ -496,7 +500,7 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
     Parameters
     ----------
     data :  pandas.DataFrame 
-        output from magine.ontology_analysis.create_enrichment_array
+        output from magine.ontology_analysis.calculate_enrichment
     pvalue : float
         upper pvalue limit to filter terms
     trim_nodes : bool, optional, default=False
