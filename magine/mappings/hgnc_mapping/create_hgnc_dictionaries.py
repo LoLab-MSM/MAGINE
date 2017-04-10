@@ -1,40 +1,31 @@
 import pandas as pd
+import os
 
-headers = ['hgnc_id', 'symbol', 'name', 'locus_group', 'locus_type', 'status', 'location', 'location_sortable',
-           'alias_symbol', 'alias_name', 'prev_symbol', 'prev_name', 'gene_family', 'gene_family_id',
-           'date_approved_reserved', 'date_symbol_changed', 'date_name_changed'    'date_modified', 'entrez_id',
-           'ensembl_gene_id', 'vega_id', 'ucsc_id', 'ena', 'refseq_accession', 'ccds_id', 'uniprot_ids', 'pubmed_id',
-           'mgd_id', 'rgd_id', 'lsdb', 'cosmic', 'omim_id', 'mirbase', 'homeodb', 'snornabase', 'bioparadigms_slc',
-           'orphanet', 'pseudogene.org', 'horde_id', 'merops', 'imgt', 'iuphar', 'kznf_gene_catalog', 'mamit-trnadb',
-           'cd', 'lncrnadb', 'enzyme_id', 'intermediate_filament_db']
-
-wanted_headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "PDB", "GO"]
-
+dirname = os.path.dirname(__file__)
 
 def create_from_hngc():
-    hngc = pd.read_table('hngc_protein-coding_gene.txt', delimiter='\t', low_memory=False)
+    # hngc = pd.read_table('hngc_protein-coding_gene.txt', delimiter='\t', low_memory=False)
+    hngc = pd.read_table(
+        'ftp://ftp.ebi.ac.uk/pub/databases/genenames/new/tsv/non_alt_loci_set.txt',
+        delimiter='\t', low_memory=False)
     print(hngc.dtypes)
     hngc = hngc[hngc['status'] == 'Approved']
-    hngc = hngc[['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name', 'alias_name', 'alias_symbol']]
-    hngc.to_csv('hngc.gz', compression='gzip', header=True)
-    hngc = pd.read_csv('hngc.gz')
+    hngc = hngc[['symbol',
+                 'uniprot_ids',
+                 'ensembl_gene_id',
+                 'name',
+                 'location',
+                 'entrez_id',
+                 'ucsc_id',
+                 'mirbase',
+                 'vega_id',
+                 'alias_name',
+                 'alias_symbol']]
+    outfile = os.path.join(dirname, '..', 'data', 'hgnc.gz')
+    hngc.to_csv(outfile, compression='gzip', header=True)
+    hngc = pd.read_csv(outfile)
     return hngc
 
 
-hngc = create_from_hngc()
-print(hngc['symbol'])
-
-
-def convert_to_dict(key, value):
-    """ creates a dictionary from hmdb with a list of values for each key
-
-    :param key:
-    :param value:
-    :return:
-    """
-    return {k: list(v) for k, v in hngc.groupby(key)[value]}
-
-
-un_to_genename = convert_to_dict('uniprot_ids', 'symbol')
-for i in un_to_genename:
-    print(i)
+if __name__ == '__main__':
+    hngc = create_from_hngc()
