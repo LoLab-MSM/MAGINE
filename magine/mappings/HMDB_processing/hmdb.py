@@ -140,11 +140,8 @@ class HMDB(object):
 
                     tmp_all.append(template)
         df = pd.DataFrame(tmp_all, columns=categories)
-        print(df.dtypes)
         df.to_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv.gz'),
                   compression='gzip', index=False)
-        df.to_csv(os.path.join(self.out_dir, 'hmdb_dataframe.csv'),
-                  index=False)
         print("Done processing HMDB")
 
     def load_db(self):
