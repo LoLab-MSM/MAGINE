@@ -16,7 +16,7 @@ def create_heatmaps_pvalue_xs(data, save_name, x_labels=None,
     Parameters
     ----------
     data :  pandas.DataFrame or str
-        output from magine.ontology_analysis.create_enrichment_array
+        output from magine.ontology_analysis.calculate_enrichment
     save_name : str
         prefix of figure to save
     x_labels : list
