@@ -23,7 +23,7 @@ protein = 'protein'
 metabolites = 'metabolites'
 species_type = 'species_type'
 sample_id = 'time'
-
+valid_cols = [fold_change, flag, p_val, protein, gene, species_type, sample_id]
 
 # sample_id = 'sample_id'
 
@@ -47,7 +47,9 @@ class ExperimentalData(object):
                 os.path.join(data_directory, proteomics_file),
                 parse_dates=False, low_memory=False
                 )
-
+        for i in valid_cols:
+            if i not in raw_df.dtypes:
+                print("{} not in columns.")
         raw_df = raw_df[raw_df[fold_change].notnull()]
         raw_df.loc[raw_df[fold_change] == np.inf, fold_change] = 1000
         raw_df.loc[raw_df[fold_change] == -np.inf, fold_change] = -1000
