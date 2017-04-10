@@ -15,17 +15,10 @@ before_install:
     nose h5py pexpect pandas
 - pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
 - pip install python-coveralls
-- pip install pytest-cov
 
 install:
   python setup.py build --build-lib=build/lib
 script:
-  nosetests build/lib/magine --with-coverage --cover-inclusive  --cover-package=build/lib/magine -a '!gpu'
+  nosetests build/lib/magine --with-coverage --cover-inclusive --cover-package=build/lib/magine
 after_success:
   coveralls
-
-
-install:
-  - pip install -r requirements.txt
-script:
-  - py.test --cov-report term-missing --cov app -v
