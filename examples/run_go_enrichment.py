@@ -21,8 +21,7 @@ go = GoAnalysis(species='hsa', output_directory='output',
                 )
 
 results = go.calculate_enrichment(list_of_proteins)
-print(results.head(10))
-quit()
+
 sig_results = slim_ontology(results,
                             pvalue=0.05,
                             go_aspects='biological_process',
@@ -31,7 +30,3 @@ sig_results = slim_ontology(results,
 sig_results.sort_values(by='enrichment_score', ascending=False, inplace=True)
 print(sig_results.head(10))
 
-
-# from magine.networks.network_generator import build_network
-
-# build_network(list_of_proteins, save_name='earm_species')
