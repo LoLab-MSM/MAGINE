@@ -12,3 +12,4 @@ runs
 /*.egg-info
 /*.egg
 /examples/KEGG/
+/build
