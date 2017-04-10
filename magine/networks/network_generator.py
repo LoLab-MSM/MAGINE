@@ -9,9 +9,10 @@ from sys import modules
 import networkx as nx
 from bioservices import KEGG
 import itertools
-import Mappings.maps as mapper
+import magine.mappings.maps as mapper
 from magine.network_database_expansions.expansion_network import \
     load_reactome_fi
+
 from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:
@@ -308,7 +309,7 @@ def download_all_of_kegg(output_dir):
 
 def create_all_of_kegg(output_dir):
     kegg.organism = 'hsa'
-    from Mappings.human_mapper import GeneMapper
+    from magine.mappings.gene_mapper import GeneMapper
     gm = GeneMapper()
     list_of_kegg_pathways = kegg.pathwayIds
     all_of_kegg = nx.DiGraph()
