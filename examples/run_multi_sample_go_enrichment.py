@@ -1,26 +1,25 @@
 from magine.ontology.ontology_analysis import GoAnalysis
 from magine.ontology.ontology_tools import slim_ontology
 
-list_of_proteins = ['CASP3', 'CASP6',
-
-                    'FAS', 'FADD', 'CASP8',  # DISC
+pro_death = ['BID', 'BAD', 'PMAIP1',  # NOXA
+             'BAX', 'BAK1',  # effector proteins
+             ]
+anti_death = ['MCL1', 'BCL2', 'BCL2L1', ]  # anti-apoptotic
+caspases = ['CASP3', 'CASP6', 'CASP8', ]
+downstream_mito = ['DIABLO', 'CYCS',
+                   'PARP1', 'APAF1', 'XIAP', ]
+upstream_mito = ['FAS', 'FADD',  # DISC
                     'CFLAR',  # FLIP
                     'BFAR',  # BAR
-                    'BAD',
-                    # pro-apoptotic
-                    'BID',
-                    'PMAIP1',  # NOXA
-                    'MCL1', 'BCL2', 'BCL2L1',  # anti-apoptotic
-                    'BAX', 'BAK1',  # effector proteins
-                    'DIABLO', 'CYCS',
-                    'PARP1', 'APAF1', 'XIAP',
-                    ]
+                 ]
+list_of_proteins = [pro_death, anti_death, caspases, downstream_mito,
+                    upstream_mito]
 
 go = GoAnalysis(species='hsa', output_directory='output',
-                save_name='example_earm_proteins',
+                save_name='multi_sample_earm_proteins',
                 )
 
-results = go.enrichment_analysis_of_single_sample(list_of_proteins)
+results = go.calculate_enrichment(list_of_proteins)
 
 sig_results = slim_ontology(results,
                             pvalue=0.05,

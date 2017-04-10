@@ -20,8 +20,9 @@ go = GoAnalysis(species='hsa', output_directory='output',
                 save_name='example_earm_proteins',
                 )
 
-results = go.enrichment_analysis_of_single_sample(list_of_proteins)
-
+results = go.calculate_enrichment(list_of_proteins)
+print(results.head(10))
+quit()
 sig_results = slim_ontology(results,
                             pvalue=0.05,
                             go_aspects='biological_process',

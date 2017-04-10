@@ -13,9 +13,9 @@ def test_html():
                     # reference=exp_data.list_species
                     )
 
-    df = go.create_enrichment_array(exp_data.proteomics_up_over_time,
-                                    exp_data.timepoints,
-                                    )
+    df = go.calculate_enrichment(exp_data.proteomics_up_over_time,
+                                 exp_data.timepoints,
+                                 )
 
     print(df.sort_values(by='enrichment_score', ascending=False).head(10))
     quit()

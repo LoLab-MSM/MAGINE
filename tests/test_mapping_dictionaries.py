@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-from Mappings.maps import create_gene_dictionaries, create_compound_dictionary
+from magine.mappings.maps import create_gene_dictionaries, \
+    create_compound_dictionary
 
 
 def test_kegg_to_uniprot():

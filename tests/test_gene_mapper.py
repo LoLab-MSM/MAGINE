@@ -1,4 +1,4 @@
-from Mappings.gene_mapper import GeneMapper
+from magine.mappings.gene_mapper import GeneMapper
 
 gm = GeneMapper('hsa')
 print(gm.gene_name_to_uniprot['BAX'])
