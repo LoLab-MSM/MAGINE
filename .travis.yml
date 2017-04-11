@@ -15,6 +15,7 @@ before_install:
     nose h5py pexpect pandas
 - pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
 - pip install python-coveralls
+- pip install jinja2
 
 install:
   python setup.py build --build-lib=build/lib
