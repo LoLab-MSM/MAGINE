@@ -16,6 +16,7 @@ before_install:
 - pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
 - pip install python-coveralls
 - pip install jinja2
+- pip install -r requirements.txt
 
 install:
   python setup.py build --build-lib=build/lib
