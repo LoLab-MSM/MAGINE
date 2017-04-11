@@ -1,8 +1,6 @@
 import os
 
-import pathos.multiprocessing as mp
-
-from magine.data_handler import ExperimentalData
+from magine.data.datatypes import ExperimentalData
 
 data_directory = os.path.join(os.path.dirname(__file__), 'Data')
 

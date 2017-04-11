@@ -1,6 +1,7 @@
 import os
-import pandas as pd
+
 import jinja2
+import pandas as pd
 
 range_number = """column_number:{},
 filter_type: "range_number" """
@@ -57,7 +58,7 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     if isinstance(data, str):
         data = pd.read_csv(data)
     from magine.plotting.species_plotting import create_gene_plots_per_go
-    from magine.data_merge import pivot_table_for_export
+    from magine.data.formatter import pivot_table_for_export
 
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
                                                    out_dir, exp_data)

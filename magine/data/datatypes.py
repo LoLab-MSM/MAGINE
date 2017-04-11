@@ -555,7 +555,7 @@ class ExperimentalData(object):
                               p_value=p_value,
                               fold_change_cutoff=fold_change_cutoff)
 
-    def time_series_volcano(self, exp_date_type, save_name, p_value=0.1,
+    def time_series_volcano(self, exp_data_type, save_name, p_value=0.1,
                             out_dir=None, fold_change_cutoff=1.5,
                             y_range=None, x_range=None, bh_critera=False):
         """
@@ -563,7 +563,7 @@ class ExperimentalData(object):
 
         Parameters
         ----------
-        exp_date_type: str
+        exp_data_type: str
             Type of experimental method for plot
         save_name: str
             name to save figure
@@ -584,25 +584,31 @@ class ExperimentalData(object):
         -------
 
         """
-
-        data = self.data[self.data[exp_method] == exp_date_type]
+        if exp_data_type not in self.exp_methods:
+            print("Must provide experimental method for volcano plot")
+            quit()
+        data = self.data[self.data[exp_method] == exp_data_type].copy()
         n_sample = np.sort(data[sample_id].unique())
         if len(n_sample) > 8:
             n_cols = 3
         else:
             n_cols = 2
-        n_rows = len(n_sample) / n_cols
-        print(n_rows, n_cols)
+        print(len(n_sample))
+        n_rows = int(np.rint(len(n_sample) / float(n_cols)))
+
+        print(n_sample, n_rows, n_cols)
 
         fig = plt.figure(figsize=(10, 10))
         for n, i in enumerate(n_sample):
-            sample = data[data[sample_id] == i]
+            sample = data[data[sample_id] == i].copy()
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
+            print(sample.shape)
             filtered_data = self._filter_data(sample, bh_critera, p_value,
                                               fold_change_cutoff)
             sec_0, sec_1, sec_2 = filtered_data
+            print(n_rows, n_cols, n + 1)
             ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
             self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
@@ -619,7 +625,7 @@ class ExperimentalData(object):
 
         self._save_plot(fig, save_name=save_name, out_dir=out_dir)
 
-    def volcano_plot(self, exp_date_type, save_name, out_dir=None,
+    def volcano_plot(self, exp_data_type, save_name, out_dir=None,
                      bh_critera=False, p_value=0.1, fold_change_cutoff=1.5,
                      x_range=None, y_range=None):
         """ Create a volcano plot of data
@@ -627,7 +633,7 @@ class ExperimentalData(object):
 
         Parameters
         ----------
-        exp_date_type: str
+        exp_data_type: str
             Type of experimental method for plot
         save_name: str
             name to save figure
@@ -650,10 +656,10 @@ class ExperimentalData(object):
 
         """
 
-        if exp_date_type not in self.exp_methods:
+        if exp_data_type not in self.exp_methods:
             print("Must provide experimental method for volcano plot")
             quit()
-        data = self.data[self.data[exp_method] == exp_date_type]
+        data = self.data[self.data[exp_method] == exp_data_type]
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         filtered_data = self._filter_data(data, bh_critera, p_value,
@@ -676,7 +682,7 @@ class ExperimentalData(object):
 
     @staticmethod
     def _save_plot(fig, save_name, out_dir):
-        fig.tight_layout()
+        # fig.tight_layout()
         tmp_save_name_pdf = '{0}.pdf'.format(save_name)
         tmp_save_name_png = '{0}.png'.format(save_name)
         if out_dir is not None:

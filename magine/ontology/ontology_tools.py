@@ -429,7 +429,13 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     # removes aspects of GO that are not wanted
     if go_aspects is None:
         go_aspects = ['biological_process']
-    data = data[data['aspect'].isin(go_aspects)]
+    if isinstance(go_aspects, str):
+        data = data[data['aspect'] == go_aspects]
+    elif isinstance(go_aspects, list):
+        data = data[data['aspect'].isin(go_aspects)]
+    else:
+        print("go_aspect must be a list! \n"
+              "biological_process, cellular_component, molecular_function")
 
     # remove terms with reference smaller than 5
     data = data[data['ref'] >= 10]

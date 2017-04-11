@@ -1,7 +1,6 @@
-
 import os
 
-from magine.data_handler import ExperimentalData
+from magine.data.datatypes import ExperimentalData
 from magine.magine_analysis import Analyzer
 
 data_directory = os.path.join(os.path.dirname(__file__), 'Data')

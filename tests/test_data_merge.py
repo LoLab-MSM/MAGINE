@@ -1,6 +1,7 @@
-from magine.data_merge import load_directory, load_csv
 import pandas as pd
 from nose.tools import raises
+
+from magine.data.formatter import load_csv, load_directory
 
 pd.set_option('display.width', 10000)
 pd.set_option('max_colwidth', 100)

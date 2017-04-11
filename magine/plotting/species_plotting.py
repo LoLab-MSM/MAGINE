@@ -135,7 +135,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
 
 # @profile
 def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
-                        out_dir='.', title=None, plot_type='plotly'):
+                        out_dir='.', title=None, plot_type='plotly',
+                        image_format='pdf'):
     """
 
     Parameters
@@ -176,8 +177,13 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         x_point_dict = {i: 2 ** (n + 1) for n, i
                         in enumerate(x_points)}
 
-    local_df = dataframe[dataframe[gene].isin(list_of_genes)]
-
+    local_df = dataframe[dataframe[gene].isin(list_of_genes)].copy()
+    crit_1 = local_df[fold_change] > 0
+    crit_2 = local_df[fold_change] < 0
+    local_df.loc[crit_1, 'log2fc'] = np.log2(
+        local_df[crit_1][fold_change].astype(np.float64))
+    local_df.loc[crit_2, 'log2fc'] = -np.log2(
+        -local_df[crit_2][fold_change].astype(np.float64))
     n_genes = len(local_df[gene].unique())
     group = local_df.groupby(gene)
 
@@ -207,7 +213,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
             x = np.array(m[sample_id])
             if len(x) < 1:
                 continue
-            y = np.array(m[fold_change])
+            y = np.array(m['log2fc'])
             sig_flag = np.array(m[flag])
             index = np.argsort(x)
             x = x[index]
@@ -232,17 +238,17 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
             # create plotly plot
             elif plot_type == 'plotly':
                 c = colors.next()[1]
-                plotly_list.append(create_ploty_graph(x_index, y, n, n, c))
+                plotly_list.append(_create_ploty_graph(x_index, y, n, n, c))
                 if len(s_flag) != 0:
                     index_counter += 1
                     total_counter += 1
-                    plotly_list.append(create_ploty_graph(x_index[s_flag],
-                                                          y[s_flag], n, n,
-                                                          c,
-                                                          marker='x-open-dot'))
+                    plotly_list.append(_create_ploty_graph(x_index[s_flag],
+                                                           y[s_flag], n, n,
+                                                           c,
+                                                           marker='x-open-dot'))
         names_list.append([name, index_counter])
     if plot_type == 'matplotlib':
-        ax.set_yscale('symlog', basey=2)
+        # ax.set_yscale('symlog', basey=2)
         plt.xlim(min(x_point_dict.values()) - 2,
                  max(x_point_dict.values()) + 2)
         # if log_scale:
@@ -258,7 +264,11 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         handles, labels = ax.get_legend_handles_labels()
         lgd = ax.legend(handles, labels, loc='best',
                         bbox_to_anchor=(1.01, 1.0))
-        tmp_savename = os.path.join(out_dir, "{}.pdf".format(save_name))
+        if out_dir is None:
+            tmp_savename = "{}.{}".format(save_name, image_format)
+        else:
+            tmp_savename = os.path.join(out_dir, "{}.{}".format(save_name,
+                                                                image_format))
         # print("Saving {}".format(tmp_savename))
         plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
                     bbox_inches='tight')
@@ -266,22 +276,17 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         true_list = [True] * total_counter
         scroll_list = [
             dict(args=['visible', true_list],
-                 label='All', method='update')]
+                 label='All',
+                 method='update')]
         prev = 0
-        # print(names_list)
-        # print(total_counter)
         for i in range(n_genes):
             t_row = [False] * total_counter
-            # print(names_list[i])
             for j in range(prev, prev + names_list[i][1]):
                 t_row[j] = True
             prev += names_list[i][1]
             scroll = dict(args=['visible', t_row],
                           label=names_list[i][0], method='update')
             scroll_list.append(scroll)
-        # print(num_colors)
-        # for i in scroll_list:
-        #     print(i)
         update_menu = list([dict(x=-0.05,
                                  y=1,
                                  yanchor='top',
@@ -290,16 +295,21 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                 title=title,
                 showlegend=True,
                 xaxis=dict(title='Sample index'),
+                yaxis=dict(title='log2fc'),
                 hovermode="closest",
                 updatemenus=update_menu)
 
         fig = plotly_graph.Figure(data=plotly_list, layout=layout)
-        s_name = '{}.html'.format(save_name)
+
+        if out_dir is None:
+            s_name = "{}.html".format(save_name)
+        else:
+            s_name = os.path.join(out_dir, "{}.html".format(save_name))
         # print("Saving {}".format(s_name))
         plot(fig, filename=s_name, auto_open=False)
 
 
-def create_ploty_graph(x, y, label, enum, color, marker='circle'):
+def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
     l_color = 'rgba({},{},{},1.)'.format(color[0], color[1], color[2])
     if marker != 'circle':
         mode = 'markers'
