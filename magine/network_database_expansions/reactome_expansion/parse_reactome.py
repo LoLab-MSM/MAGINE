@@ -1,7 +1,9 @@
 import numpy as np
 import pandas as pd
 
-from magine.mappings.gene_mapper import gm
+from magine.mappings.gene_mapper import GeneMapper
+
+gm = GeneMapper()
 
 columns = ['uniprot_source', 'ensebml_source', 'ensebml_source_id', 'uniprot_target', 'ensebml_target',
            'ensebml_target_id', 'type', 'database_source', 'else']
