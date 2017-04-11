@@ -13,8 +13,7 @@ before_install:
 - conda update --yes conda
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
     nose h5py pexpect pandas
-- conda config --add channels conda-forge
-- conda install orange
+- pip install orange
 - pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
 - pip install python-coveralls
 - pip install -r requirements.txt
