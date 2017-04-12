@@ -1,4 +1,4 @@
 include README.md
 include magine/html_templates/*.html
-include tests/Data/*
+include magine/tests/Data/*
 include magine/mappings/*mapper.p
