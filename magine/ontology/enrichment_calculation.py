@@ -27,12 +27,12 @@ class MagineGO(object):
             if not os.path.exists(i):
                 create_dicts_through_orange(species=species)
 
-        self.gene_to_go = pickle.load(open(gene_to_go_name, 'r'))
-        self.go_to_gene = pickle.load(open(go_to_gene_name, 'r'))
-        self.go_to_name = pickle.load(open(go_to_go_name, 'r'))
-        self.go_depth = pickle.load(open(go_depth, 'r'))
-        self.go_slim = pickle.load(open(go_slim, 'r'))
-        self.go_aspect = pickle.load(open(go_aspect, 'r'))
+        self.gene_to_go = pickle.load(open(gene_to_go_name, 'rb'))
+        self.go_to_gene = pickle.load(open(go_to_gene_name, 'rb'))
+        self.go_to_name = pickle.load(open(go_to_go_name, 'rb'))
+        self.go_depth = pickle.load(open(go_depth, 'rb'))
+        self.go_slim = pickle.load(open(go_slim, 'rb'))
+        self.go_aspect = pickle.load(open(go_aspect, 'rb'))
 
     def calculate_enrichment(self, genes, reference=None, evidence_codes=None,
                              aspect=None,
@@ -154,11 +154,11 @@ def create_dicts_through_orange(species='hsa'):
         go_depth[i] = ont.term_depth(i)
         go_aspect[i] = ont[i].namespace
 
-    pickle.dump(go_to_gene, open(go_to_gene_name, 'w'))
-    pickle.dump(goid_to_name, open(go_to_go_name, 'w'))
-    pickle.dump(go_depth, open(go_depth_name, 'w'))
-    pickle.dump(go_slims, open(go_slim_name, 'w'))
-    pickle.dump(go_aspect, open(go_aspect_name, 'w'))
+    pickle.dump(go_to_gene, open(go_to_gene_name, 'wb'))
+    pickle.dump(goid_to_name, open(go_to_go_name, 'wb'))
+    pickle.dump(go_depth, open(go_depth_name, 'wb'))
+    pickle.dump(go_slims, open(go_slim_name, 'wb'))
+    pickle.dump(go_aspect, open(go_aspect_name, 'wb'))
 
     for i in go_to_gene:
         term = i
@@ -169,7 +169,7 @@ def create_dicts_through_orange(species='hsa'):
             else:
                 gene_to_go[g] = set()
                 gene_to_go[g].add(term)
-    pickle.dump(gene_to_go, open(gene_to_go_name, 'w'))
+    pickle.dump(gene_to_go, open(gene_to_go_name, 'wb'))
     print("Done creating GO files")
 
 

@@ -11,7 +11,8 @@ import pandas as pd
 import requests
 
 
-from xml_to_dictionary import XmlDictConfig, XmlListConfig
+from magine.mappings.HMDB_processing.xml_to_dictionary import XmlDictConfig, \
+XmlListConfig
 
 directory = os.path.dirname(__file__)
 

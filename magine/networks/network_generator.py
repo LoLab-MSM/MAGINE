@@ -168,7 +168,8 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                     drug_dict[i] = split_name[1]
                     end_network.node[i]['drug'] = split_name[0]
     end_network = nx.relabel_nodes(end_network, drug_dict)
-    end_network = mapper.convert_all(end_network, species=species)
+    end_network = mapper.convert_all(end_network, species=species,
+                                    use_hmdb=use_hmdb)
     if all_measured_list is not None:
         end_network = add_reactome(end_network, all_measured_list)
     elif use_reactome:

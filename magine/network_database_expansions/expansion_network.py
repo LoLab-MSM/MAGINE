@@ -1,7 +1,7 @@
 import networkx as nx
 import os
-from reactome_expansion.reactome_functional_interaction import \
-    ReactomeFunctionalInteraction
+from magine.network_database_expansions.reactome_expansion.reactome_functional_interaction \
+    import ReactomeFunctionalInteraction
 
 
 def load_reactome_fi():

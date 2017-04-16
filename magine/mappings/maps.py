@@ -2,7 +2,10 @@
 """
 Mapping between data identifiers
 """
-import cPickle as pickle
+try:
+    import cPickle as pickle
+except:
+    import _pickle as pickle
 import os
 from sys import modules
 
@@ -226,17 +229,19 @@ def create_compound_dictionary(network):
     return cpd_to_hmdb
 
 
-def convert_all(network, species='hsa'):
+def convert_all(network, species='hsa', use_hmdb=False):
     """ Maps gene names to HGNC and kegg compound to HMDB
 
     :param network:
     :param species:
+    :param use_hmdb
     :return:
     """
     renamed_network = nx.relabel_nodes(network, compound_manual)
-    print('Started converting kegg compounds to HMDB')
-    dict1 = create_compound_dictionary(renamed_network)
-    renamed_network = nx.relabel_nodes(renamed_network, dict1)
+    if use_hmdb:
+        print('Started converting kegg compounds to HMDB')
+        dict1 = create_compound_dictionary(renamed_network)
+        renamed_network = nx.relabel_nodes(renamed_network, dict1)
     print('Started converting kegg genes to HGNC')
     dict2 = create_gene_dictionaries(renamed_network, species=species)
     renamed_network = nx.relabel_nodes(renamed_network, dict2)

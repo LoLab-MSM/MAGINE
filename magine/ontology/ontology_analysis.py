@@ -15,7 +15,7 @@ import warnings
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
 from collections import defaultdict
-from enrichment_calculation import MagineGO
+from magine.ontology.enrichment_calculation import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
 
@@ -168,7 +168,10 @@ class GoAnalysis(object):
             print("Running single GO enrichment since single list provided.")
             return self._calculate_enrichment_single_sample(list_of_exp)
 
-        assert self.num_data_sets != 0, "Must provide at least one data list"
+        if self.num_data_sets == 0:
+            print("Must provide at least one data list")
+            print("Returning nothing")
+            return
 
         if isinstance(labels, list):
             assert len(labels) == self.num_data_sets, \
