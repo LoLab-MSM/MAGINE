@@ -15,7 +15,7 @@ import warnings
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
 from collections import defaultdict
-from enrichment_calculation import MagineGO
+from magine.ontology.enrichment_calculation import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
 

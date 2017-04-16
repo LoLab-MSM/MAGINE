@@ -185,16 +185,22 @@ class Analyzer(object):
             Visualize the network after creation
 
         Returns
-        -------
-
+        --------
+        tall: networkx.DiGraph
+            GO network created with GoNetworkGenerator
+        data : pd.Dataframe
+            enrichment data from GOAnalysis.calculate_enrichment
         """
 
-        if self.go_net_gen is None:
+        if self.network is None:
             warnings.warn("Warning : A molecular network is required to "
                           "generate a GO level network!.\n"
                           "You must provide Analyzer with a network "
                           "or pass the build_network flag", RuntimeWarning)
             quit()
+        elif self.go_net_gen is None:
+            self.go_net_gen = GoNetworkGenerator(self.species, self.network,
+                                                 self.out_dir)
 
         from magine.ontology.ontology_tools import filter_ontology_df
 
@@ -209,6 +215,7 @@ class Analyzer(object):
             threshold=0)
         if visualize:
             self.visualize_go_network(tall, data, save_name)
+        return tall, data
 
     def create_go_network_manual_terms(self, file_name, save_name, go_ids=None,
                                        visualize=False):
@@ -227,7 +234,10 @@ class Analyzer(object):
 
         Returns
         -------
-
+        tall: networkx.DiGraph
+            GO network created with GoNetworkGenerator
+        data : pd.Dataframe
+            enrichment data from GOAnalysis.calculate_enrichment
         """
 
         if self.go_net_gen is None:
@@ -247,8 +257,10 @@ class Analyzer(object):
                 threshold=0)
         if visualize:
             self.visualize_go_network(tall, data, save_name)
+        return tall, data
 
-    def visualize_go_network(self, go_network, data, save_name):
+    def visualize_go_network(self, go_network, data, save_name,
+            format_only=False):
         """ Renders GO network with py2cytoscape
 
         Parameters
@@ -259,7 +271,8 @@ class Analyzer(object):
             enrichment data from GOAnalysis.calculate_enrichment
         save_name: str
             prefix to save images of GO network
-
+        format_only: boolean
+            option to return formatted network and labels for rendering
 
         Returns
         -------
@@ -286,6 +299,9 @@ class Analyzer(object):
                 t = 'time_{0:04d}'.format(n)
                 go_network.node[i][t] = float(values[time])
 
+        if format_only:
+            return go_network, data
+
         savename = os.path.join(self.out_dir, 'Network_files',
                                 '{0}_all_colored.graphml'.format(save_name))
 
@@ -296,7 +312,6 @@ class Analyzer(object):
                                      prefix=save_name,
                                      labels=self.exp_data.timepoints,
                                      out_dir=self.out_dir)
-
 
 def create_names(n):
     names = []
