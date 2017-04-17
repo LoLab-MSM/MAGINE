@@ -370,7 +370,6 @@ def _process_phsilac(data):
     data.loc[criteria, 'p_value_group_1_and_group_2'] = 0.049
     data.loc[criteria, 'significant_flag'] = True
 
-
     data['data_type'] = 'ph_silac'
     data['species_type'] = 'protein'
     headers = ['gene', 'treated_control_fold_change', 'protein',
@@ -380,13 +379,16 @@ def _process_phsilac(data):
     return data
 
 
-def pivot_table_for_export(data):
+def pivot_table_for_export(data, save_name=None):
     """
     creates a pivot table of combined data that is in MAGINE format
 
     Parameters
     ----------
     data : pd.DataFrame
+        output from magine analysis
+    save_name : str
+        save name for excel merged format
 
     Returns
     -------
@@ -394,7 +396,11 @@ def pivot_table_for_export(data):
     """
     index = ['GO_id', 'GO_name', 'depth', 'ref', 'slim', 'aspect']
     tmp = pd.pivot_table(data, index=index, columns='sample_index',
-                         aggfunc='first')
+                         # aggfunc='first'
+                         )
+    if save_name:
+        tmp.to_excel('{}.xlsx'.format(save_name),
+                     merge_cells=True)
     return tmp
 
 
