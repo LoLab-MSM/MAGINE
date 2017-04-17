@@ -31,6 +31,6 @@ before_install:
 install:
   python setup.py build --build-lib=build/lib
 script:
-  nosetests build/lib/magine --nologcapture --with-coverage --cover-inclusive --cover-package=build/lib/magine --exclude-dir=build/lib/magine/networks/correlation_networks  --exclude-dir=build/lib/magine/pysb_conversion --logging-filter=INFO
+  nosetests build/lib/magine --nologcapture --with-coverage --cover-inclusive --cover-package=build/lib/magine --exclude-dir=build/lib/magine/networks/correlation_networks  --exclude-dir=build/lib/magine/networks/pysb_conversion
 after_success:
   coveralls
