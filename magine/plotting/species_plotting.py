@@ -27,21 +27,27 @@ tls.set_credentials_file(username='james.ch.pino',
                          api_key='BnUcJSpmPcMKZg0yEFaL')
 
 
-def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
+def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
+                             run_parallel=False):
     """ Creates a figure for each GO term in data
 
     Data should be a result of running calculate_enrichment.
     This function creates a plot of all proteins per term if a term is
     significant and the number of the reference set is larger than 5 and
-    the total number of species measured is less than 50.
-
+    the total number of species measured is less than 100.
 
 
     Parameters
     ----------
-    data : pandas.DataFrame, optional
+    data : pandas.DataFrame
         previously ran enrichment analysis
-
+    save_name : str
+        name to save file   
+    out_dir : str
+        output path for file
+    exp_data : magine.ExperimentalData
+        data to plot
+    
     Returns
     -------
     out_array : dict
@@ -116,9 +122,10 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
     # just keeping this code just in case using pathos is a bad idea
     # ultimately, using matplotlib is slow.
     run_seq = True
-    # run_seq = False
     run_par = False
-    # run_par = True
+    if run_parallel:
+        run_par = True
+        run_seq = False
 
     if run_seq:
         st1 = time.time()
