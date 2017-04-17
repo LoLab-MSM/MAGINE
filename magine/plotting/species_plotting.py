@@ -55,6 +55,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
     # filter data by significance and number of references
     list_of_sig_go = data[(data['ref'] >= 5)
                           &
+                          (data['ref'] <= 2000)
+                          &
                           (data['pvalue'] < 0.05)]['GO_id'].unique()
 
     # here we are going to iterate through all sig GO terms and create
@@ -87,10 +89,10 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
             for j in each:
                 gene_set.add(j)
         # too many genes isn't helpful on plots, so skip them
-        if len(gene_set) > 50:
+        if len(gene_set) > 100:
             figure_locations[i] = '<a>{0}</a>'.format(name)
             continue
-        out_point = '<a href="Figures/go_{0}_{1}.html">{2} ({0})</a>'
+        out_point = '<a href="Figures/go_{0}_{1}.html">{2}</a>'
         out_point = out_point.format(i, save_name, name).replace(':', '')
 
         figure_locations[i] = out_point
@@ -109,9 +111,9 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
     # just keeping this code just in case using pathos is a bad idea
     # ultimately, using matplotlib is slow.
     run_seq = True
-    run_seq = False
+    # run_seq = False
     run_par = False
-    run_par = True
+    # run_par = True
 
     if run_seq:
         st1 = time.time()
@@ -135,12 +137,14 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
 
 # @profile
 def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
-                        out_dir='.', title=None, plot_type='plotly',
+                        out_dir=None, title=None, plot_type='plotly',
                         image_format='pdf'):
     """
 
     Parameters
     ----------
+    dataframe: pandas.DataFrame
+        magine formatted dataframe
     list_of_genes: list
         List of genes to be plotter
     save_name: str
@@ -151,6 +155,8 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         Title of plot, useful when list of genes corresponds to a GO term
     plot_type : str
         Use plotly to generate html output or matplotlib to generate pdf
+    image_format : str
+        pdf or png, only used if plot_type="matplotlib"
 
     Returns
     -------
@@ -160,13 +166,13 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                           api_key='BnUcJSpmPcMKZg0yEFaL')
     tls.set_credentials_file(username='james.ch.pino',
                              api_key='BnUcJSpmPcMKZg0yEFaL')
-    if os.path.exists(out_dir):
+    if out_dir is None:
         pass
-    else:
+    elif not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
     if list_of_genes is None:
-        dataframe, list_of_genes, save_name, out_dir, title, plot_all_x, log_scale = dataframe
+        dataframe, list_of_genes, save_name, out_dir, title = dataframe
 
     x_points = sorted(dataframe[sample_id].unique())
 
@@ -248,11 +254,8 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                                                            marker='x-open-dot'))
         names_list.append([name, index_counter])
     if plot_type == 'matplotlib':
-        # ax.set_yscale('symlog', basey=2)
         plt.xlim(min(x_point_dict.values()) - 2,
                  max(x_point_dict.values()) + 2)
-        # if log_scale:
-        #     ax.set_xscale('log', basex=2)
         ax.set_xticks(sorted(x_point_dict.values()))
         ax.set_xticklabels(x_points)
         plt.ylabel('log$_2$ Fold Change')
@@ -287,6 +290,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
             scroll = dict(args=['visible', t_row],
                           label=names_list[i][0], method='update')
             scroll_list.append(scroll)
+
         update_menu = list([dict(x=-0.05,
                                  y=1,
                                  yanchor='top',
