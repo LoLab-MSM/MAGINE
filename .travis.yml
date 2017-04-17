@@ -26,6 +26,7 @@ before_install:
 - pip install pygraphviz
 - pip install python-coveralls
 - pip install -r requirements.txt
+- pip install nose-exclude
 
 install:
   python setup.py build --build-lib=build/lib
