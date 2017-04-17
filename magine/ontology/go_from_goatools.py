@@ -31,6 +31,7 @@ except KeyError:
 def load_termcount():
     from goatools.associations import read_gaf
     from goatools.semantic import TermCounts
+    """
     association_file = os.path.join(os.path.dirname(__file__),
                                     "associations.p")
     if os.path.exists(association_file):
@@ -53,5 +54,10 @@ def load_termcount():
         associations[gene] = terms_copy
     associations = {key: value for key, value in associations.items()
                     if value is not to_remove}
+    """
+    from magine.ontology.enrichment_calculation import MagineGO
+    mg = MagineGO()
+    # associations = pickle.load(open('hsa_gene_to_go.p', 'rb'))
+    associations = mg.gene_to_go
     termcounts = TermCounts(go, associations)
     return termcounts, associations
