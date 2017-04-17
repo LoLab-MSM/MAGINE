@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
-
+"""
 from pysb.simulator.scipyode import ScipyOdeSimulator
 from pysb_model import model
 
@@ -14,3 +14,4 @@ x = np.array(x.all)
 print(np.shape(x))
 plt.plot(t, x)
 plt.show()
+"""

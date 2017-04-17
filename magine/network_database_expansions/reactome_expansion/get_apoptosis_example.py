@@ -365,6 +365,7 @@ def extract_pathways(pathway_events):
 
 if __name__ == "__main__":
 
+
     save_name = 'apoptosis'
     save_name = 'bad_activation'
     save_name = 'apoptosis'
@@ -431,4 +432,4 @@ if __name__ == "__main__":
     # g.add_subgraph(species, name='cluster2', label='Species')
 
     g.write('{}.dot'.format(save_name), )
-    g.draw('{}.png'.format(save_name), prog='dot')
+    # g.draw('{}.png'.format(save_name), prog='dot')

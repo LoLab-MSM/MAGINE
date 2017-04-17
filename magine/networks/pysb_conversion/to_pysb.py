@@ -44,7 +44,7 @@ def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
     X = str(X)
     Y = str(Y)
     split = option.split("_")
-    print split
+    print(split)
     if split[0] == 'inhibition':
         rate1 = "kf%s" % str(param_counter)
         rate2 = "kr%s" % str(param_counter)
@@ -79,7 +79,7 @@ def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
         rule_name = '"%s_expression_%s"' % (Y, str(param_counter))
         tmp1 = 'catalyze(%s(gene="protein"),%s(gene="off"),%s(gene="on",state="A"),[%s,%s,%s] )\n' % (
             X, Y, Y, rate1, rate2, rate3)
-        tmp2 = 'Rule(%s,%s(bf=None,gene="on",state="A") >> %s(bf=None,gene="on",state="A") + %s(bf=None,gene="protein",state="A"),%s)\n' % (
+        tmp2 = 'Rule(%s,%s(bf=None,gene="on",state="A") !> %s(bf=None,gene="on",state="A") + %s(bf=None,gene="protein",state="A"),%s)\n' % (
             rule_name, Y, Y, Y, rate2)
         rules += tmp1
         rules += tmp2
@@ -122,7 +122,7 @@ def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
         rate2 = "kr%s" % str(param_counter)
         rule_name = '"%s_binds_%s_%s"' % (X, Y, str(param_counter))
 
-        tmp1 = 'Rule(%s, %s(bf=None, gene="protein") +%s(bf=None,gene="protein")<> %s(bf=1,gene="protein") ** %s(bf=1,gene="protein"),%s,%s)\n' % (
+        tmp1 = 'Rule(%s, %s(bf=None, gene="protein") +%s(bf=None,gene="protein")!> %s(bf=1,gene="protein") ** %s(bf=1,gene="protein"),%s,%s)\n' % (
             rule_name, X, Y, X, Y, rate1, rate2)
 
         tmp1 = tmp1.replace("**", "%")
@@ -131,7 +131,7 @@ def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
         parameters += 'Parameter("%s",1)\n' % rate2
 
     else:
-        print split[0], 'not found'
+        print(split[0], 'not found')
     return rules, parameters
 
     # catalyze(enzyme, e_site, substrate, s_site, product, klist):
