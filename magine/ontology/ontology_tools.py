@@ -464,7 +464,7 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
             terms.update(set(list(tmp.index)[:updated_index + n_needed]))
             print("after {}".format(terms))
             print(check_term_list(terms))
-            quit()
+            #quit()
             return check_term_list(terms)
         list_all_go = set()
         for i in enrichment_list:
