@@ -4,7 +4,7 @@ from magine.data.datatypes import ExperimentalData
 
 data_directory = os.path.join(os.path.dirname(__file__), 'Data')
 
-exp_data = ExperimentalData('large_example.csv', data_directory)
+exp_data = ExperimentalData('example_apoptosis.csv', data_directory)
 
 
 def test_table():
