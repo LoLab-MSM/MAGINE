@@ -48,7 +48,7 @@ setup(
                           'networkx',
                           'requests',
                           'py2cytoscape',
-                          'orange-bioinformatics==2.6.19',
+                          'orange-bioinformatics==2.6.21',
                           'pygraphviz',
                           'pandas',
                           'xlrd',
