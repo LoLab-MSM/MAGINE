@@ -243,7 +243,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                     ax.plot(x_index[s_flag], y[s_flag], '^', color=color)
             # create plotly plot
             elif plot_type == 'plotly':
-                c = colors.next()[1]
+                c = next(colors)[1]
                 plotly_list.append(_create_ploty_graph(x_index, y, n, n, c))
                 if len(s_flag) != 0:
                     index_counter += 1
