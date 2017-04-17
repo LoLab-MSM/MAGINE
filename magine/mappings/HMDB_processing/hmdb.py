@@ -12,7 +12,7 @@ import requests
 
 
 from magine.mappings.HMDB_processing.xml_to_dictionary import XmlDictConfig, \
-XmlListConfig
+    XmlListConfig
 
 directory = os.path.dirname(__file__)
 
@@ -119,7 +119,7 @@ class HMDB(object):
             context = iter(context)
 
             # get the root element
-            event, root = context.next()
+            event, root = next(context)
             for event, elem in context:
                 if '}' in elem.tag:
                     elem.tag = elem.tag.split('}', 1)[1]
