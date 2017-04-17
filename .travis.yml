@@ -29,6 +29,7 @@ before_install:
 install:
   python setup.py build --build-lib=build/lib
 script:
-  nosetests build/lib/magine/tests --with-coverage --cover-inclusive --cover-package=build/lib/magine
+  nosetests build/lib/magine --with-coverage --cover-inclusive --cover-package=build/lib/magine
+  --ignore-files=build/lib/magine/networks/calculate_correlation_network.py
 after_success:
   coveralls
