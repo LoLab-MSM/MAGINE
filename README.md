@@ -1,3 +1,4 @@
+[![Coverage Status](https://coveralls.io/repos/github/LoLab-VU/Magine/badge.svg?branch=master)](https://coveralls.io/github/LoLab-VU/Magine?branch=master)
 #Magine- Mechanism of Action Generator involving Network Expansion
 
 Python package that integrates omic style data.
