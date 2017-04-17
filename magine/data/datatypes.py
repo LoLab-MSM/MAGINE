@@ -341,6 +341,7 @@ class ExperimentalData(object):
         ax.yaxis.set_visible(False)
         # plt.tight_layout()
         plt.savefig('{}.png'.format(save_name))
+        plt.close()
         t.to_csv('{0}.csv'.format(save_name))
         filename = '{0}.tex'.format(save_name)
 
@@ -354,10 +355,11 @@ class ExperimentalData(object):
                 subprocess.call(['pdflatex', filename],
                                 stderr=subprocess.STDOUT,
                                 stdout=fnull)
-                subprocess.call(['rm',
-                                 '{0}.aux'.format(save_name),
-                                 '{0}.log'.format(save_name)],
-                                stderr=subprocess.STDOUT)
+
+                # subprocess.call(['rm',
+                #                  '{0}.aux'.format(save_name),
+                #                  '{0}.log'.format(save_name)],
+                #                 stderr=subprocess.STDOUT)
                 if _which('pdfcrop'):
                     pdffile = '{0}.pdf'.format(save_name)
                     subprocess.call(['pdfcrop', pdffile, pdffile],
@@ -714,10 +716,17 @@ class ExperimentalData(object):
         # tmp[fold_change] = np.where(tmp[fold_change] > 0,
         #                             np.log2(tmp[fold_change]),
         #                             -np.log2(-tmp[fold_change]))
-        tmp[fold_change][tmp[fold_change] > 0] = np.log2(
-                tmp[fold_change][tmp[fold_change] > 0])
-        tmp[fold_change][tmp[fold_change] < 0] = -np.log2(
-            -tmp[fold_change][tmp[fold_change] < 0])
+        greater_than = tmp[fold_change] > 0
+        less_than = tmp[fold_change] < 0
+        tmp.loc[greater_than, fold_change] = \
+            np.log2(tmp[greater_than][fold_change])
+        tmp.loc[less_than, fold_change] = -np.log2(
+                -tmp[less_than][fold_change])
+
+        # tmp[fold_change][tmp[fold_change] > 0] = np.log2(
+        #         tmp[fold_change][tmp[fold_change] > 0])
+        # tmp[fold_change][tmp[fold_change] < 0] = -np.log2(
+        #     -tmp[fold_change][tmp[fold_change] < 0])
         # tmp.loc[tmp[fold_change] >= 0, fold_change] = np.log2(tmp[tmp[fold_change] >= 0]][fold_change])
         # tmp.loc[tmp[fold_change] < 0, fold_change] = np.log2(tmp[tmp[fold_change] < 0]][fold_change])
         # Visual example of volcano plot
@@ -793,13 +802,12 @@ class ExperimentalData(object):
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
         self._save_plot(fig, save_name, out_dir)
 
-
 template = r'''
 \documentclass[12pt, letterpaper]{{article}}
 \usepackage{{booktabs}}
 \usepackage{{geometry}}
 \usepackage{{pdflscape}}
-\usepackage{{nopageno}}
+%\usepackage{{nopageno}}
 \geometry{{ papersize={{4.444in,8.681in}},total={{3.8in,6.8in}} }}
 \begin{{document}}
 \begin{{landscape}}
