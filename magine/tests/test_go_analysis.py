@@ -3,7 +3,7 @@ import sys
 sys.path.append(".")
 
 from magine.ontology.ontology_analysis import GoAnalysis
-from sample_experimental_data import exp_data
+from magine.tests.sample_experimental_data import exp_data
 
 
 def test_html():

@@ -2,6 +2,7 @@ import pandas as pd
 import time
 import pathos.multiprocessing as mp
 from ast import literal_eval
+import ast
 import os
 import matplotlib
 
@@ -85,7 +86,11 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data):
         gene_set = set()
         genes = data[index]['genes']
         for g in genes:
-            each = literal_eval(g)
+            if isinstance(g, list):
+                each = g
+            else:
+                each = literal_eval(g)
+
             for j in each:
                 gene_set.add(j)
         # too many genes isn't helpful on plots, so skip them
