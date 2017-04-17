@@ -18,3 +18,7 @@ def test_filter():
     write_filter_table(df, 'html_writer', 'test')
 
     write_single_table(df, 'html_writer2', 'test2')
+
+
+if __name__ == '__main__':
+    test_filter()

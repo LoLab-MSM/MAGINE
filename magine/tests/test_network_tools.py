@@ -1,6 +1,5 @@
 import networkx as nx
 import numpy as np
-import matplotlib.pyplot as plt
 from magine.network_tools import trim_sink_source_nodes, export_to_dot
 
 
@@ -28,12 +27,12 @@ def test_compress():
                 continue
             if (adj[:, i] == adj[:, j]).all():
                 to_concate.append(j)
-                print "here", nodelist[i], nodelist[j]
-        print to_concate
-    print adj
-    test = nx.from_numpy_matrix(adj, create_using=nx.DiGraph())
-    nx.draw_graphviz(test, prog='dot')
-    plt.savefig('test.png')
+                print("here", nodelist[i], nodelist[j])
+        print(to_concate)
+    print(adj)
+    # test = nx.from_numpy_matrix(adj, create_using=nx.DiGraph())
+    # nx.draw_graphviz(test, prog='dot')
+    # plt.savefig('test.png')
 
 
 def test_trim_sink_source():
@@ -50,7 +49,7 @@ def test_trim_sink_source():
     g.add_edge('source_3', 'b')
     g.add_edge('b', 'c')
     g.add_edge('a', 'c')
-    export_to_dot(g, 'test_before', view=False)
+    export_to_dot(g, 'test_before')
     test_set = ['source_1']
     # test should result in only
     # ['a', 'c', 'b', 'source_3', 'source_1']
@@ -58,6 +57,6 @@ def test_trim_sink_source():
     test_1_nodes = test_1.nodes()
     print(test_1_nodes)
 
-    export_to_dot(test_1, 'test_after', view=False)
+    export_to_dot(test_1, 'test_after')
     for i in sink_nodes:
         assert i not in test_1_nodes

@@ -9,6 +9,6 @@ def test_build_network():
             print(i)
 
 
-# download_all_of_kegg('test')
+# _download_all_of_kegg('test')
 if __name__ == '__main__':
     test_build_network()

@@ -18,7 +18,7 @@ def test_html():
                                  )
 
     print(df.sort_values(by='enrichment_score', ascending=False).head(10))
-    quit()
+
     go.write_table_to_html(save_name='index')
 
     go.write_table_to_html(df, save_name='index2')

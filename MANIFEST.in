@@ -1,4 +1,6 @@
 include README.md
 include magine/html_templates/*.html
 include magine/tests/Data/*
+include magine/tests/Data/hilic/*
+include magine/tests/Network_files/*
 include magine/mappings/*mapper.p
