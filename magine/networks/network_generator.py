@@ -197,9 +197,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
         networks_added.append(each)
         # tmp, pathways_to_add, compounds = kgml_to_graph("{}.xml".format(each),
         #                                                 species=species)
-        tmp = nx.read_gml(os.path.join(os.path.dirname(__file__),
-                                       'DELETE',
-                                       "{}.gml".format(each)))
+        tmp = nx.read_gml(os.path.join(tmp_dir, "{}.gml".format(each)))
         end_network = nx.compose(end_network, tmp)
         list_of_graphs.append(tmp)
     # for tmp in list_of_graphs:
@@ -435,8 +433,9 @@ def _create_all_of_kegg(output_dir):
 
 
 dirname = os.path.join(os.path.dirname(__file__), 'node_to_pathway.p')
+tmp_dir = os.path.join(os.path.dirname(__file__), 'TMP_KEGG')
 if not os.path.exists(dirname):
-    _download_all_of_kegg('DELETE')
+    _download_all_of_kegg(tmp_dir)
 
 node_to_path = pickle.load(open(dirname, 'rb'))
 
