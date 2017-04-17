@@ -260,7 +260,7 @@ class Analyzer(object):
         return tall, data
 
     def visualize_go_network(self, go_network, data, save_name,
-            format_only=False):
+                             format_only=False):
         """ Renders GO network with py2cytoscape
 
         Parameters
@@ -308,12 +308,13 @@ class Analyzer(object):
         nx.nx.write_graphml(go_network, savename)
         size_of_data = len(labels)
         rm = RenderModel(go_network, layout='force-directed')
-        rm.visualize_by_list_of_time(create_names(size_of_data),
+        rm.visualize_by_list_of_time(_create_names(size_of_data),
                                      prefix=save_name,
                                      labels=self.exp_data.timepoints,
                                      out_dir=self.out_dir)
 
-def create_names(n):
+
+def _create_names(n):
     names = []
     for i in range(n):
         names.append('time_{0:04d}'.format(i))
