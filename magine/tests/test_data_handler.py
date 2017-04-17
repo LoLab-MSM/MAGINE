@@ -21,9 +21,9 @@ def test_plot_list():
     x = ['CAV1', 'SRSF5', 'H2AFV', 'TPR', 'HIST1H2AA', 'GPRC5A']
     exp_data.plot_list_of_genes(x, 'del_test', 'DELETE', 'test')
 
+
 def test_html_output():
     exp_data.plot_all_proteins()
-
 
 
 if __name__ == '__main__':

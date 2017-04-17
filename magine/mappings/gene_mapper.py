@@ -111,14 +111,14 @@ class GeneMapper:
         """ save class instance
         """
         print('Saving class data')
-        with open(self._reload_fname, 'w') as f:
+        with open(self._reload_fname, 'wb') as f:
             f.write(pickle.dumps(self.__dict__))
 
     def reload(self):
         """ loads class instance
         """
 
-        with open(self._reload_fname, 'r') as f:
+        with open(self._reload_fname, 'rb') as f:
             data = f.read()
             f.close()
         self.__dict__ = pickle.loads(data)

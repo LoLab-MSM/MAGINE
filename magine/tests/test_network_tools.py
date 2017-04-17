@@ -57,6 +57,6 @@ def test_trim_sink_source():
     test_1_nodes = test_1.nodes()
     print(test_1_nodes)
 
-    export_to_dot(test_1, 'test_after')
+    # export_to_dot(test_1, 'test_after')
     for i in sink_nodes:
         assert i not in test_1_nodes
