@@ -396,7 +396,7 @@ def pivot_table_for_export(data, save_name=None):
     """
     index = ['GO_id', 'GO_name', 'depth', 'ref', 'slim', 'aspect']
     tmp = pd.pivot_table(data, index=index, columns='sample_index',
-                         # aggfunc='first'
+                         aggfunc='first'
                          )
     if save_name:
         tmp.to_excel('{}.xlsx'.format(save_name),
