@@ -259,7 +259,7 @@ def add_reactome(network, measured_list):
 
     fi_network = load_reactome_fi()
     reactome_nodes = set(fi_network.nodes())
-    reactome_edges = set(fi_network.edges(data=True))
+    reactome_edges = fi_network.edges(data=True)
 
     added_nodes = 0
     added_edges = 0
