@@ -15,6 +15,7 @@ before_install:
 - bash miniconda.sh -b -p $HOME/miniconda
 - export PATH="$HOME/miniconda/bin:$PATH"
 - conda update --yes conda
+- sudo apt-get install graphviz
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
     nose h5py pexpect pandas
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
@@ -29,7 +30,6 @@ before_install:
 install:
   python setup.py build --build-lib=build/lib
 script:
-  nosetests build/lib/magine --with-coverage --cover-inclusive --cover-package=build/lib/magine
-  --ignore-files=build/lib/magine/networks/calculate_correlation_network.py
+  nosetests build/lib/magine --with-coverage --cover-inclusive --cover-package=build/lib/magine --ignore-files=build/lib/magine/networks/calculate_correlation_network.py --logging-filter=INFO --processes=-1
 after_success:
   coveralls
