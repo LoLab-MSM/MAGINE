@@ -22,7 +22,7 @@ before_install:
   else
     pip install orange;
   fi
-- pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
+- pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.4rc1
 - pip install python-coveralls
 - pip install -r requirements.txt
 
