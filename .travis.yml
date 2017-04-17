@@ -6,16 +6,22 @@ python:
 - '3.4'
 cache: pip
 before_install:
-- wget http://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    -O miniconda.sh
+- if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
+      wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+    else
+      wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+    fi
 - chmod +x miniconda.sh
 - bash miniconda.sh -b -p $HOME/miniconda
 - export PATH="$HOME/miniconda/bin:$PATH"
 - conda update --yes conda
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
     nose h5py pexpect pandas
-- if [$TRAVIS_PYTHON_VERSION == 3.4]; then pip install orange3;
-  else pip install orange
+- if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
+    pip install orange3;
+  else
+    pip install orange;
+  fi
 - pip install -i https://pypi.binstar.org/pypi/simple pygraphviz==1.3rc1
 - pip install python-coveralls
 - pip install -r requirements.txt
