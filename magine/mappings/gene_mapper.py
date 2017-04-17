@@ -21,6 +21,11 @@ def convert_to_dict(data, key, value):
     :param value:
     :return:
     """
+    # return_dict = {}
+    # for k, v in data.groupby(key)[value]:
+    #     return_dict[k] = list(set(v))
+    #     if None in return_dict[k]:
+    #         return_dict[k].remove(None)
     return {k: list(v) for k, v in data.groupby(key)[value]}
 
 
@@ -66,7 +71,7 @@ class GeneMapper:
         self.gene_name_to_uniprot = {}
         self.gene_name_to_alias_name = {}
         self.gene_name_to_ensembl = {}
-        self.gene_name_to_kegg = None
+        self.gene_name_to_kegg = {}
         self.uniprot_to_gene_name = {}
         self.uniprot_to_kegg = {}
         self.protein_name_to_gene_name = None
@@ -89,7 +94,8 @@ class GeneMapper:
                                                        'alias_name')
         self.gene_name_to_ensembl = convert_to_dict(self.hgnc, 'symbol',
                                                     'ensembl_gene_id')
-        self.gene_name_to_kegg = None
+        self.gene_name_to_kegg = convert_to_dict(self.uniprot, 'Gene_Name',
+                                                 'KEGG')
 
         self.uniprot_to_gene_name = convert_to_dict(self.hgnc, 'uniprot_ids',
                                                     'symbol')
@@ -118,7 +124,6 @@ class GeneMapper:
         self.__dict__ = pickle.loads(data)
 
 
-
-
 if __name__ == '__main__':
     gm = GeneMapper()
+    gm.load()
