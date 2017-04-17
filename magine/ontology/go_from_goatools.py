@@ -36,11 +36,12 @@ def load_termcount():
     if os.path.exists(association_file):
         associations = pickle.load(open(association_file, "rb"))
     else:
-        try:
-            association_filename = os.path.join(os.path.dirname(__file__),
-                                    "goa_human.gaf")
-        except:
-            association_filename = "http://geneontology.org/gene-associations/goa_human.gaf.gz"
+        # try:
+        #     association_filename = os.path.join(os.path.dirname(__file__),
+        #                             "goa_human.gaf")
+        #     associations = read_gaf(association_filename)
+        # except:
+        association_filename = "http://geneontology.org/gene-associations/goa_human.gaf.gz"
         associations = read_gaf(association_filename)
         pickle.dump(associations, open(association_file, "wb"))
     to_remove = set()
