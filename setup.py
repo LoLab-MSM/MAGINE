@@ -60,7 +60,7 @@ setup(
                           'plotly'],
 
         test_suite='nose.collector',
-        tests_require=['nose'],
+        tests_require=['nose', 'coverage'],
 
         extras_require={
             'dev':  ['check-manifest'],
