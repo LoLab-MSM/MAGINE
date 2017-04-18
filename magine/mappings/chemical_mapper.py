@@ -111,7 +111,7 @@ class ChemicalMapper(object):
         :return:
         """
         print('Saving class data')
-        with open(self._instance_filename, 'w') as f:
+        with open(self._instance_filename, 'wb') as f:
             f.write(cPickle.dumps(self.__dict__))
 
     def reload(self):
@@ -120,7 +120,7 @@ class ChemicalMapper(object):
         :return:
         """
 
-        with open(self._instance_filename, 'r') as f:
+        with open(self._instance_filename, 'rb') as f:
             data = f.read()
             f.close()
         self.__dict__ = cPickle.loads(data)
@@ -130,14 +130,14 @@ if __name__ == '__main__':
 
     cm = ChemicalMapper()
     cm.load()
-
-    count = 0
-
-    print('HMDB43286', cm.hmdb_accession_to_protein['HMDB43286'])
-    quit()
-    print(cm.hmdb_accession_to_kegg['HMDB06070'])
-    print(cm.hmdb_accession_to_kegg['HMDB06525'])
-    print(cm.hmdb_accession_to_kegg['HMDB38693'])
-    print(cm.hmdb_accession_to_kegg['HMDB06523'])
-    for i in cm.hmdb_accession_to_protein.keys():
-        print(i, cm.hmdb_accession_to_protein[i])
+    #
+    # count = 0
+    #
+    # print('HMDB43286', cm.hmdb_accession_to_protein['HMDB43286'])
+    #
+    # print(cm.hmdb_accession_to_kegg['HMDB06070'])
+    # print(cm.hmdb_accession_to_kegg['HMDB06525'])
+    # print(cm.hmdb_accession_to_kegg['HMDB38693'])
+    # print(cm.hmdb_accession_to_kegg['HMDB06523'])
+    # for i in cm.hmdb_accession_to_protein.keys():
+    #     print(i, cm.hmdb_accession_to_protein[i])
