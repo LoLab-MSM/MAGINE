@@ -1,7 +1,7 @@
-try:
-    import cPickle
-except:  # python3 doesnt have cPickle
-    import pickle as cPickle
+# try:
+#     import cPickle
+# except:  # python3 doesnt have cPickle
+import pickle
 import os
 from ast import literal_eval
 
@@ -112,7 +112,7 @@ class ChemicalMapper(object):
         """
         print('Saving class data')
         with open(self._instance_filename, 'wb') as f:
-            f.write(cPickle.dumps(self.__dict__))
+            f.write(pickle.dumps(self.__dict__, protocol=-1))
 
     def reload(self):
         """ loads class instance
@@ -122,8 +122,10 @@ class ChemicalMapper(object):
 
         with open(self._instance_filename, 'rb') as f:
             data = f.read()
-            f.close()
-        self.__dict__ = cPickle.loads(data)
+        try:
+            self.__dict__ = pickle.loads(data, encoding='utf-8')
+        except:
+            self.__dict__ = pickle.loads(data)
 
 
 if __name__ == '__main__':
