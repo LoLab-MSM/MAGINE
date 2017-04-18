@@ -217,10 +217,12 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     end_network = nx.relabel_nodes(end_network, drug_dict)
     end_network = mapper.convert_all(end_network, species=species,
                                      use_hmdb=use_hmdb)
+
     if all_measured_list is not None:
         end_network = add_reactome(end_network, all_measured_list)
     elif use_reactome:
         end_network = add_reactome(end_network, gene_list)
+
     if use_hmdb:
         print("warning: automatic integration currently in progress.\n"
               "For now, please use "
@@ -233,7 +235,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     print('Number of edges {}'.format(len(end_network.edges())))
     print('Number of nodes {}'.format(len(end_network.nodes())))
     nx.write_gml(end_network, '{}.gml'.format(save_name))
-    nx.nx.nx_agraph.write_dot(end_network, '{}.dot'.format(save_name))
+    # nx.nx.nx_agraph.write_dot(end_network, '{}.dot'.format(save_name))
 
     return end_network
 
