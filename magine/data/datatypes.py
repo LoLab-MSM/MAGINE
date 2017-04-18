@@ -527,7 +527,6 @@ class ExperimentalData(object):
                         bbox_inches='tight')
             plt.close()
 
-
     def volcano_analysis(self, out_dir, use_sig_flag=True,
                          p_value=0.1, fold_change_cutoff=1.5):
         """
@@ -586,9 +585,9 @@ class ExperimentalData(object):
         -------
 
         """
-        if exp_data_type not in self.exp_methods:
-            print("Must provide experimental method for volcano plot")
-            quit()
+        if not self._check_experiment_type_existence:
+            return
+
         data = self.data[self.data[exp_method] == exp_data_type].copy()
         n_sample = np.sort(data[sample_id].unique())
         if len(n_sample) > 8:
@@ -658,9 +657,8 @@ class ExperimentalData(object):
 
         """
 
-        if exp_data_type not in self.exp_methods:
-            print("Must provide experimental method for volcano plot")
-            quit()
+        if not self._check_experiment_type_existence:
+            return
         data = self.data[self.data[exp_method] == exp_data_type]
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
@@ -776,10 +774,9 @@ class ExperimentalData(object):
         -------
 
         """
-        print(exp_date_type, self.exp_methods)
-        if exp_date_type not in self.exp_methods:
-            print("Must provide experimental method for volcano plot")
-            quit()
+
+        if not self._check_experiment_type_existence:
+            return
         data = self.data[self.data[exp_method] == exp_date_type]
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
@@ -801,6 +798,13 @@ class ExperimentalData(object):
         ax.set_ylabel('Count', fontsize=16)
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
         self._save_plot(fig, save_name, out_dir)
+
+    def _check_experiment_type_existence(self, exp_type):
+        if exp_type not in self.exp_methods:
+            print("Must provide experimental method for volcano plot")
+            # raise Warning
+            return False
+        return True
 
 template = r'''
 \documentclass[12pt, letterpaper]{{article}}
