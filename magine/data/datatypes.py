@@ -585,7 +585,7 @@ class ExperimentalData(object):
         -------
 
         """
-        if not self._check_experiment_type_existence:
+        if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
 
         data = self.data[self.data[exp_method] == exp_data_type].copy()
@@ -657,7 +657,7 @@ class ExperimentalData(object):
 
         """
 
-        if not self._check_experiment_type_existence:
+        if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
         data = self.data[self.data[exp_method] == exp_data_type]
         data = data.dropna(subset=[p_val])
@@ -753,14 +753,14 @@ class ExperimentalData(object):
             sec_2 = tmp[(tmp[p_val] < p_value)]
         return sec_0, sec_1, sec_2
 
-    def create_histogram_measurements(self, exp_date_type, save_name,
+    def create_histogram_measurements(self, exp_data_type, save_name,
                                       y_range=None, out_dir=None):
         """
         Plots a histogram of data
 
         Parameters
         ----------
-        exp_date_type: str
+        exp_data_type: str
             Which data to plot
         save_name: str
             Name of figure
@@ -775,9 +775,9 @@ class ExperimentalData(object):
 
         """
 
-        if not self._check_experiment_type_existence:
+        if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
-        data = self.data[self.data[exp_method] == exp_date_type]
+        data = self.data[self.data[exp_method] == exp_data_type]
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])
