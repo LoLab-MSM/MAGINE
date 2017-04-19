@@ -9,7 +9,7 @@ def test_init():
     cm.load()
     cm.reload()
 
-
+"""
 def test_synonyms():
     hmdb = cm.check_synonym_dict(term='dodecene', format_name='accession')
     assert (hmdb == 'HMDB59874')
@@ -26,9 +26,9 @@ def test_protein_network():
 
     for protein in cm.hmdb_accession_to_protein[item]:
         assert protein in hit_list
-
+"""
 
 if __name__ == "__main__":
     test_init()
-    test_synonyms()
-    test_protein_network()
+    # test_synonyms()
+    # test_protein_network()

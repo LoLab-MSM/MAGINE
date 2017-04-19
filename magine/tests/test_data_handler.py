@@ -12,8 +12,8 @@ def test_table():
 
 
 def test_time_series_volcano():
-    exp_data.time_series_volcano('LF', 'test_label_free',
-                                 bh_critera=True)
+    exp_data.volcano_plot('LF', 'test_label_free',
+                          bh_critera=True)
 
 
 def test_plot_list():
@@ -31,7 +31,7 @@ def test_html_output():
 
 
 if __name__ == '__main__':
-    test_stat_table()
+    # test_stat_table()
     # test_table()
-    # test_time_series_volcano()
+    test_time_series_volcano()
     # test_plot_list_of_species()
