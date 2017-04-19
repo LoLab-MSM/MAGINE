@@ -5,7 +5,7 @@ from magine.plotting.species_plotting import plot_list_of_genes2
 import pandas as pd
 import os
 
-
+"""
 def test_plotly():
     d_name = os.path.join(os.path.dirname(__file__), 'Data',
                           'large_example.csv')
@@ -39,3 +39,4 @@ def test_matplotlib():
 
 if __name__ == '__main__':
     test_plotly()
+"""
