@@ -345,9 +345,9 @@ class ExperimentalData(object):
         t.to_csv('{0}.csv'.format(save_name))
         filename = '{0}.tex'.format(save_name)
 
-        with open(filename, 'wb') as f:
+        with open(filename, 'wt') as f:
             f.write(template.format(t.to_latex(
-                    column_format='*{%s}{c}' % str(len(timepoints) + 1))))
+                    column_format='*{}{{c}}'.format(str(len(timepoints) + 1)))))
 
         if _which('pdflatex'):
             print('Compiling table')
