@@ -5,6 +5,12 @@ import pandas as pd
 from magine.plotting.species_plotting import create_gene_plots_per_go
 from magine.data.formatter import pivot_table_for_export
 
+env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(
+                    searchpath=os.path.join(
+                            os.path.dirname(__file__),
+                            'templates'))
+    )
 
 range_number = """column_number:{},
 filter_type: "range_number" """
@@ -35,9 +41,7 @@ dict_of_templates['n_genes'] = range_number
 
 
 def write_single_table(table, save_name, title):
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader(
-        searchpath=os.path.dirname(__file__))
-    )
+
     template = env.get_template('single_table_view.html')
 
     # formats output to less precision and ints rather than floats
@@ -121,10 +125,6 @@ def write_filter_table(table, save_name, title):
         "filter_table": out_string
         }
 
-    env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(
-                    searchpath=os.path.dirname(__file__))
-    )
     template = env.get_template('filter_table.html')
 
     html_out = template.render(template_vars)
@@ -149,3 +149,15 @@ def format_data_table(data):
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(int)
     return tmp_table, format_dict
+
+
+def format_ploty(text, save_name):
+
+    template = env.get_template('plotly_template.html')
+
+    template_vars = {
+        "plotly_code":        text,
+    }
+    html_out = template.render(template_vars)
+    with open('{}'.format(save_name), 'w') as f:
+        f.write(html_out)

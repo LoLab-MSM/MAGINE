@@ -22,12 +22,16 @@ def test_plot_list():
     exp_data.plot_list_of_genes(x, 'del_test', 'DELETE', 'test')
 
 
+def test_stat_table():
+    exp_data.create_table_of_data(sig=True, save_name='stat_table')
+
+
 def test_html_output():
     exp_data.plot_all_proteins()
 
 
 if __name__ == '__main__':
-    # test_plot_list()
+    test_stat_table()
     # test_table()
-    test_time_series_volcano()
+    # test_time_series_volcano()
     # test_plot_list_of_species()
