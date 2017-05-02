@@ -4,4 +4,4 @@ omit =
     *.html
 
 [report]
-ignore_errors =True
+ignore_errors = True
