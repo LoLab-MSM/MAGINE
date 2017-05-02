@@ -11,20 +11,22 @@ from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 kegg = KEGG(verbose=True)
 kegg.TIMEOUT = 100
 
-arrowType = {'activation': 'onormal', 'indirect effect': 'odiamondodiamond', \
-             'expression': 'normal', 'inhibition': 'tee', \
-             'binding/association': 'curve', 'phosphorylation': 'dot', \
-             'missing interaction': 'odiamond', 'compound': 'dotodot', \
-             'dissociation': 'diamond', 'ubiquitination': 'oldiamond', \
-             'state change': 'teetee', 'dephosphorylation': 'onormal', \
+arrowType = {
+    'activation':          'onormal', 'indirect effect': 'odiamondodiamond',
+    'expression':          'normal', 'inhibition': 'tee',
+    'binding/association': 'curve', 'phosphorylation': 'dot',
+    'missing interaction': 'odiamond', 'compound': 'dotodot',
+    'dissociation':        'diamond', 'ubiquitination': 'oldiamond',
+    'state change':        'teetee', 'dephosphorylation': 'onormal',
              'repression': 'obox'}
 
-colorType = {'activation': 'black', 'indirect effect': 'black', \
-             'expression': 'black', 'inhibition': 'red', \
-             'binding/association': 'green', 'phosphorylation': 'blue', \
-             'missing interaction': 'pink', 'compound': 'pink', \
-             'dissociation': 'pink', 'ubiquitination': 'red', \
-             'state change': 'red', 'dephosphorylation': 'red', \
+colorType = {
+    'activation':          'black', 'indirect effect': 'black',
+    'expression':          'black', 'inhibition': 'red',
+    'binding/association': 'green', 'phosphorylation': 'blue',
+    'missing interaction': 'pink', 'compound': 'pink',
+    'dissociation':        'pink', 'ubiquitination': 'red',
+    'state change':        'red', 'dephosphorylation': 'red',
              'repression': 'red'}
 
 shapeType = {'gene': 'oval', 'compound': 'box'}
