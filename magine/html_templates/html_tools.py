@@ -11,6 +11,9 @@ env = jinja2.Environment(
                             os.path.dirname(__file__),
                             'templates'))
     )
+plotly_template = env.get_template('plotly_template.html')
+single_template = env.get_template('single_table_view.html')
+filter_template = env.get_template('filter_table.html')
 
 range_number = """column_number:{},
 filter_type: "range_number" """
@@ -42,10 +45,8 @@ dict_of_templates['n_genes'] = range_number
 
 def write_single_table(table, save_name, title):
 
-    template = env.get_template('single_table_view.html')
-
     # formats output to less precision and ints rather than floats
-    tmp_table, format_dict = format_data_table(table)
+    tmp_table, format_dict = _format_data_table(table)
     html_table = tmp_table.to_html(escape=False,
                                    # na_rep='-',
                                    formatters=format_dict,
@@ -54,7 +55,7 @@ def write_single_table(table, save_name, title):
                      "table_name": html_table
                      }
 
-    html_out = template.render(template_vars)
+    html_out = single_template.render(template_vars)
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
 
@@ -66,7 +67,9 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
         data = pd.read_csv(data)
 
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
-                                                   out_dir, exp_data)
+                                                   out_dir, exp_data,
+                                                   run_parallel=True
+                                                   )
     for i in fig_dict:
         data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
 
@@ -101,6 +104,7 @@ def write_filter_table(table, save_name, title):
 
     out_string = ''
     leave = ['GO_id', 'genes']
+    n=0
     for n, i in enumerate(table.index.names):
         if i in leave:
             continue
@@ -112,27 +116,34 @@ def write_filter_table(table, save_name, title):
             continue
         new_string = dict_of_templates[i[0]].format(n + m + 1)
         out_string += '{' + new_string + '},\n'
-    # print(out_string)
+
     # formats output to less precision and ints rather than floats
-    tmp_table, format_dict = format_data_table(table)
+    tmp_table, format_dict = _format_data_table(table)
     html_table = tmp_table.to_html(escape=False,
                                    # na_rep='-',
                                    formatters=format_dict
                                    )
-    template_vars = {
-        "title":        title,
-        "table_name":   html_table,
-        "filter_table": out_string
-        }
+    template_vars = {"title":        title,
+                     "table_name":   html_table,
+                     "filter_table": out_string}
 
-    template = env.get_template('filter_table.html')
-
-    html_out = template.render(template_vars)
+    html_out = filter_template.render(template_vars)
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
 
 
-def format_data_table(data):
+def _format_data_table(data):
+    """
+    formats precession of data for outputs
+    
+    Parameters
+    ----------
+    data : pandas.DataFrame
+
+    Returns
+    -------
+
+    """
     tmp_table = data.copy()
     format_dict = {}
     for i in tmp_table.columns:
@@ -152,12 +163,21 @@ def format_data_table(data):
 
 
 def format_ploty(text, save_name):
+    """
+    
+    Parameters
+    ----------
+    text : str
+        html code to embed in file
+    save_name : str
+        html output filename
 
-    template = env.get_template('plotly_template.html')
+    Returns
+    -------
 
-    template_vars = {
-        "plotly_code":        text,
-    }
-    html_out = template.render(template_vars)
+    """
+
+    template_vars = {"plotly_code": text}
+    html_out = plotly_template.render(template_vars)
     with open('{}'.format(save_name), 'w') as f:
         f.write(html_out)
