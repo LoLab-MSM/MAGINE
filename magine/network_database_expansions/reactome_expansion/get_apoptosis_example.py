@@ -19,6 +19,7 @@ pd.options.display.max_colwidth = 5000
 
 reactome = Reactome()
 
+verbose = False
 """
 
 reaction
@@ -72,7 +73,8 @@ def add_to_graph(sample, list_of_species, graph):
         # outputs.add(each)
         return
     if sample['className'] not in shapes:
-        print('Is a {}'.format(sample['className']))
+        if verbose:
+            print('Is a {}'.format(sample['className']))
         return
     name = sample['dbId']
     display = shorten_compartment_name(sample['displayName'])
@@ -88,7 +90,8 @@ def add_to_graph(sample, list_of_species, graph):
 def get_root_of_species(i):
     a = reactome.get_entity_info(i['dbId'])
     # print(a)
-    print("\nEntity info")
+    if verbose:
+        print("\nEntity info")
     # for aa in a:
     #     print(aa, a[aa])
     print("\nDatabaseObject info")
@@ -109,7 +112,8 @@ def extract_list_from_key(keyword, y):
             if 'dbId' in i.keys():
                 input_list.append(i['dbId'])
             else:
-                print("No dbID and not an int")
+                if verbose:
+                    print("No dbID and not an int")
     return input_list
 
 
@@ -142,10 +146,10 @@ def create_graph(inputs, outputs, class_names, catalyst, rxn_name, graph,
             if each == catalyst:
                 pass
             else:
-                g.add_edge(catalyst, rxn_name)
-        g.add_edge(name, rxn_name)
+                graph.add_edge(catalyst, rxn_name)
+        graph.add_edge(name, rxn_name)
         for i in prev_events:
-            g.add_edge(i, name)
+            graph.add_edge(i, name)
 
     for each in outputs:
         name = each
@@ -155,7 +159,7 @@ def create_graph(inputs, outputs, class_names, catalyst, rxn_name, graph,
                        displayName=display,
                        dbId=name,
                        shape=shapes[class_names[each]])
-        g.add_edge(rxn_name, each)
+        graph.add_edge(rxn_name, each)
 
 
 def create_graph_from_df(inputs, outputs, class_names, catalyst, rxn_name,
@@ -172,10 +176,10 @@ def create_graph_from_df(inputs, outputs, class_names, catalyst, rxn_name,
             if each == catalyst:
                 pass
             else:
-                g.add_edge(catalyst, rxn_name)
-        g.add_edge(name, rxn_name)
+                graph.add_edge(catalyst, rxn_name)
+        graph.add_edge(name, rxn_name)
         for i in prev_events:
-            g.add_edge(i, name)
+            graph.add_edge(i, name)
 
     for each in outputs:
         name = each
@@ -185,31 +189,36 @@ def create_graph_from_df(inputs, outputs, class_names, catalyst, rxn_name,
                        displayName=display,
                        dbId=name,
                        shape=shapes[class_names[each]])
-        g.add_edge(rxn_name, each)
+        graph.add_edge(rxn_name, each)
 
-def get_reaction_info(reaction):
+
+def get_reaction_info(reaction, graph):
     if 'className' not in reaction:
         return
     if reaction['className'] != 'Reaction':
-        print("Not a reaction")
-        print(reaction)
+        if verbose:
+            print("Not a reaction")
+            print(reaction)
         return None, None
 
     y = reactome.get_reaction_info(reaction['dbId'])
 
     if 'compartment' not in y:
-        print("No compartment")
+        if verbose:
+            print("No compartment")
         return None, None
     if ('input' or 'output') not in y:
-        print("No input or output")
+        if verbose:
+            print("No input or output")
         return None, None
     rxn_name = reaction['dbId']
     rxn_display_name = reaction['displayName']
     print_info = True
     if print_info:
-        print("Reaction :{} {} ".format(rxn_name, rxn_display_name))
-        for i in y:
-            print("\t{} : {}".format(i, y[i]))
+        if verbose:
+            print("Reaction :{} {} ".format(rxn_name, rxn_display_name))
+            for i in y:
+                print("\t{} : {}".format(i, y[i]))
     comp = y['compartment']
     compartments = []
 
@@ -227,12 +236,14 @@ def get_reaction_info(reaction):
     reaction_info['input'] = in_name  # {'count':in_count, 'name':in_name}
     reaction_info['output'] = out_name  # {'count':out_count, 'name':out_name}
     reaction_info['compartment'] = compartments  # {'comp':comparments}
-    print(reaction_info)
+    if verbose:
+        print(reaction_info)
 
     prev_events = []
     if 'precedingEvent' in y:
         prec_event = y['precedingEvent']
-        print(prec_event)
+        if verbose:
+            print(prec_event)
         for i in prec_event:
             if 'dbId' in i:
                 prev_event_id = i['dbId']
@@ -242,16 +253,19 @@ def get_reaction_info(reaction):
     cat_all = []
     if 'catalystActivity' in y:
         catalyst = y['catalystActivity'][0]['dbId']
-        print(catalyst, 1)
+        if verbose:
+            print(catalyst, 1)
         test = reactome.get_event_participating_phys_entities(catalyst)
         # print('TEST', test)
         for n in test:
-            for j in n:
-                print('\t\t {} : {}'.format(j, n[j]))
+            if verbose:
+                for j in n:
+                    print('\t\t {} : {}'.format(j, n[j]))
         for n in test:
             if 'displayName' in n:
                 catalyst = n['dbId']
-                print(catalyst, 2)
+                if verbose:
+                    print(catalyst, 2)
                 # if n['className'] == 'Set':
                 #     print('set of species')
                 #     print(n['stId'])
@@ -259,9 +273,9 @@ def get_reaction_info(reaction):
                 #     print('HERE', x)
                 #     quit()
                 cat_all.append(catalyst)
-                g.add_node(catalyst,
-                           label=shorten_compartment_name(n['displayName']),
-                           shape='box', fillcolor='grey', style='filled')
+                graph.add_node(catalyst,
+                               label=shorten_compartment_name(n['displayName']),
+                               shape='box', fillcolor='grey', style='filled')
 
     inputs = {}
     dict_of_info = {
@@ -275,10 +289,12 @@ def get_reaction_info(reaction):
                 inputs[each]['counter'] += 1
                 continue
             else:
-                print(each, "Not in inputs")
+                if verbose:
+                    print(each, "Not in inputs")
                 continue
-        for i in each:
-            print(i, each[i])
+        if verbose:
+            for i in each:
+                print(i, each[i])
         dict_of_info['id'] = each['dbId']
         dict_of_info['counter'] = 1
         dict_of_info['species_type'] = each['className']
@@ -297,18 +313,21 @@ def get_reaction_info(reaction):
                 outputs[each]['counter'] += 1
                 continue
             else:
-                print(each, "Not in inputs")
+                if verbose:
+                    print(each, "Not in inputs")
                 continue
-        for i in each:
-            print(i, each[i])
+        if verbose:
+            for i in each:
+                print(i, each[i])
         dict_of_info['id'] = each['dbId']
         dict_of_info['counter'] = 1
         dict_of_info['species_type'] = each['className']
         dict_of_info['displayname'] = each['displayName']
         outputs[each['dbId']] = dict_of_info
+    if verbose:
+        print('Inputs : {}'.format(inputs))
+        print('Outputs : {}'.format(outputs))
 
-    print(inputs)
-    print(outputs)
     reaction_info = dict()
     reaction_info['inputs'] = inputs
     reaction_info['outputs'] = outputs
@@ -334,7 +353,8 @@ def get_reaction_info(reaction):
 
     for each in y['output']:
         if isinstance(each, int):
-            print(type(each))
+            if verbose:
+                print(type(each))
             if each in outputs:
                 continue
         else:
@@ -344,11 +364,13 @@ def get_reaction_info(reaction):
             class_names[id] = each['className']
 
     if len(cat_all) > 1:
-        print(cat_all)
+        if verbose:
+            print(cat_all)
         quit()
 
-    g.add_node(rxn_name, displayName=rxn_display_name, label=rxn_display_name)
-    create_graph(inputs, outputs, class_names, catalyst, rxn_name, g,
+    graph.add_node(rxn_name, displayName=rxn_display_name,
+                   label=rxn_display_name)
+    create_graph(inputs, outputs, class_names, catalyst, rxn_name, graph,
                  prev_events)
 
     return reaction_info, rxn_name
@@ -357,14 +379,14 @@ def get_reaction_info(reaction):
 def extract_pathways(pathway_events):
     pathways = []
     for i in pathway_events:
-        print(i)
+        if verbose:
+            print(i)
         if i['className'] == 'Pathway':
             pathways.append(i['dbId'])
     return pathways
 
 
 if __name__ == "__main__":
-
 
     save_name = 'apoptosis'
     save_name = 'bad_activation'
