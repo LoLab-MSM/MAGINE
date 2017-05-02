@@ -2,8 +2,8 @@ import pandas as pd
 import time
 import pathos.multiprocessing as mp
 from ast import literal_eval
-import ast
 import os
+
 import matplotlib
 
 matplotlib.use('Agg')
@@ -12,9 +12,15 @@ import numpy as np
 from textwrap import wrap
 from plotly.offline import plot
 import plotly
-import sys
 import plotly.graph_objs as plotly_graph
 import plotly.tools as tls
+
+plotly.plotly.sign_in(username='james.ch.pino',
+                      api_key='BnUcJSpmPcMKZg0yEFaL')
+
+
+# tls.set_credentials_file(username='james.ch.pino',
+#                          api_key='BnUcJSpmPcMKZg0yEFaL')
 
 gene = 'gene'
 protein = 'protein'
@@ -23,8 +29,6 @@ species_type = 'species_type'
 sample_id = 'time'
 fold_change = 'treated_control_fold_change'
 flag = 'significant_flag'
-tls.set_credentials_file(username='james.ch.pino',
-                         api_key='BnUcJSpmPcMKZg0yEFaL')
 
 
 def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
@@ -47,6 +51,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
         output path for file
     exp_data : magine.ExperimentalData
         data to plot
+    run_parallel : bool
+        To run in parallel using pathos.multiprocessing
     
     Returns
     -------
@@ -121,29 +127,34 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
     print("Starting to create plots for each GO term")
     # just keeping this code just in case using pathos is a bad idea
     # ultimately, using matplotlib is slow.
-    run_seq = True
-    run_par = False
-    if run_parallel:
-        run_par = True
-        run_seq = False
 
-    if run_seq:
+    if run_parallel:
+        st2 = time.time()
+        pool = mp.Pool(4)
+        pool.map_async(plot_list_of_genes2, plots_to_create)
+        # pool.map(plot_list_of_genes2, plots_to_create)
+        pool.close()
+        # n_plots = float(len(plots_to_create))
+        # while True:
+        #     if rs.ready():
+        #         break
+        #     remaining = rs._number_left
+        #     if remaining % n_plots == 0:
+        #
+        #         print("Waiting for", remaining, "tasks to complete...")
+        #         time.sleep(0.5)
+        pool.join()
+        end2 = time.time()
+        print("parallel time = {}".format(end2 - st2))
+        print("Done creating plots for each GO term")
+
+    # else:
         st1 = time.time()
         for i in plots_to_create:
             plot_list_of_genes2(i)
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
-
-    if run_par:
-        st2 = time.time()
-        pool = mp.Pool(4)
-        pool.map(plot_list_of_genes2, plots_to_create)
-        pool.close()
-        pool.join()
-        end2 = time.time()
-        print("parallel time = {}".format(end2 - st2))
-    print("Done creating plots for each GO term")
-
+    quit()
     return figure_locations, to_remove
 
 
@@ -174,10 +185,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
     -------
 
     """
-    plotly.plotly.sign_in(username='james.ch.pino',
-                          api_key='BnUcJSpmPcMKZg0yEFaL')
-    tls.set_credentials_file(username='james.ch.pino',
-                             api_key='BnUcJSpmPcMKZg0yEFaL')
+    from magine.html_templates.html_tools import format_ploty
     if out_dir is None:
         pass
     elif not os.path.exists(out_dir):
@@ -322,7 +330,11 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         else:
             s_name = os.path.join(out_dir, "{}.html".format(save_name))
         # print("Saving {}".format(s_name))
-        plot(fig, filename=s_name, auto_open=False)
+        x = plot(fig, filename=s_name, auto_open=False, include_plotlyjs=False,
+                 output_type='div'
+                 )
+
+        format_ploty(x, s_name)
 
 
 def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
