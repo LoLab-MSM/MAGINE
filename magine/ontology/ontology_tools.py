@@ -395,7 +395,9 @@ def find_disjunction_common_ancestor(list_of_terms):
 
 
 def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
-                       trim_nodes=False, additional_ids_to_include=None):
+                       trim_nodes=False, additional_ids_to_include=None,
+                       pvalue=0.05, min_depth=3, max_depth=10, min_ref=5,
+                       max_ref=500):
     """
 
     Parameters
@@ -411,7 +413,16 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         {"biological_process", "cellular_compartment", "molecular_function"}
     additional_ids_to_include: list
         list of additional GO ids to keep
-
+    pvalue : float
+        upper pvalue limit to filter terms
+    min_depth : int
+        minimum depth of GO ontology
+    max_depth : int
+        maximum depth of GO ontology
+    min_ref : int
+        minimum number of references for GO ontology term
+    max_ref : int
+        maximum number of references for GO ontology term
     Returns
     -------
 
@@ -437,16 +448,22 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         print("go_aspect must be a list! \n"
               "biological_process, cellular_component, molecular_function")
 
-    # remove terms with reference smaller than 5
-    data = data[data['ref'] >= 10]
-    # data = data[data['ref'] <= 300]
+    # filter terms based on reference and depth
+    if max_ref is not None:
+        data = data[data['ref'] <= max_ref]
+    if min_ref is not None:
+        data = data[data['ref'] >= min_ref]
+    if max_depth is not None:
+        data = data[data['depth'] <= max_depth]
+    if min_depth is not None:
+        data = data[data['depth'] >= min_depth]
 
     # normalize maximum enrichment to 20
     # done for simplicity, may not be desired
     # data.loc[data['enrichment_score'] > 20, 'enrichment_score'] = 20
 
     # filter out non-signficant terms
-    tmp = data[data['pvalue'] < 0.05]
+    tmp = data[data['pvalue'] <= pvalue]
 
     # create sample labels
     labels = tmp['sample_index'].unique()
@@ -458,14 +475,10 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         tmp = pd.pivot_table(tmp, index=['GO_id', ], columns='sample_index')
 
         def find_n_go_terms(terms, updated_index):
-
             n_needed = n_hits_per_time - len(terms)
-            print("before {}", format(terms))
             terms.update(set(list(tmp.index)[:updated_index + n_needed]))
-            print("after {}".format(terms))
-            print(check_term_list(terms))
-            #quit()
             return check_term_list(terms)
+
         list_all_go = set()
         for i in enrichment_list:
             tmp = tmp.sort_values(by=i, ascending=False)
@@ -474,12 +487,11 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
             if trim_nodes:
                 list_of_go = check_term_list(list_of_go)
                 print("start {}", format(list_of_go))
-                count = 1
+                count = n_hits_per_time
                 while len(list_of_go) < n_hits_per_time:
-                    list_of_go = find_n_go_terms(list_of_go,
-                                                 n_hits_per_time + count)
+                    list_of_go = find_n_go_terms(list_of_go, count)
                     count += 1
-                    count += len(list_of_go)
+                    # count += len(list_of_go)
 
             list_all_go.update(list_of_go)
 
@@ -500,7 +512,8 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
 
 
 def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
-                  trim_nodes=False, additional_ids_to_include=None):
+                  trim_nodes=False, additional_ids_to_include=None,
+                  min_depth=3, max_depth=10, min_ref=5, max_ref=500):
     """
 
     Parameters
@@ -518,7 +531,14 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
         {"biological_process", "cellular_compartment", "molecular_function"}
     additional_ids_to_include: list
         list of additional GO ids to keep
-
+    min_depth : int
+        minimum depth of GO ontology
+    max_depth : int
+        maximum depth of GO ontology
+    min_ref : int
+        minimum number of references for GO ontology term
+    max_ref : int
+        maximum number of references for GO ontology term
     Returns
     -------
 
@@ -545,9 +565,14 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
               "biological_process, cellular_component, molecular_function")
 
     # remove terms with reference smaller than 5
-    data = data[data['ref'] >= 10]
-    data = data[data['depth'] >= 3]
-    # data = data[data['ref'] <= 300]
+    if max_ref is not None:
+        data = data[data['ref'] <= max_ref]
+    if min_ref is not None:
+        data = data[data['ref'] >= min_ref]
+    if max_depth is not None:
+        data = data[data['depth'] <= max_depth]
+    if min_depth is not None:
+        data = data[data['depth'] >= min_depth]
 
     # normalize maximum enrichment to 20
     # done for simplicity, may not be desired
@@ -561,14 +586,9 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
     list_all_go = tmp['GO_id'].unique()
     if n_top_hits is not None:
         def find_n_go_terms(terms, updated_index):
-
             n_needed = n_top_hits - len(terms)
-            print("before {}", format(terms))
-            terms.update(set(list(tmp['GO_id'])[:updated_index + n_needed]))
-            print("after {}".format(terms))
-            print(check_term_list(terms))
+            terms.update(set(list(tmp.index)[:updated_index + n_needed]))
             return check_term_list(terms)
-
         list_all_go = set()
 
         tmp.sort_values(by=enrichment_list, ascending=False, inplace=True)
@@ -577,12 +597,10 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
         if trim_nodes:
             list_of_go = check_term_list(list_of_go)
             print("start {}", format(list_of_go))
-            count = 1
+            count = n_top_hits
             while len(list_of_go) < n_top_hits:
-                list_of_go = find_n_go_terms(list_of_go, n_top_hits + count)
+                list_of_go = find_n_go_terms(list_of_go, count)
                 count += 1
-                count += len(list_of_go)
-
         list_all_go.update(list_of_go)
 
     if trim_nodes:
