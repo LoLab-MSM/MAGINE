@@ -28,6 +28,9 @@ except KeyError:
     kegg = KEGG()
 
 
+dirname = os.path.join(os.path.dirname(__file__), 'node_to_pathway.p')
+
+
 def find_kegg_pathways(protein_names, num_overlap=1, download=True,
                        species='hsa', overwrite=True):
     """
@@ -50,7 +53,6 @@ def find_kegg_pathways(protein_names, num_overlap=1, download=True,
     -------
 
     """
-
 
     pathway_list = []
     list_not_found = []
@@ -172,21 +174,32 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     end_network = nx.DiGraph()
     gm = GeneMapper()
     # gm.load()
+    tmp_dir = os.path.join(os.path.dirname(__file__), 'TMP_KEGG')
+    if not os.path.exists(dirname):
+        _download_all_of_kegg(tmp_dir)
+
+    node_to_path = pickle.load(open(dirname, 'rb'))
 
     to_remove = set()
     pathway_list = set()
+    gene_list = set(x.upper() for x in gene_list)
+
     for i in gene_list:
+        gene = i.upper()
         if i not in gm.gene_name_to_kegg:
-            to_remove.add(i)
+            to_remove.add(gene)
         else:
-            tmp_list = gm.gene_name_to_kegg[i]
+            tmp_list = gm.gene_name_to_kegg[gene]
             if len(tmp_list) == 0:
-                to_remove.add(i)
+                to_remove.add(gene)
             for n in tmp_list:
                 if n in node_to_path:
                     for j in node_to_path[n]:
                         pathway_list.add(str(j.replace(':', '')[4:]))
-
+    # print("{} not found in KEGG".format(to_remove))
+    pathway_list2 = find_kegg_pathways(to_remove, download=False,
+                                       species=species)
+    pathway_list.update(pathway_list2)
     # list_of_all = find_kegg_pathways(protein_names=gene_set,
     #                                  num_overlap=num_overlap, species=species,
     #                                  overwrite=overwrite)
@@ -219,6 +232,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                                      use_hmdb=use_hmdb)
 
     if all_measured_list is not None:
+        all_measured_list = set(x.upper() for x in all_measured_list)
         end_network = add_reactome(end_network, all_measured_list)
     elif use_reactome:
         end_network = add_reactome(end_network, gene_list)
@@ -335,7 +349,7 @@ def _add_edges_from_path(network, graph, path):
             previous = protein
 
 
-def _download_all_of_kegg(output_dir):
+def _download_all_of_kegg(output_dir, species='hsa'):
     """
     Downloads every KEGG pathway to provided directory
     
@@ -349,7 +363,7 @@ def _download_all_of_kegg(output_dir):
     print("Downloading KEGG")
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
-    kegg.organism = 'hsa'
+    kegg.organism = species
     list_of_kegg_pathways = kegg.pathwayIds
     print("Number of pathways  = {}".format(len(list_of_kegg_pathways)))
     # keys are KEGG pathway ids, values are nodes
@@ -385,8 +399,8 @@ def _download_all_of_kegg(output_dir):
     pickle.dump(node_to_path, open(dirname, 'wb'), )
 
 
-def _create_all_of_kegg(output_dir):
-    kegg.organism = 'hsa'
+def _create_all_of_kegg(output_dir, species='hsa'):
+    kegg.organism = species
     from magine.mappings.gene_mapper import GeneMapper
     from magine.mappings.chemical_mapper import ChemicalMapper
     gm = GeneMapper()
@@ -401,7 +415,7 @@ def _create_all_of_kegg(output_dir):
         graph = nx.read_gml(output_name)
         all_of_kegg = nx.compose(all_of_kegg, graph)
         for j in graph.nodes():
-            if j.startswith('hsa'):
+            if j.startswith(species):
                 if j in gm.kegg_to_gene_name:
                     name_dict[j] = str(gm.kegg_to_gene_name[j][0])
                     continue
@@ -433,13 +447,6 @@ def _create_all_of_kegg(output_dir):
     all_of_kegg = nx.relabel_nodes(all_of_kegg, name_dict)
     nx.write_gml(all_of_kegg, 'all_of_kegg.gml')
 
-
-dirname = os.path.join(os.path.dirname(__file__), 'node_to_pathway.p')
-tmp_dir = os.path.join(os.path.dirname(__file__), 'TMP_KEGG')
-if not os.path.exists(dirname):
-    _download_all_of_kegg(tmp_dir)
-
-node_to_path = pickle.load(open(dirname, 'rb'))
 
 if __name__ == '__main__':
     _download_all_of_kegg('DELETE')

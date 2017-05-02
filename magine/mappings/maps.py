@@ -5,7 +5,7 @@ Mapping between data identifiers
 try:
     import cPickle as pickle
 except:
-    import _pickle as pickle
+    import pickle as pickle
 import os
 from sys import modules
 
@@ -26,16 +26,10 @@ chem = UniChem()
 # TODO create a database to store all of this
 # TODO create a kegg to uniprot identifier dictionary
 directory = os.path.dirname(__file__)
-# mouse genes
-# mouse_uniprot_to_gene_name = pickle.load(open(os.path.join(directory, 'mouse_uniprot_to_gene_mapper.p'), 'rb'))
-# human genes
-# human_uniprot_to_gene_name = pickle.load(open(os.path.join(directory, 'network_based_UPids_to_genes.p'), 'rb'))
-# human_uniprot_to_gene_name_2 = pickle.load(open(os.path.join(directory, 'kegg_to_uniprot_gene_name.p'), 'rb'))
-# human_uniprot_to_gene_name = pd.read_table(os.path.join(directory, 'humanID_to_gene_name.tab'))
 
 
 # creation of a manual dictionary because of kegg to uniprot errors.
-# These errors are mostly on KEGG sides that link it to an unreviewed Uniprot ID
+# These errors are mostly on KEGG side that link it to an unreviewed Uniprot ID
 manual_dict = {'hsa:857'      : 'CAV1',
                'hsa:2250'     : 'FGF5',
                'hsa:5337'     : 'PLD1',
@@ -56,17 +50,6 @@ manual_dict = {'hsa:857'      : 'CAV1',
                'hsa:182': 'JAG1',
                'hsa:3708': 'ITPR1',
                'hsa:1293': 'COL6A3',
-               'hsa:427': '',
-               'hsa:2005': '',
-               'hsa:7010': '',
-               'hsa:3710': '',
-               'hsa:5159': '',
-               'hsa:1735': '',
-
-
-
-
-
                }
 
 compound_manual = {'cpd:C07909': 'HMDB15015',
@@ -77,10 +60,20 @@ compound_manual = {'cpd:C07909': 'HMDB15015',
 def create_gene_dictionaries(network, species='hsa'):
     """
     maps network from kegg to gene names
-    :param network:
-    :param species:
+    
+    Parameters
+    ----------
+    network : networkx.DiGraph
+    species : str
+        species of genes (HSA, MMU, etc)
+
+    Returns
+    -------
+
     """
 
+    from magine.mappings.gene_mapper import GeneMapper
+    gm = GeneMapper()
     # first we will check the pre-created dictionaries
     if species == 'hsa':
         dictionary = pickle.load(open(os.path.join(directory,
@@ -98,15 +91,23 @@ def create_gene_dictionaries(network, species='hsa'):
     nodes = set(network.nodes())
     # check stores dictionaries
     for i in nodes:
-        if str(i).startswith(species):
-            network.node[i]['keggName'] = i
-            if i in dictionary:
-                kegg_to_gene_name[i] = dictionary[i]
+        str_gene = str(i)
+        if str_gene.startswith(species):
+            network.node[i]['keggName'] = str_gene
+            if str_gene in gm.kegg_to_gene_name:
+                if len(gm.kegg_to_gene_name[str_gene]) == 1:
+                    kegg_to_gene_name[str_gene] = gm.kegg_to_gene_name[str_gene][0]
+                else:
+                    for g in gm.kegg_to_gene_name[str_gene]:
+                        if g in gm.gene_name_to_uniprot:
+                            kegg_to_gene_name[str_gene] = g
+
+            elif i in dictionary:
+                kegg_to_gene_name[str_gene] = dictionary[str_gene]
             elif i in manual_dict:
-                kegg_to_gene_name[i] = manual_dict[i]
+                kegg_to_gene_name[str_gene] = manual_dict[str_gene]
             else:
-                if str(i).startswith(species):
-                    unknown_genes.add(i)
+                unknown_genes.add(i)
     if len(unknown_genes) == 0:
         return kegg_to_gene_name
     # create string to call uniprot for mapping
@@ -142,12 +143,17 @@ def create_gene_dictionaries(network, species='hsa'):
 
 
 def hugo_mapper(network, species='hsa'):
-    """ Converts all MIR from kegg
+    """
+    Converts all KEGG names to HGNC 
+    
+    Parameters
+    ----------
+    network : networkx.DiGraph
+    species : str
 
-    :param species:
-    :param network:
-    :return:
-
+    Returns
+    -------
+    dict
     """
     prefix = species+':'
     nodes = set(network.nodes())
@@ -177,11 +183,17 @@ def hugo_mapper(network, species='hsa'):
 
 
 def create_compound_dictionary(network):
-    """ Maps network from kegg to gene names
+    """
+    Maps network from kegg to gene names
+    
+    Parameters
+    ----------
+    network : networkx.DiGraph
 
-    :param network:
-    :return: dictionary
-
+    Returns
+    -------
+    dict
+    
     """
     cm = ChemicalMapper()
 
@@ -230,12 +242,21 @@ def create_compound_dictionary(network):
 
 
 def convert_all(network, species='hsa', use_hmdb=False):
-    """ Maps gene names to HGNC and kegg compound to HMDB
+    """ 
+    Maps gene names to HGNC and kegg compound to HMDB
+    
+    Parameters
+    ----------
+    network : networkx.DiGraph
+        network to convert mappings
+    species : str   
+        species of network (hsa, mmu)
+    use_hmdb : bool
+        convert to HMDB identifers
 
-    :param network:
-    :param species:
-    :param use_hmdb
-    :return:
+    Returns
+    -------
+
     """
     renamed_network = nx.relabel_nodes(network, compound_manual)
     if use_hmdb:
@@ -251,7 +272,7 @@ def convert_all(network, species='hsa', use_hmdb=False):
 
     return renamed_network
 
-
+"""
 def read_fasta(fp):
     name, seq = None, []
     for line in fp:
@@ -286,3 +307,4 @@ def gather_list_of_mouse_approved():
     # acc_to_gene = pandas.read_table('acc_to_geneid.tab')
     #
     # acc_to_gene = acc_to_gene.set_index('From')['To'].to_dict()
+"""

@@ -21,12 +21,13 @@ def convert_to_dict(data, key, value):
     :param value:
     :return:
     """
-    # return_dict = {}
-    # for k, v in data.groupby(key)[value]:
-    #     return_dict[k] = list(set(v))
-    #     if None in return_dict[k]:
-    #         return_dict[k].remove(None)
-    return {k: list(v) for k, v in data.groupby(key)[value]}
+    return_dict = {}
+    for k, v in data.groupby(key)[value]:
+        return_dict[k] = list(set(v))
+        if None in return_dict[k]:
+            return_dict[k].remove(None)
+    return return_dict
+    # return {k: list(v) for k, v in data.groupby(key)[value]}
 
 
 class GeneMapper:
