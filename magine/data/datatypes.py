@@ -62,6 +62,8 @@ class ExperimentalData(object):
 
         if metabolites in self.data[species_type].unique():
             self._set_up_metabolites()
+        else:
+            self.data['compound_id'] = None
         # return
         self.proteomics = raw_df[raw_df[species_type] == protein]
         self.proteomics = self.proteomics.dropna(subset=[gene])
@@ -413,6 +415,12 @@ class ExperimentalData(object):
         else:
             print('Install pdflatex to compile to pdf or png\n'
                   'You can use the csv file for use in outside tools')
+
+    def plot_list_of_genes(self, list_of_genes, save_name, out_dir=None,
+                           title=None):
+
+        plot_list_of_genes2(self.proteomics, list_of_genes=list_of_genes,
+                            save_name=save_name, out_dir=out_dir, title=title)
 
     def plot_all_proteins(self, out_dir='proteins'):
         """
