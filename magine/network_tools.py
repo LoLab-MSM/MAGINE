@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from bioservices import KEGG, UniProt
-
+import os
 
 try:
     kegg = modules['kegg']
@@ -18,6 +18,208 @@ try:
 except KeyError:
     uniprot = UniProt()
     uniprot.TIMEOUT = 100
+
+
+def paint_network_overtime(graph, list_of_lists, color_list, save_name,
+                           labels=None):
+    """
+    Adds color attribute to network over time.
+    
+    Parameters
+    ----------
+    graph : pygraphviz.AGraph
+        Network
+    list_of_lists : list_like
+        List of lists, where the inner list contains the node to add the
+        color 
+    color_list : list_like
+        list of colors for each time point
+    save_name : str
+        prefix for images to be saved
+    labels: list
+        list of labels to add to graph per sample
+    
+    Returns
+    -------
+
+    """
+    if len(list_of_lists) != len(color_list):
+        print('Length of list of data must equal len of color list')
+        return
+    if labels is not None:
+        if len(labels) != len(list_of_lists):
+            print('Length of labels must be equal to len of data')
+            return
+    string = 'convert -delay 100 '
+    tmp_graph = graph.copy()
+    for n, i in enumerate(list_of_lists):
+        graph2 = paint_network(tmp_graph, i, color_list[n])
+        _format_to_directions(graph2)
+        if labels is not None:
+            graph2.graph_attr.update(label=labels[n], ranksep='0.2',
+                                     fontsize=13)
+        graph2.draw('%s_%04i.png' % (save_name, n), prog='dot')
+        string += '%s_%04i.png ' % (save_name, n)
+    string1 = string + '  %s.gif' % save_name
+    string2 = string + '  %s.pdf' % save_name
+
+    os.system(string1)
+    os.system(string2)
+
+
+def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
+                                   color_up='red', color_down='blue',
+                                   labels=None):
+    """
+    Adds color attribute to network over time.
+
+    Parameters
+    ----------
+    graph : pygraphviz.AGraph
+        Network
+    list_up : list_like
+        List of lists, where the inner list contains the node to add the
+        color 
+    list_down : list_like
+        list of colors for each time point
+    color_up : str
+        color for first list of species
+    color_down : str
+        color of second list of species
+    save_name : str
+        prefix for images to be saved
+    labels: list
+        list of labels to add to graph per sample
+
+    Returns
+    -------
+
+    """
+    if len(list_up) != len(list_down):
+        print('Length of list of data must equal len of color list')
+        return
+    if labels is not None:
+        if len(labels) != len(list_down):
+            print('Length of labels must be equal to len of data')
+            return
+    string = 'convert -delay 100 '
+    tmp_graph = graph.copy()
+    _format_to_directions(tmp_graph)
+    for n, (up, down) in enumerate(zip(list_up, list_down)):
+        graph2 = paint_network(tmp_graph, up, color_up)
+        graph2 = paint_network(graph2, down, color_down)
+        up_s = set(up)
+        down_s = set(down)
+        both = up_s.intersection(down_s)
+        graph2 = paint_network(graph2, both, 'yellow')
+
+        if labels is not None:
+            graph2.graph_attr.update(label=labels[n], ranksep='0.2',
+                                     fontsize=13)
+        graph2.draw('%s_%04i.png' % (save_name, n), prog='dot')
+        string += '%s_%04i.png ' % (save_name, n)
+    string1 = string + '  %s.gif' % save_name
+    string2 = string + '  %s.pdf' % save_name
+
+    os.system(string1)
+    os.system(string2)
+
+
+def paint_network(graph, list_to_paint, color):
+    """
+    
+    Parameters
+    ----------
+    graph: pygraphvix.AGraph
+    list_to_paint : list
+        
+    color : str
+
+    Returns
+    -------
+
+    """
+    tmp_g = graph.copy()
+    nodes1 = tmp_g.nodes()
+    for i in list_to_paint:
+        if i in nodes1:
+            n = tmp_g.get_node(i)
+            n.attr['measured'] = 'True'
+            n.attr['color'] = 'black'
+            n.attr['fillcolor'] = color
+            n.attr['style'] = 'filled'
+    return tmp_g
+
+
+def _format_to_directions(network):
+    if isinstance(network, nx.DiGraph):
+        network = nx.nx_agraph.to_agraph(network)
+    activators = ['activation', 'expression', 'phosphorylation']
+    inhibitors = ['inhibition', 'repression', 'dephosphorylation',
+                  'ubiquitination']
+    physical_contact = ['binding/association', 'dissociation', 'state change',
+                        'compound', 'glycosylation']
+    indirect_types = ['missing interaction', 'indirect effect']
+    for i in network.edges():
+        n = network.get_edge(i[0], i[1])
+        edge_type = str(i.attr['interactionType'])
+
+        def _find_edge_type():
+            for j in activators:
+                if edge_type.startswith(j):
+                    n.attr['arrowhead'] = 'normal'
+                    return
+            for j in inhibitors:
+                if edge_type.startswith(j):
+                    n.attr['arrowhead'] = 'tee'
+                    return
+            for j in physical_contact:
+                if edge_type.startswith(j):
+                    n.attr['dir'] = 'both'
+                    n.attr['arrowtail'] = 'diamond'
+                    n.attr['arrowhead'] = 'diamond'
+                    return
+            for j in indirect_types:
+                if edge_type.startswith(j):
+                    n.attr['arrowhead'] = 'diamond'
+                    n.attr['style'] = 'dashed'
+                    return
+            print(n, n.attr)
+        _find_edge_type()
+
+    return network
+
+
+def create_legend(graph):
+    """
+    adds a legend to a graph
+    :param graph:
+    :return:
+    """
+    dict_of_types = {'activation': 'onormal',
+                     'indirect effect': 'odiamondodiamond',
+                     'expression': 'normal',
+                     'inhibition': 'tee',
+                     'binding/association': 'curve',
+                     'phosphorylation': 'dot',
+                     'missing interaction': 'odiamond',
+                     'compound': 'dotodot',
+                     'dissociation': 'diamond',
+                     'ubiquitination': 'oldiamond',
+                     'state change': 'teetee',
+                     'dephosphorylation': 'onormal',
+                     'repression': 'obox',
+                     'glycosylation': 'dot'}
+    subgraph = []
+    len_dic = len(dict_of_types)
+    for n, i in enumerate(dict_of_types):
+        subgraph.append(n)
+        subgraph.append(n + len_dic)
+        graph.add_node(n, label="")
+        graph.add_node(n + len_dic, label="")
+        graph.add_edge(n, n + len_dic, dir='both', arrowhead=dict_of_types[i],
+                       arrowtail="none", label=i)
+    graph.add_subgraph(subgraph, name='cluster_legend', rank="LR")
 
 
 def export_to_dot(graph, save_name, image_format='png', engine='dot',
