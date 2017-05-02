@@ -17,13 +17,8 @@ def test_time_series_volcano():
 
 
 def test_plot_list():
-    # x = list(exp_data.list_proteins)
-    x = ['CAV1', 'SRSF5', 'H2AFV', 'TPR', 'HIST1H2AA', 'GPRC5A']
+    x = list(exp_data.list_proteins)
     exp_data.plot_list_of_genes(x, 'del_test', 'DELETE', 'test')
-
-
-def test_stat_table():
-    exp_data.create_table_of_data(sig=True, save_name='stat_table')
 
 
 def test_html_output():
@@ -31,7 +26,6 @@ def test_html_output():
 
 
 if __name__ == '__main__':
-    # test_stat_table()
-    # test_table()
+    test_table()
     test_time_series_volcano()
-    # test_plot_list_of_species()
+    test_plot_list()
