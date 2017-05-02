@@ -219,6 +219,8 @@ class GoNetworkGenerator:
             s_name = os.path.join(self.out_dir, 'Network_files',
                                   '{0}'.format(save_name))
             export_to_dot(go_graph, s_name)
+            export_to_dot(molecular_network,
+                          '{}_molecular_network'.format(save_name))
         return go_graph
 
 
