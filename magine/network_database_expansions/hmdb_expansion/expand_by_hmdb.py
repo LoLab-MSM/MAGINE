@@ -52,7 +52,8 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                     tmp_graph.add_node(i, speciesType='gene',
                                        databaseSource='HMDB')
                     tmp_nodes.add(i)
-                    tmp_graph.add_edge(each, i)
+                    tmp_graph.add_edge(each, i, interactionType='chemical',
+                                       databaseSource='HMDB')
         # if the metabolite is NOT in the network,
         # it checks to see if it has any protein relationships
         # if it does and they are new to the graph, it adds it
@@ -77,7 +78,8 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                                            speciesType='metabolite',
                                            databaseSource='HMDB')
 
-                        tmp_graph.add_edge(i, each)
+                        tmp_graph.add_edge(i, each, interactionType='chemical',
+                                           databaseSource='HMDB')
                         protein_hits += 1
                     else:
                         missing_proteins.add(each)
