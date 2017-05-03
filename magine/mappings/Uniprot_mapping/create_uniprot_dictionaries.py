@@ -1,43 +1,35 @@
-import pandas as pd
 import os
+
+import pandas as pd
 
 dir_name = os.path.dirname(__file__)
 
-headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "RefSeq",
-           "GI", "PDB", "GO", "UniRef100", "UniRef90",
-           "UniRef50", "UniParc", "PIR", "NCBI-taxon", "MIM", "UniGene",
-           "PubMed", "EMBL", "EMBL-CDS", "Ensembl",
-           "Ensembl_TRS", "Ensembl_PRO", "Additional PubMed"]
-
-wanted_headers = ["UniProtKB-AC", "UniProtKB-ID", "GeneID (EntrezGene)", "PDB",
-                  "GO", "Ensembl"]
-
 
 def create_mouse_dataframe():
-    mouse = pd.read_table('MOUSE_10090_idmapping_selected.tab.gz',
-                          delimiter='\t', names=headers)
-    print(mouse.head(10))
-    mouse = mouse[wanted_headers]
-    mouse.to_csv('../mouse_uniprot.gz', compression='gzip',
-                 columns=wanted_headers, header=True)
-    mouse = pd.read_csv('../mouse_uniprot.gz')
+    url = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmppinga/by_organism/HUMAN_9606_idmapping.dat.gz',
+    headers = ['uniprot', 'mapping_type', 'mapping']
+    print("First time initialzing gene_mapper! \n"
+          "Downloading from Uniprot. Might take awhile.")
+
+    mouse = pd.read_table(url, delimiter='\t', names=headers,
+                          compression='gzip', verbose=True)
+
+    outfile = os.path.join(dir_name, '..', 'data', 'human_uniprot.csv.gz')
+    mouse.to_csv(outfile, compression='gzip', columns=headers, header=True)
+
     return mouse
 
 
 def create_human_dataframe():
-    url = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping_selected.tab.gz'
     url2 = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/HUMAN_9606_idmapping.dat.gz'
     headers = ['uniprot', 'mapping_type', 'mapping']
 
     print("First time initialzing gene_mapper! \n"
           "Downloading from Uniprot. Might take awhile.")
 
-    human = pd.read_table(url2, delimiter='\t',
-                          names=headers,
+    human = pd.read_table(url2, delimiter='\t', names=headers,
                           compression='gzip', verbose=True)
-    print(human.dtypes)
-    print(human.head(10))
-    print(human['mapping_type'].unique())
+
     outfile = os.path.join(dir_name, '..', 'data', 'human_uniprot.csv.gz')
     human.to_csv(outfile, compression='gzip', columns=headers, header=True)
     return human

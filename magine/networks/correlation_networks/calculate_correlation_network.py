@@ -2,28 +2,37 @@ try:
     import bottleneck as bn
 except ImportError:
     print("Must install bottleneck to calculate correlation network")
-try:
-    from rpy2.robjects.packages import importr
-    from rpy2.robjects.vectors import FloatVector
-except ImportError:
-    print("Must install R and rpy2 to calculate correlation network")
+# try:
+#     from rpy2.robjects.packages import importr
+#     from rpy2.robjects.vectors import FloatVector
+# except ImportError:
+#     print("Must install R and rpy2 to calculate correlation network")
+
 import time
 from itertools import combinations
-import matplotlib.pyplot
-import multiprocessing as mp
+
+import matplotlib
+from statsmodels.sandbox.stats.multicomp import multipletests
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import pathos.multiprocessing as mp
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 import scipy.special as special
+
 from matplotlib.ticker import FormatStrFormatter
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numba import float64, jit
 from scipy.stats.stats import distributions
 
-matplotlib.use('Agg')
 np.set_printoptions(linewidth=300)
-plt = matplotlib.pyplot
-stats = importr('stats')
+
+# stats = importr('stats')
+
+global_data = None
+samples = None
 
 
 @jit((float64, float64, float64), nopython=True, nogil=True)
@@ -118,12 +127,12 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
     # Create pairwise samples
     global samples
     if sample_all:
-        samples = np.array(list(combinations(xrange(n_samples), 2)))
+        samples = np.array(list(combinations(range(n_samples), 2)))
         total_possible_samples = total_values * (total_values - 1) / 2
         n_samples = total_possible_samples
         # print("Sampling all = {}".format(total_possible_samples))
     else:
-        samples = np.array(list(combinations(xrange(len(data)), 2)))
+        samples = np.array(list(combinations(range(len(data)), 2)))
         samples = samples[np.random.choice(len(samples), size=n_samples,
                                            replace=False), :]
         # print("Sampling = {}".format(len(samples)))
@@ -134,19 +143,26 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
     # time_taken = time.time() - start_time
     # print('Done with {} samples in {}'.format(n_samples, time_taken))
     # quit()
-    pool = mp.Pool(processes=6)
+
+
+    pool = mp.ProcessPool(processes=4)
+    # pool = mp2.Pool(4)
     print('Starting to calculate spearman correlations')
 
     samples_range = range(0, n_samples)
     start_time = time.time()
-    x = pool.map(calculate_spearman, samples_range, n_samples / 100)
+    x = pool.map(calculate_spearman, samples_range, )  # n_samples / 100)
+    print(x)
+    print(np.shape(x))
     pool.close()
     pool.join()
     time_taken = time.time() - start_time
-    # print('Done calculating correlation')
+
     # return time_taken
     print('Done with {} samples in {}'.format(n_samples, time_taken))
     x = np.array(x)
+
+    print(np.shape(x))
     co_var = x[:, 0]
     pvals = x[:, 1]
     nan_index = np.isfinite(pvals)
@@ -161,7 +177,8 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
     output['species_2'] = names[samples[:, 1]]
 
     # adjust pvalues for multiple hypothesis testing
-    adj_pvalues = stats.p_adjust(FloatVector(pvals), method='BH')
+    # adj_pvalues = stats.p_adjust(FloatVector(pvals), method='BH')
+    adj_pvalues = multipletests(pvals=pvals, method='fdr_bh')
     output['adj_pvalue'] = adj_pvalues
     output['co_var'] = co_var
     output.to_csv('{}_correlation_sampling_output.csv.gz'.format(save_name),

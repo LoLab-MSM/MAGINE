@@ -1,10 +1,10 @@
-import pandas as pd
-import time
-import pathos.multiprocessing as mp
-from ast import literal_eval
 import os
+import time
+from ast import literal_eval
 
 import matplotlib
+import pandas as pd
+import pathos.multiprocessing as mp
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -13,7 +13,6 @@ from textwrap import wrap
 from plotly.offline import plot
 import plotly
 import plotly.graph_objs as plotly_graph
-import plotly.tools as tls
 
 plotly.plotly.sign_in(username='james.ch.pino',
                       api_key='BnUcJSpmPcMKZg0yEFaL')
@@ -130,7 +129,7 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
 
     if run_parallel:
         st2 = time.time()
-        pool = mp.Pool(4)
+        pool = mp.Pool()
         pool.map_async(plot_list_of_genes2, plots_to_create)
         # pool.map(plot_list_of_genes2, plots_to_create)
         pool.close()
@@ -148,13 +147,13 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
         print("parallel time = {}".format(end2 - st2))
         print("Done creating plots for each GO term")
 
-    # else:
+    else:
         st1 = time.time()
         for i in plots_to_create:
             plot_list_of_genes2(i)
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
-    quit()
+
     return figure_locations, to_remove
 
 

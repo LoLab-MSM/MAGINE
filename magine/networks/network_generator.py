@@ -8,13 +8,11 @@ from sys import modules
 
 import networkx as nx
 from bioservices import KEGG
-import itertools
+
 import magine.mappings.maps as mapper
+from magine.mappings.gene_mapper import GeneMapper
 from magine.network_database_expansions.expansion_network import \
     load_reactome_fi
-
-from magine.mappings.gene_mapper import GeneMapper
-
 from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:
@@ -197,9 +195,9 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                     for j in node_to_path[n]:
                         pathway_list.add(str(j.replace(':', '')[4:]))
     # print("{} not found in KEGG".format(to_remove))
-    pathway_list2 = find_kegg_pathways(to_remove, download=False,
-                                       species=species)
-    pathway_list.update(pathway_list2)
+    # pathway_list2 = find_kegg_pathways(to_remove, download=False,
+    #                                    species=species)
+    # pathway_list.update(pathway_list2)
     # list_of_all = find_kegg_pathways(protein_names=gene_set,
     #                                  num_overlap=num_overlap, species=species,
     #                                  overwrite=overwrite)

@@ -294,7 +294,7 @@ class Reactome(REST):
         """
         res = self.http_get(
                 'http://reactome.org/ContentService/data/query/%s/extended' % entity,
-                frmt='xml')
+                frmt='json')
         # compartment = ''
         # if 'compartment' in res:
         #     compartment = res['compartment']

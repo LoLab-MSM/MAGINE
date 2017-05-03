@@ -123,10 +123,12 @@ class Analyzer(object):
                      }
         if save:
             print("Saving enrichment array to {}".format(save_name))
-            enrich_array.to_csv('{0}_all_data.csv'.format(save_name),
+            enrich_array.to_csv('{0}/{1}_all_data.csv'.format(self.out_dir,
+                                                              save_name),
                                 index=False)
             pt = pivot_table_for_export(enrich_array)
-            pt.to_csv('{0}_all_data_pivot.csv'.format(save_name))
+            pt.to_csv('{0}/{1}_all_data_pivot.csv'.format(self.out_dir,
+                                                          save_name))
         return enrich_array, html_dict
 
     def run_proteomics_go(self):
@@ -156,14 +158,16 @@ class Analyzer(object):
 
         list_of_go_dict = self.run_proteomics_go()
         for i in list_of_go_dict:
-            file_name = '{}_all_data.csv'.format(i['save_name'])
+
+            file_name = '{}/{}_all_data.csv'.format(self.out_dir,
+                                                    i['save_name'])
             save_name = "{}_{}_{}".format(self.save_name, i['DataType'],
                                           i['FoldChange'])
-
+            print(save_name)
             write_table_to_html_with_figures(file_name, self.exp_data,
                                              save_name, out_dir=self.out_dir)
-            self.create_selected_go_network(file_name, save_name,
-                                            visualize=True)
+            # self.create_selected_go_network(file_name, save_name,
+            #                                 visualize=True)
 
         df = pd.DataFrame(list_of_go_dict)
         df.drop('save_name', axis=1, inplace=True)

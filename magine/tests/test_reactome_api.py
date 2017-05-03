@@ -9,53 +9,57 @@ import \
 def test_reactome():
     save_name = 'test_apoptosis'
 
-    apoptosis = 109581
+    # apoptosis = 109581
+    apoptosis = 111457
 
     g = pyg.AGraph(directed=True)
     g.graph_attr['rankdir'] = 'LR'
     g.graph_attr['splines'] = 'true'
 
     x = reactome_api.reactome.get_pathway_events(apoptosis)
-
-    pathways = reactome_api.extract_pathways(x)
-    pathways = [111457]
-    print("Pathways found: {}".format(pathways))
-
     reactions = []
     all_info = []
 
     def extract_list_of_events(events):
-        for i in events[:10]:
+        for i in events:
             info, rxn = reactome_api.get_reaction_info(i, g)
             if info is None:
                 continue
             all_info.append(info)
             reactions.append(rxn)
 
-    #
-    for i in pathways:
-        x = reactome_api.reactome.get_pathway_events(i)
-        extract_list_of_events(x)
+    x = reactome_api.reactome.get_pathway_events(apoptosis)
+    print("{} has {} events".format(save_name, len(x)))
+    print("Extracting events")
+    extract_list_of_events(x)
 
     df = pd.DataFrame(all_info)
 
     df.to_csv('reactome_df_{}.csv'.format(save_name))
     # """
     # df = pd.read_csv('reactome_df.csv')
+    if 'compartment' in df.columns:
+        translocations = df[df['compartment'].map(len) > 1]
+        if len(translocations) > 0:
+            print("Translocations found")
+            print(translocations)
+            print(translocations.shape)
+    for i in g.nodes():
+        ent_dict = reactome_api.get_entity_info(i)
+        if 'displayName' not in ent_dict:
+            continue
+        node = g.get_node(i)
+        print("Node and attributes = {} : {} ".format(i, node.attr))
 
-    translocations = df[df['compartment'].map(len) > 1]
-    if len(translocations) > 0:
-        print("Translocations found")
-        print(translocations)
-        print(translocations.shape)
+        if 'label' not in node.attr:
+            node.attr['label'] = reactome_api.shorten_name(
+                    ent_dict['displayName'])
+        node.attr['label'] = reactome_api.shorten_name(
+                ent_dict['displayName'])
 
     gml_g = nx.nx_agraph.from_agraph(g)
     nx.write_gml(gml_g, '{}.gml'.format(save_name))
     print("Created GML file!")
-    species = []
-    for i in g.nodes():
-        if i not in reactions:
-            species.append(i)
 
     g.write('{}.dot'.format(save_name), )
     g.draw('{}.png'.format(save_name), prog='dot')
