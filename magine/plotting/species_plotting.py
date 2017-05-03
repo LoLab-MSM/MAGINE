@@ -299,7 +299,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         scroll_list = [
             dict(args=['visible', true_list],
                  label='All',
-                 method='update')]
+                 method='restyle')]
         prev = 0
         for i in range(n_genes):
             t_row = [False] * total_counter
@@ -307,7 +307,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                 t_row[j] = True
             prev += names_list[i][1]
             scroll = dict(args=['visible', t_row],
-                          label=names_list[i][0], method='update')
+                          label=names_list[i][0], method='restyle')
             scroll_list.append(scroll)
 
         update_menu = list([dict(x=-0.05,
