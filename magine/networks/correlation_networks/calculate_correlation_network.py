@@ -119,7 +119,7 @@ def calculate_spearman(pos):
 
 
 def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
-                         create_plots=True):
+                         create_plots=True, in_parallel=False):
     global global_data
     global_data = data
     total_values = len(global_data)
@@ -136,30 +136,32 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
         samples = samples[np.random.choice(len(samples), size=n_samples,
                                            replace=False), :]
         # print("Sampling = {}".format(len(samples)))
+    print(np.shape(global_data))
+    print(n_samples)
+    if not in_parallel:
+        x = [None] * n_samples
+        start_time = time.time()
+        for i in range(n_samples):
+            x[i] = calculate_spearman(i)
+        time_taken = time.time() - start_time
+        print('Done with {} samples in {}'.format(n_samples, time_taken))
+    else:
 
-    # start_time = time.time()
-    # for i in range(5000):
-    #     calculate_spearman(i)
-    # time_taken = time.time() - start_time
-    # print('Done with {} samples in {}'.format(n_samples, time_taken))
-    # quit()
+        pool = mp.ProcessPool(processes=4)
+        # pool = mp2.Pool(4)
+        print('Starting to calculate spearman correlations')
 
+        samples_range = range(0, n_samples)
+        start_time = time.time()
+        x = pool.map(calculate_spearman, samples_range, )  # n_samples / 100)
+        print(x)
+        print(np.shape(x))
+        pool.close()
+        pool.join()
+        time_taken = time.time() - start_time
 
-    pool = mp.ProcessPool(processes=4)
-    # pool = mp2.Pool(4)
-    print('Starting to calculate spearman correlations')
-
-    samples_range = range(0, n_samples)
-    start_time = time.time()
-    x = pool.map(calculate_spearman, samples_range, )  # n_samples / 100)
-    print(x)
-    print(np.shape(x))
-    pool.close()
-    pool.join()
-    time_taken = time.time() - start_time
-
-    # return time_taken
-    print('Done with {} samples in {}'.format(n_samples, time_taken))
+        # return time_taken
+        print('Done with {} samples in {}'.format(n_samples, time_taken))
     x = np.array(x)
 
     print(np.shape(x))
@@ -179,7 +181,8 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
     # adjust pvalues for multiple hypothesis testing
     # adj_pvalues = stats.p_adjust(FloatVector(pvals), method='BH')
     adj_pvalues = multipletests(pvals=pvals, method='fdr_bh')
-    output['adj_pvalue'] = adj_pvalues
+
+    output['adj_pvalue'] = adj_pvalues[1]
     output['co_var'] = co_var
     output.to_csv('{}_correlation_sampling_output.csv.gz'.format(save_name),
                   index=False, compression='gzip')
@@ -215,9 +218,10 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
         ax2.tick_params(axis='y', labelsize=16)
         ax2.tick_params(axis='x', labelsize=16)
         plt.tight_layout(h_pad=0.15)
-        plt.savefig(
-                '{}_correlation_and_pvalue_histogram.png'.format(save_name),
-                bbox_inches='tight')
+        _same_name = '{}_correlation_and_pvalue_histogram.png'.format(
+            save_name)
+        print("Saving to  {}".format(_same_name))
+        plt.savefig(_same_name, bbox_inches='tight')
         plt.close()
         print("Done 2")
 
