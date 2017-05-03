@@ -2,12 +2,12 @@ import itertools
 import os
 
 import networkx as nx
-from orangecontrib.bio import go
 
 from magine.network_tools import export_to_dot
+from magine.ontology.enrichment_calculation import MagineGO
 
 
-class GoNetworkGenerator:
+class GoNetworkGenerator(object):
     """ Generates GO networks from molecular networks.
 
     Nodes are GO terms.
@@ -15,23 +15,18 @@ class GoNetworkGenerator:
 
     """
 
-    def __init__(self, organism='hsa', network=None, directory='tmp'):
-        self.ontology = go.Ontology()
-        self.annotations = go.Annotations(organism, ontology=self.ontology)
+    def __init__(self, organism='hsa', network=None):
+
+        self.mg = MagineGO(organism)
         if network is None:
             print("Please provide networkx network to map GO onto")
         self.network = network
         if network is not None:
             self.nodes = set(self.network.nodes())
             self.edges = set(self.network.edges())
-        self.go_network = None
         self.molecular_network = None
-        self.out_dir = directory
-        if not os.path.exists(self.out_dir):
-            os.mkdir(self.out_dir)
-            os.mkdir(os.path.join(self.out_dir, 'Network_files'))
 
-    def count_neighbors(self, term_a, term_b):
+    def _count_neighbors(self, term_a, term_b):
         """
         Calculate the number of direct edges between two GO terms species
 
@@ -93,7 +88,8 @@ class GoNetworkGenerator:
 
     # @profile
     def create_network_from_list(self, network=None, list_of_go_terms=None,
-                                 save_name=None, draw=False, threshold=0):
+                                 save_name=None, draw=False, threshold=0,
+                                 out_dir=None, merge_edges=False):
         """
         Creates a GO level network from list of GO terms
 
@@ -110,41 +106,54 @@ class GoNetworkGenerator:
         threshold : int
             integer threshold of number of neighbors between two GO terms
             default = 0
+        out_dir : str
+            output directory
+        merge_edges : bool
+            merge the edges between GO nodes
 
         Returns
         -------
         networkx.DiGraph
 
         """
+        if out_dir is not None:
+            out_path = os.path.join(out_dir, 'Network_files')
+            if not os.path.exists(out_dir):
+                os.mkdir(out_dir)
+                os.mkdir(out_path)
+        else:
+            out_path = '.'
+
         # if provided a new network, nodes and edges will be used from here
         if network is not None:
             self.network = network
             self.nodes = set(self.network.nodes())
             self.edges = set(self.network.edges())
 
+        # make sure a network exists
+        if self.network is None:
+            print("Must provide a network! Returning None")
+            return None
         go_graph = nx.DiGraph()
         molecular_network = nx.DiGraph()
         gene_annotations_dict = dict()
-        go_names = dict()
         all_genes = set()
         list_of_go_terms = set(list_of_go_terms)
         for i in list_of_go_terms:
-            gene_annotations_dict[i] = set(self.annotations.get_all_genes(i))
-            # go_names[i] = "\n".join(wrap(self.ontology[i].name, 20))
-            go_names[i] = self.ontology[i].name
+            gene_annotations_dict[i] = set(self.mg.go_to_gene[i])
 
         for i in itertools.combinations(list_of_go_terms, 2):
             term1 = i[0]
             term2 = i[1]
             term_1 = set(gene_annotations_dict[term1])
             term_2 = set(gene_annotations_dict[term2])
-            label_1 = go_names[term1]
-            label_2 = go_names[term2]
+            label_1 = self.mg.go_to_name[term1]
+            label_2 = self.mg.go_to_name[term2]
             go_1 = str(term1).replace(':', '')
             go_2 = str(term2).replace(':', '')
 
-            a_to_b, b_to_a, genes_in_edges = self.count_neighbors(term_1,
-                                                                  term_2)
+            a_to_b, b_to_a, genes_in_edges = self._count_neighbors(term_1,
+                                                                   term_2)
 
             # add to graph if at least one edge found between terms
             if a_to_b or b_to_a:
@@ -176,66 +185,51 @@ class GoNetworkGenerator:
                         if gene in term_2:
                             molecular_network.node[gene]['go'] = go_2
                             molecular_network.node[gene]['goName'] = label_2
-                for g in genes_in_edges:
-                    all_genes.add(g)
+
+                all_genes.update(genes_in_edges)
             else:
                 print('No edges between {} and {}'.format(label_1, label_2))
 
-            # if a_to_b > threshold or b_to_a > threshold:
-            #     go_graph.add_node(label_1, go=go_1, label=label_1)
-            #     go_graph.add_node(label_2, go=go_2, label=label_2)
-            #     if a_to_b > b_to_a:
-            #         go_graph.add_edge(label_2, label_1, label=str(a_to_b + b_to_a), weight=a_to_b + b_to_a,
-            #                        weightAtoB=b_to_a, weightBtoA=a_to_b)
-            #     else:
-            #         go_graph.add_edge(label_1, label_2, label=str(a_to_b + b_to_a), weight=a_to_b + b_to_a,
-            #                        weightAtoB=a_to_b, weightBtoA=b_to_a)
-            # else:
-            #     pass
+            if merge_edges:
+                if a_to_b > threshold or b_to_a > threshold:
+                    go_graph.add_node(label_1, go=go_1, label=label_1)
+                    go_graph.add_node(label_2, go=go_2, label=label_2)
+                    if a_to_b > b_to_a:
+                        go_graph.add_edge(label_2, label_1,
+                                          label=str(a_to_b + b_to_a),
+                                          weight=a_to_b + b_to_a, dir='both',
+                                          weightAtoB=b_to_a, weightBtoA=a_to_b)
+                    else:
+                        go_graph.add_edge(label_1, label_2,
+                                          label=str(a_to_b + b_to_a),
+                                          weight=a_to_b + b_to_a, dir='both',
+                                          weightAtoB=a_to_b, weightBtoA=b_to_a)
+            else:
+                if a_to_b > threshold:
+                    go_graph.add_node(label_1, go=go_1, label=label_1, )
+                    go_graph.add_node(label_2, go=go_2, label=label_2, )
+                    go_graph.add_edge(label_1, label_2, label=str(a_to_b),
+                                      weight=a_to_b)
 
-            if a_to_b > threshold:
-                go_graph.add_node(label_1, go=go_1, label=label_1, )
-                go_graph.add_node(label_2, go=go_2, label=label_2, )
-                go_graph.add_edge(label_1, label_2, label=str(a_to_b),
-                                  weight=a_to_b)
-
-            if b_to_a > threshold:
-                go_graph.add_node(label_1, go=go_1, label=label_1, )
-                go_graph.add_node(label_2, go=go_2, label=label_2, )
-                go_graph.add_edge(label_2, label_1, label=str(b_to_a),
-                                  weight=b_to_a)
+                if b_to_a > threshold:
+                    go_graph.add_node(label_1, go=go_1, label=label_1, )
+                    go_graph.add_node(label_2, go=go_2, label=label_2, )
+                    go_graph.add_edge(label_2, label_1, label=str(b_to_a),
+                                      weight=b_to_a)
 
         self.molecular_network = molecular_network
 
         nx.write_gml(molecular_network,
-                     os.path.join(self.out_dir, 'Network_files',
+                     os.path.join(out_path,
                                   '{0}_subgraph.gml'.format(save_name)))
 
         nx.write_graphml(go_graph,
-                         os.path.join(self.out_dir, 'Network_files',
+                         os.path.join(out_path,
                                       '{0}.graphml'.format(save_name)))
 
         if draw:
-            s_name = os.path.join(self.out_dir, 'Network_files',
-                                  '{0}'.format(save_name))
+            s_name = os.path.join(out_path, save_name)
             export_to_dot(go_graph, s_name)
-            export_to_dot(molecular_network,
-                          '{}_molecular_network'.format(save_name))
+            # export_to_dot(molecular_network,
+            #               '{}_molecular_network'.format(save_name))
         return go_graph
-
-
-if __name__ == '__main__':
-#    ddn = nx.read_gml(
-#        'C:\Users\James Pino\PycharmProjects\Network_projects\Cisplatin_project\Network_files\ddn3.gml')
-    # test_list = ['GO:0008219', 'GO:0006281', 'GO:0008283', 'GO:0043066', 'GO:0043065', 'GO:1902175', 'GO:0006805',
-    #              'GO:0006766']
-    test_list = ['GO:1902175', 'GO:0006805', 'GO:0006766', 'GO:0015893',
-                 'GO:0006936']
-
-    gnc = GoNetworkGenerator('hsa', ddn)
-    # import cProfile
-    # cProfile.run("gnc.create_network_from_list(ddn, test_list, 'xeno', draw=False)", sort=1)
-    gnc.create_network_from_list(ddn, test_list, 'xeno', draw=False)
-    # create_go_network,save_name='death_dnaRepair_proliferation')
-
-    # create_go_network('GO:0043066', 'GO:0043065', 'GO:1902175', 'apoptosis')
