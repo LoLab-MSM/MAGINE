@@ -19,7 +19,7 @@ pd.options.display.max_colwidth = 5000
 
 reactome = Reactome()
 
-verbose = False
+verbose = True
 """
 
 reaction
@@ -36,23 +36,17 @@ reaction
         Protein, Chemical Compound
 """
 
-
-def shorten_compartment_name(string):
-    name_dict = {
-        'plasma membrane':                   'PlasmaMem',
-        'cytosol':                           'CYTO',
-        'mitochondrial outer membrane':      'MOM',
-        'nucleoplasm':                       'NucPlasm',
-        'endosome membrane':                 'EndosomeMem',
-        'mitochondrial intermembrane space': 'MIM',
-        'nuclear envelope':                  'NucEnv',
-        'endoplasmic reticulum membrane':    'ERM',
-        '[':                                 r'\n['
-    }
-    for s in name_dict:
-        if s in string:
-            string = string.replace(s, name_dict[s])
-    return string
+name_dict = {
+    'plasma membrane':                   'PlasmaMem',
+    'cytosol':                           'CYTO',
+    'mitochondrial outer membrane':      'MOM',
+    'nucleoplasm':                       'NucPlasm',
+    'endosome membrane':                 'EndosomeMem',
+    'mitochondrial intermembrane space': 'MIM',
+    'nuclear envelope':                  'NucEnv',
+    'endoplasmic reticulum membrane':    'ERM',
+    '[':                                 r'\n['
+}
 
 
 shapes = {
@@ -67,6 +61,13 @@ shapes = {
 }
 
 
+def shorten_name(string):
+    for s in name_dict:
+        if s in string:
+            string = string.replace(s, name_dict[s])
+    return string
+
+
 def add_to_graph(sample, list_of_species, graph):
     if type(sample) == int:
         # print('output type = int')
@@ -77,7 +78,7 @@ def add_to_graph(sample, list_of_species, graph):
             print('Is a {}'.format(sample['className']))
         return
     name = sample['dbId']
-    display = shorten_compartment_name(sample['displayName'])
+    display = shorten_name(sample['displayName'])
     graph.add_node(name,
                    label=display,
                    displayName=display,
@@ -85,22 +86,6 @@ def add_to_graph(sample, list_of_species, graph):
                    shape=shapes[sample['className']])
 
     list_of_species[name] = display
-
-
-def get_root_of_species(i):
-    a = reactome.get_entity_info(i['dbId'])
-    # print(a)
-    if verbose:
-        print("\nEntity info")
-    # for aa in a:
-    #     print(aa, a[aa])
-    print("\nDatabaseObject info")
-    b = a['databaseObject']
-    if 'hasComponent' in b:
-        print("\nHasComponenet")
-        c = b['hasComponent']
-        for i in c:
-            print(i)
 
 
 def extract_list_from_key(keyword, y):
@@ -117,6 +102,60 @@ def extract_list_from_key(keyword, y):
     return input_list
 
 
+def get_entity_info(species):
+    x = reactome.get_entity_info(species)
+
+    info_needed = ['referenceType', 'className', 'startCoordinate',
+                   'endCoordinate', 'referenceEntity', 'compartment',
+                   'referenceEntity', 'displayName', 'hasModifiedResidue']
+
+    dont_need = ['inDisease', 'name', 'dbId', 'stId', 'inferredTo',
+                 'speciesName', 'species', 'schemaClass', 'isChimeric',
+                 'literatureReference']
+
+    need_to_investigate = ['hasComponent', 'literatureReference',
+                           'hasMember', 'summation', 'hasCandidate']
+    entity_info = dict()
+    for n in x:
+        if n == 'databaseObject':
+            if 'className' in x[n]:
+                c_name = x[n]['className']
+                if c_name == 'Reaction':
+                    continue
+
+            if 'referenceEntity' in x[n]:
+                info = x[n]['referenceEntity']
+                if 'dbId' in info:
+                    entity_info['parent_dbid'] = info['dbId']
+                if 'databaseName' in info:
+                    entity_info['parent_db_name'] = info['databaseName']
+                if 'identifier' in info:
+                    entity_info['parent_identifier'] = info['identifier']
+            if 'hasModifiedResidue' in x[n]:
+                info = x[n]['hasModifiedResidue']
+                mod_residues = []
+                mods = []
+                for r in info:
+                    if 'coordinate' in r:
+                        mod_residues.append(r['coordinate'])
+                    if 'psiMod' in r:
+                        ms = r['psiMod']
+                        if isinstance(ms, int):
+                            mods.append(ms)
+                        elif isinstance(ms, dict):
+                            if 'dbId' in ms:
+                                mods.append(ms['dbId'])
+                            else:
+                                for m_type in ms:
+                                    print(m_type, ms[m_type])
+            for m in x[n]:
+                if m in info_needed:
+                    entity_info[m] = x[n][m]
+                elif m not in dont_need:
+                    print(species, m, x[n][m])
+    return entity_info
+
+
 def count_entites(list_of_object):
     count_dict = {}
     name_dict = {}
@@ -128,7 +167,7 @@ def count_entites(list_of_object):
     for i in count_dict:
         x = reactome.get_entity_attribute(i, 'displayName')
         name_dict[i] = x
-        # print("Species {}, number {}, dbID {} ".format(x, count_dict[i], i))
+        # get_entity_info(i)
     return name_dict, count_dict
 
 
@@ -192,58 +231,74 @@ def create_graph_from_df(inputs, outputs, class_names, catalyst, rxn_name,
         graph.add_edge(rxn_name, each)
 
 
+def _extract_info_from_reactants_or_products(r_dict, in_out):
+    dict_of_info = dict()
+    return_info = dict()
+    for each in r_dict[in_out]:
+        if isinstance(each, int):
+            if each in return_info:
+                return_info[each]['counter'] += 1
+                continue
+            else:
+                if verbose:
+                    print(each, "Not in inputs")
+                continue
+        dict_of_info['id'] = each['dbId']
+        dict_of_info['counter'] = 1
+        dict_of_info['species_type'] = each['className']
+        dict_of_info['displayname'] = each['displayName']
+        return_info[each['dbId']] = dict_of_info
+    return return_info
+
+
 def get_reaction_info(reaction, graph):
+
     if 'className' not in reaction:
-        return
+        return None, None
+
+    # ensure class is a reaction
     if reaction['className'] != 'Reaction':
         if verbose:
             print("Not a reaction")
             print(reaction)
         return None, None
 
+    # get all reaction info
     y = reactome.get_reaction_info(reaction['dbId'])
 
+    # check to see if compartment exists
     if 'compartment' not in y:
         if verbose:
             print("No compartment")
         return None, None
+
+    # check to make sure there is input and output
     if ('input' or 'output') not in y:
         if verbose:
             print("No input or output")
         return None, None
+
+    # get reaction id and name
     rxn_name = reaction['dbId']
     rxn_display_name = reaction['displayName']
-    print_info = True
-    if print_info:
-        if verbose:
-            print("Reaction :{} {} ".format(rxn_name, rxn_display_name))
-            for i in y:
-                print("\t{} : {}".format(i, y[i]))
+
+    if verbose:
+        print("Reaction {} : {} ".format(rxn_name, rxn_display_name))
+        for i in y:
+            print("\t{} : {}".format(i, y[i]))
+
+    # get compartment info
     comp = y['compartment']
     compartments = []
 
     for c in comp:
         if 'name' in c:
             compartments.append(c['name'])
-
-    all_in = extract_list_from_key('input', y)
-    all_out = extract_list_from_key('output', y)
-
-    in_name, in_count = count_entites(all_in)
-    out_name, out_count = count_entites(all_out)
-
-    reaction_info = dict()
-    reaction_info['input'] = in_name  # {'count':in_count, 'name':in_name}
-    reaction_info['output'] = out_name  # {'count':out_count, 'name':out_name}
-    reaction_info['compartment'] = compartments  # {'comp':comparments}
-    if verbose:
-        print(reaction_info)
-
     prev_events = []
     if 'precedingEvent' in y:
         prec_event = y['precedingEvent']
         if verbose:
-            print(prec_event)
+            print("\tPreceeding event = {}".format(prec_event))
         for i in prec_event:
             if 'dbId' in i:
                 prev_event_id = i['dbId']
@@ -266,64 +321,14 @@ def get_reaction_info(reaction, graph):
                 catalyst = n['dbId']
                 if verbose:
                     print(catalyst, 2)
-                # if n['className'] == 'Set':
-                #     print('set of species')
-                #     print(n['stId'])
-                #     x = reactome.get_event_participants(n['stId'])
-                #     print('HERE', x)
-                #     quit()
                 cat_all.append(catalyst)
                 graph.add_node(catalyst,
-                               label=shorten_compartment_name(n['displayName']),
+                               label=shorten_name(n['displayName']),
                                shape='box', fillcolor='grey', style='filled')
 
-    inputs = {}
-    dict_of_info = {
-        'id':           None,
-        'species_type': None,
-        'counter':      None,
-        }
-    for each in y['input']:
-        if isinstance(each, int):
-            if each in inputs:
-                inputs[each]['counter'] += 1
-                continue
-            else:
-                if verbose:
-                    print(each, "Not in inputs")
-                continue
-        if verbose:
-            for i in each:
-                print(i, each[i])
-        dict_of_info['id'] = each['dbId']
-        dict_of_info['counter'] = 1
-        dict_of_info['species_type'] = each['className']
-        dict_of_info['displayname'] = each['displayName']
-        inputs[each['dbId']] = dict_of_info
+    inputs = _extract_info_from_reactants_or_products(y, 'input')
+    outputs = _extract_info_from_reactants_or_products(y, 'output')
 
-    outputs = {}
-    dict_of_info = {
-        'id':           None,
-        'species_type': None,
-        'counter':      None,
-        }
-    for each in y['output']:
-        if isinstance(each, int):
-            if each in outputs:
-                outputs[each]['counter'] += 1
-                continue
-            else:
-                if verbose:
-                    print(each, "Not in inputs")
-                continue
-        if verbose:
-            for i in each:
-                print(i, each[i])
-        dict_of_info['id'] = each['dbId']
-        dict_of_info['counter'] = 1
-        dict_of_info['species_type'] = each['className']
-        dict_of_info['displayname'] = each['displayName']
-        outputs[each['dbId']] = dict_of_info
     if verbose:
         print('Inputs : {}'.format(inputs))
         print('Outputs : {}'.format(outputs))
@@ -347,7 +352,7 @@ def get_reaction_info(reaction, graph):
             if each in inputs:
                 continue
         id = each['dbId']
-        display = shorten_compartment_name(each['displayName'])
+        display = shorten_name(each['displayName'])
         inputs[id] = display
         class_names[id] = each['className']
 
@@ -359,7 +364,7 @@ def get_reaction_info(reaction, graph):
                 continue
         else:
             id = each['dbId']
-            display = shorten_compartment_name(each['displayName'])
+            display = shorten_name(each['displayName'])
             outputs[id] = display
             class_names[id] = each['className']
 
@@ -445,10 +450,10 @@ if __name__ == "__main__":
     gml_g = nx.nx_agraph.from_agraph(g)
     nx.write_gml(gml_g, '{}.gml'.format(save_name), )
     print("Created GML file!")
-    species = []
+    node_species = []
     for i in g.nodes():
         if i not in reactions:
-            species.append(i)
+            node_species.append(i)
 
     # g.add_subgraph(reactions, name='cluster1', label='Reactions')
     # g.add_subgraph(species, name='cluster2', label='Species')
