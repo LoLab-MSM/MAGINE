@@ -1,10 +1,10 @@
 import itertools
-import warnings
 
 import networkx as nx
 
-from magine.network_tools import compress_edges, export_to_dot
 import magine.network_tools as nt
+from magine.network_tools import compress_edges, export_to_dot
+
 
 class NetworkSubgraphs:
     def __init__(self, network, exp_data=None):
@@ -74,8 +74,8 @@ class NetworkSubgraphs:
                 self._add_edges_from_path(graph, path)
 
         if not direction_1 and not direction_2:
-            warnings.warn("Warning : No paths between {} and {}. Returning "
-                          "None".format(node_1, node_2), RuntimeWarning)
+            raise RuntimeWarning("No paths between {} and {}. Returning "
+                                 "None".format(node_1, node_2))
             return None
 
         nx.write_gml(graph, "%s_and_%s.gml" % (node_1, node_2))
@@ -153,6 +153,7 @@ class NetworkSubgraphs:
 
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
+            graph = nt._format_to_directions(graph)
             export_to_dot(graph, save_name=save_name)
 
         return graph
@@ -213,6 +214,7 @@ class NetworkSubgraphs:
             graph = compress_edges(graph)
 
         if draw:
+            graph = nt._format_to_directions(graph)
             export_to_dot(graph, save_name)
         nx.write_gml(graph, "{}.gml".format(save_name))
 
@@ -276,6 +278,7 @@ class NetworkSubgraphs:
             graph = compress_edges(graph)
 
         if draw:
+            graph = nt._format_to_directions(graph)
             export_to_dot(graph, save_name)
         nx.write_gml(graph, "{}.gml".format(save_name))
 
@@ -298,18 +301,18 @@ class NetworkSubgraphs:
 
         """
         nt.paint_network_overtime(graph, self.exp_data.sig_species_over_time,
-                                  colors, prefix, self.exp_data.protomics_time_points)
+                                  colors, prefix,
+                                  self.exp_data.protomics_time_points)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
-                                            color_up='lightred',
+                                            color_up='tomato',
                                             color_down='lightblue'):
         """
 
         Parameters
         ----------
         graph : pygraphviz.AGraph
-        colors : list
-            List of colors for time points
+
         prefix : str
             Prefix for image files
         color_up : str
@@ -324,7 +327,6 @@ class NetworkSubgraphs:
         up_species = self.exp_data.sig_species_up_over_time
         down_species = self.exp_data.sig_species_down_over_time
         labels = self.exp_data.protomics_time_points
-        print(len(up_species), len(down_species), len(labels))
         nt.paint_network_overtime_up_down(graph, list_up=up_species,
                                           list_down=down_species,
                                           save_name=prefix,

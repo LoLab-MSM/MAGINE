@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
+import os
 from sys import modules
 
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 from bioservices import KEGG, UniProt
-import os
 
 try:
     kegg = modules['kegg']
@@ -52,9 +52,12 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
             return
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
+    tmp_graph = _format_to_directions(tmp_graph)
+    if isinstance(tmp_graph, nx.DiGraph):
+        tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
     for n, i in enumerate(list_of_lists):
         graph2 = paint_network(tmp_graph, i, color_list[n])
-        _format_to_directions(graph2)
+
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.2',
                                      fontsize=13)
@@ -104,7 +107,9 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
             return
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
-    _format_to_directions(tmp_graph)
+    tmp_graph = _format_to_directions(tmp_graph)
+    if isinstance(tmp_graph, nx.DiGraph):
+        tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
     for n, (up, down) in enumerate(zip(list_up, list_down)):
         graph2 = paint_network(tmp_graph, up, color_up)
         graph2 = paint_network(graph2, down, color_down)
@@ -186,7 +191,7 @@ def _format_to_directions(network):
                     return
             print(n, n.attr)
         _find_edge_type()
-
+    network = nx.nx_agraph.from_agraph(network)
     return network
 
 
