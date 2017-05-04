@@ -17,7 +17,7 @@ before_install:
 - conda update --yes conda
 - sudo apt-get install graphviz
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
-    nose h5py pexpect pandas
+    nose h5py pexpect pandas numba
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
     pip install orange3;
   else
