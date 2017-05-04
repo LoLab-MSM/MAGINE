@@ -11,8 +11,8 @@ def test_html_array():
                            output_directory='test_html',
                            save_name='test')
 
-    # go_analyzer.run_proteomics_go()
-    go_analyzer.run_go_and_create_html('test_del.html')
+    go_analyzer.generate_network('test_2')
+    go_analyzer.run_go_and_create_html('test_del')
 
 
 if __name__ == '__main__':
