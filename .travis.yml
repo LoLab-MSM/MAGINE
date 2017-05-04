@@ -31,6 +31,6 @@ before_install:
 install:
   python setup.py build --build-lib=build/lib
 script:
-  travis_wait 30 nosetests build/lib/magine/tests --with-coverage --cover-inclusive --cover-package=build/lib/magine --exclude-dir=build/lib/magine/networks/correlation_networks  --exclude-dir=build/lib/magine/networks/pysb_conversion
+  travis_wait 30 nosetests build/lib/magine --with-coverage --cover-inclusive --cover-package=build/lib/magine
 after_success:
   coveralls
