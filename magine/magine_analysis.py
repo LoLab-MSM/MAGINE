@@ -40,12 +40,10 @@ class Analyzer(object):
                 warnings.warn("Warning : Passing build_network=True "
                               "and a network file! ", RuntimeWarning)
             self.generate_network(save_name)
-            self.go_net_gen = GoNetworkGenerator(self.species, self.network,
-                                                 self.out_dir)
+            self.go_net_gen = GoNetworkGenerator(self.species, self.network)
         elif network is not None:
             self.network = network
-            self.go_net_gen = GoNetworkGenerator(self.species, self.network,
-                                                 self.out_dir)
+            self.go_net_gen = GoNetworkGenerator(self.species, self.network)
 
         self.html_names = []
         if not os.path.exists(self.out_dir):
@@ -163,15 +161,22 @@ class Analyzer(object):
                                                     i['save_name'])
             save_name = "{}_{}_{}".format(self.save_name, i['DataType'],
                                           i['FoldChange'])
-            print(save_name)
+            print("Processing : {}".format(save_name))
+
             write_table_to_html_with_figures(file_name, self.exp_data,
-                                             save_name, out_dir=self.out_dir)
+                                             save_name, out_dir=self.out_dir,
+                                             )
             # self.create_selected_go_network(file_name, save_name,
             #                                 visualize=True)
 
         df = pd.DataFrame(list_of_go_dict)
         df.drop('save_name', axis=1, inplace=True)
         write_single_table(df, html_name, 'MAGINE Output', )
+        print(df['fileName'])
+        df['fileName'] = df['fileName'].str.replace('\.html', '_filter.html')
+        print(df['fileName'])
+        write_single_table(df, html_name + '_filter', 'MAGINE Output', )
+
 
     def create_selected_go_network(self, file_name, save_name, go_ids=None,
                                    visualize=False):
