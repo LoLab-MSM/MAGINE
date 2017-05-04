@@ -1,35 +1,18 @@
-try:
-    import bottleneck as bn
-except ImportError:
-    print("Must install bottleneck to calculate correlation network")
-# try:
-#     from rpy2.robjects.packages import importr
-#     from rpy2.robjects.vectors import FloatVector
-# except ImportError:
-#     print("Must install R and rpy2 to calculate correlation network")
-
 import time
 from itertools import combinations
 
-import matplotlib
-from statsmodels.sandbox.stats.multicomp import multipletests
-
-matplotlib.use('Agg')
+import bottleneck as bn
 import matplotlib.pyplot as plt
-import pathos.multiprocessing as mp
 import numpy as np
 import pandas as pd
-import scipy.cluster.hierarchy as sch
+import pathos.multiprocessing as mp
 import scipy.special as special
-
 from matplotlib.ticker import FormatStrFormatter
-from mpl_toolkits.axes_grid1 import make_axes_locatable
 from numba import float64, jit
 from scipy.stats.stats import distributions
+from statsmodels.sandbox.stats.multicomp import multipletests
 
 np.set_printoptions(linewidth=300)
-
-# stats = importr('stats')
 
 global_data = None
 samples = None
@@ -136,8 +119,7 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
         samples = samples[np.random.choice(len(samples), size=n_samples,
                                            replace=False), :]
         # print("Sampling = {}".format(len(samples)))
-    print(np.shape(global_data))
-    print(n_samples)
+
     if not in_parallel:
         x = [None] * n_samples
         start_time = time.time()
@@ -154,17 +136,12 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
         samples_range = range(0, n_samples)
         start_time = time.time()
         x = pool.map(calculate_spearman, samples_range, )  # n_samples / 100)
-        print(x)
-        print(np.shape(x))
         pool.close()
         pool.join()
         time_taken = time.time() - start_time
-
-        # return time_taken
         print('Done with {} samples in {}'.format(n_samples, time_taken))
-    x = np.array(x)
 
-    print(np.shape(x))
+    x = np.array(x)
     co_var = x[:, 0]
     pvals = x[:, 1]
     nan_index = np.isfinite(pvals)
@@ -172,14 +149,13 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
     pvals = pvals[nan_index]
 
     samples = samples[nan_index]
-    print(np.shape(samples))
+
     # Create output file
     output = pd.DataFrame()
     output['species_1'] = names[samples[:, 0]]
     output['species_2'] = names[samples[:, 1]]
 
     # adjust pvalues for multiple hypothesis testing
-    # adj_pvalues = stats.p_adjust(FloatVector(pvals), method='BH')
     adj_pvalues = multipletests(pvals=pvals, method='fdr_bh')
 
     output['adj_pvalue'] = adj_pvalues[1]
@@ -226,53 +202,4 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
         print("Done 2")
 
 
-def create_heatmap(data, savename, xlabels=None):
-    data = np.nan_to_num(data)
-    # data = np.log2(data)
-    threshold = 2.
-    data[data > threshold] = threshold
-    data[data < -1 * threshold] = -1 * threshold
-    name = 'bwr'
 
-    size_of_data = np.shape(data)[1]
-    length_matrix = len(data)
-    x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    im = plt.imshow(data, interpolation='nearest', aspect='auto',
-                    extent=(0, size_of_data, 0, length_matrix + 1),
-                    cmap=plt.get_cmap(name))
-
-    plt.gca().xaxis.set_major_locator(plt.NullLocator())
-    plt.gca().yaxis.set_major_locator(plt.NullLocator())
-    if xlabels is not None:
-        plt.xticks(x_ticks, xlabels, fontsize=16, rotation='90')
-    divider = make_axes_locatable(ax1)
-    cax1 = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(im, cax=cax1)
-
-    plt.savefig('{}_heatmap.png'.format(savename), bbox_inches='tight')
-    plt.close()
-
-    # distanceMatrix = dist.pdist(data, 'euclidean')
-    # linkageMatrix = sch.linkage(distanceMatrix, method='centroid')
-    linkageMatrix = sch.linkage(data, method='centroid')
-    heatmapOrder = sch.leaves_list(linkageMatrix)
-
-    data = data[heatmapOrder, :]
-    fig = plt.figure()
-    ax1 = fig.add_subplot(111)
-    im = plt.imshow(data, interpolation='nearest', aspect='auto',
-                    extent=(0, size_of_data, 0, length_matrix + 1),
-                    cmap=plt.get_cmap(name))
-
-    plt.gca().xaxis.set_major_locator(plt.NullLocator())
-    plt.gca().yaxis.set_major_locator(plt.NullLocator())
-    if xlabels is not None:
-        plt.xticks(x_ticks, xlabels, fontsize=16, rotation='90')
-    divider = make_axes_locatable(ax1)
-    cax1 = divider.append_axes("right", size="5%", pad=0.05)
-    plt.colorbar(im, cax=cax1)
-
-    plt.savefig('{}_heatmap_clustered.png'.format(savename),
-                bbox_inches='tight')

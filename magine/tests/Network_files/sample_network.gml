@@ -1,6 +1,5 @@
 graph [
   directed 1
-  name "compose( ,  )"
   node [
     id 0
     label "HSPA2"
