@@ -31,7 +31,7 @@ flag = 'significant_flag'
 
 
 def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
-                             run_parallel=False):
+                             run_parallel=False, plot_type='plotly'):
     """ Creates a figure for each GO term in data
 
     Data should be a result of running calculate_enrichment.
@@ -61,6 +61,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
 
     if isinstance(data, str):
         data = pd.read_csv(data)
+
+    assert plot_type == ('plotly' or 'matplotlib')
     # get list of all terms
     list_of_go_terms = data['GO_id'].unique()
 
@@ -104,10 +106,11 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
 
             for j in each:
                 gene_set.add(j)
-        # too many genes isn't helpful on plots, so skip them
-        if len(gene_set) > 100:
-            figure_locations[i] = '<a>{0}</a>'.format(name)
-            continue
+        if plot_type == 'matplotlib':
+            # too many genes isn't helpful on plots, so skip them
+            if len(gene_set) > 100:
+                figure_locations[i] = '<a>{0}</a>'.format(name)
+                continue
         out_point = '<a href="Figures/go_{0}_{1}.html">{2}</a>'
         out_point = out_point.format(i, save_name, name).replace(':', '')
 
@@ -118,7 +121,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
         local_save_name = local_save_name.replace(':', '')
         title = "{0} : {1}".format(str(i), name)
         local_df = exp_data.data[exp_data.data[gene].isin(list(gene_set))]
-        p_input = (local_df, list(gene_set), local_save_name, '.', title,)
+        p_input = (local_df, list(gene_set), local_save_name, '.', title,
+                   plot_type)
         plots_to_create.append(p_input)
 
     # return figure_locations, to_remove
@@ -133,15 +137,6 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
         pool.map_async(plot_list_of_genes2, plots_to_create)
         # pool.map(plot_list_of_genes2, plots_to_create)
         pool.close()
-        # n_plots = float(len(plots_to_create))
-        # while True:
-        #     if rs.ready():
-        #         break
-        #     remaining = rs._number_left
-        #     if remaining % n_plots == 0:
-        #
-        #         print("Waiting for", remaining, "tasks to complete...")
-        #         time.sleep(0.5)
         pool.join()
         end2 = time.time()
         print("parallel time = {}".format(end2 - st2))
@@ -157,7 +152,6 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
     return figure_locations, to_remove
 
 
-# @profile
 def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                         out_dir=None, title=None, plot_type='plotly',
                         image_format='pdf'):
@@ -191,7 +185,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         os.mkdir(out_dir)
 
     if list_of_genes is None:
-        dataframe, list_of_genes, save_name, out_dir, title = dataframe
+        dataframe, list_of_genes, save_name, out_dir, title, plot_type = dataframe
 
     x_points = sorted(dataframe[sample_id].unique())
 
