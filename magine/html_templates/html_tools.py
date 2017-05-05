@@ -2,8 +2,9 @@ import os
 
 import jinja2
 import pandas as pd
-from magine.plotting.species_plotting import create_gene_plots_per_go
+
 from magine.data.formatter import pivot_table_for_export
+from magine.plotting.species_plotting import create_gene_plots_per_go
 
 env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
@@ -36,11 +37,19 @@ dict_of_templates['GO_id'] = range_number
 dict_of_templates['GO_name'] = auto_complete
 dict_of_templates['slim'] = auto_complete
 dict_of_templates['aspect'] = auto_complete
+
+dict_of_templates['significant_flag'] = auto_complete
+dict_of_templates['data_type'] = auto_complete
 dict_of_templates['ref'] = range_number
 dict_of_templates['depth'] = range_number
 dict_of_templates['enrichment_score'] = range_number
 dict_of_templates['pvalue'] = range_number
 dict_of_templates['n_genes'] = range_number
+
+dict_of_templates['treated_control_fold_change'] = range_number
+dict_of_templates['p_value_group_1_and_group_2'] = range_number
+dict_of_templates['protein'] = auto_complete
+dict_of_templates['gene'] = auto_complete
 
 
 def write_single_table(table, save_name, title):
@@ -108,12 +117,19 @@ def write_filter_table(table, save_name, title):
     for n, i in enumerate(table.index.names):
         if i in leave:
             continue
+        if i not in dict_of_templates:
+            print(i)
+            continue
         new_string = dict_of_templates[i].format(n)
         out_string += '{' + new_string + '},\n'
 
     for m, i in enumerate(table.columns):
         if i[0] in leave:
             continue
+        if i[0] not in dict_of_templates:
+            print(i[0])
+            continue
+
         new_string = dict_of_templates[i[0]].format(n + m + 1)
         out_string += '{' + new_string + '},\n'
 
@@ -159,6 +175,12 @@ def _format_data_table(data):
             format_dict[i] = '{:,d}'.format
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(int)
+        elif i[0] == 'p_value_group_1_and_group_2':
+            format_dict[i] = '{:.2g}'.format
+            tmp_table[i] = tmp_table[i].fillna(1)
+        elif i[0] == 'treated_control_fold_change':
+            format_dict[i] = '{:.4g}'.format
+            # tmp_table[i] = tmp_table[i].fillna(1)
     return tmp_table, format_dict
 
 

@@ -1,8 +1,9 @@
-import pandas as pd
-import numpy as np
-import re
 import os
+import re
 import warnings
+
+import numpy as np
+import pandas as pd
 
 names = {}
 for i in range(16):
@@ -33,7 +34,7 @@ rename_met_dict = {
 }
 
 
-def load_csv(directory, filename):
+def load_csv(directory=None, filename=None):
     """ Creates a pandas.Dataframe from omics data files
 
     Parameters
@@ -48,7 +49,10 @@ def load_csv(directory, filename):
     pandas.Dataframe
 
     """
-    file_location = os.path.join(directory, filename)
+    if directory is None:
+        file_location = filename
+    else:
+        file_location = os.path.join(directory, filename)
     print(file_location)
     if file_location.endswith('csv'):
         data = pd.read_csv(file_location, parse_dates=False, low_memory=False)
@@ -262,6 +266,17 @@ def load_metabolite_dir(dirname):
     return load_directory(dirname)[cols]
 
 
+def process_list_of_dir_and_add_attribute(list_dim2, label_free=False):
+    all_df = []
+    for attr, filename in list_dim2:
+        d = load_csv(directory=None, filename=filename)
+
+        if label_free:
+            d = process_label_free(d)
+        d['sample_id'] = attr
+        all_df.append(d)
+    return pd.concat(all_df)
+
 
 def load_label_free(directory):
     data = load_directory(dir_name=directory)
@@ -295,7 +310,6 @@ def process_label_free(data):
         else:
             protein_names.append(row['gene'] + '_lf')
 
-    print(label_free.dtypes)
     label_free['p_value_group_1_and_group_2'] = label_free[
         'p_value_group_1_and_group_2']
     label_free['protein'] = protein_names
@@ -404,7 +418,7 @@ def pivot_table_for_export(data, save_name=None):
     return tmp
 
 
-def pivot_raw_gene_data(data):
+def pivot_raw_gene_data(data, save_name=None):
     headers1 = ['gene', 'treated_control_fold_change', 'protein',
                 'p_value_group_1_and_group_2', 'time', 'data_type',
                 'time_points', 'significant_flag']
@@ -419,8 +433,39 @@ def pivot_raw_gene_data(data):
                          columns='time', aggfunc='first')
 
     tmp.to_csv('protein_data_pivot.csv', index=True)
-
+    if save_name:
+        tmp.to_excel('{}.xlsx'.format(save_name),
+                     merge_cells=True)
+    return tmp
     tmp = pd.pivot_table(meta, index=['compound', 'compound_id'],
                          columns='time', aggfunc='first')
 
     tmp.to_csv('metabolomics_data_pivot.csv', index=True)
+
+
+def pivot_tables_for_export(data, save_name=None):
+    headers1 = ['gene', 'treated_control_fold_change', 'protein',
+                'p_value_group_1_and_group_2', 'time', 'data_type',
+                'significant_flag',  # 'time_points',
+                ]
+    cols = ['compound', 'compound_id',
+            'treated_control_fold_change',
+            'p_value_group_1_and_group_2', 'significant_flag',
+            'data_type', 'time',  # 'time_points',
+            ]
+    prot = data[data['species_type'] == 'protein'][headers1]
+    meta = data[data['species_type'] == 'metabolites'][cols]
+    genes = pd.pivot_table(prot, index=['gene', 'protein', 'data_type'],
+                           columns='time', aggfunc='first')
+
+    if save_name:
+        genes.to_excel('{}_genes.xlsx'.format(save_name),
+                       merge_cells=True)
+        meta.to_csv('{}_genes.csv', index=True)
+    meta = pd.pivot_table(meta, index=['compound', 'compound_id'],
+                          columns='time', aggfunc='first')
+    if save_name:
+        genes.to_excel('{}_genes.xlsx'.format(save_name),
+                       merge_cells=True)
+        meta.to_csv('{}_metabolites.csv', index=True)
+    return genes, meta

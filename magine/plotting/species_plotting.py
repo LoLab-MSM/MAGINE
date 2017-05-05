@@ -1,15 +1,18 @@
 import os
 import time
 from ast import literal_eval
+from textwrap import wrap
 
 import matplotlib
+import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import numpy as np
-from textwrap import wrap
+
+from magine.data.formatter import pivot_tables_for_export
+
 from plotly.offline import plot
 import plotly
 import plotly.graph_objs as plotly_graph
@@ -150,6 +153,65 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
         print("sequential time = {}".format(end1 - st1))
 
     return figure_locations, to_remove
+
+
+def plot_dataframe(exp_data, html_filename, out_dir='proteins',
+                   plot_type='plotly'):
+    """
+    Creates a plot of all proteins
+
+    Parameters
+    ----------
+    out_dir: str, path
+        Directory that will contain all proteins
+    plot_type : str
+        plotly or matplotlib output
+
+    Returns
+    -------
+
+    """
+    if os.path.exists(out_dir):
+        pass
+    else:
+        os.mkdir(out_dir)
+    html_pages = []
+
+    genes = exp_data[exp_data['species_type'] == 'protein'].copy()
+    genes_to_plot = genes['gene'].unique()
+    print("Plotting {} genes".format(len(genes_to_plot)))
+    figure_locations = {}
+    for i in genes_to_plot:
+        plot_list_of_genes2(genes, list_of_genes=[i], save_name=i,
+                            out_dir=out_dir, title=i, plot_type=plot_type)
+        if plot_type == 'plotly':
+            out_point = '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i)
+
+            figure_locations[i] = out_point
+
+            # html_pages.append(
+            #         '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i))
+        else:
+            out_point = '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i)
+            figure_locations[i] = out_point
+            # html_pages.append(
+            #     '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
+    print(figure_locations)
+    print(exp_data.head(20))
+    for i in figure_locations:
+        exp_data.loc[exp_data['gene'] == i, 'gene'] = figure_locations[i]
+    print(exp_data.head(20))
+    genes_out, meta_out = pivot_tables_for_export(exp_data)
+    from magine.html_templates.html_tools import write_filter_table
+    write_filter_table(genes_out, html_filename, 'genes')
+
+    quit()
+    proteins = pd.DataFrame(figure_locations, columns=['Genes'])
+    print(proteins.head(10))
+    quit()
+
+
+
 
 
 def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
@@ -317,17 +379,17 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                 updatemenus=update_menu)
 
         fig = plotly_graph.Figure(data=plotly_list, layout=layout)
-
         if out_dir is None:
-            s_name = "{}.html".format(save_name)
+            tmp_savename = "{}.html".format(save_name)
         else:
-            s_name = os.path.join(out_dir, "{}.html".format(save_name))
-        # print("Saving {}".format(s_name))
-        x = plot(fig, filename=s_name, auto_open=False, include_plotlyjs=False,
-                 output_type='div'
-                 )
+            tmp_savename = os.path.join(out_dir, "{}.html".format(save_name))
 
-        format_ploty(x, s_name)
+        x = plot(fig, filename=tmp_savename, auto_open=False,
+                 include_plotlyjs=False, output_type='div')
+
+        format_ploty(x, tmp_savename)
+        # return tmp_savename
+
 
 
 def _create_ploty_graph(x, y, label, enum, color, marker='circle'):

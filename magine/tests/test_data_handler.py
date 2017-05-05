@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from magine.data.datatypes import ExperimentalData
 
 data_directory = os.path.join(os.path.dirname(__file__), 'Data')
@@ -8,7 +10,14 @@ exp_data = ExperimentalData('example_apoptosis.csv', data_directory)
 
 
 def test_table():
-    exp_data.create_table_of_data(sig=True, save_name='sig_table')
+    df = pd.read_csv(os.path.join(data_directory, 'test_data.csv'))
+    df['compound_id'] = df['compound']
+    exp_data = ExperimentalData(df)
+    # exp_data.create_table_of_data(sig=True, save_name='sig_table')
+    # exp_data.create_table_of_data(sig=False, save_name='all_table')
+    exp_data.create_table_of_data(unique=True, save_name='unique_table')
+    exp_data.create_table_of_data(unique=True, sig=True,
+                                  save_name='sig_unique_table')
 
 
 def test_time_series_volcano():
@@ -27,5 +36,5 @@ def test_html_output():
 
 if __name__ == '__main__':
     test_table()
-    test_time_series_volcano()
-    test_plot_list()
+    # test_time_series_volcano()
+    # test_plot_list()

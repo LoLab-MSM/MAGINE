@@ -1,9 +1,13 @@
 import os
 
+import matplotlib
+
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 
 def create_heatmaps_pvalue_xs(data, save_name, x_labels=None,
@@ -168,7 +172,7 @@ def plot_heatmap(enrichment_array, names_col, labels, global_go,
     plt.close()
 
 
-def plot_heatmap_cluster(tmp_array, names, savename, out_dir):
+def plot_heatmap_cluster(tmp_array, names, savename, out_dir=None):
     fig = plt.figure()
     axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
     linkage = sch.linkage(tmp_array, method='centroid')
@@ -184,7 +188,124 @@ def plot_heatmap_cluster(tmp_array, names, savename, out_dir):
     axmatrix.set_yticks([])
     axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
     plt.colorbar(im, cax=axcolor)
-    fig.savefig(os.path.join(out_dir, 'Figures',
-                             '%s_clustered.pdf' % savename))
+    if out_dir is None:
+        fig.savefig('%s_clustered.pdf' % savename)
+        fig.savefig('%s_clustered.png' % savename)
+
+    else:
+        fig.savefig(os.path.join(out_dir, '%s_clustered.pdf' % savename))
     plt.close()
     return tmp_array, names_sorted
+
+
+def create_heatmap(data, savename, xlabels=None, threshold=None,
+                   convert_to_log=False):
+    data = np.nan_to_num(data)
+    if convert_to_log:
+        above = data > 0
+        below = data < 0
+        data[above] = np.log2(data[above])
+        data[below] = -1 * np.log2(-1 * data[below])
+
+    if threshold is not None:
+        data[data > threshold] = threshold
+        data[data < -1 * threshold] = -1 * threshold
+    name = 'bwr'
+
+    size_of_data = np.shape(data)[1]
+    length_matrix = len(data)
+    x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    im = plt.imshow(data, interpolation='nearest', aspect='auto',
+                    extent=(0, size_of_data, 0, length_matrix + 1),
+                    cmap=plt.get_cmap(name))
+
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    if xlabels is not None:
+        plt.xticks(x_ticks, xlabels, fontsize=16, rotation='90')
+    divider = make_axes_locatable(ax1)
+    cax1 = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im, cax=cax1)
+    plt.tight_layout()
+    plt.savefig('{}_heatmap.png'.format(savename), bbox_inches='tight')
+    plt.close()
+
+    # distanceMatrix = dist.pdist(data, 'euclidean')
+    # linkageMatrix = sch.linkage(distanceMatrix, method='centroid')
+    linkageMatrix = sch.linkage(data, method='centroid')
+    heatmapOrder = sch.leaves_list(linkageMatrix)
+
+    data = data[heatmapOrder, :]
+
+    fig = plt.figure()
+    ax1 = fig.add_subplot(111)
+    im = plt.imshow(data, interpolation='nearest', aspect='auto',
+                    extent=(0, size_of_data, 0, length_matrix + 1),
+                    cmap=plt.get_cmap(name))
+
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    if xlabels is not None:
+        plt.xticks(x_ticks, xlabels, fontsize=16, rotation='90')
+    divider = make_axes_locatable(ax1)
+    cax1 = divider.append_axes("right", size="5%", pad=0.05)
+    plt.colorbar(im, cax=cax1)
+    plt.tight_layout()
+    plt.savefig('{}_heatmap_clustered.png'.format(savename),
+                bbox_inches='tight')
+
+
+def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
+                    xlabels=None, ):
+    fig = plt.figure()
+
+    if convert_to_log:
+        above = tmp_array > 0
+        below = tmp_array < 0
+        tmp_array[above] = np.log2(tmp_array[above])
+        tmp_array[below] = -1 * np.log2(-1 * tmp_array[below])
+
+    # dengrogram side
+    axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
+    # centroid average
+    linkage = sch.linkage(tmp_array, method='average')
+
+    dendrogram = sch.dendrogram(linkage, orientation='right')
+    axdendro.set_xticks([])
+    axdendro.set_yticks([])
+    name = 'bwr'
+
+    # matrix side
+    axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.8])
+    index = dendrogram['leaves']
+    print(dendrogram.keys())
+    tmp_array = tmp_array[index, :].T
+    # tmp_array = tmp_array[:, index]
+    # im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower',
+    #                       cmap=plt.get_cmap(name))
+    plt.imshow(tmp_array, aspect='auto', origin='lower',
+               cmap=plt.get_cmap(name))
+    plt.colorbar()
+    axmatrix.set_xticks([])
+    axmatrix.set_yticks([])
+
+    if xlabels is not None:
+        size_of_data = np.shape(tmp_array)[1]
+        x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
+        plt.xticks(x_ticks, xlabels, fontsize=16, rotation='90')
+
+    axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
+    # plt.colorbar(im, cax=axcolor)
+
+
+    # plt.tight_layout(h_pad=.1, rect=(0, 0, 1, 1))
+    if out_dir is None:
+        fig.savefig('%s_clustered.pdf' % savename, bbox_layout='tight')
+        fig.savefig('%s_clustered.png' % savename, bbox_layout='tight')
+
+    else:
+        fig.savefig(os.path.join(out_dir, '%s_clustered.pdf' % savename))
+    plt.close()
+    return tmp_array

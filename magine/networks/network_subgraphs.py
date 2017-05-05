@@ -285,7 +285,7 @@ class NetworkSubgraphs:
         return graph
 
     def measured_networks_over_time(self, graph, colors, prefix):
-        """
+        """ Adds color to a network over time
         
         Parameters
         ----------

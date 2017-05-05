@@ -1,10 +1,10 @@
-import os
 import subprocess
 
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-
+import os
 import numpy as np
 import pandas
 from magine.html_templates.html_tools import write_single_table
@@ -304,7 +304,7 @@ class ExperimentalData(object):
             tmp = tmp[tmp[fold_change] >= 0]
         elif fold_change_value == 'down':
             tmp = tmp[tmp[fold_change] <= 0]
-        if mol_type == 'gene':
+        if mol_type == 'genes':
             return list(tmp[gene].unique())
         elif mol_type == 'metabolite':
             return list(tmp[metabolites].unique())
@@ -331,50 +331,57 @@ class ExperimentalData(object):
         -------
 
         """
-        measured_table = []
-        genes = set()
-        meta = set()
         timepoints = list(self.timepoints)
-        for i in self.exp_methods:
-            tmp = self.data[self.data[exp_method] == i]
-            if sig:
-                tmp = tmp[tmp[flag]]
-            local = set()
-            values = []
+        tmp_data = self.data.copy()
 
-            for j in timepoints:
-                tmp2 = tmp[tmp[sample_id] == j]
-                if unique:
-                    if i in self.exp_methods_metabolite:
-                        tmp2 = tmp2['compound'].unique()
-                        for l in list(tmp2):
-                            local.add(l)
-                            meta.add(l)
-                    else:
-                        tmp2 = tmp2[gene].unique()
-                        for l in list(tmp2):
-                            local.add(l)
-                            genes.add(l)
-                if len(tmp2) == 0:
-                    values.append('-')
-                else:
-                    values.append(len(tmp2))
-            if unique:
-                values.append(len(local))
-            measured_table.append(values)
-            if unique:
-                print(i, len(local))
-
-        measured_table = np.array(measured_table)
+        if sig:
+            tmp_data = tmp_data[tmp_data[flag]]
+        meta_d = tmp_data[tmp_data[species_type] == metabolites].copy()
+        gene_d = tmp_data[tmp_data[species_type] == protein].copy()
 
         if unique:
-            print('Unique genes = {}'.format(len(genes)))
-            print('Unique metabolites = {}'.format(len(meta)))
-            timepoints.append('Total Unique')
 
-        t = pandas.DataFrame(data=measured_table,
-                             index=self.exp_methods,
-                             columns=timepoints)
+            tmp_data1 = meta_d.pivot_table(values='compound', index=exp_method,
+                                           columns='time',
+                                           aggfunc=lambda x:
+                                           len(x.dropna().unique()))
+
+            tmp_data2 = gene_d.pivot_table(values='gene', index=exp_method,
+                                           columns='time',
+                                           aggfunc=lambda x:
+                                           len(x.dropna().unique()))
+            unique_col = []
+            for i in self.exp_methods:
+                if i in self.exp_methods_metabolite:
+                    n = len(tmp_data[tmp_data[exp_method] == i][
+                                'compound'].dropna().unique())
+                else:
+                    n = len(tmp_data[tmp_data[exp_method] == i][
+                                'gene'].dropna().unique())
+                unique_col.append(n)
+        else:
+
+            tmp_data1 = meta_d.pivot_table(values='compound_id',
+                                           index=exp_method,
+                                           columns='time',
+                                           aggfunc=lambda x:
+                                           len(x.dropna().unique()))
+            tmp_data2 = gene_d.pivot_table(values='protein', index=exp_method,
+                                           columns='time',
+                                           aggfunc=lambda x:
+                                           len(x.dropna().unique()))
+            unique_col = []
+            for i in self.exp_methods:
+                if i in self.exp_methods_metabolite:
+                    n = len(tmp_data[tmp_data[exp_method] == i][
+                                'compound_id'].dropna().unique())
+                else:
+                    n = len(tmp_data[tmp_data[exp_method] == i][
+                                'protein'].dropna().unique())
+                unique_col.append(n)
+        t = pandas.concat([tmp_data1, tmp_data2]).fillna('-')
+
+        t['Total Unique Across '] = pandas.Series(unique_col, index=t.index)
 
         ax = plt.subplot(111, frame_on=False)
         pandas.tools.plotting.table(ax, t, loc='center')
@@ -422,7 +429,7 @@ class ExperimentalData(object):
         plot_list_of_genes2(self.proteomics, list_of_genes=list_of_genes,
                             save_name=save_name, out_dir=out_dir, title=title)
 
-    def plot_all_proteins(self, out_dir='proteins'):
+    def plot_all_proteins(self, out_dir='proteins', plot_type='plotly'):
         """
         Creates a plot of all proteins
 
@@ -430,11 +437,17 @@ class ExperimentalData(object):
         ----------
         out_dir: str, path
             Directory that will contain all proteins
+        plot_type : str
+            plotly or matplotlib output
 
         Returns
         -------
 
         """
+        from magine.plotting.species_plotting import plot_dataframe
+
+        plot_dataframe(self.data, 'proteins', out_dir, plot_type)
+        return
         if os.path.exists(out_dir):
             pass
         else:
@@ -444,9 +457,12 @@ class ExperimentalData(object):
         for i in np.sort(genes_to_plot):
 
             plot_list_of_genes2(self.proteomics, list_of_genes=[i], save_name=i,
-                                out_dir=out_dir, title=i)
-
-            html_pages.append(
+                                out_dir=out_dir, title=i, plot_type=plot_type)
+            if plot_type == 'plotly':
+                html_pages.append(
+                        '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i))
+            else:
+                html_pages.append(
                     '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
 
         proteins = pandas.DataFrame(html_pages, columns=['Genes'])
@@ -519,10 +535,7 @@ class ExperimentalData(object):
             n_cols = 3
         else:
             n_cols = 2
-        print(len(n_sample))
         n_rows = int(np.rint(len(n_sample) / float(n_cols)))
-
-        print(n_sample, n_rows, n_cols)
 
         fig = plt.figure(figsize=(10, 10))
         for n, i in enumerate(n_sample):
@@ -530,11 +543,9 @@ class ExperimentalData(object):
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
-            print(sample.shape)
             filtered_data = self._filter_data(sample, bh_critera, p_value,
                                               fold_change_cutoff)
             sec_0, sec_1, sec_2 = filtered_data
-            print(n_rows, n_cols, n + 1)
             ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
             self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
@@ -744,7 +755,6 @@ template = r'''
 
 
 def _which(program):
-    import os
 
     def _is_exe(filepath):
         return os.path.isfile(filepath) and os.access(filepath, os.X_OK)
