@@ -1,7 +1,7 @@
+import os
+
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
-
-import os
 
 try:
     import cPickle as pickle
@@ -128,11 +128,11 @@ class MagineGO(object):
         return res
 
 
-def create_dicts_through_orange(species='hsa'):
+def create_dicts_through_orange(species='hsa', rev=None, rev_ass=None):
     print("Creating GO files")
     from orangecontrib.bio import go
-    ont = go.Ontology()
-    ann = go.Annotations(species, ontology=ont)
+    ont = go.Ontology(rev=rev)
+    ann = go.Annotations(species, ontology=ont, rev=rev_ass)
     go_to_gene = dict()
     gene_to_go = dict()
     goid_to_name = dict()
@@ -174,7 +174,7 @@ def create_dicts_through_orange(species='hsa'):
 
 
 if __name__ == '__main__':
-    # create_dicts_through_orange()
+    create_dicts_through_orange()
     go = MagineGO('hsa')
     terms = go.calculate_enrichment(['BAX'],
                                     reference=['BAX', "LL", 'BCL2', 'CASP1'])

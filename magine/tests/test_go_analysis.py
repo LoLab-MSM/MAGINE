@@ -4,6 +4,13 @@ sys.path.append(".")
 
 from magine.ontology.ontology_analysis import GoAnalysis
 from magine.tests.sample_experimental_data import exp_data
+from magine.ontology.enrichment_calculation import MagineGO, \
+    create_dicts_through_orange
+
+
+def test_create_dicts():
+    create_dicts_through_orange(species='hsa', rev="5.2795", rev_ass='1.353')
+    m_go = MagineGO()
 
 
 def test_html():
