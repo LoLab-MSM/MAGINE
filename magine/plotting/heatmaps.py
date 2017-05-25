@@ -259,7 +259,6 @@ def create_heatmap(data, savename, xlabels=None, threshold=None,
 
 def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
                     xlabels=None, ):
-    fig = plt.figure()
 
     if convert_to_log:
         above = tmp_array > 0
@@ -267,36 +266,103 @@ def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
         tmp_array[above] = np.log2(tmp_array[above])
         tmp_array[below] = -1 * np.log2(-1 * tmp_array[below])
 
-    # dengrogram side
-    axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
-    # centroid average
-    linkage = sch.linkage(tmp_array, method='average')
-
-    dendrogram = sch.dendrogram(linkage, orientation='right')
-    axdendro.set_xticks([])
-    axdendro.set_yticks([])
+    print(np.shape(tmp_array))
     name = 'bwr'
+    # Compute and plot first dendrogram.
+    fig = plt.figure(figsize=(8, 14))
+    ax1 = fig.add_axes([0.09, 0.2, 0.2, 0.5])
+    Y = sch.linkage(tmp_array, method='centroid')
+    Z1 = sch.dendrogram(Y, orientation='left',
+                        # truncate_mode='lastp',
+                        # p=20,
+                        # show_contracted=True,
+                        # show_leaf_counts=False,
+                        )
+    ax1.set_xticks([])
+    ax1.set_yticks([])
+
+    # Compute and plot second dendrogram.
+    ax2 = fig.add_axes([0.3, 0.01, 0.6, 0.19])
+    Y = sch.linkage(tmp_array.T, method='centroid')
+    Z2 = sch.dendrogram(Y,
+                        orientation='bottom')
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+    size_of_data = np.shape(tmp_array)[1]
+    length_matrix = np.shape(tmp_array)[0]
+    # Plot distance matrix.
+    axmatrix = fig.add_axes([0.3, 0.2, 0.6, 0.5])
+    idx1 = Z1['leaves']
+    idx2 = Z2['leaves']
+    tmp_array = tmp_array[idx1, :]
+    tmp_array = tmp_array[:, idx2]
+    im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower',
+                          extent=(0, size_of_data, 0, length_matrix + 1),
+                          cmap=plt.get_cmap(name))
+    # axmatrix.set_xticks([])
+    axmatrix.set_yticks([])
+    if xlabels is not None:
+
+        x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
+        axmatrix.set_xticks(x_ticks, minor=False)
+        axmatrix.set_xticklabels(xlabels[idx2], fontsize=16, rotation='90',
+                                 minor=False)
+        axmatrix.xaxis.set_label_position('bottom')
+
+    if out_dir is None:
+        fig.savefig('%s_clustered.pdf' % savename, bbox_layout='tight')
+        fig.savefig('%s_clustered.png' % savename, bbox_layout='tight')
+
+    else:
+        fig.savefig(os.path.join(out_dir, '%s_clustered.pdf' % savename))
+    plt.close()
+    quit()
+    plt.show()
+
+    # dengrogram side
+    ax1 = plt.subplot(211)
+    # centroid average
+    linkage = sch.linkage(tmp_array.T, method='average')
+
+    # dendrogram = sch.dendrogram(linkage, orientation='right')
+
+    dendrogram = sch.dendrogram(
+            linkage,
+            # truncate_mode='lastp',  # show only the last p merged clusters
+            # p=12,  # show only the last p merged clusters
+            # show_leaf_counts=False,  # otherwise numbers in brackets are counts
+            leaf_rotation=90.,
+            leaf_font_size=12,
+            show_contracted=True,
+            # to get a distribution impression in truncated branches
+    )
+
+    ax1.set_xticks([])
+    ax1.set_yticks([])
+
 
     # matrix side
-    axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.8])
+    # axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.8])
+    ax2 = plt.subplot(212)
     index = dendrogram['leaves']
+    print(np.shape(index))
     print(dendrogram.keys())
-    tmp_array = tmp_array[index, :].T
-    # tmp_array = tmp_array[:, index]
+    # tmp_array = tmp_array[index, :]
+    tmp_array = tmp_array[:, index]
     # im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower',
     #                       cmap=plt.get_cmap(name))
     plt.imshow(tmp_array, aspect='auto', origin='lower',
-               cmap=plt.get_cmap(name))
+               cmap=plt.get_cmap(name), interpolation='nearest')
     plt.colorbar()
-    axmatrix.set_xticks([])
-    axmatrix.set_yticks([])
+    ax2.set_xticks([])
+    ax2.set_yticks([])
 
     if xlabels is not None:
         size_of_data = np.shape(tmp_array)[1]
         x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
-        plt.xticks(x_ticks, xlabels, fontsize=16, rotation='90')
+        plt.xticks(x_ticks, xlabels[index], fontsize=16, rotation='90')
 
-    axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
+    # axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
     # plt.colorbar(im, cax=axcolor)
 
 
