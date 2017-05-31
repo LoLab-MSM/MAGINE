@@ -7,7 +7,7 @@ def test_find_kegg_pathways():
     :return:
     """
     proteins = ['tp53','bax']
-    pathways = find_kegg_pathways(proteins,1)
+    pathways = find_kegg_pathways(proteins, 1, download=False)
     for i in pathways:
         print(i)
 
