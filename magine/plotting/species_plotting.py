@@ -28,7 +28,7 @@ gene = 'gene'
 protein = 'protein'
 metabolites = 'metabolites'
 species_type = 'species_type'
-sample_id = 'time'
+sample_id = 'sample_id'
 fold_change = 'treated_control_fold_change'
 flag = 'significant_flag'
 
@@ -205,10 +205,10 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     from magine.html_templates.html_tools import write_filter_table
     write_filter_table(genes_out, html_filename, 'genes')
 
-    quit()
+    # quit()
     proteins = pd.DataFrame(figure_locations, columns=['Genes'])
-    print(proteins.head(10))
-    quit()
+    # print(proteins.head(10))
+    # quit()
 
 
 
@@ -356,7 +356,9 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
             dict(args=['visible', true_list],
                  label='All',
                  method='restyle')]
+
         prev = 0
+
         for i in range(n_genes):
             t_row = [False] * total_counter
             for j in range(prev, prev + names_list[i][1]):
@@ -373,7 +375,13 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         layout = plotly_graph.Layout(
                 title=title,
                 showlegend=True,
-                xaxis=dict(title='Sample index'),
+                xaxis=dict(title='Sample index',
+                           range=[min(x_point_dict.values()),
+                                  max(x_point_dict.values())],
+                           showticklabels=True,
+                           ticktext=x_points,
+                           tickmode='array'
+                           ),
                 yaxis=dict(title='log2fc'),
                 hovermode="closest",
                 updatemenus=update_menu)
