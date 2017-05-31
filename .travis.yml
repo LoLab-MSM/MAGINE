@@ -3,7 +3,7 @@ sudo: required
 dist: trusty
 python:
 - '2.7'
-- '3.4'
+- '3.6'
 cache: pip
 before_install:
 - if [[ "$TRAVIS_PYTHON_VERSION" == "2.7" ]]; then
@@ -18,7 +18,7 @@ before_install:
 - sudo apt-get install graphviz
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
     nose h5py pexpect pandas numba
-- if [[ "$TRAVIS_PYTHON_VERSION" == "3.4" ]]; then
+- if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
     pip install orange3;
   else
     pip install orange;
