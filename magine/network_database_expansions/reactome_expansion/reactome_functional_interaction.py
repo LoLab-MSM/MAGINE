@@ -1,9 +1,10 @@
-import networkx as nx
-import pandas as pd
 import os
 import tempfile
-import requests
+
+import networkx as nx
 import numpy as np
+import pandas as pd
+import requests
 
 directory = os.path.dirname(__file__)
 
@@ -15,8 +16,17 @@ class ReactomeFunctionalInteraction(object):
         self.target_file = 'FIsInGene_031516_with_annotations.txt.zip'
         self.url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2015/FIsInGene_031516_with_annotations.txt.zip'
         self.out_path = os.path.join(self.tmp_dir, self.target_file)
+        self._reverse = {"<-", "?-"}
+        self._forward = {"->", "->"}
 
-    def setup(self):
+    def _setup(self):
+        """
+        Downloads file
+
+        Returns
+        -------
+
+        """
         r = requests.get(self.url, stream=True)
         response = requests.head(self.url)
         file_size = int(response.headers['content-length'])
@@ -42,23 +52,26 @@ class ReactomeFunctionalInteraction(object):
         print("Downloaded {} and stored {}".format(self.url, self.out_path))
 
     def parse_network(self):
-        table = pd.read_table(self.out_path)
+        """
+        Parses tab delimited file to networkx.DiGraph
+
+
+        Returns
+        -------
+
+        """
+        self._setup()
+        table = pd.read_table(self.out_path, low_memory=False,
+                              compression='zip')
         g = nx.DiGraph()
         added_genes = set()
-        for i, row in table.iterrows():
-            score = row['Score']
-            gene1, gene2, interaction, prediction, mod = self.check_row(row)
+
+        x = table.apply(self.check_row, axis=1)
+
+        for i, row in x.iteritems():
+            gene1, gene2, interaction, prediction, mod, score = row
             if gene1 == gene2:
                 continue
-            elif prediction:
-                if gene1 not in added_genes:
-                    g.add_node(gene1, sourceDB='ReactomeFI', speciesType='gene')
-                    added_genes.add(gene1)
-                if gene2 not in added_genes:
-                    g.add_node(gene2, sourceDB='ReactomeFI', speciesType='gene')
-                    added_genes.add(gene2)
-                g.add_edge(gene1, gene2, interactionType=interaction, ptm=mod,
-                           score=score, prediction='True', sourceDB='ReactomeFI')
             else:
                 if gene1 not in added_genes:
                     g.add_node(gene1, sourceDB='ReactomeFI', speciesType='gene')
@@ -66,9 +79,14 @@ class ReactomeFunctionalInteraction(object):
                 if gene2 not in added_genes:
                     g.add_node(gene2, sourceDB='ReactomeFI', speciesType='gene')
                     added_genes.add(gene2)
-
-                g.add_edge(gene1, gene2, interactionType=interaction, ptm=mod,
-                           score=score, sourceDB='ReactomeFI')
+                if prediction:
+                    g.add_edge(gene1, gene2, interactionType=interaction,
+                               ptm=mod, score=score, prediction='True',
+                               sourceDB='ReactomeFI')
+                else:
+                    g.add_edge(gene1, gene2, interactionType=interaction,
+                               ptm=mod,
+                               score=score, sourceDB='ReactomeFI')
         ge = set(g.nodes())
         g1 = set(table['Gene1'])
         g2 = set(table['Gene2'])
@@ -83,15 +101,13 @@ class ReactomeFunctionalInteraction(object):
         print("Reactome network has {} edges ".format(len(g.edges())))
         nx.write_gml(g, os.path.join(directory, 'reactome_fi.gml'))
 
-    @staticmethod
-    def return_direction(text, gene1, gene2):
-        if text in ("<-", "?-"):
+    def return_direction(self, text, gene1, gene2):
+        if text in self._reverse:
             return gene2, gene1
-        if text in ("->", "->"):
+        if text in self._forward:
             return gene1, gene2
         else:
             return gene1, gene2
-
 
     def check_row(self, row):
         prediction = False
@@ -145,9 +161,15 @@ class ReactomeFunctionalInteraction(object):
         if interaction_type is None:
             interaction_type = '?'
         g1, g2 = self.return_direction(row['Direction'], row['Gene1'], row['Gene2'])
-        return g1, g2, interaction_type, prediction, modification
+        return g1, g2, interaction_type, prediction, modification, row['Score']
+
 
 if __name__ == '__main__':
+    import time
+
+    st = time.time()
     rfi = ReactomeFunctionalInteraction()
-    rfi.setup()
     rfi.parse_network()
+    end_time = time.time()
+    print(end_time - st)
+    # 33.48 seconds with set
