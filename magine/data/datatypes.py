@@ -121,8 +121,8 @@ class ExperimentalData(object):
         self.proteomics_up = {}
         self.proteomics_down = {}
         self.proteomics_sign_changed = {}
-        self.protomics_time_points = np.sort(self.proteomics[
-                                                 sample_id].unique())
+        self.protomics_time_points = \
+            np.sort(self.proteomics[sample_id].unique())
         self.rna_time_points = np.sort(self.rna_seq[sample_id].unique())
 
         self.proteomics_over_time = []
@@ -309,7 +309,11 @@ class ExperimentalData(object):
         elif mol_type == 'metabolite':
             return list(tmp[metabolites].unique())
         else:
-            return list(tmp[gene].unique()) + list(tmp['compound_id'].unique())
+            if 'compound_id' not in tmp.dtypes:
+                return list(tmp[gene].unique())
+            else:
+                return list(tmp[gene].unique()) + list(
+                    tmp['compound_id'].unique())
 
     def create_table_of_data(self, sig=False, save_name='tmp', unique=False):
         """
@@ -535,9 +539,13 @@ class ExperimentalData(object):
             n_cols = 3
         else:
             n_cols = 2
-        n_rows = int(np.rint(len(n_sample) / float(n_cols)))
-
-        fig = plt.figure(figsize=(10, 10))
+        n_rows = np.rint(np.rint(len(n_sample) / float(n_cols)))
+        if n_cols * n_rows < len(n_sample):
+            if n_cols >= n_rows:
+                n_rows += 1
+            else:
+                n_cols += 1
+        fig = plt.figure(figsize=(3 * n_rows, 3 * n_cols))
         for n, i in enumerate(n_sample):
             sample = data[data[sample_id] == i].copy()
             sample = sample.dropna(subset=[p_val])
