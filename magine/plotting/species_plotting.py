@@ -64,8 +64,6 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
 
     if isinstance(data, str):
         data = pd.read_csv(data)
-    if 'sample_id' not in data.dtypes:
-        data['sample_id'] = data['time']
 
     assert plot_type == ('plotly' or 'matplotlib')
     # get list of all terms
@@ -208,11 +206,9 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     write_filter_table(genes_out, html_filename, 'genes')
 
     # quit()
-    proteins = pd.DataFrame(figure_locations, columns=['Genes'])
+    # proteins = pd.DataFrame(figure_locations, columns=['Genes'])
     # print(proteins.head(10))
     # quit()
-
-
 
 
 
