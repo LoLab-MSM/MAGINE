@@ -1,5 +1,7 @@
-import networkx as nx
 import os
+
+import networkx as nx
+
 from magine.network_database_expansions.reactome_expansion.reactome_functional_interaction \
     import ReactomeFunctionalInteraction
 
@@ -11,7 +13,6 @@ def load_reactome_fi():
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")
         rfi = ReactomeFunctionalInteraction()
-        rfi.setup()
         rfi.parse_network()
     if not os.path.exists(path):
         print('Failed!')
