@@ -4,12 +4,6 @@ Created on Thu Jun 18 20:36:51 2015
 
 @author: pinojc
 """
-from bioservices import *
-
-from magine.networks.kgml_to_networkx_parser import kgml_to_graph
-
-kegg = KEGG(verbose=True)
-kegg.TIMEOUT = 100
 
 arrowType = {
     'activation':          'onormal', 'indirect effect': 'odiamondodiamond',
@@ -43,6 +37,25 @@ maplink link to another map]
 
 def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
               compound_monomers):
+    """
+    translate edge information to a rule
+
+
+    Parameters
+    ----------
+    X : str
+    Y : str
+    option : str
+    param_counter : int
+    parameters : list
+    rules : list
+    gene_monomers : list
+    compound_monomers : list
+
+    Returns
+    -------
+
+    """
     X = str(X)
     Y = str(Y)
     split = option.split("_")
@@ -124,89 +137,18 @@ def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
         rate2 = "kr%s" % str(param_counter)
         rule_name = '"%s_binds_%s_%s"' % (X, Y, str(param_counter))
 
-        tmp1 = 'Rule(%s, %s(bf=None, gene="protein") +%s(bf=None,gene="protein")!> %s(bf=1,gene="protein") ** %s(bf=1,gene="protein"),%s,%s)\n' % (
-            rule_name, X, Y, X, Y, rate1, rate2)
+        tmp1 = 'Rule(%s, %s(bf=None, gene="protein") + ' \
+               '%s(bf=None, gene="protein") !> ' \
+               '%s(bf=1, gene="protein") ** %s(bf=1, gene="protein"),' \
+               ' %s, %s)\n' % (rule_name, X, Y, X, Y, rate1, rate2)
 
         tmp1 = tmp1.replace("**", "%")
         rules += tmp1
-        parameters += 'Parameter("%s",1)\n' % rate1
-        parameters += 'Parameter("%s",1)\n' % rate2
+        parameters += 'Parameter("%s", 1)\n' % rate1
+        parameters += 'Parameter("%s", 1)\n' % rate2
 
     else:
         print(split[0], 'not found')
     return rules, parameters
 
-    # catalyze(enzyme, e_site, substrate, s_site, product, klist):
 
-
-# synthesize(A(x=None, y='e'), 1e-4)
-
-if __name__ == '__main__':
-    # nodes, edges = KGML2Graph("hsa04210.xml")
-    g, x, y = kgml_to_graph("hsa04210.xml", output_dir='.')
-    print(g, x, y)
-    print('made it here')
-    nodes = g.nodes(data=True)
-    print(nodes)
-    edges = g.edges(data=True)
-    pysb_file = ''
-    gene_monomers = []
-    compound_monomers = []
-
-    output = """
-import pysb.macros as macros
-from pysb import *
-def catalyze(enz, sub, product, klist):
-    return macros.catalyze(enz, 'bf', sub, 'bf', product, klist)
-Model()
-"""
-    added = set()
-    monomers = ''
-    initials = ''
-    counter = 0
-    rules = ''
-    parameters = ""
-    for i, info in nodes:
-        if i in added:
-            continue
-        added.add(i)
-        i = i.replace(':', '')
-        if info['speciesType'] == 'gene':
-            gene_monomers.append(i)
-
-            monomers += 'Monomer("{}", ["gene", "state", "bf"], ' \
-                        '{{"state": ["I", "A"], ' \
-                        '"gene": ["on", "off", "protein"]}})\n'.format(i)
-            initials += 'Initial({0}(bf=None, gene="on", state="A"), ' \
-                        '{0}_0)\n'.format(i)
-            initials += 'Initial({0}(bf=None, gene="protein", state="A"), ' \
-                        '{0}_0 )\n'.format(i)
-            initials += 'Initial({0}(bf=None, gene="on", state="I"), ' \
-                        '{0}_0 )\n'.format(i)
-            initials += 'Initial({0}(bf=None, gene="off", state="I"), ' \
-                        '{0}_0 )\n'.format(i)
-            # print 'Monomer("%s",["gene","bs"],{"gene":["on","off"]})'% i[0]
-
-        elif info['speciesType'] == 'compound':
-            compound_monomers.append(i)
-            # print 'Monomer("%s",["bf"])'% i[0].strip("+")
-            monomers += 'Monomer("{0}", ["bf"])\n'.format(i)
-            initials += 'Initial({0}(bf=None), {0}_0 )\n'.format(i)
-        parameters += 'Parameter("{0}_0", 1)\n'.format(i)
-
-    for info in edges:
-        s_1 = info[0]
-        s_2 = info[1]
-        s_1 = s_1.replace(':', '')
-        s_2 = s_2.replace(':', '')
-        int_type = info[2]['interactionType']
-
-        rules, parameters = translate(s_1, s_2, int_type, counter, parameters,
-                                      rules, gene_monomers, compound_monomers)
-        counter += 1
-    output += monomers
-    output += parameters
-    output += initials
-    output += rules
-    with open('pysb_model.py', 'w') as File:
-        File.write(output)
