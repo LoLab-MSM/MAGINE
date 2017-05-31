@@ -64,6 +64,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
 
     if isinstance(data, str):
         data = pd.read_csv(data)
+    if 'sample_id' not in data.dtypes:
+        data['sample_id'] = data['time']
 
     assert plot_type == ('plotly' or 'matplotlib')
     # get list of all terms
@@ -249,6 +251,8 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
     if list_of_genes is None:
         dataframe, list_of_genes, save_name, out_dir, title, plot_type = dataframe
 
+    if 'sample_id' not in dataframe.dtypes:
+        dataframe['sample_id'] = dataframe['time']
     x_points = sorted(dataframe[sample_id].unique())
 
     if isinstance(x_points[0], np.float):
