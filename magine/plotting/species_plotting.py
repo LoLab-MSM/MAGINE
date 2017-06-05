@@ -162,6 +162,8 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
     Parameters
     ----------
+    exp_data : pandas.DataFrame
+    html_filename : str
     out_dir: str, path
         Directory that will contain all proteins
     plot_type : str
@@ -175,7 +177,6 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
         pass
     else:
         os.mkdir(out_dir)
-    html_pages = []
 
     genes = exp_data[exp_data['species_type'] == 'protein'].copy()
     genes_to_plot = genes['gene'].unique()
@@ -186,16 +187,11 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
                             out_dir=out_dir, title=i, plot_type=plot_type)
         if plot_type == 'plotly':
             out_point = '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i)
-
             figure_locations[i] = out_point
-
-            # html_pages.append(
-            #         '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i))
         else:
             out_point = '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i)
             figure_locations[i] = out_point
-            # html_pages.append(
-            #     '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
+
     print(figure_locations)
     print(exp_data.head(20))
     for i in figure_locations:
@@ -209,7 +205,6 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     # proteins = pd.DataFrame(figure_locations, columns=['Genes'])
     # print(proteins.head(10))
     # quit()
-
 
 
 def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
@@ -328,6 +323,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                                                            c,
                                                            marker='x-open-dot'))
         names_list.append([name, index_counter])
+
     if plot_type == 'matplotlib':
         plt.xlim(min(x_point_dict.values()) - 2,
                  max(x_point_dict.values()) + 2)
@@ -350,15 +346,15 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         # print("Saving {}".format(tmp_savename))
         plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
                     bbox_inches='tight')
+
     elif plot_type == 'plotly':
         true_list = [True] * total_counter
-        scroll_list = [
-            dict(args=['visible', true_list],
-                 label='All',
-                 method='restyle')]
+        scroll_list = [dict(args=['visible', true_list],
+                            label='All',
+                            method='restyle')]
 
         prev = 0
-
+        # making all false except group defined by protein name
         for i in range(n_genes):
             t_row = [False] * total_counter
             for j in range(prev, prev + names_list[i][1]):
@@ -372,6 +368,7 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                                  y=1,
                                  yanchor='top',
                                  buttons=scroll_list, )])
+
         layout = plotly_graph.Layout(
                 title=title,
                 showlegend=True,
@@ -380,11 +377,13 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                                   max(x_point_dict.values())],
                            showticklabels=True,
                            ticktext=x_points,
-                           tickmode='array'
+                           tickmode='array',
+                           tickvals=np.sort(x_point_dict.values()),
                            ),
                 yaxis=dict(title='log2fc'),
                 hovermode="closest",
-                updatemenus=update_menu)
+                updatemenus=update_menu
+        )
 
         fig = plotly_graph.Figure(data=plotly_list, layout=layout)
         if out_dir is None:
@@ -399,8 +398,22 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         # return tmp_savename
 
 
-
 def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
+    """
+    Creates a single scatter plot
+    Parameters
+    ----------
+    x : list_like
+    y : list_like
+    label : str
+    enum : int
+    color : str
+    marker : str
+
+    Returns
+    -------
+
+    """
     l_color = 'rgba({},{},{},1.)'.format(color[0], color[1], color[2])
     if marker != 'circle':
         mode = 'markers'
@@ -412,15 +425,18 @@ def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
         size = 8
     legendgroup = 'group_{}'.format(enum)
 
-    g = plotly_graph.Scatter(x=x, y=y,
-                             hoveron='text', name=label,
-                             visible=True,
-                             mode=mode,
-                             legendgroup=legendgroup,
-                             showlegend=show,
-                             line=dict(color=l_color),
-                             marker=dict(symbol=marker,
-                                         size=size,
-                                         color=l_color),
-                             )
+    g = plotly_graph.Scatter(
+            x=x,
+            y=y,
+            hoveron='text',
+            name=label,
+            visible=True,
+            mode=mode,
+            legendgroup=legendgroup,
+            showlegend=show,
+            line=dict(color=l_color),
+            marker=dict(symbol=marker,
+                        size=size,
+                        color=l_color),
+    )
     return g
