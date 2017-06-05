@@ -4,14 +4,13 @@ import networkx as nx
 from nose.tools import raises
 
 from magine.networks.network_subgraphs import NetworkSubgraphs
+from magine.tests.sample_experimental_data import exp_data
 
 _path = os.path.join(os.path.dirname(__file__), 'Network_files',
                      'sample_network.gml')
 
-from magine.tests.sample_experimental_data import exp_data
 
-
-class TestSolver(object):
+class TestNetworkSubgraphs(object):
     def setUp(self):
 
         self.network = nx.read_gml(_path)
@@ -38,11 +37,11 @@ class TestSolver(object):
     def test_paths_from_list(self):
         """Test finding paths from a list."""
         up_nodes = {'MTMR4', 'ZFYVE1', 'MTMR14', 'MTMR3', 'WIPI1'}
-        edges = {('MTMR14', u'HMDB03850'),
-                 (u'HMDB03850', 'ZFYVE1'),
-                 (u'HMDB03850', 'WIPI1'),
-                 ('MTMR4', u'HMDB03850'),
-                 ('MTMR3', u'HMDB03850')}
+        edges = {('MTMR14', 'HMDB03850'),
+                 ('HMDB03850', 'ZFYVE1'),
+                 ('HMDB03850', 'WIPI1'),
+                 ('MTMR4', 'HMDB03850'),
+                 ('MTMR3', 'HMDB03850')}
         g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=True,
                                                       save_name='ns_test')
         assert set(g.edges()) == edges
@@ -51,7 +50,7 @@ class TestSolver(object):
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
                                                       single_path=True,
                                                       save_name='smaller_list')
-        nodes = {'TP53', 'CASP3', u'MAP3K1', u'BAX', u'MAPK10', u'BCL2'}
+        nodes = {'TP53', 'CASP3', 'MAP3K1', 'BAX', 'MAPK10', 'BCL2'}
         assert set(g.nodes()) == nodes
 
     @raises(RuntimeWarning)
@@ -64,11 +63,11 @@ class TestSolver(object):
     def test_path_between_two(self):
         start = 'AKT1'
         end = 'BAX'
-        nodes = {u'BCL2L1', u'PTK2', u'HMDB04249', 'BAX', u'MAPK14', 'AKT1',
-                 u'MAPK11', u'MAPK12', u'MAPK13', u'RAF1', u'MAP2K4',
-                 u'PIK3CA', u'PIK3CB', u'MAP3K1', u'PIK3CD', u'PIK3R3',
-                 u'PIK3R2', u'PIK3R1', u'TP53', u'CASP3', u'PTEN', u'PAK1',
-                 u'PAK2', u'BCL2'}
+        nodes = {'BCL2L1', 'PTK2', 'HMDB04249', 'BAX', 'MAPK14', 'AKT1',
+                 'MAPK11', 'MAPK12', 'MAPK13', 'RAF1', 'MAP2K4',
+                 'PIK3CA', 'PIK3CB', 'MAP3K1', 'PIK3CD', 'PIK3R3',
+                 'PIK3R2', 'PIK3R1', 'TP53', 'CASP3', 'PTEN', 'PAK1',
+                 'PAK2', 'BCL2'}
         g = self.net_sub.shortest_paths_between_two_proteins(start, end,
                                                              draw=True,
                                                              )
