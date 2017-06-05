@@ -145,14 +145,15 @@ class Analyzer(object):
                                                    fold_change=i)
             list_of_go_dict.append(att_dict)
 
-        for i in ['up', 'down', 'both']:
-            e_array, att_dict = self.run_single_go(data_type='rnaseq',
-                                                   fold_change=i)
-            list_of_go_dict.append(att_dict)
+        if 'rnaseq' in self.exp_data.exp_methods:
+            for i in ['up', 'down', 'both']:
+                e_array, att_dict = self.run_single_go(data_type='rnaseq',
+                                                       fold_change=i)
+                list_of_go_dict.append(att_dict)
 
         return list_of_go_dict
 
-    def run_go_and_create_html(self, html_name):
+    def run_go_and_create_html(self, html_name, visualize=False):
 
         list_of_go_dict = self.run_proteomics_go()
         for i in list_of_go_dict:
@@ -166,20 +167,18 @@ class Analyzer(object):
             write_table_to_html_with_figures(file_name, self.exp_data,
                                              save_name, out_dir=self.out_dir,
                                              )
-            # self.create_selected_go_network(file_name, save_name,
-            #                                 visualize=True)
+            if visualize:
+                self.create_selected_go_network(file_name, save_name,
+                                                visualize=True)
 
         df = pd.DataFrame(list_of_go_dict)
         df.drop('save_name', axis=1, inplace=True)
         write_single_table(df, html_name, 'MAGINE Output', )
-        print(df['fileName'])
         df['fileName'] = df['fileName'].str.replace('\.html', '_filter.html')
-        print(df['fileName'])
         write_single_table(df, html_name + '_filter', 'MAGINE Output', )
 
-
     def create_selected_go_network(self, file_name, save_name, go_ids=None,
-                                   visualize=False):
+                                   visualize=False, slim=True):
         """ creates a GO level network
 
         Parameters
@@ -192,7 +191,8 @@ class Analyzer(object):
             list of GO terms to include
         visualize: bool
             Visualize the network after creation
-
+        slim : bool
+            Slim the ontology
         Returns
         --------
         tall: networkx.DiGraph
@@ -208,62 +208,22 @@ class Analyzer(object):
                           "or pass the build_network flag", RuntimeWarning)
             quit()
         elif self.go_net_gen is None:
-            self.go_net_gen = GoNetworkGenerator(self.species, self.network,
-                                                 self.out_dir)
+            self.go_net_gen = GoNetworkGenerator(self.species, self.network)
+        if slim:
+            from magine.ontology.ontology_tools import filter_ontology_df
 
-        from magine.ontology.ontology_tools import filter_ontology_df
-
-        data = filter_ontology_df(file_name, n_hits_per_time=5,
-                                  trim_nodes=True,
-                                  additional_ids_to_include=go_ids)
+            data = filter_ontology_df(file_name, n_hits_per_time=5,
+                                      trim_nodes=True,
+                                      additional_ids_to_include=go_ids)
+        else:
+            data = pd.read_csv(file_name)
+            data = data[data['GO_id'].isin(go_ids)]
         list_all_go = data['GO_id'].unique()
 
         tall = self.go_net_gen.create_network_from_list(
             list_of_go_terms=list_all_go,
             save_name='{0}_network'.format(save_name),
             threshold=0)
-        if visualize:
-            self.visualize_go_network(tall, data, save_name)
-        return tall, data
-
-    def create_go_network_manual_terms(self, file_name, save_name, go_ids=None,
-                                       visualize=False):
-        """ creates a GO level network with manually curated terms
-
-        Parameters
-        ----------
-        file_name: str or pandas.Dataframe
-            Enrichment array
-        save_name: str
-            prefix of GO network to save
-        go_ids: list, optional
-            list of GO terms to include
-        visualize: bool
-            Visualize the network after creation
-
-        Returns
-        -------
-        tall: networkx.DiGraph
-            GO network created with GoNetworkGenerator
-        data : pd.Dataframe
-            enrichment data from GOAnalysis.calculate_enrichment
-        """
-
-        if self.go_net_gen is None:
-            warnings.warn("Warning : A molecular network is required to "
-                          "generate a GO level network!.\n"
-                          "You must provide Analyzer with a network "
-                          "or pass the build_network flag", RuntimeWarning)
-            quit()
-
-        data = pd.read_csv(file_name)
-        data = data[data['GO_id'].isin(go_ids)]
-        list_all_go = data['GO_id'].unique()
-
-        tall = self.go_net_gen.create_network_from_list(
-                list_of_go_terms=list_all_go,
-                save_name='{0}_network'.format(save_name),
-                threshold=0)
         if visualize:
             self.visualize_go_network(tall, data, save_name)
         return tall, data
