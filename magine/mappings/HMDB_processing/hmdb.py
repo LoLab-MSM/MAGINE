@@ -11,9 +11,10 @@ import numpy as np
 import pandas as pd
 import requests
 
-# from magine.mappings.HMDB_processing.xml_to_dictionary import XmlDictConfig, \
-#     XmlListConfig
-from xml_to_dictionary import XmlDictConfig, XmlListConfig
+from magine.mappings.HMDB_processing.xml_to_dictionary import XmlDictConfig, \
+    XmlListConfig
+
+# from xml_to_dictionary import XmlDictConfig, XmlListConfig
 
 directory = os.path.dirname(__file__)
 
@@ -92,7 +93,6 @@ class HMDB(object):
         zip_ref.extractall(out_directory)
         zip_ref.close()
         print("Done unzipping metabolites file")
-
 
     def parse_hmdb(self):
         """ parse HMDB to Pandas.DataFrame
