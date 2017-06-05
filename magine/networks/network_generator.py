@@ -312,6 +312,9 @@ def add_reactome(network, measured_list):
         if i in measured_set and j in measured_set:
             combined_network.add_edge(i, j, k)
             added_edges += 1
+        elif i in nodes_to_check or j in measured_list:
+            combined_network.add_edge(i, j, k)
+            added_edges += 1
 
     print("Found {} nodes in REACTOME not in KEGG".format(added_nodes))
     print("Added {} edges from REACTOME".format(added_edges))
@@ -319,6 +322,7 @@ def add_reactome(network, measured_list):
     print("Nodes before Reactome expansion "
           "= {}, after = {}".format(len(existing_nodes),
                                     len(combined_network.nodes())))
+
     return combined_network
 
 

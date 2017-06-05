@@ -5,9 +5,11 @@ except:  # python3 doesnt have cPickle
 import os
 
 import pandas as pd
-from magine.mappings.hgnc_mapping.create_hgnc_dictionaries import download_hgnc
-from magine.mappings.Uniprot_mapping.create_uniprot_dictionaries import \
-    create_human_dataframe
+
+from magine.mappings.Uniprot_mapping.create_uniprot_dictionaries \
+    import create_human_dataframe
+from magine.mappings.hgnc_mapping.create_hgnc_dictionaries \
+    import download_hgnc, download_ncbi
 
 directory = os.path.dirname(__file__)
 
@@ -26,6 +28,8 @@ def convert_to_dict(data, key, value):
         return_dict[k] = list(set(v))
         if None in return_dict[k]:
             return_dict[k].remove(None)
+            # if len(return_dict[k]) == 1:
+            #     return_dict[k] = return_dict[k][0]
     return return_dict
     # return {k: list(v) for k, v in data.groupby(key)[value]}
 
@@ -53,6 +57,14 @@ class GeneMapper:
         hgnc = pd.read_csv(hgnc_name)
         self.hgnc = hgnc
 
+        ncbi_name = os.path.join(directory, 'data', 'ncbi.gz')
+        if not os.path.exists(ncbi_name):
+            download_ncbi()
+            assert os.path.exists(ncbi_name)
+
+        ncbi = pd.read_csv(ncbi_name)
+        self.ncbi = ncbi
+
         # gather data from uniprot
         uniprot_path = os.path.join(directory, 'data', 'human_uniprot.csv.gz')
         # check to see if exists, if not create it
@@ -79,6 +91,7 @@ class GeneMapper:
         self.protein_name_to_uniprot = None
         self.kegg_to_gene_name = {}
         self.kegg_to_uniprot = {}
+        self.ncbi_to_symbol = {}
 
         try:
             self.reload()
@@ -106,6 +119,7 @@ class GeneMapper:
         self.kegg_to_gene_name = convert_to_dict(self.uniprot,
                                                  'KEGG', 'Gene_Name')
         self.kegg_to_uniprot = convert_to_dict(self.uniprot, 'KEGG', 'uniprot')
+        self.ncbi_to_symbol = convert_to_dict(self.ncbi, 'GeneID', 'Symbol')
         self.save()
 
     def save(self):
@@ -128,3 +142,4 @@ class GeneMapper:
 if __name__ == '__main__':
     gm = GeneMapper()
     gm.load()
+    print(gm.ncbi_to_symbol)

@@ -13,6 +13,7 @@ import networkx as nx
 from bioservices import HGNC, KEGG, UniChem, UniProt
 
 from magine.mappings.chemical_mapper import ChemicalMapper
+from magine.mappings.gene_mapper import GeneMapper
 
 try:
     kegg = modules['kegg']
@@ -22,6 +23,7 @@ except KeyError:
 uniprot = UniProt()
 hugo = HGNC()
 chem = UniChem()
+gm = GeneMapper()
 
 # TODO create a database to store all of this
 # TODO create a kegg to uniprot identifier dictionary
@@ -53,7 +55,13 @@ manual_dict = {'hsa:857'      : 'CAV1',
                }
 
 compound_manual = {'cpd:C07909': 'HMDB15015',
-                   'cpd:C16844': 'HMDB01039'
+                   'cpd:C16844': 'HMDB01039',
+                   'cpd:C00076': 'HMDB00464',
+                   'cpd:C00154': 'HMDB01338',
+                   'cpd:C01561': 'HMDB03550',
+                   'cpd:C04043': 'HMDB03791',
+                   'cpd:C01165': 'HMDB02104',
+
                    }
 
 
@@ -72,17 +80,16 @@ def create_gene_dictionaries(network, species='hsa'):
 
     """
 
-    from magine.mappings.gene_mapper import GeneMapper
-    gm = GeneMapper()
+
     # first we will check the pre-created dictionaries
     if species == 'hsa':
-        dictionary = pickle.load(open(os.path.join(directory,
-                                                   'human_kegg_mapper.p'),
-                                      'rb'))
+        dictionary = pickle.load(open(
+                os.path.join(directory, 'human_kegg_mapper.p'), 'rb')
+        )
     elif species == 'mmu':
-        dictionary = pickle.load(open(os.path.join(directory,
-                                                   'mouse_kegg_mapper.p'),
-                                      'rb'))
+        dictionary = pickle.load(open(
+                os.path.join(directory, 'mouse_kegg_mapper.p'), 'rb')
+        )
     # Create the dictionary to store all conversions to be returned
     kegg_to_gene_name = {}
     # List to store things not in the initial dictionary
@@ -94,6 +101,7 @@ def create_gene_dictionaries(network, species='hsa'):
         str_gene = str(i)
         if str_gene.startswith(species):
             network.node[i]['keggName'] = str_gene
+            tmp_name = str_gene.replace(species + ':', '')
             if str_gene in gm.kegg_to_gene_name:
                 if len(gm.kegg_to_gene_name[str_gene]) == 1:
                     kegg_to_gene_name[str_gene] = gm.kegg_to_gene_name[str_gene][0]
@@ -106,10 +114,14 @@ def create_gene_dictionaries(network, species='hsa'):
                 kegg_to_gene_name[str_gene] = dictionary[str_gene]
             elif i in manual_dict:
                 kegg_to_gene_name[str_gene] = manual_dict[str_gene]
+
+            elif int(tmp_name) in gm.ncbi_to_symbol:
+                kegg_to_gene_name[str_gene] = gm.ncbi_to_symbol[int(tmp_name)][
+                    0]
             else:
                 unknown_genes.add(i)
     if len(unknown_genes) == 0:
-        return kegg_to_gene_name
+        return kegg_to_gene_name, 1
     # create string to call uniprot for mapping
     search_string = ''
     for n, i in enumerate(unknown_genes):
@@ -139,7 +151,8 @@ def create_gene_dictionaries(network, species='hsa'):
             still_missing.add(i)
     print("{} mappings not found from kegg to"
           " gene name".format(len(still_missing)))
-    return kegg_to_gene_name
+    print(still_missing)
+    return kegg_to_gene_name, 0
 
 
 def hugo_mapper(network, species='hsa'):
@@ -162,23 +175,30 @@ def hugo_mapper(network, species='hsa'):
     for i in nodes:
         if str(i).startswith(prefix):
             tmp_name = str(i).replace(prefix, '')
-            mapping = hugo.search(tmp_name)
-            if 'response' in mapping:
-                response = mapping['response']
-                if 'numFound' in response:
-                    if response['numFound'] == 0:
-                        not_found.add(i)
-                        continue
-                    elif response['numFound'] == 1:
-                        docs = response['docs'][0]
-                        hugo_dict[i] = docs['symbol']
-                        continue
-                    else:
-                        if 'symbol' in response['docs'][0]:
-                            hugo_dict[i] = response['docs'][0]['symbol']
+            if int(tmp_name) in gm.ncbi_to_symbol:
+                print(tmp_name, gm.ncbi_to_symbol[int(tmp_name)])
+                hugo_dict[i] = gm.ncbi_to_symbol[int(tmp_name)][0]
             else:
-                not_found.add(i)
-    print("{} mappings not found after HGNC mapping".format(len(not_found)))
+                mapping = hugo.search(tmp_name)
+                if 'response' in mapping:
+                    response = mapping['response']
+                    if 'numFound' in response:
+                        if response['numFound'] == 0:
+                            not_found.add(i)
+                            continue
+                        elif response['numFound'] == 1:
+                            docs = response['docs'][0]
+                            hugo_dict[i] = docs['symbol']
+                            continue
+                        else:
+                            if 'symbol' in response['docs'][0]:
+                                hugo_dict[i] = response['docs'][0]['symbol']
+                else:
+                    not_found.add(i)
+    if not_found != 0:
+        print(
+        "{} mappings not found after HGNC mapping".format(len(not_found)))
+        print("{} ".format(not_found))
     return hugo_dict
 
 
@@ -264,11 +284,14 @@ def convert_all(network, species='hsa', use_hmdb=False):
         dict1 = create_compound_dictionary(renamed_network)
         renamed_network = nx.relabel_nodes(renamed_network, dict1)
     print('Started converting kegg genes to HGNC')
-    dict2 = create_gene_dictionaries(renamed_network, species=species)
+    dict2, found_all = create_gene_dictionaries(renamed_network,
+                                                species=species)
+
     renamed_network = nx.relabel_nodes(renamed_network, dict2)
-    print('Started to check for miRNAs')
-    dict3 = hugo_mapper(renamed_network, species=species)
-    renamed_network = nx.relabel_nodes(renamed_network, dict3)
+    if not found_all:
+        print('Started to check for miRNAs')
+        dict3 = hugo_mapper(renamed_network, species=species)
+        renamed_network = nx.relabel_nodes(renamed_network, dict3)
 
     return renamed_network
 

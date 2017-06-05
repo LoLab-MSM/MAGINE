@@ -12,6 +12,7 @@ from py2cytoscape.data.cyrest_client import CyRestClient
 from py2cytoscape.data.style import StyleUtil
 from py2cytoscape.data.util_network import NetworkUtil as util
 
+
 class RenderModel:
     def __init__(self, graph, layout="attributes-layout", style='Directed'):
         # name='FromMAGINE'):
