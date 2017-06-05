@@ -11,6 +11,7 @@ downstream_mito = ['DIABLO', 'CYCS',
 upstream_mito = ['FAS', 'FADD',  # DISC
                     'CFLAR',  # FLIP
                     'BFAR',  # BAR
+
                  ]
 list_of_proteins = [pro_death, anti_death, caspases, downstream_mito,
                     upstream_mito]

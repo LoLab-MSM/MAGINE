@@ -48,3 +48,31 @@ print(sig_results[cols].head(10))
 
 sig_results.sort_values(by='pvalue', ascending=True, inplace=True)
 print(sig_results[cols].head(10))
+
+"""
+
+CASP3, CASP6, FAS, FADD, CASP8, CFLAR, BFAR, BAD, BID, PMAIP1, MCL1, BCL2, 
+BCL2L1, BAX, BAK1, DIABLO, CYCS, PARP1, APAF1, XIAP
+
+CASP3
+CASP6
+FAS
+FADD
+CASP8
+CFLAR
+BFAR
+BAD
+BID
+PMAIP1
+MCL1
+BCL2
+BCL2L1
+BAX
+BAK1
+DIABLO
+CYCS
+PARP1
+APAF1
+XIAP
+
+"""
