@@ -4,4 +4,5 @@ include magine/html_templates/templates/*.html
 include magine/tests/Data/*
 include magine/tests/Data/hilic/*
 include magine/tests/Network_files/*
+include magine/tests/KEGG/*
 include magine/mappings/*mapper.p
