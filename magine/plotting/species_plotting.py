@@ -7,22 +7,18 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
+import plotly
+import plotly.graph_objs as plotly_graph
+from plotly.offline import plot
+
+from magine.data.formatter import pivot_tables_for_export
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
-from magine.data.formatter import pivot_tables_for_export
-
-from plotly.offline import plot
-import plotly
-import plotly.graph_objs as plotly_graph
 
 plotly.plotly.sign_in(username='james.ch.pino',
                       api_key='BnUcJSpmPcMKZg0yEFaL')
-
-
-# tls.set_credentials_file(username='james.ch.pino',
-#                          api_key='BnUcJSpmPcMKZg0yEFaL')
 
 gene = 'gene'
 protein = 'protein'
@@ -55,6 +51,8 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
         data to plot
     run_parallel : bool
         To run in parallel using pathos.multiprocessing
+    plot_type : str
+        plotly or matplotlib
     
     Returns
     -------

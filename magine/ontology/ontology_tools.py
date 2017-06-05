@@ -3,9 +3,10 @@ from sys import modules
 
 import networkx as nx
 import pandas as pd
+from goatools.semantic import ic, resnik_sim, semantic_similarity
 
 from magine.ontology.go_from_goatools import go
-from goatools.semantic import resnik_sim, semantic_similarity, ic
+
 try:
     termcounts = modules['termcounts']
 except:
@@ -147,7 +148,7 @@ def add_children(go_term, graph, gene_set_of_interest):
             add_children(i.id, graph, gene_set_of_interest)
 
 
-def check_if_children(list_of_terms):
+def check_if_children(list_of_terms, verbose=False):
     """
     Checks to see if any term is a child of another
     
@@ -156,6 +157,7 @@ def check_if_children(list_of_terms):
     ----------
     list_of_terms : list
         list of all terms to consider
+    verbose : bool
 
     Returns
     -------
@@ -169,20 +171,23 @@ def check_if_children(list_of_terms):
         for j in list_of_terms:
             if not i == j:
                 if j in nodes:
-                    print("{} is a parent of {}, "
-                          "removing from list".format(i, j))
+                    if verbose:
+                        print("{} is a parent of {}, "
+                              "removing from list".format(i, j))
                     to_remove.add(i)
     return list_of_terms.difference(to_remove)
 
 
-def check_depth_level(list_of_terms):
+def check_depth_level(list_of_terms, verbose=False):
     """
     Checks to see if any terms are too deep in graph
     
     Parameters
     ----------
     list_of_terms : list
-        list of GO terms 
+        list of GO terms
+    verbose : bool
+
 
     Returns
     -------
@@ -190,10 +195,12 @@ def check_depth_level(list_of_terms):
     """
     list_of_terms = set(list_of_terms)
     to_remove = set()
+
     for i in list_of_terms:
         if go[i].depth > 11:
-            print("Depth of {} is greater than 11.".format(i),
-                  "Removing from list for now as path to root is VAST")
+            if verbose:
+                print("Depth of {} is greater than 11.".format(i),
+                      "Removing from list for now as path to root is VAST")
             to_remove.add(i)
     return list_of_terms.difference(to_remove)
 
@@ -513,7 +520,8 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
 
 def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
                   trim_nodes=False, additional_ids_to_include=None,
-                  min_depth=3, max_depth=10, min_ref=5, max_ref=500):
+                  min_depth=3, max_depth=10, min_ref=5, max_ref=500,
+                  variable_of_interest='enrichment_score'):
     """
 
     Parameters
@@ -539,6 +547,8 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
         minimum number of references for GO ontology term
     max_ref : int
         maximum number of references for GO ontology term
+    variable_of_interest : str
+        "enrichment_score" or "pvalue"
     Returns
     -------
 
@@ -580,8 +590,10 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
 
     # filter out non-significant terms
     tmp = data[data['pvalue'] <= pvalue].copy()
+    assert variable_of_interest in ('enrichment_score', 'pvalue'), \
+        "variable_of_interest must be 'enrichment_score' or 'pvalue'"
 
-    enrichment_list = ['enrichment_score']
+    enrichment_list = [variable_of_interest]
 
     list_all_go = tmp['GO_id'].unique()
     if n_top_hits is not None:
@@ -590,10 +602,9 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
             terms.update(set(list(tmp.index)[:updated_index + n_needed]))
             return check_term_list(terms)
         list_all_go = set()
-
+        tmp.set_index('GO_id', inplace=True)
         tmp.sort_values(by=enrichment_list, ascending=False, inplace=True)
-        # tmp = tmp.sort_values(by=i, ascending=True)
-        list_of_go = set(tmp.head(n_top_hits)['GO_id'])
+        list_of_go = set(tmp.head(n_top_hits).index)
         if trim_nodes:
             list_of_go = check_term_list(list_of_go)
             print("start {}", format(list_of_go))

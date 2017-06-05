@@ -1,3 +1,5 @@
+import textwrap
+
 import networkx as nx
 import pandas as pd
 import pygraphviz as pyg
@@ -11,9 +13,10 @@ def test_reactome():
 
     # apoptosis = 109581
     apoptosis = 111457
-
+    apoptosis = 114294
+    #
     g = pyg.AGraph(directed=True)
-    g.graph_attr['rankdir'] = 'LR'
+    # g.graph_attr['rankdir'] = 'LR'
     g.graph_attr['splines'] = 'true'
 
     x = reactome_api.reactome.get_pathway_events(apoptosis)
@@ -46,16 +49,20 @@ def test_reactome():
             print(translocations.shape)
     for i in g.nodes():
         ent_dict = reactome_api.get_entity_info(i)
-        if 'displayName' not in ent_dict:
-            continue
         node = g.get_node(i)
+        if 'displayName' not in ent_dict:
+            lab = node.attr['label']
+            print(lab, textwrap.wrap(str(lab), 40))
+            node.attr['label'] = '\n'.join(textwrap.wrap(str(lab), 20))
+            continue
+
         print("Node and attributes = {} : {} ".format(i, node.attr))
 
-        if 'label' not in node.attr:
-            node.attr['label'] = reactome_api.shorten_name(
-                    ent_dict['displayName'])
-        node.attr['label'] = reactome_api.shorten_name(
-                ent_dict['displayName'])
+        # if 'label' not in node.attr:
+        #     node.attr['label'] = reactome_api.shorten_name(
+        #             ent_dict['displayName'])
+        # else:
+        node.attr['label'] = reactome_api.shorten_name(ent_dict['displayName'])
 
     gml_g = nx.nx_agraph.from_agraph(g)
     nx.write_gml(gml_g, '{}.gml'.format(save_name))

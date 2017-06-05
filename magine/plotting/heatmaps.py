@@ -259,12 +259,16 @@ def create_heatmap(data, savename, xlabels=None, threshold=None,
 
 def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
                     xlabels=None, ):
-
+    tmp_array = np.nan_to_num(tmp_array)
     if convert_to_log:
-        above = tmp_array > 0
-        below = tmp_array < 0
+        above = tmp_array > 0.
+        below = tmp_array < 0.
+
         tmp_array[above] = np.log2(tmp_array[above])
         tmp_array[below] = -1 * np.log2(-1 * tmp_array[below])
+
+    size_of_data = np.shape(tmp_array)[1]
+    length_matrix = np.shape(tmp_array)[0]
 
     print(np.shape(tmp_array))
     name = 'bwr'
@@ -283,19 +287,18 @@ def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
 
     # Compute and plot second dendrogram.
     ax2 = fig.add_axes([0.3, 0.01, 0.6, 0.19])
-    Y = sch.linkage(tmp_array.T, method='centroid')
-    Z2 = sch.dendrogram(Y,
-                        orientation='bottom')
+    # Y = sch.linkage(tmp_array.T, method='centroid')
+    # Z2 = sch.dendrogram(Y,
+    #                     orientation='bottom')
     ax2.set_xticks([])
     ax2.set_yticks([])
-    size_of_data = np.shape(tmp_array)[1]
-    length_matrix = np.shape(tmp_array)[0]
+
     # Plot distance matrix.
     axmatrix = fig.add_axes([0.3, 0.2, 0.6, 0.5])
     idx1 = Z1['leaves']
-    idx2 = Z2['leaves']
+    # idx2 = Z2['leaves']
     tmp_array = tmp_array[idx1, :]
-    tmp_array = tmp_array[:, idx2]
+    # tmp_array = tmp_array[:, idx2]
     im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower',
                           extent=(0, size_of_data, 0, length_matrix + 1),
                           cmap=plt.get_cmap(name))
@@ -305,7 +308,7 @@ def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
 
         x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
         axmatrix.set_xticks(x_ticks, minor=False)
-        axmatrix.set_xticklabels(xlabels[idx2], fontsize=16, rotation='90',
+        axmatrix.set_xticklabels(xlabels, fontsize=16, rotation='90',
                                  minor=False)
         axmatrix.xaxis.set_label_position('bottom')
 
@@ -375,3 +378,67 @@ def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
         fig.savefig(os.path.join(out_dir, '%s_clustered.pdf' % savename))
     plt.close()
     return tmp_array
+
+
+def cluster_samples_by_time(tmp_array, savename, out_dir=None,
+                            convert_to_log=False, xlabels=None, format='png'):
+    tmp_array = np.nan_to_num(tmp_array)
+    if convert_to_log:
+        above = tmp_array > 0.
+        below = tmp_array < 0.
+
+        tmp_array[above] = np.log2(tmp_array[above])
+        tmp_array[below] = -1 * np.log2(-1 * tmp_array[below])
+
+    size_of_data = np.shape(tmp_array)[1]
+    length_matrix = np.shape(tmp_array)[0]
+
+    print(np.shape(tmp_array))
+    name = 'bwr'
+    # Compute and plot first dendrogram.
+    fig = plt.figure(figsize=(8, 5))
+    ax1 = fig.add_axes([0.09, 0.1, 0.2, 0.8])
+    axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.8])
+    axcolor = fig.add_axes([0.91, 0.1, 0.02, 0.8])
+
+    Y = sch.linkage(tmp_array, method='centroid')
+    Z1 = sch.dendrogram(Y, orientation='left',
+                        # truncate_mode='lastp',
+                        # p=20,
+                        # show_contracted=True,
+                        # show_leaf_counts=False,
+                        ax=ax1
+                        )
+
+    idx1 = Z1['leaves']
+    tmp_array = tmp_array[idx1, :]
+
+    ax1.set_xticks([])
+    ax1.set_yticks([])
+
+    # Plot distance matrix.
+
+    im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower',
+                          extent=(0, size_of_data, 0, length_matrix + 1),
+                          cmap=plt.get_cmap(name))
+    axmatrix.set_yticks([])
+    plt.colorbar(im, cax=axcolor)
+
+    if xlabels is not None:
+
+        x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
+        axmatrix.set_xticks(x_ticks, minor=False)
+        axmatrix.set_xticklabels(xlabels, fontsize=16, rotation='90',
+                                 minor=False)
+        axmatrix.xaxis.set_label_position('bottom')
+
+    if out_dir is None:
+        save_name = '{}_clustered.{}'.format(savename, format)
+    else:
+        save_name = os.path.join(
+                out_dir, '{}_clustered.{}'.format(savename, format)
+        )
+
+    fig.savefig(save_name, bbox_inches='tight',
+                bbox_extra_artists=(axcolor, axmatrix, ax1))
+    plt.close()
