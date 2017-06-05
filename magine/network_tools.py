@@ -2,9 +2,10 @@
 import os
 from sys import modules
 
-import matplotlib.pyplot as plt
+import matplotlib
+
+matplotlib.use('Agg')
 import networkx as nx
-import numpy as np
 from bioservices import KEGG, UniProt
 
 try:
@@ -493,6 +494,7 @@ def compress_edges(graph):
     return g
 
 
+'''
 # deprecated
 def get_uniprot_info(name):
     """
@@ -592,3 +594,4 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     plt.show()
     print("Number of subgraphs with 1 node = %s" % counter)
     return subgraph_species
+'''
