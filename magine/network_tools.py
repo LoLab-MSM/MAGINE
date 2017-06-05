@@ -2,9 +2,6 @@
 import os
 from sys import modules
 
-import matplotlib
-
-matplotlib.use('Agg')
 import networkx as nx
 from bioservices import KEGG, UniProt
 
@@ -190,7 +187,7 @@ def _format_to_directions(network):
                     n.attr['arrowhead'] = 'diamond'
                     n.attr['style'] = 'dashed'
                     return
-            print(n, n.attr)
+                    # print(n, n.attr)
         _find_edge_type()
     network = nx.nx_agraph.from_agraph(network)
     return network
