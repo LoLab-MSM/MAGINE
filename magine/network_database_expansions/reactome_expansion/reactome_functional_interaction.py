@@ -1,5 +1,7 @@
+import io
 import os
 import tempfile
+import urllib
 
 import networkx as nx
 import numpy as np
@@ -51,6 +53,7 @@ class ReactomeFunctionalInteraction(object):
 
         print("Downloaded {} and stored {}".format(self.url, self.out_path))
 
+    # @profile
     def parse_network(self):
         """
         Parses tab delimited file to networkx.DiGraph
@@ -60,39 +63,42 @@ class ReactomeFunctionalInteraction(object):
         -------
 
         """
-        self._setup()
-        table = pd.read_table(self.out_path, low_memory=False,
-                              compression='zip')
+        table = pd.read_csv(io.BytesIO(urllib.urlopen(self.url).read()),
+                            compression='zip',
+                            delimiter='\t',
+                            error_bad_lines=False)
+        table = table.as_matrix()
         g = nx.DiGraph()
         added_genes = set()
 
-        x = table.apply(self.check_row, axis=1)
+        for r in table:
+            gene1, gene2, inter, prediction, mod, score = self._check_rows2(r)
 
-        for i, row in x.iteritems():
-            gene1, gene2, interaction, prediction, mod, score = row
             if gene1 == gene2:
                 continue
             else:
                 if gene1 not in added_genes:
-                    g.add_node(gene1, sourceDB='ReactomeFI', speciesType='gene')
+                    g.add_node(gene1, sourceDB='ReactomeFI',
+                               speciesType='gene')
                     added_genes.add(gene1)
                 if gene2 not in added_genes:
-                    g.add_node(gene2, sourceDB='ReactomeFI', speciesType='gene')
+                    g.add_node(gene2, sourceDB='ReactomeFI',
+                               speciesType='gene')
                     added_genes.add(gene2)
                 if prediction:
-                    g.add_edge(gene1, gene2, interactionType=interaction,
+                    g.add_edge(gene1, gene2, interactionType=inter,
                                ptm=mod, score=score, prediction='True',
                                sourceDB='ReactomeFI')
                 else:
-                    g.add_edge(gene1, gene2, interactionType=interaction,
-                               ptm=mod,
-                               score=score, sourceDB='ReactomeFI')
+                    g.add_edge(gene1, gene2, interactionType=inter,
+                               ptm=mod, score=score, sourceDB='ReactomeFI')
         ge = set(g.nodes())
-        g1 = set(table['Gene1'])
-        g2 = set(table['Gene2'])
+        g1 = set(table[:, 0])
+        g2 = set(table[:, 1])
         g_all = set()
         g_all.update(g1)
         g_all.update(g2)
+
         for i in g_all:
             if i not in ge:
                 print(i)
@@ -109,10 +115,13 @@ class ReactomeFunctionalInteraction(object):
         else:
             return gene1, gene2
 
-    def check_row(self, row):
+    def _check_rows2(self, row):
+        # print(row)
         prediction = False
         interaction_type = None
-        annotation = row['Annotation']
+        annotation = row[2]
+        g1, g2 = self.return_direction(row[3], row[0], row[1])
+        score = row[4]
         modification = ''
         if 'predicted' in annotation:
             prediction = True
@@ -160,9 +169,8 @@ class ReactomeFunctionalInteraction(object):
                 interaction_type = 'ubiquitination'
         if interaction_type is None:
             interaction_type = '?'
-        g1, g2 = self.return_direction(row['Direction'], row['Gene1'], row['Gene2'])
-        return g1, g2, interaction_type, prediction, modification, row['Score']
 
+        return g1, g2, interaction_type, prediction, modification, score
 
 if __name__ == '__main__':
     import time
