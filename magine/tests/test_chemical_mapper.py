@@ -1,4 +1,4 @@
-"""
+
 from magine.mappings.chemical_mapper import ChemicalMapper
 
 cm = ChemicalMapper()
@@ -9,6 +9,7 @@ def test_init():
     cm.reload()
 
 
+"""
 
 def test_synonyms():
     hmdb = cm.check_synonym_dict(term='dodecene', format_name='accession')
