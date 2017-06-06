@@ -13,9 +13,7 @@ else:
 
 
 import networkx as nx
-import numpy as np
 import pandas as pd
-import requests
 
 directory = os.path.dirname(__file__)
 
@@ -30,39 +28,6 @@ class ReactomeFunctionalInteraction(object):
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
 
-    def _setup(self):
-        """
-        Downloads file
-
-        Returns
-        -------
-
-        """
-        r = requests.get(self.url, stream=True)
-        response = requests.head(self.url)
-        file_size = int(response.headers['content-length'])
-        print("Downloading: %s Bytes: %s" % (self.target_file, file_size))
-        file_size_dl = 0
-        block_sz = 8192
-        v = set()
-        milestone_markers = range(0, 101, 10)
-
-        with open(self.out_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=block_sz):
-                file_size_dl += len(chunk)
-                percent_download = int(
-                    np.floor(file_size_dl * 100. / file_size))
-
-                if percent_download in milestone_markers:
-                    if percent_download not in v:
-                        print("{}%".format(percent_download))
-                        v.add(percent_download)
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-
-        print("Downloaded {} and stored {}".format(self.url, self.out_path))
-
-    # @profile
     def parse_network(self):
         """
         Parses tab delimited file to networkx.DiGraph
