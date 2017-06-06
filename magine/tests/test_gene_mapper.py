@@ -1,11 +1,6 @@
 from magine.mappings.gene_mapper import GeneMapper
 
 gm = GeneMapper('hsa')
-print(gm.gene_name_to_uniprot['BAX'])
-print(gm.gene_name_to_alias_name['BAX'])
-print(gm.gene_name_to_ensembl['BAX'])
-
-print(gm.uniprot_to_gene_name)
 
 
 def test_gene_name_to_ensemble():

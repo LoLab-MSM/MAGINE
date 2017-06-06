@@ -1,8 +1,7 @@
 # -*- coding: utf-8 -*-
 import networkx as nx
 
-from magine.mappings.maps import create_gene_dictionaries, \
-    create_compound_dictionary
+from magine.mappings.maps import create_gene_dictionaries
 
 
 def test_kegg_to_uniprot():
@@ -23,6 +22,7 @@ def test_kegg_to_uniprot():
     assert (g.node['ALDH3A2']['keggName'] == 'hsa:224')
 
 
+'''
 def test_kegg_to_hmdb():
     """
     tests kegg compound to hmdb
@@ -39,25 +39,9 @@ def test_kegg_to_hmdb():
     nx.write_gml(g, 'test.gml')
     # assert (g.node['HMDB60180']['chemName'] == '(2R)-2-Hydroxy-3-(phosphonatooxy)propanoate')
     # assert (g.node['HMDB60180']['keggName'] == 'cpd:C00197')
+'''
 
-
-# def test_hugo():
-#     """
-#
-#     :return:
-#     """
-#     g = nx.DiGraph()
-#     g.add_node('hsa:406915')
-#     g.add_node('hsa:406913')
-#     g.add_node('hsa:406912')
-#     g.add_node('hsa:406911')
-#     g.add_node('hsa:406910')
-#     dic = hugo_mapper(g)
-#     g = nx.relabel_nodes(g, dic)
-#     for i in g.nodes():
-#         print(i)
-
-if __name__ =='__main__':
+# if __name__ =='__main__':
     #test_kegg_to_uniprot()
-    test_kegg_to_hmdb()
+# test_kegg_to_hmdb()
     #test_hugo()
