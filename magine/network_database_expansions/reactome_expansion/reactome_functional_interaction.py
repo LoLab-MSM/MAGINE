@@ -1,7 +1,16 @@
 import io
 import os
+import sys
 import tempfile
-import urllib
+
+if sys.version_info[0] == 3:
+    from urllib.request import urlopen
+else:
+    # Not Python 3 - today, it is most likely to be Python 2
+    # But note that this might need an update when Python 4
+    # might be around one day
+    from urllib import urlopen
+
 
 import networkx as nx
 import numpy as np
@@ -63,7 +72,7 @@ class ReactomeFunctionalInteraction(object):
         -------
 
         """
-        table = pd.read_csv(io.BytesIO(urllib.urlopen(self.url).read()),
+        table = pd.read_csv(io.BytesIO(urlopen(self.url).read()),
                             compression='zip',
                             delimiter='\t',
                             error_bad_lines=False)
