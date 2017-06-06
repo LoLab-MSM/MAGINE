@@ -15,10 +15,8 @@ def test_kegg_to_uniprot():
     g.add_edge('hsa:501', 'hsa:219')
     g.add_edge('hsa:224', 'hsa:219')
     g.add_node('hsa:857')
-    dic = create_gene_dictionaries(g, species='hsa')
-    g = nx.relabel_nodes(g,dic)
-    for i in g.nodes():
-        print(i)
+    dic, found_all = create_gene_dictionaries(g, species='hsa')
+    g = nx.relabel_nodes(g, dic)
     assert (g.node['ALDH3A2']['keggName'] == 'hsa:224')
 
 
