@@ -1,18 +1,24 @@
+import networkx as nx
 
 from magine.mappings.chemical_mapper import ChemicalMapper
+from magine.network_database_expansions.hmdb_expansion.expand_by_hmdb \
+    import expand_by_hmdb
 
 cm = ChemicalMapper()
 
 
-def test_init():
-    cm.load()
-    cm.reload()
+# def test_init():
+#     cm.load()
+#     cm.reload()
+#     cm.print_info()
 
 
-"""
+# """
 
 def test_synonyms():
     hmdb = cm.check_synonym_dict(term='dodecene', format_name='accession')
+    print(hmdb)
+    # print(cm.hmdb_accession_to_protein)
     assert (hmdb == 'HMDB59874')
 
 
@@ -24,13 +30,26 @@ def test_protein_network():
                 'MGLL', 'CES1', 'LIPE', 'MTTP', 'APOA1', 'CETP', 'APOE',
                 'APOC3', 'APOB', 'APOA4', 'CD36', 'P4HB', 'MOGAT2', 'PNPLA4',
                 'SLC27A1', 'DGAT2', 'MOGAT1', 'MOGAT3', 'PLB1', 'APOA5']
-
+    print("Here", cm.hmdb_accession_to_protein[item])
     for protein in cm.hmdb_accession_to_protein[item]:
+        print(item, protein)
         assert protein in hit_list
 
-if __name__ == "__main__":
-    test_init()
+
+# """
+def test_expand_by_hmdb():
+    g = nx.DiGraph()
+    g.add_edge('PNLIP', 'LIPC')
+    new_g = expand_by_hmdb(graph=g,
+                           metabolite_list=['HMDB42489'],
+                           all_measured=['HMDB02865', 'HMDB59874']
+                           )
+    for i in new_g.nodes():
+        print(i)
+    # """
+    # if __name__ == "__main__":
+    #     test_init()
     # test_synonyms()
     # test_protein_network()
 
-"""
+# """

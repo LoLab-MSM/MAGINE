@@ -1,16 +1,28 @@
+from sys import modules
+
 from magine.mappings.chemical_mapper import ChemicalMapper
 
-cm = ChemicalMapper()
+try:
+    cm = modules['cm']
+except:
+    cm = ChemicalMapper()
 
 
 def expand_by_hmdb(graph, metabolite_list, all_measured):
-    """ Expands a network using HMDB metabolites-protein information
+    """
+    Expands a network using HMDB metabolites-protein information
 
+    Parameters
+    ----------
+    graph : nx.DiGraph
+    metabolite_list : list
+        List of HMDB ids
+    all_measured : list
+        list of all species measured, including proteins
+    Returns
+    -------
+    nx.DiGraph
 
-    :param graph: Networkx network
-    :param metabolite_list:  List of HMDB ids
-    :param all_measured: list of all species measured
-    :return:
     """
     tmp_graph = graph.copy()
     start_nodes = set(tmp_graph.nodes())
@@ -36,6 +48,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
         # if it is, it can add an associated gene
         if i in tmp_nodes:
             count_in_network += 1
+
             if i in cm.hmdb_accession_to_protein:
 
                 tmp_list = cm.hmdb_accession_to_protein[i]
@@ -59,6 +72,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
         # if it does and they are new to the graph, it adds it
         else:
             count_not_in_network += 1
+            print(i in cm.hmdb_accession_to_protein)
             if i in cm.hmdb_accession_to_protein:
                 tmp_list = cm.hmdb_accession_to_protein[i]
                 if tmp_list is None or len(tmp_list) == 0:

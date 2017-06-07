@@ -1,11 +1,12 @@
-# try:
-#     import cPickle
-# except:  # python3 doesnt have cPickle
-import pickle
+try:
+    import cPickle
+except:  # python3 doesnt have cPickle
+    import pickle
 import os
 from ast import literal_eval
 
 import pandas as pd
+
 directory = os.path.dirname(__file__)
 
 
@@ -29,7 +30,10 @@ class ChemicalMapper(object):
         if not os.path.exists(self.filename):
             from magine.mappings.HMDB_processing import HMDB
             HMDB().setup()
-        hmdb_database = pd.read_csv(self.filename)
+        hmdb_database = pd.read_csv(self.filename, low_memory=False,
+                                    compression='gzip',
+                                    encoding='utf-8')
+
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
         self._instance_filename = os.path.join(directory, 'data',
                                                'hmdb_instance.p')
@@ -43,20 +47,18 @@ class ChemicalMapper(object):
 
     def load(self):
 
-        self.hmdb_accession_to_chemical_name = self.convert_to_dict(
-                "accession", "name")
-        self.chemical_name_to_hmdb_accession = self.convert_to_dict(
-                "name", "accession")
-        self.hmdb_accession_to_kegg = self.convert_to_dict("accession",
-                                                           "kegg_id")
-        self.kegg_to_hmdb_accession = self.convert_to_dict("kegg_id",
-                                                           "accession")
+        self.hmdb_accession_to_chemical_name = self._to_dict("accession",
+                                                             "name")
+        self.chemical_name_to_hmdb_accession = self._to_dict("name",
+                                                             "accession")
+        self.hmdb_accession_to_kegg = self._to_dict("accession", "kegg_id")
+        self.kegg_to_hmdb_accession = self._to_dict("kegg_id", "accession")
         self.hmdb_accession_to_protein = self.convert_to_dict_from_list(
                 "accession", "protein_associations")
         self.synonyms_to_hmdb = None
         self.save()
 
-    def convert_to_dict(self, key, value):
+    def _to_dict(self, key, value):
         """ creates a dictionary from hmdb with a list of values for each key
 
         :param key:
@@ -72,9 +74,17 @@ class ChemicalMapper(object):
         :param value:
         :return:
         """
-        return {
-        k: v.tolist()[0].strip("[]").replace(' ', '').replace('\'', '').split(
-            ',') for k, v in self.database.groupby(key)[value]}
+        tmp_dict = {}
+        for k, v in self.database.groupby(key)[value]:
+            v = v.tolist()
+            if isinstance(v[0], list):
+                tmp_dict[k] = v
+            else:
+                if v[0].startswith("["):
+                    v = literal_eval(v[0])
+                    tmp_dict[k] = v
+
+        return tmp_dict
 
     def check_synonym_dict(self, term, format_name):
         """ checks hmdb database for synonyms and returns formatted name
@@ -111,7 +121,7 @@ class ChemicalMapper(object):
         :return:
         """
         print('Saving class data')
-        with open(self._instance_filename, 'wb') as f:
+        with open(self._instance_filename, 'wb', encoding='ascii') as f:
             f.write(pickle.dumps(self.__dict__, protocol=-1))
 
     def reload(self):
@@ -120,26 +130,19 @@ class ChemicalMapper(object):
         :return:
         """
 
-        with open(self._instance_filename, 'rb') as f:
+        with open(self._instance_filename, 'rb', encoding='ascii') as f:
             data = f.read()
+
         try:
-            self.__dict__ = pickle.loads(data, encoding='utf-8')
+            self.__dict__ = pickle.loads(data, encoding='ascii')
+            print("here")
         except:
             self.__dict__ = pickle.loads(data)
+            print("not here")
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     cm = ChemicalMapper()
-    cm.load()
-    #
-    # count = 0
-    #
-    # print('HMDB43286', cm.hmdb_accession_to_protein['HMDB43286'])
-    #
-    # print(cm.hmdb_accession_to_kegg['HMDB06070'])
-    # print(cm.hmdb_accession_to_kegg['HMDB06525'])
-    # print(cm.hmdb_accession_to_kegg['HMDB38693'])
-    # print(cm.hmdb_accession_to_kegg['HMDB06523'])
-    # for i in cm.hmdb_accession_to_protein.keys():
-    #     print(i, cm.hmdb_accession_to_protein[i])
+    print(list(cm.hmdb_accession_to_protein)[:10])
+    print(cm.hmdb_accession_to_protein[b'HMDB00005'])
+    print(cm.hmdb_accession_to_protein['HMDB00005'])

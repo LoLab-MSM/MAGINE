@@ -16,7 +16,7 @@ directory = os.path.dirname(__file__)
 categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id',
               'biocyc_id', 'synonyms', 'pubchem_compound_id',
               'protein_associations', 'inchikey', 'iupac_name',
-              'ontology'
+              'ontology',  # 'cellular_location', 'biofunction'
               # 'cellular_location', 'biofunction', 'molecular_framework'
               # 'secondary_accessions',
 
@@ -94,7 +94,7 @@ class HMDB(object):
         """ parse HMDB to Pandas.DataFrame
 
         """
-        # out_dir = 'c:\users\jamesp~1\\appdata\local\\temp\\tmpnvpdle\HMDB'
+        # out_dir = b'c:\users\jamesp~1\\appdata\local\\temp\\tmpnvpdle\HMDB'
         out_dir = os.path.join(self.tmp_dir, 'HMDB')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
@@ -134,11 +134,13 @@ class HMDB(object):
                     elem.clear()
                     root.clear()
 
-        # df = pd.DataFrame(tmp_all, columns=categories)
-        df = pd.DataFrame(tmp_all[:count], columns=categories)
-        df.to_csv(self.out_name,
-                  compression='gzip', index=False)
+        df = pd.DataFrame(tmp_all[:count], columns=template.keys())
+        for i in template.keys():
+            df[i] = df[i].str.decode('utf8')
+        df.to_csv(self.out_name, compression='gzip', index=False, mode='w',
+                  encoding='utf-8')
         print("Done processing HMDB")
+        # quit()
 
     def load_db(self):
         df = pd.read_csv(self.out_name)
@@ -155,12 +157,12 @@ def _create_dict(elem):
                 for gn in pr.findall('gene_name'):
                     gene_name = gn.text
                     if gene_name is not None:
-                        output.append(gene_name.encode('ascii', 'ignore'))
+                        output.append(gene_name.encode('utf-8', 'ignore'))
             template[i] = output
         elif i == 'synonyms':
             output = []
             for pr in n.findall('synonym'):
-                output.append(pr.text.encode('ascii', 'ignore'))
+                output.append(pr.text.encode('utf-8', 'ignore'))
             template[i] = output
         elif i == 'ontology':
             bf_all = []
@@ -169,18 +171,18 @@ def _create_dict(elem):
                 for bf in pr.findall('biofunction'):
                     bf_text = bf.text
                     if bf_text is not None:
-                        bf_all.append(bf_text.encode('ascii', 'ignore'))
+                        bf_all.append(bf_text.encode('utf-8', 'ignore'))
             for pr in n.findall('cellular_locations'):
                 for cl in pr.findall('cellular_location'):
                     cl_text = cl.text
                     if cl_text is not None:
-                        cl_all.append(cl.text.encode('ascii', 'ignore'))
+                        cl_all.append(cl.text.encode('utf-8', 'ignore'))
             template['cellular_locations'] = cl_all
             template['biofunction'] = bf_all
         else:
             output = n.text
             if output is not None:
-                output = output.encode('ascii', 'ignore')
+                output = output.encode('utf-8', 'ignore')
             template[i] = output
     return template
 

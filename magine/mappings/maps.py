@@ -23,7 +23,7 @@ except KeyError:
 uniprot = UniProt()
 hugo = HGNC()
 chem = UniChem()
-gm = GeneMapper()
+
 
 # TODO create a database to store all of this
 # TODO create a kegg to uniprot identifier dictionary
@@ -80,7 +80,7 @@ def create_gene_dictionaries(network, species='hsa'):
 
     """
 
-
+    gm = GeneMapper(species)
     # first we will check the pre-created dictionaries
     if species == 'hsa':
         dictionary = pickle.load(open(
@@ -175,26 +175,22 @@ def hugo_mapper(network, species='hsa'):
     for i in nodes:
         if str(i).startswith(prefix):
             tmp_name = str(i).replace(prefix, '')
-            if int(tmp_name) in gm.ncbi_to_symbol:
-                print(tmp_name, gm.ncbi_to_symbol[int(tmp_name)])
-                hugo_dict[i] = gm.ncbi_to_symbol[int(tmp_name)][0]
+            mapping = hugo.search(tmp_name)
+            if 'response' in mapping:
+                response = mapping['response']
+                if 'numFound' in response:
+                    if response['numFound'] == 0:
+                        not_found.add(i)
+                        continue
+                    elif response['numFound'] == 1:
+                        docs = response['docs'][0]
+                        hugo_dict[i] = docs['symbol']
+                        continue
+                    else:
+                        if 'symbol' in response['docs'][0]:
+                            hugo_dict[i] = response['docs'][0]['symbol']
             else:
-                mapping = hugo.search(tmp_name)
-                if 'response' in mapping:
-                    response = mapping['response']
-                    if 'numFound' in response:
-                        if response['numFound'] == 0:
-                            not_found.add(i)
-                            continue
-                        elif response['numFound'] == 1:
-                            docs = response['docs'][0]
-                            hugo_dict[i] = docs['symbol']
-                            continue
-                        else:
-                            if 'symbol' in response['docs'][0]:
-                                hugo_dict[i] = response['docs'][0]['symbol']
-                else:
-                    not_found.add(i)
+                not_found.add(i)
     if not_found != 0:
         print(
         "{} mappings not found after HGNC mapping".format(len(not_found)))
