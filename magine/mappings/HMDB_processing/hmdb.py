@@ -36,7 +36,7 @@ class HMDB(object):
         self.out_dir = directory
         self.target_file = 'hmdb_metabolites.zip'
         self.out_name = os.path.join(self.out_dir, '..', 'data',
-                                     'hmdb_dataframe.csv.gz')
+                                     'hmdb_dataframe.csv')
 
     def _download_hmdb(self):
         """ Downloads hmdb metabolites xml file
@@ -136,15 +136,13 @@ class HMDB(object):
                     root.clear()
 
         df = pd.DataFrame(tmp_all[:count], columns=template.keys())
-        # for i in template.keys():
-        #     df[i] = df[i].str.decode('utf8')
-        df.to_csv(self.out_name, compression='gzip', index=False, mode='w',
-                  encoding='utf-8')
+        df.to_csv(self.out_name, index=False, encoding='utf-8',
+                  tupleize_cols=True)
         print("Done processing HMDB")
-        # quit()
+
 
     def load_db(self):
-        df = pd.read_csv(self.out_name)
+        df = pd.read_csv(self.out_name, low_memory=False)
         return df
 
 
@@ -159,14 +157,12 @@ def _create_dict(elem):
                     gene_name = gn.text
                     if gene_name is not None:
                         output.append(gene_name)
-                        # output.append(gene_name.encode('utf-8').decode('utf-8'))
-            template[i] = output
+            template[i] = '|'.join(i for i in output)
         elif i == 'synonyms':
             output = []
             for pr in n.findall('synonym'):
                 output.append(pr.text)
-                # output.append(pr.text.encode('utf-8').decode('utf-8'))
-            template[i] = output
+            template[i] = '|'.join(i for i in output)
         elif i == 'ontology':
             bf_all = []
             cl_all = []
@@ -175,15 +171,13 @@ def _create_dict(elem):
                     bf_text = bf.text
                     if bf_text is not None:
                         bf_all.append(bf_text)
-                        # bf_all.append(bf_text.encode('utf-8').decode('utf-8'))
-            template['biofunction'] = bf_all
+            template['biofunction'] = '|'.join(i for i in bf_all)
             for pr in n.findall('cellular_locations'):
                 for cl in pr.findall('cellular_location'):
                     cl_text = cl.text
                     if cl_text is not None:
                         cl_all.append(cl.text)
-                        # cl_all.append(cl.text.encode('utf-8').decode('utf-8'))
-            template['cellular_locations'] = cl_all
+            template['cellular_locations'] = '|'.join(i for i in cl_all)
 
         else:
             output = n.text
@@ -208,7 +202,7 @@ if __name__ == '__main__':
     time2 = end - st
     print("Parsing time took {}".format(time2))
     df = hm.load_db()
-    print(df.head(10))
+    print(repr(df.head(10)))
     # 97.2819998264 lxml
     # 105.569000006 lxml root.clear()
     # 83.878000021 lxml, no root.clear(), no  elem.getprevious()
