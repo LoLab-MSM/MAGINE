@@ -80,18 +80,25 @@ class ChemicalMapper(object):
             if isinstance(v[0], list):
                 tmp_dict[k] = v
             else:
-                if v[0].startswith("["):
-                    v = literal_eval(v[0])
-                    tmp_dict[k] = v
+                if len(v) > 0:
+                    if v[0] is not None:
+                        if v[0].startswith("["):
+                            v = literal_eval(v[0])
+                            tmp_dict[k] = v
 
         return tmp_dict
 
     def check_synonym_dict(self, term, format_name):
         """ checks hmdb database for synonyms and returns formatted name
 
-        :param term:
-        :param format_name:
-        :return:
+        Parameters
+        ----------
+        term : str
+        format_name : str
+
+        Returns
+        -------
+
         """
         for index, row in self.database.iterrows():
             each = row.synonyms
@@ -121,7 +128,7 @@ class ChemicalMapper(object):
         :return:
         """
         print('Saving class data')
-        with open(self._instance_filename, 'wb', encoding='ascii') as f:
+        with open(self._instance_filename, 'wb') as f:
             f.write(pickle.dumps(self.__dict__, protocol=-1))
 
     def reload(self):
@@ -130,11 +137,11 @@ class ChemicalMapper(object):
         :return:
         """
 
-        with open(self._instance_filename, 'rb', encoding='ascii') as f:
+        with open(self._instance_filename, 'rb') as f:
             data = f.read()
 
         try:
-            self.__dict__ = pickle.loads(data, encoding='ascii')
+            self.__dict__ = pickle.loads(data, encoding='utf-8')
             print("here")
         except:
             self.__dict__ = pickle.loads(data)
@@ -144,5 +151,4 @@ class ChemicalMapper(object):
 if __name__ == "__main__":
     cm = ChemicalMapper()
     print(list(cm.hmdb_accession_to_protein)[:10])
-    print(cm.hmdb_accession_to_protein[b'HMDB00005'])
     print(cm.hmdb_accession_to_protein['HMDB00005'])
