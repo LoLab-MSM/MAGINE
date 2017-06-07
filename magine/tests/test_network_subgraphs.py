@@ -42,15 +42,17 @@ class TestNetworkSubgraphs(object):
                  ('HMDB03850', 'WIPI1'),
                  ('MTMR4', 'HMDB03850'),
                  ('MTMR3', 'HMDB03850')}
-        g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=True,
+        g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=False,
                                                       save_name='ns_test')
+
         assert set(g.edges()) == edges
 
         list_2 = {'CASP3', 'BAX', 'TP53'}
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
                                                       single_path=True,
                                                       save_name='smaller_list')
-        nodes = {'TP53', 'CASP3', 'MAP3K1', 'BAX', 'MAPK10', 'BCL2'}
+
+        nodes = {'TP53', 'CDKN1A', 'CASP3', 'MAP3K1', 'BAX', 'MAPK10', 'BCL2'}
         assert set(g.nodes()) == nodes
 
     @raises(RuntimeWarning)
