@@ -366,17 +366,18 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
                                  y=1,
                                  yanchor='top',
                                  buttons=scroll_list, )])
-
+        ticks = np.sort(list(x_point_dict.values()))
+        min_tick = np.min(ticks)
+        max_tick = np.max(ticks)
         layout = plotly_graph.Layout(
                 title=title,
                 showlegend=True,
                 xaxis=dict(title='Sample index',
-                           range=[min(x_point_dict.values()),
-                                  max(x_point_dict.values())],
+                           range=[min_tick, max_tick],
                            showticklabels=True,
                            ticktext=x_points,
                            tickmode='array',
-                           tickvals=np.sort(x_point_dict.values()),
+                           tickvals=ticks,
                            ),
                 yaxis=dict(title='log2fc'),
                 hovermode="closest",
