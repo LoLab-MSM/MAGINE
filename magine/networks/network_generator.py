@@ -194,7 +194,8 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                 if n in node_to_path:
                     for j in node_to_path[n]:
                         pathway_list.add(str(j.replace(':', '')[4:]))
-    # print("{} not found in KEGG".format(to_remove))
+    if len(to_remove) != 0:
+        print("{} not found in KEGG".format(to_remove))
     # pathway_list2 = find_kegg_pathways(to_remove, download=False,
     #                                    species=species)
     # pathway_list.update(pathway_list2)
