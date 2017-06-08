@@ -23,6 +23,7 @@ results = results[results['aspect'] == 'biological_process']
 cols = ['GO_name', 'GO_id', 'pvalue', 'enrichment_score']
 
 results.sort_values(by='enrichment_score', ascending=False, inplace=True)
+results.to_csv('enrichment_results.csv', index=False)
 print(results[cols].head(10))
 
 results.sort_values(by='pvalue', ascending=True, inplace=True)
@@ -37,7 +38,7 @@ print(sig_results[cols].head(10))
 
 sig_results.sort_values(by='pvalue', ascending=True, inplace=True)
 print(sig_results[cols].head(10))
-sig_results.to_csv('enrichment_out.csv', index=False)
+sig_results.to_csv('enrichment_results_slimmed.csv', index=False)
 
 """
 
