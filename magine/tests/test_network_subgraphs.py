@@ -49,10 +49,10 @@ class TestNetworkSubgraphs(object):
 
         list_2 = {'CASP3', 'BAX', 'TP53'}
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
-                                                      single_path=True,
+                                                      single_path=False,
                                                       save_name='smaller_list')
-
-        nodes = {'TP53', 'CDKN1A', 'CASP3', 'MAP3K1', 'BAX', 'MAPK10', 'BCL2'}
+        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10',
+                 'MAPK8', 'MAPK9', 'BCL2'}
         assert set(g.nodes()) == nodes
 
     @raises(RuntimeWarning)
@@ -70,9 +70,7 @@ class TestNetworkSubgraphs(object):
                  'PIK3CA', 'PIK3CB', 'MAP3K1', 'PIK3CD', 'PIK3R3',
                  'PIK3R2', 'PIK3R1', 'TP53', 'CASP3', 'PTEN', 'PAK1',
                  'PAK2', 'BCL2'}
-        g = self.net_sub.shortest_paths_between_two_proteins(start, end,
-                                                             draw=True,
-                                                             )
+        g = self.net_sub.shortest_paths_between_two_proteins(start, end)
         assert set(g.nodes()) == nodes
 
     def test_paint_over_time(self):
