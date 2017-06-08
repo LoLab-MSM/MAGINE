@@ -16,25 +16,29 @@ directory = os.path.dirname(__file__)
 pd.set_option('display.width', 20000)
 
 
-def convert_to_dict(data, key, value):
-    """ creates a dictionary with a list of values for each key
+def _to_dict(data, key, value):
+    """
+    creates a dictionary with a list of values for each key
 
-    :param key:
-    :param value:
-    :return:
+    Parameters
+    ----------
+    data : pandas.DataFrame
+    key : str
+    value : str
+
+    Returns
+    -------
+
     """
     return_dict = {}
     for k, v in data.groupby(key)[value]:
         return_dict[k] = list(set(v))
         if None in return_dict[k]:
             return_dict[k].remove(None)
-            # if len(return_dict[k]) == 1:
-            #     return_dict[k] = return_dict[k][0]
     return return_dict
-    # return {k: list(v) for k, v in data.groupby(key)[value]}
 
 
-class GeneMapper:
+class GeneMapper(object):
     """
     converts chemical species
     Datbase was creating by pulling down everything from HMDB
@@ -102,24 +106,22 @@ class GeneMapper:
 
     def load(self):
 
-        self.gene_name_to_uniprot = convert_to_dict(self.hgnc, 'symbol',
-                                                    'uniprot_ids')
-        self.gene_name_to_alias_name = convert_to_dict(self.hgnc, 'symbol',
-                                                       'alias_name')
-        self.gene_name_to_ensembl = convert_to_dict(self.hgnc, 'symbol',
-                                                    'ensembl_gene_id')
-        self.gene_name_to_kegg = convert_to_dict(self.uniprot, 'Gene_Name',
-                                                 'KEGG')
+        self.gene_name_to_uniprot = _to_dict(self.hgnc, 'symbol',
+                                             'uniprot_ids')
+        self.gene_name_to_alias_name = _to_dict(self.hgnc, 'symbol',
+                                                'alias_name')
+        self.gene_name_to_ensembl = _to_dict(self.hgnc, 'symbol',
+                                             'ensembl_gene_id')
+        self.gene_name_to_kegg = _to_dict(self.uniprot, 'Gene_Name', 'KEGG')
+        self.uniprot_to_kegg = _to_dict(self.uniprot, 'uniprot', 'KEGG')
+        self.uniprot_to_gene_name = _to_dict(self.hgnc, 'uniprot_ids',
+                                             'symbol')
 
-        self.uniprot_to_gene_name = convert_to_dict(self.hgnc, 'uniprot_ids',
-                                                    'symbol')
-        self.uniprot_to_kegg = convert_to_dict(self.uniprot, 'uniprot', 'KEGG')
         self.protein_name_to_gene_name = None
         self.protein_name_to_uniprot = None
-        self.kegg_to_gene_name = convert_to_dict(self.uniprot,
-                                                 'KEGG', 'Gene_Name')
-        self.kegg_to_uniprot = convert_to_dict(self.uniprot, 'KEGG', 'uniprot')
-        self.ncbi_to_symbol = convert_to_dict(self.ncbi, 'GeneID', 'Symbol')
+        self.kegg_to_gene_name = _to_dict(self.uniprot, 'KEGG', 'Gene_Name')
+        self.kegg_to_uniprot = _to_dict(self.uniprot, 'KEGG', 'uniprot')
+        self.ncbi_to_symbol = _to_dict(self.ncbi, 'GeneID', 'Symbol')
         self.save()
 
     def save(self):
