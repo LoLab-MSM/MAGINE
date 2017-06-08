@@ -6,20 +6,9 @@ from magine.ontology.ontology_tools import slim_ontology
 pd.set_option('display.width', 10000)
 pd.set_option('max_colwidth', 100)
 
-list_of_proteins = ['CASP3', 'CASP6',
-
-                    'FAS', 'FADD', 'CASP8',  # DISC
-                    'CFLAR',  # FLIP
-                    'BFAR',  # BAR
-                    'BAD',
-                    # pro-apoptotic
-                    'BID',
-                    'PMAIP1',  # NOXA
-                    'MCL1', 'BCL2', 'BCL2L1',  # anti-apoptotic
-                    'BAX', 'BAK1',  # effector proteins
-                    'DIABLO', 'CYCS',
-                    'PARP1', 'APAF1', 'XIAP',
-                    ]
+list_of_proteins = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR',
+                    'BFAR', 'BAD', 'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1',
+                    'BAX', 'BAK1', 'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
 
 # go analyzer class
 go = GoAnalysis(species='hsa', output_directory='output',
@@ -48,6 +37,7 @@ print(sig_results[cols].head(10))
 
 sig_results.sort_values(by='pvalue', ascending=True, inplace=True)
 print(sig_results[cols].head(10))
+sig_results.to_csv('enrichment_out.csv', index=False)
 
 """
 
