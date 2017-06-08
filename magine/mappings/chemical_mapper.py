@@ -92,15 +92,11 @@ class ChemicalMapper(object):
 
         tmp_dict = {}
         for k, v in self.database.groupby(key)[value]:
-            v = v.tolist()
-            if isinstance(v[0], list):
-                tmp_dict[k] = v
-            else:
+            v = v.tolist()[0]
+            if isinstance(v, list):
                 if len(v) > 0:
                     if v[0] is not None:
-                        if v[0].startswith("["):
-                            tmp_dict[k] = literal_eval(repr(v[0]))
-
+                        tmp_dict[k] = v
         return tmp_dict
 
     def check_synonym_dict(self, term, format_name):
@@ -168,11 +164,8 @@ class ChemicalMapper(object):
 
         try:
             self.__dict__ = pickle.loads(data, encoding='utf-8')
-            print("here")
         except:
             self.__dict__ = pickle.loads(data)
-            print("not here")
-
 
 if __name__ == "__main__":
     cm = ChemicalMapper()

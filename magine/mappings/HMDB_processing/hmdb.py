@@ -62,7 +62,7 @@ class HMDB(object):
             for chunk in r.iter_content(chunk_size=block_sz):
                 file_size_dl += len(chunk)
                 percent_download = int(
-                    np.floor(file_size_dl * 100. / file_size))
+                        np.floor(file_size_dl * 100. / file_size))
 
                 if percent_download in milestone_markers:
                     if percent_download not in v:
@@ -140,7 +140,6 @@ class HMDB(object):
                   tupleize_cols=True)
         print("Done processing HMDB")
 
-
     def load_db(self):
         df = pd.read_csv(self.out_name, low_memory=False)
         return df
@@ -186,6 +185,7 @@ def _create_dict(elem):
                 # output = output.encode('utf-8')
             template[i] = output
     return template
+
 
 if __name__ == '__main__':
     import time

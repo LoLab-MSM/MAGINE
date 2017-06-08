@@ -17,8 +17,6 @@ cm = ChemicalMapper()
 
 def test_synonyms():
     hmdb = cm.check_synonym_dict(term='dodecene', format_name='accession')
-    print(hmdb)
-    # print(cm.hmdb_accession_to_protein)
     assert (hmdb == 'HMDB59874')
 
 
@@ -30,9 +28,7 @@ def test_protein_network():
                 'MGLL', 'CES1', 'LIPE', 'MTTP', 'APOA1', 'CETP', 'APOE',
                 'APOC3', 'APOB', 'APOA4', 'CD36', 'P4HB', 'MOGAT2', 'PNPLA4',
                 'SLC27A1', 'DGAT2', 'MOGAT1', 'MOGAT3', 'PLB1', 'APOA5']
-    print("Here", cm.hmdb_accession_to_protein[item])
     for protein in cm.hmdb_accession_to_protein[item]:
-        print(item, protein)
         assert protein in hit_list
 
 

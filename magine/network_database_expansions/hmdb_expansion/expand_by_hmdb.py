@@ -38,7 +38,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     count_in_network, count_not_in_network = 0, 0
     missing_edge = 0
     protein_hits = 0
-    added_proteins = []
+    added_proteins = set()
     missing_protein_info = 0
     missing_proteins = set()
     tmp_nodes = set(tmp_graph.nodes())
@@ -60,7 +60,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                     if each is None:
                         continue
                     elif each not in tmp_nodes:
-                        added_proteins.append(each)
+                        added_proteins.add(each)
                     missing_edge += 1
                     tmp_graph.add_node(i, speciesType='gene',
                                        databaseSource='HMDB')
@@ -72,7 +72,6 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
         # if it does and they are new to the graph, it adds it
         else:
             count_not_in_network += 1
-            print(i in cm.hmdb_accession_to_protein)
             if i in cm.hmdb_accession_to_protein:
                 tmp_list = cm.hmdb_accession_to_protein[i]
                 if tmp_list is None or len(tmp_list) == 0:
@@ -99,13 +98,13 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                         missing_proteins.add(each)
     end_nodes = set(tmp_graph.nodes())
     end_edges = tmp_graph.edges()
-    metabolites_added = []
-    still_missing = []
+    metabolites_added = set()
+    still_missing = set()
     for i in missing_metabolites:
         if i in end_nodes:
-            metabolites_added.append(i)
+            metabolites_added.add(i)
         else:
-            still_missing.append(i)
+            still_missing.add(i)
 
     count = 0
     all_measured = set(all_measured)
