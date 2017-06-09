@@ -10,7 +10,7 @@ Python package that integrates omic style data.
 #Requirments
 Graphviz (http://www.graphviz.org)
 
-#Installation
+# Installation
 ## For people new to python enviroment creation
 ## Anaconda is a great easy way to get you up and running.
 ## Open a terminal
@@ -20,10 +20,16 @@ bash ./Miniconda2-latest-Linux-x86_64.sh
 ## source ~/.bashrc if you added it to your path
 conda create -n magine_env python=2
 source activate magine_env
-conda config --add channels conda-forge
-conda install orange
-conda install jinja2
-conda install statsmodels
-conda install networkx
-conda install graphviz
-pip install -r requirements.txt
+
+- conda config --add channels conda-forge
+- conda install orange
+- conda install jinja2
+- conda install statsmodels
+- conda install networkx
+- conda install graphviz
+- conda install python-igraph
+- If you have MacOSX or Linux, you can install pygraphviz using
+- - conda install -c pdrops pygraphviz=1.2
+- git clone https://github.com/LoLab-VU/magine
+- cd magine
+- python setup.py install
