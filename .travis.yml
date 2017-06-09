@@ -15,7 +15,6 @@ before_install:
 - bash miniconda.sh -b -p $HOME/miniconda
 - export PATH="$HOME/miniconda/bin:$PATH"
 - conda update --yes conda
-#- sudo apt-get install graphviz
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
     nose h5py pexpect pandas numba graphviz
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
