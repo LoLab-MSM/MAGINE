@@ -1,15 +1,16 @@
+import sys
+
 from magine.networks.network_generator import build_network
 from magine.networks.network_subgraphs import NetworkSubgraphs
 
-# add an example passing a file with genes and a save name
+list_name = sys.argv[1]
+save_name = sys.argv[2]
 
-
-list_of_proteins = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR',
-                    'BAD', 'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX',
-                    'BAK1', 'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
+with open(list_name, 'r') as f:
+    list_of_proteins = f.read().split('\n')
 
 network = build_network(list_of_proteins,
-                        save_name='example_earm_network',
+                        save_name=save_name,
                         use_reactome=True,
                         overwrite=False  # re-download KEGG database
                         )
@@ -50,10 +51,11 @@ print("Network has {} edgess".format(network.number_of_edges()))
 
 
 x = NetworkSubgraphs(network)
-sub = x.shortest_paths_between_lists(list_of_proteins,
-                                     single_path=False,
-                                     save_name='trimmed_network',
-                                     draw=True,
-                                     image_format='pdf')
+sub = x.shortest_paths_between_lists(
+        list_of_proteins,
+        single_path=True,
+        save_name='{}_trimmed_network'.format(save_name),
+        draw=True
+)
 print("Network has {} nodes".format(sub.number_of_nodes()))
 print("Network has {} edgess".format(sub.number_of_edges()))
