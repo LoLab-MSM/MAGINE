@@ -3,10 +3,9 @@ import itertools
 import networkx as nx
 
 import magine.network_tools as nt
-from magine.network_tools import compress_edges, export_to_dot
 
 
-class NetworkSubgraphs:
+class NetworkSubgraphs(object):
     def __init__(self, network, exp_data=None):
         """
         Generates network subgraphs
@@ -78,16 +77,15 @@ class NetworkSubgraphs:
                                  "None".format(node_1, node_2))
             return None
 
-        nx.write_gml(graph, "%s_and_%s.gml" % (node_1, node_2))
-        if draw:
-            export_to_dot(graph, save_name="%s_and_%s.pdf" % (node_1, node_2),
-                          image_format='pdf', engine='dot')
+        if draw is not None:
+            save_name = "%s_and_%s.pdf" % (node_1, node_2)
+            self._save_or_draw(graph, save_name, draw)
+
         return graph
 
-    def shortest_paths_between_lists(self, species_list,
-                                     save_name='tmp',
-                                     single_path=False,
-                                     draw=False):
+    def shortest_paths_between_lists(self, species_list, save_name=None,
+                                     single_path=False, draw=False,
+                                     image_format='png'):
         """
 
         Parameters
@@ -100,7 +98,8 @@ class NetworkSubgraphs:
             use single shortest path if True, else use all shortest paths
         draw : bool
             create a dot generated figure
-
+        image_format : str
+            dot acceptable output formats, (pdf, png, etc)
         Returns
         -------
         graph : networkx.DiGraph
@@ -132,10 +131,10 @@ class NetworkSubgraphs:
                 print(warning_message.format(node_1, node_2))
             else:
                 if single_path:
-                    self._add_edges_from_path(graph,
-                                              nx.shortest_path(self.network,
-                                                               node_1,
-                                                               node_2))
+                    self._add_edges_from_path(
+                            graph,
+                            nx.shortest_path(self.network, node_1, node_2)
+                    )
                 else:
                     for path in nx.all_shortest_paths(self.network, node_1,
                                                       node_2):
@@ -144,22 +143,21 @@ class NetworkSubgraphs:
                 print(warning_message.format(node_2, node_1))
             else:
                 if single_path:
-                    self._add_edges_from_path(graph, nx.shortest_path(
-                        self.network, node_2, node_1))
+                    self._add_edges_from_path(
+                            graph,
+                            nx.shortest_path(self.network, node_2, node_1)
+                    )
                 else:
                     for path in nx.all_shortest_paths(self.network, node_2,
                                                       node_1):
                         self._add_edges_from_path(graph, path)
 
-        nx.write_gml(graph, "{}.gml".format(save_name))
-        if draw:
-            graph = nt._format_to_directions(graph)
-            export_to_dot(graph, save_name=save_name)
-
+        if save_name is not None:
+            self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
     def upstream_network_of_specie(self, species_1, include_list=None,
-                                   save_name='test', compress=False,
+                                   save_name=None, compress=False,
                                    draw=False, ):
         """
         Generate network of all upstream species of provides species
@@ -211,17 +209,14 @@ class NetworkSubgraphs:
                     self._add_edges_from_path(graph, path)
 
         if compress:
-            graph = compress_edges(graph)
-
-        if draw:
-            graph = nt._format_to_directions(graph)
-            export_to_dot(graph, save_name)
-        nx.write_gml(graph, "{}.gml".format(save_name))
+            graph = nt.compress_edges(graph)
+        if save_name is not None:
+            self._save_or_draw(graph, save_name, draw)
 
         return graph
 
     def downstream_network_of_specie(self, species_1, include_list=None,
-                                     save_name='test', compress=False,
+                                     save_name=None, compress=False,
                                      draw=False, ):
         """
         Generate network of all downstream species of provides species
@@ -275,12 +270,10 @@ class NetworkSubgraphs:
                     )
 
         if compress:
-            graph = compress_edges(graph)
+            graph = nt.compress_edges(graph)
 
-        if draw:
-            graph = nt._format_to_directions(graph)
-            export_to_dot(graph, save_name)
-        nx.write_gml(graph, "{}.gml".format(save_name))
+        if save_name is not None:
+            self._save_or_draw(graph, save_name, draw)
 
         return graph
 
@@ -384,4 +377,10 @@ class NetworkSubgraphs:
                                **self.network.edge[previous][protein])
                 previous = protein
 
-
+    @staticmethod
+    def _save_or_draw(graph, save_name, draw, img_format):
+        nx.write_gml(graph, "{}.gml".format(save_name))
+        if draw:
+            graph = nt._format_to_directions(graph)
+            nt.export_to_dot(graph, save_name=save_name,
+                             image_format=img_format)

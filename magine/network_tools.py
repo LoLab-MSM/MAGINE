@@ -52,7 +52,11 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
     tmp_graph = graph.copy()
     tmp_graph = _format_to_directions(tmp_graph)
     if isinstance(tmp_graph, nx.DiGraph):
-        tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+        try:
+            tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+        except ImportError:
+            print("Please install pygraphviz")
+            return
     for n, i in enumerate(list_of_lists):
         graph2 = paint_network(tmp_graph, i, color_list[n])
 
@@ -106,8 +110,13 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
     tmp_graph = _format_to_directions(tmp_graph)
+
     if isinstance(tmp_graph, nx.DiGraph):
-        tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+        try:
+            tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+        except ImportError:
+            print("Please install pygraphviz")
+            return
     for n, (up, down) in enumerate(zip(list_up, list_down)):
         graph2 = paint_network(tmp_graph, up, color_up)
         graph2 = paint_network(graph2, down, color_down)
@@ -156,7 +165,11 @@ def paint_network(graph, list_to_paint, color):
 
 def _format_to_directions(network):
     if isinstance(network, nx.DiGraph):
-        network = nx.nx_agraph.to_agraph(network)
+        try:
+            network = nx.nx_agraph.to_agraph(network)
+        except ImportError:
+            print("Need to install pygraphviz")
+            return network
     activators = ['activation', 'expression', 'phosphorylation']
     inhibitors = ['inhibition', 'repression', 'dephosphorylation',
                   'ubiquitination']
@@ -188,6 +201,7 @@ def _format_to_directions(network):
                     n.attr['style'] = 'dashed'
                     return
                     # print(n, n.attr)
+
         _find_edge_type()
     network = nx.nx_agraph.from_agraph(network)
     return network
@@ -199,20 +213,22 @@ def create_legend(graph):
     :param graph:
     :return:
     """
-    dict_of_types = {'activation': 'onormal',
-                     'indirect effect': 'odiamondodiamond',
-                     'expression': 'normal',
-                     'inhibition': 'tee',
-                     'binding/association': 'curve',
-                     'phosphorylation': 'dot',
-                     'missing interaction': 'odiamond',
-                     'compound': 'dotodot',
-                     'dissociation': 'diamond',
-                     'ubiquitination': 'oldiamond',
-                     'state change': 'teetee',
-                     'dephosphorylation': 'onormal',
-                     'repression': 'obox',
-                     'glycosylation': 'dot'}
+    dict_of_types = {
+        'activation':          'onormal',
+        'indirect effect':     'odiamondodiamond',
+        'expression':          'normal',
+        'inhibition':          'tee',
+        'binding/association': 'curve',
+        'phosphorylation':     'dot',
+        'missing interaction': 'odiamond',
+        'compound':            'dotodot',
+        'dissociation':        'diamond',
+        'ubiquitination':      'oldiamond',
+        'state change':        'teetee',
+        'dephosphorylation':   'onormal',
+        'repression':          'obox',
+        'glycosylation':       'dot'
+    }
     subgraph = []
     len_dic = len(dict_of_types)
     for n, i in enumerate(dict_of_types):
@@ -247,10 +263,16 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
     -------
 
     """
-    py_dot = nx.nx_agraph.to_agraph(graph)
-    py_dot.write('{}.dot'.format(save_name))
-    py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
-                args='-Gdpi={} -Gconcentrate={}'.format(dpi, 'true' if concentrate else 'false'))
+    try:
+        py_dot = nx.nx_agraph.to_agraph(graph)
+        py_dot.write('{}.dot'.format(save_name))
+        arg = '-Gdpi={} -Gconcentrate={}'.format(
+                dpi, 'true' if concentrate else 'false'
+        )
+        py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
+                    args=arg)
+    except ImportError:
+        print("No pygraphivz installed")
 
 
 def add_attribute_to_network(graph, list_to_add_attribute, attribute,
@@ -490,6 +512,14 @@ def compress_edges(graph):
                                    arrowtail="none")
     return g
 
+
+def _nx_to_dot(network):
+    if isinstance(network, nx.DiGraph):
+        try:
+            network = nx.nx_agraph.to_agraph(network)
+        except ImportError:
+            print("Need to install pygraphviz")
+            return network
 
 '''
 # deprecated
