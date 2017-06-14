@@ -404,9 +404,9 @@ class ExperimentalData(object):
             f.write(template.format(t.to_latex(
                     column_format='*{}{{c}}'.format(str(len(timepoints) + 1)))))
 
-        # if _which('pdflatex'):
-        t = True
-        if t:
+        if _which('pdflatex'):
+        # t = True
+        # if t:
             print('Compiling table')
             with open(os.devnull, "w") as fnull:
                 subprocess.call(['pdflatex', filename],

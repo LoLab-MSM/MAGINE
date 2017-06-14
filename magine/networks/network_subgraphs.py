@@ -1,7 +1,5 @@
 import itertools
-
 import networkx as nx
-
 import magine.network_tools as nt
 
 
@@ -20,7 +18,8 @@ class NetworkSubgraphs(object):
         self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
 
-    def shortest_paths_between_two_proteins(self, node_1, node_2, draw=False):
+    def shortest_paths_between_two_proteins(self, node_1, node_2, draw=False,
+                                            image_format='png'):
         """
         Generates a graph based on all shortest paths between two species
 
@@ -33,7 +32,9 @@ class NetworkSubgraphs(object):
             name of second species
         draw : bool
             create an image of returned network
-
+        image_format : str, optional
+            If draw=True you can pass an image format. (pdf, png, svg). 
+            default=png
 
         Returns
         -------
@@ -78,8 +79,8 @@ class NetworkSubgraphs(object):
             return None
 
         if draw is not None:
-            save_name = "%s_and_%s.pdf" % (node_1, node_2)
-            self._save_or_draw(graph, save_name, draw)
+            save_name = "%s_and_%s" % (node_1, node_2)
+            self._save_or_draw(graph, save_name, draw, image_format)
 
         return graph
 
