@@ -1,8 +1,7 @@
 import networkx as nx
 
 from magine.mappings.chemical_mapper import ChemicalMapper
-from magine.network_database_expansions.hmdb_expansion.expand_by_hmdb \
-    import expand_by_hmdb
+from magine.networks.network_generator import expand_by_hmdb
 
 cm = ChemicalMapper()
 
