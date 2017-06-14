@@ -1,7 +1,6 @@
 [![Coverage Status](https://coveralls.io/repos/github/LoLab-VU/Magine/badge.svg?branch=master)](https://coveralls.io/github/LoLab-VU/Magine?branch=master)
 
-[![Travis Status](https://travis-ci.org/LoLab-VU/Magine.svg?branch=master)](https://travis-ci.org/LoLab-VU/Magine.svg?branch=master)
-
+[![Build Status](https://travis-ci.org/LoLab-VU/Magine.svg?branch=master)](https://travis-ci.org/LoLab-VU/Magine)
 
 #Magine- Mechanism of Action Generator involving Network Expansion
 
