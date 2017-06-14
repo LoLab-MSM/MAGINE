@@ -15,3 +15,9 @@ BAX,BAX,,4,protein,TRUE,Time_3,label_free,0.05
 BAX,BAX_T,,-24,protein,TRUE,Time_3,label_free,0.05
 TP53,TP53,,4,protein,TRUE,Time_3,label_free,0.05
 BID,BID_cleavage,test,3,metabolite,TRUE,Time_2,hilic,0.01
+,,HMDB1,1,metabolites,TRUE,Time_1,hilic,0.01
+,,HMDB1,2,metabolites,TRUE,Time_2,hilic,0.01
+,,HMDB1,3,metabolites,TRUE,Time_3,hilic,0.01
+,,HMDB2,-2,metabolites,TRUE,Time_1,hilic,0.01
+,,HMDB2,-3,metabolites,TRUE,Time_2,hilic,0.01
+,,HMDB2,-4,metabolites,TRUE,Time_3,hilic,0.01

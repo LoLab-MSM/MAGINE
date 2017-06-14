@@ -31,7 +31,7 @@ def test_plot_list():
 
 
 def test_html_output():
-    exp_data.plot_all_proteins()
+    exp_data.plot_all_proteins(html_file_name='del', out_dir='DEL')
 
 
 if __name__ == '__main__':

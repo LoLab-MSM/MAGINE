@@ -4,7 +4,7 @@ import jinja2
 import pandas as pd
 
 from magine.data.formatter import pivot_table_for_export
-from magine.plotting.species_plotting import create_gene_plots_per_go
+
 
 env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
@@ -74,7 +74,7 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     # create plots of everything
     if isinstance(data, str):
         data = pd.read_csv(data)
-
+    from magine.plotting.species_plotting import create_gene_plots_per_go
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
                                                    out_dir, exp_data,
                                                    run_parallel=True

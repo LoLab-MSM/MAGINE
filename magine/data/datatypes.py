@@ -1,15 +1,14 @@
 import subprocess
-
 import matplotlib
-
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from pandas.plotting import table
 import os
 import numpy as np
 import pandas
-from magine.html_templates.html_tools import write_single_table
-from magine.plotting.species_plotting import plot_list_of_genes2
+import magine.plotting.species_plotting as species_plotter
+import magine.plotting.volcano_plots as v_plot
+from magine.data.formatter import log2_normalize_df
 
 pandas.set_option('display.max_colwidth', -1)
 # column definitions
@@ -431,49 +430,114 @@ class ExperimentalData(object):
                   'You can use the csv file for use in outside tools')
 
     def plot_list_of_genes(self, list_of_genes, save_name, out_dir=None,
-                           title=None):
-
-        plot_list_of_genes2(self.proteomics, list_of_genes=list_of_genes,
-                            save_name=save_name, out_dir=out_dir, title=title)
-
-    def plot_all_proteins(self, out_dir='proteins', plot_type='plotly'):
+                           title=None, plot_type='plotly', image_format='png'):
         """
-        Creates a plot of all proteins
-
+        Creates an HTML table of plots provided a list gene names
         Parameters
         ----------
-        out_dir: str, path
-            Directory that will contain all proteins
+    
+        list_of_genes: list
+            List of genes to be plotter
+        save_name: str
+            Filename to be saved as
+        out_dir: str
+            Path for output to be saved
+        title: str
+            Title of plot, useful when list of genes corresponds to a GO term
         plot_type : str
-            plotly or matplotlib output
+            Use plotly to generate html output or matplotlib to generate pdf
+        image_format : str
+            pdf or png, only used if plot_type="matplotlib"
 
         Returns
         -------
 
         """
-        from magine.plotting.species_plotting import plot_dataframe
+        species_plotter.plot_list_of_genes(
+            self.proteomics, list_of_genes=list_of_genes, save_name=save_name,
+            out_dir=out_dir, title=title, plot_type=plot_type,
+            image_format=image_format
+        )
 
-        plot_dataframe(self.data, 'proteins', out_dir, plot_type)
-        return
-        if os.path.exists(out_dir):
-            pass
-        else:
-            os.mkdir(out_dir)
-        html_pages = []
-        genes_to_plot = self.list_sig_proteins
-        for i in np.sort(genes_to_plot):
+    def plot_list_of_metabolites(self, list_of_metabolites, save_name,
+                                 out_dir=None, title=None, plot_type='plotly',
+                                 image_format='png'):
+        """
+        Creates an HTML table of plots provided a list metabolites
+        
+        Parameters
+        ----------
+        list_of_metabolites : list
+            list of compounds 
+        save_name : str
+            Name of html output file
+        out_dir : str
+            Location to place plots
+        title : str
+            Title for HTML page
+        plot_type : str
+            Type of plot outputs, can be "plotly" or "matplotlib"
+        image_format : str
+            pdf or png, only used if plot_type="matplotlib"
+        Returns
+        -------
 
-            plot_list_of_genes2(self.proteomics, list_of_genes=[i], save_name=i,
-                                out_dir=out_dir, title=i, plot_type=plot_type)
-            if plot_type == 'plotly':
-                html_pages.append(
-                        '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i))
-            else:
-                html_pages.append(
-                    '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i))
+        """
+        species_plotter.plot_list_of_metabolites(
+            self.proteomics, list_of_metab=list_of_metabolites,
+            save_name=save_name, out_dir=out_dir, title=title,
+            plot_type=plot_type, image_format=image_format
+        )
 
-        proteins = pandas.DataFrame(html_pages, columns=['Genes'])
-        write_single_table(proteins, 'proteins', 'All proteins')
+    def plot_all_proteins(self, html_file_name, out_dir='proteins',
+                          plot_type='plotly', run_parallel=False):
+        """
+        Creates a plot of all proteins
+
+        Parameters
+        ----------
+        html_file_name : str
+            filename to save html of all plots
+        out_dir: str, path
+            Directory that will contain all proteins
+        plot_type : str
+            plotly or matplotlib output
+        run_parallel : bool
+            Create the plots in parallel
+        Returns
+        -------
+
+        """
+
+        species_plotter.plot_dataframe(self.data, html_filename=html_file_name,
+                                       out_dir=out_dir, plot_type=plot_type,
+                                       type_of_species='proteins',
+                                       run_parallel=run_parallel)
+
+    def plot_all_metabolites(self, html_file_name, out_dir='metabolites',
+                             plot_type='plotly', run_parallel=False):
+        """
+        Creates a plot of all metabolites
+
+        Parameters
+        ----------
+        html_file_name : str
+            filename to save html of all plots
+        out_dir: str, path
+            Directory that will contain all proteins
+        plot_type : str
+            plotly or matplotlib output
+        run_parallel : bool
+            Create the plots in parallel
+        Returns
+        -------
+
+        """
+
+        species_plotter.plot_dataframe(self.data, html_filename=html_file_name,
+                                       out_dir=out_dir, plot_type=plot_type,
+                                       type_of_species='metabolites',
+                                       run_parallel=run_parallel)
 
     def volcano_analysis(self, out_dir, use_sig_flag=True,
                          p_value=0.1, fold_change_cutoff=1.5):
@@ -554,12 +618,12 @@ class ExperimentalData(object):
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
-            filtered_data = self._filter_data(sample, bh_critera, p_value,
-                                              fold_change_cutoff)
+            filtered_data = v_plot.filter_data(sample, bh_critera, p_value,
+                                               fold_change_cutoff)
             sec_0, sec_1, sec_2 = filtered_data
             ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
-            self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
+            v_plot.add_volcano_plot(ax, sec_0, sec_1, sec_2)
             if not bh_critera:
                 fc = np.log2(fold_change_cutoff)
                 log_p_val = -1 * np.log10(p_value)
@@ -571,7 +635,7 @@ class ExperimentalData(object):
             if x_range is not None:
                 ax.set_xlim(x_range[0], x_range[1])
 
-        self._save_plot(fig, save_name=save_name, out_dir=out_dir)
+        v_plot.save_plot(fig, save_name=save_name, out_dir=out_dir)
 
     def volcano_plot(self, exp_data_type, save_name, out_dir=None,
                      bh_critera=False, p_value=0.1, fold_change_cutoff=1.5,
@@ -606,94 +670,11 @@ class ExperimentalData(object):
 
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
-        data = self.data[self.data[exp_method] == exp_data_type]
-        data = data.dropna(subset=[p_val])
-        data = data[np.isfinite(data[fold_change])]
-        filtered_data = self._filter_data(data, bh_critera, p_value,
-                                          fold_change_cutoff)
-        sec_0, sec_1, sec_2 = filtered_data
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-        self._add_volcano_plot(ax, sec_0, sec_1, sec_2)
-        if not bh_critera:
-            fc = np.log2(fold_change_cutoff)
-            log_p_val = -1 * np.log10(p_value)
-            ax.axvline(x=fc, linestyle='--')
-            ax.axvline(x=-1 * fc, linestyle='--')
-            ax.axhline(y=log_p_val, linestyle='--')
-        if y_range is not None:
-            ax.set_ylim(y_range[0], y_range[1])
-        if x_range is not None:
-            ax.set_xlim(x_range[0], x_range[1])
-        self._save_plot(fig, save_name=save_name, out_dir=out_dir)
-
-    @staticmethod
-    def _save_plot(fig, save_name, out_dir):
-        fig.tight_layout()
-        tmp_save_name_pdf = '{0}.pdf'.format(save_name)
-        tmp_save_name_png = '{0}.png'.format(save_name)
-        if out_dir is not None:
-            tmp_save_name_pdf = os.path.join(out_dir, tmp_save_name_pdf)
-            tmp_save_name_png = os.path.join(out_dir, tmp_save_name_png)
-        fig.savefig(tmp_save_name_pdf, bbox_inches='tight')
-        fig.savefig(tmp_save_name_png, bbox_inches='tight')
-        plt.close()
-
-    @staticmethod
-    def _add_volcano_plot(fig_axis, section_0, section_1, section_2):
-
-        fig_axis.scatter(section_0[fold_change], section_0[p_val], marker='.',
-                         color='blue')
-        if section_1 is not None:
-            fig_axis.scatter(section_1[fold_change], section_1[p_val],
-                             marker='.', color='red')
-        fig_axis.scatter(section_2[fold_change], section_2[p_val], s=1,
-                         marker=',', color='gray')
-        fig_axis.set_ylabel('-log$_{10}$ p-value', fontsize=16)
-        fig_axis.set_xlabel('log$_2$ Fold Change', fontsize=16)
-
-    @staticmethod
-    def _filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
-        tmp = data.loc[:, (p_val, fold_change, flag)]
-
-        # convert to log10 scale
-        tmp[p_val] = np.log10(data[p_val]) * -1
-
-        # convert to log2 space
-        greater_than = tmp[fold_change] > 0
-        less_than = tmp[fold_change] < 0
-
-        tmp.loc[greater_than, fold_change] = \
-            np.log2(tmp[greater_than][fold_change])
-
-        tmp.loc[less_than, fold_change] = \
-            -np.log2(-tmp[less_than][fold_change])
-
-        # Visual example of volcano plot
-        # section 0 are significant criteria
-
-        #    0    #    1   #      0     #
-        #         #        #            #
-        #################################
-        #         #        #            #
-        #    2    #    2   #      2     #
-        #         #        #            #
-        #################################
-
-        if use_sig:
-            sec_0 = tmp[tmp[flag]]
-            sec_2 = tmp[~tmp[flag]]
-            sec_1 = None
-        else:
-            fc = np.log2(fold_change_cutoff)
-            p_value = -1 * np.log10(p_value)
-
-            sec_0 = tmp[
-                (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) >= fc)]
-            sec_1 = tmp[
-                (tmp[p_val] >= p_value) & (np.abs(tmp[fold_change]) < fc)]
-            sec_2 = tmp[(tmp[p_val] < p_value)]
-        return sec_0, sec_1, sec_2
+        data = self.data[self.data[exp_method] == exp_data_type].copy()
+        v_plot.volcano_plot(data, save_name=save_name, out_dir=out_dir,
+                            bh_criteria=bh_critera, p_value=p_value,
+                            fold_change_cutoff=fold_change_cutoff,
+                            x_range=x_range, y_range=y_range)
 
     def create_histogram_measurements(self, exp_data_type, save_name,
                                       y_range=None, out_dir=None):
@@ -723,12 +704,7 @@ class ExperimentalData(object):
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])
-        tmp = np.array(data[fold_change])
-
-        # tmp = np.where(tmp > 0, np.log2(tmp), -np.log2(-tmp))
-
-        tmp[tmp > 0] = np.log2(tmp[tmp > 0])
-        tmp[tmp < 0] = -np.log2(-tmp[tmp < 0])
+        tmp = np.array(log2_normalize_df(data)[fold_change])
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -739,7 +715,7 @@ class ExperimentalData(object):
         ax.set_yscale('log', base=10)
         ax.set_ylabel('Count', fontsize=16)
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
-        self._save_plot(fig, save_name, out_dir)
+        v_plot.save_plot(fig, save_name, out_dir)
 
     def _check_experiment_type_existence(self, exp_type):
         if exp_type not in self.exp_methods:

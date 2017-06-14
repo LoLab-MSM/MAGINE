@@ -526,3 +526,27 @@ def pivot_tables_for_export(data, save_name=None):
                       merge_cells=True)
         meta.to_csv('{}_metabolites.csv', index=True)
     return genes, meta
+
+
+def log2_normalize_df(df, fold_change):
+    """
+    
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        dataframe of fold changes
+    fold_change : str
+        column that contains fold change values
+
+    Returns
+    -------
+
+    """
+    tmp_df = df.copy()
+    greater_than = tmp_df[fold_change] > 0
+    less_than = tmp_df[fold_change] < 0
+    tmp_df.loc[greater_than, 'log2fc'] = np.log2(
+        tmp_df[greater_than][fold_change].astype(np.float64))
+    tmp_df.loc[less_than, 'log2fc'] = -np.log2(
+        -tmp_df[less_than][fold_change].astype(np.float64))
+    return tmp_df

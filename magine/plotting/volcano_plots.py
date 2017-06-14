@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from magine.data.formatter import log2_normalize_df
 
 fold_change = 'treated_control_fold_change'
 flag = 'significant_flag'
@@ -14,16 +15,13 @@ species_type = 'species_type'
 sample_id = 'time'
 
 
-def _filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
+def filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
     tmp = data.loc[:, (p_val, fold_change, flag)].copy()
     # convert to log10 scale
     tmp[p_val] = np.log10(data[p_val]) * -1
     # convert to log2 space
-    greater_than = tmp[fold_change] > 0
-    less_than = tmp[fold_change] < 0
-    tmp.loc[greater_than, fold_change] = \
-        np.log2(tmp[greater_than][fold_change])
-    tmp.loc[less_than, fold_change] = -np.log2(-tmp[less_than][fold_change])
+    tmp = log2_normalize_df(tmp, fold_change=fold_change)
+
     # Visual example of volcano plot
     # section 0 are significant criteria
 
@@ -49,7 +47,7 @@ def _filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
     return sec_0, sec_1, sec_2
 
 
-def _add_volcano_plot(fig_axis, section_0, section_1, section_2):
+def add_volcano_plot(fig_axis, section_0, section_1, section_2):
     fig_axis.scatter(section_0[fold_change], section_0[p_val], marker='.',
                      color='blue')
     if section_1 is not None:
@@ -94,12 +92,12 @@ def volcano_plot(data, save_name, out_dir=None,
 
     data = data.dropna(subset=[p_val])
     data = data[np.isfinite(data[fold_change])]
-    filtered_data = _filter_data(data, bh_criteria, p_value,
-                                 fold_change_cutoff)
+    filtered_data = filter_data(data, bh_criteria, p_value,
+                                fold_change_cutoff)
     sec_0, sec_1, sec_2 = filtered_data
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    _add_volcano_plot(ax, sec_0, sec_1, sec_2)
+    add_volcano_plot(ax, sec_0, sec_1, sec_2)
 
     if not bh_criteria:
         fc = np.log2(fold_change_cutoff)
@@ -112,11 +110,30 @@ def volcano_plot(data, save_name, out_dir=None,
     if x_range is not None:
         ax.set_xlim(x_range[0], x_range[1])
         fig.tight_layout()
-    tmp_save_name_pdf = '{0}.pdf'.format(save_name)
-    tmp_save_name_png = '{0}.png'.format(save_name)
+    save_plot(fig, save_name=save_name, out_dir=out_dir)
+
+
+def save_plot(fig, save_name, out_dir=None, image_type='png'):
+    """
+    
+    Parameters
+    ----------
+    fig : matplotlib.pyplot.figure
+        Figure to be saved
+    save_name : str
+        output file name
+    out_dir : str, optional
+        output path
+    image_type : str, optional
+        output type of file, {"png", "pdf", etc..}
+
+    Returns
+    -------
+
+    """
+    fig.tight_layout()
+    save_name = '{}.{}'.format(save_name, image_type)
     if out_dir is not None:
-        tmp_save_name_pdf = os.path.join(out_dir, tmp_save_name_pdf)
-        tmp_save_name_png = os.path.join(out_dir, tmp_save_name_png)
-    fig.savefig(tmp_save_name_pdf, bbox_inches='tight')
-    fig.savefig(tmp_save_name_png, bbox_inches='tight')
+        save_name = os.path.join(out_dir, save_name)
+    fig.savefig(save_name, bbox_inches='tight')
     plt.close()
