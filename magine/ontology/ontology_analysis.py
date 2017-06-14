@@ -5,16 +5,11 @@ import os
 import numpy as np
 import pandas as pd
 
-from magine.html_templates.html_tools import write_single_table
-# from magine.ontology.go_from_goatools import go as goa_tools
-# from orangecontrib.bio import go
-# from orangecontrib.bio.go import evidenceDict
+import magine.html_templates.html_tools as html_tools
 
 import warnings
 
-from statsmodels.sandbox.stats.multicomp import fdrcorrection0
-from statsmodels.stats.proportion import binom_test
-from collections import defaultdict
+
 from magine.ontology.enrichment_calculation import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
@@ -43,10 +38,6 @@ class GoAnalysis(object):
         # options can be goslim_pir goslim_generic goslim_chembl
         self.slim_name = slim_name
 
-        # self.ontology = go.Ontology()
-        # self.annotations = go.Annotations(species, ontology=self.ontology)
-        # self.gene_annotations = set(self.annotations.gene_names)
-        # self.slim_set = self.ontology.named_slims_subset(self.slim_name)
         if reference is not None:
             self.gene_annotations = \
                 set(reference).intersection(self.magine_go.gene_to_go.keys())
@@ -134,7 +125,7 @@ class GoAnalysis(object):
             go_row['slim'] = go_id in self.magine_go.go_slim
 
             all_go_rows.append(go_row)
-            if self.verbose:
+            if self.verbose: # pragma: no cover
                 print(go_id, float(len(genes) / float(ref)) * 100,
                       self.magine_go.go_to_name[go_id],
                       p_value, len(genes), ref,
@@ -183,46 +174,51 @@ class GoAnalysis(object):
 
         all_data = []
         for n, i in enumerate(list_of_exp):
-            tmp_array_3 = self._calculate_enrichment_single_sample(i)
-            tmp_array_3['sample_index'] = labels[n]
-            all_data.append(tmp_array_3)
+            tmp = self._calculate_enrichment_single_sample(i)
+            tmp['sample_index'] = labels[n]
+            all_data.append(tmp)
 
         results = pd.concat(all_data)
 
-        if results is None:
+        if results is None:  # pragma: no cover
             print('No data! Error! Returning nothing')
             return
         self.data = results
         return results
 
-    def write_table_to_html(self, data=None, save_name='index'):
-        # create plots of everything
+    def write_table_to_html(self, save_name='index', out_dir=None):
+        """
+        Creates a table of all the plots of all genes for each GO term.
+        
+        Uses last calculated enrichment array.
+        
+        Parameters
+        ----------
+        save_name : str
+            name of html output file
+        out_dir : str, optional
+            output path for all plots
 
-        if data is None and self.data is None:
-            print("Array is empty. This could be due to no significant species"
-                  "provided in list or because analysis has not been run yet.")
-            return
+        Returns
+        -------
 
-        if data is None:
-            data = self.data.copy()
-        elif isinstance(data, str):
-            data = pd.read_csv(data)
-        from magine.plotting.species_plotting import create_gene_plots_per_go
-        fig_dict = create_gene_plots_per_go(data, self.savename, self.out_dir,
-                                            self.exp_data)
+        """
+        if out_dir is None:
+            out_dir = self.out_dir
 
-        for i in fig_dict:
-            data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
+        html_tools.write_table_to_html_with_figures(
+            self.data, self.exp_data, save_name, out_dir=out_dir
+        )
 
-        tmp = pd.pivot_table(data,
-                             index=['GO_id', 'GO_name', 'depth', 'ref', 'slim',
-                                    'aspect'],
-                             columns='sample_index')
 
-        html_out = os.path.join(self.out_dir, save_name)
-        print("Saving to : {}".format(html_out))
-        write_single_table(tmp, html_out, 'MAGINE GO analysis')
-
+# All code below is old and will be removed. Keeping for just a bit longer.
+'''  
+# from magine.ontology.go_from_goatools import go as goa_tools
+# from orangecontrib.bio import go
+# from orangecontrib.bio.go import evidenceDict
+from statsmodels.sandbox.stats.multicomp import fdrcorrection0
+from statsmodels.stats.proportion import binom_test
+from collections import defaultdict
     def __calculate_enrichment(self, genes, reference=None, evi_codes=None,
                                aspect=None, use_fdr=True, ):
         rev_genes_dict = self.annotations.get_gene_names_translator(genes)
@@ -583,3 +579,4 @@ def _sort_data_by_index(data, index=0):
     names = names[step_size]
     array = array[step_size]
     return names, array
+'''
