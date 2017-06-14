@@ -153,7 +153,7 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
     return figure_locations, to_remove
 
 
-def plot_dataframe(exp_data, html_filename, out_dir='proteins',
+def plot_dataframe(exp_data, species_type, html_filename, out_dir='proteins',
                    plot_type='plotly'):
     """
     Creates a plot of all proteins
@@ -176,7 +176,11 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     else:
         os.mkdir(out_dir)
 
-    genes = exp_data[exp_data['species_type'] == 'protein'].copy()
+    genes = exp_data[exp_data['species_type'] == species_type].copy()
+    if species_type == 'protein':
+        idx_key = 'gene'
+    elif species_type == 'metabolites':
+        idx_key = 'compound'
     genes_to_plot = genes['gene'].unique()
     print("Plotting {} genes".format(len(genes_to_plot)))
     figure_locations = {}
@@ -248,7 +252,9 @@ def plot_list_of_genes2(dataframe, list_of_genes=None, save_name='test',
         x_point_dict = {i: x_points[n] for n, i
                         in enumerate(x_points)}
     else:
-        x_point_dict = {i: 2 ** (n + 1) for n, i
+        # x_point_dict = {i: 2 ** (n + 1) for n, i
+        #                 in enumerate(x_points)}
+        x_point_dict = {i: n for n, i
                         in enumerate(x_points)}
 
     local_df = dataframe[dataframe[gene].isin(list_of_genes)].copy()

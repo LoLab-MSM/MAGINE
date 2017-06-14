@@ -404,7 +404,7 @@ def find_disjunction_common_ancestor(list_of_terms):
 def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
                        trim_nodes=False, additional_ids_to_include=None,
                        pvalue=0.05, min_depth=3, max_depth=10, min_ref=5,
-                       max_ref=500):
+                       max_ref=500, variable_of_interest='enrichment_score'):
     """
 
     Parameters
@@ -475,7 +475,10 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     # create sample labels
     labels = tmp['sample_index'].unique()
 
-    enrichment_list = [('enrichment_score', i) for i in labels]
+    enrichment_list = [(variable_of_interest, i) for i in labels]
+    ascend = False
+    if variable_of_interest == 'pvalue':
+        ascend = True
     # enrichment_list = [('pvalue', i) for i in labels]
     list_all_go = tmp['GO_id'].unique()
     if n_hits_per_time is not None:
@@ -488,7 +491,7 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
 
         list_all_go = set()
         for i in enrichment_list:
-            tmp = tmp.sort_values(by=i, ascending=False)
+            tmp = tmp.sort_values(by=i, ascending=ascend)
             # tmp = tmp.sort_values(by=i, ascending=True)
             list_of_go = set(tmp.head(n_hits_per_time).index)
             if trim_nodes:

@@ -4,6 +4,7 @@ import matplotlib
 
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+from pandas.plotting import table
 import os
 import numpy as np
 import pandas
@@ -388,11 +389,13 @@ class ExperimentalData(object):
         t['Total Unique Across '] = pandas.Series(unique_col, index=t.index)
 
         ax = plt.subplot(111, frame_on=False)
-        pandas.tools.plotting.table(ax, t, loc='center')
+        # pandas.tools.plotting.table(ax, t, loc='center')
+        # t.plot(table=True, ax=ax)
+        table(ax, t, loc='center')
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
         # plt.tight_layout()
-        plt.savefig('{}.png'.format(save_name))
+        plt.savefig('{}.png'.format(save_name), dpi=300)
         plt.close()
         t.to_csv('{0}.csv'.format(save_name))
         filename = '{0}.tex'.format(save_name)
@@ -401,9 +404,9 @@ class ExperimentalData(object):
             f.write(template.format(t.to_latex(
                     column_format='*{}{{c}}'.format(str(len(timepoints) + 1)))))
 
-        if _which('pdflatex'):
-        # t = True
-        # if t:
+        # if _which('pdflatex'):
+        t = True
+        if t:
             print('Compiling table')
             with open(os.devnull, "w") as fnull:
                 subprocess.call(['pdflatex', filename],

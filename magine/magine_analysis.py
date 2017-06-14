@@ -153,7 +153,8 @@ class Analyzer(object):
 
         return list_of_go_dict
 
-    def run_go_and_create_html(self, html_name, visualize=False):
+    def run_go_and_create_html(self, html_name, visualize=False,
+                               create_figure=True):
 
         list_of_go_dict = self.run_proteomics_go()
         for i in list_of_go_dict:
@@ -163,10 +164,11 @@ class Analyzer(object):
             save_name = "{}_{}_{}".format(self.save_name, i['DataType'],
                                           i['FoldChange'])
             print("Processing : {}".format(save_name))
-
-            write_table_to_html_with_figures(file_name, self.exp_data,
-                                             save_name, out_dir=self.out_dir,
-                                             )
+            if create_figure:
+                write_table_to_html_with_figures(file_name, self.exp_data,
+                                                 save_name,
+                                                 out_dir=self.out_dir
+                                                 )
             if visualize:
                 self.create_selected_go_network(file_name, save_name,
                                                 visualize=True)
@@ -282,6 +284,8 @@ class Analyzer(object):
                                      labels=self.exp_data.timepoints,
                                      out_dir=self.out_dir)
 
+        def _plot_species_over_time():
+            self.exp_data
 
 def _create_names(n):
     names = []

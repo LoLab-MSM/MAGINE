@@ -55,6 +55,9 @@ def load_csv(directory=None, filename=None):
 
     if file_location.endswith('csv'):
         data = pd.read_csv(file_location, parse_dates=False, low_memory=False)
+    elif file_location.endswith('csv.gz'):
+        data = pd.read_csv(file_location, parse_dates=False, low_memory=False,
+                           compression='gzip')
     elif file_location.endswith('xlsx'):
         data = pd.read_excel(file_location, parse_dates=False)
     else:
@@ -217,19 +220,23 @@ def check_data(data, keyword):
 def process_list_of_dir_and_add_attribute(list_dim2):
     all_df = []
     for entry in list_dim2:
-        for i in ['filename', 'directory', 'sample_id', 'data_type']:
-            assert i in entry, "Entry missing {}".format(i)
+        if isinstance(entry, dict):
+            for i in ['filename', 'directory', 'sample_id', 'data_type']:
+                assert i in entry, "Entry missing {}".format(i)
+        else:
+            assert len(entry) == 4
         filename = entry['filename']
         sample_id = entry['sample_id']
         data_type = entry['data_type']
         directory = entry['directory']
 
         d = load_csv(directory=directory, filename=filename)
-        assert data_type in valid_exp_data_types, \
-            'data_type of {} is unknown'.format(data_type)
+        # assert data_type in valid_exp_data_types, \
+        #     'data_type of {} is unknown'.format(data_type)
 
-        if data_type == 'label_free':
+        if data_type.startswith('label_free'):
             d = _process_label_free(d)
+            d['data_type'] = data_type
         elif data_type == 'ph_silac':
             d = _process_phsilac(d)
         elif data_type == 'silac':
@@ -240,7 +247,7 @@ def process_list_of_dir_and_add_attribute(list_dim2):
             d = _process_metabolites(d)
 
         d['sample_id'] = sample_id
-        d['time'] = d['sample_id'].astype(str) + '_' + d['time'].astype(str)
+        # d['time'] = d['sample_id'].astype(str) + '_' + d['time'].astype(str)
         all_df.append(d)
     return pd.concat(all_df)
 
@@ -453,6 +460,9 @@ def pivot_table_for_export(data, save_name=None):
     tmp = pd.pivot_table(data, index=index, columns='sample_index',
                          aggfunc='first'
                          )
+    print(tmp.head(10))
+    tmp = tmp[['pvalue', 'enrichment_score', 'genes', 'n_genes', ]]
+    print(tmp.head(10))
     if save_name:
         tmp.to_excel('{}.xlsx'.format(save_name),
                      merge_cells=True)
