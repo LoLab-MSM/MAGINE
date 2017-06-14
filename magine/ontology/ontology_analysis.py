@@ -101,31 +101,19 @@ class GoAnalysis(object):
                 ref) / self.number_of_total_reference_genes
             enrichment = float(len(genes)) / expected_value
 
-            # using Orange.bioinformatics way
-
-            # go_name = self.ontology[go_id].name
-            # aspect_name = goa_tools[go_id].namespace
-            # n_reference_genes = len(self.annotations.get_all_genes(go_id))
-            # depth = self.ontology.term_depth(go_id)
-
-            go_name = self.magine_go.go_to_name[go_id]
-            aspect_name = self.magine_go.go_aspect[go_id]
-            n_reference_genes = len(self.magine_go.go_to_gene[go_id])
-            depth = self.magine_go.go_depth[go_id]
-
             go_row['GO_id'] = go_id
             go_row['enrichment_score'] = enrichment
             go_row['pvalue'] = p_value
             go_row['genes'] = list(np.sort(genes))
             go_row['n_genes'] = len(genes)
-            go_row['aspect'] = aspect_name
-            go_row['ref'] = n_reference_genes
-            go_row['depth'] = depth
-            go_row['GO_name'] = go_name
+            go_row['aspect'] = self.magine_go.go_aspect[go_id]
+            go_row['ref'] = len(self.magine_go.go_to_gene[go_id])
+            go_row['depth'] = self.magine_go.go_depth[go_id]
+            go_row['GO_name'] = self.magine_go.go_to_name[go_id]
             go_row['slim'] = go_id in self.magine_go.go_slim
 
             all_go_rows.append(go_row)
-            if self.verbose: # pragma: no cover
+            if self.verbose:  # pragma: no cover
                 print(go_id, float(len(genes) / float(ref)) * 100,
                       self.magine_go.go_to_name[go_id],
                       p_value, len(genes), ref,
