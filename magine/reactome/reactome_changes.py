@@ -1,71 +1,30 @@
-# -*- python -*-
-#
-#  This file is part of bioservices software
-#
-#  Copyright (c) 2013-2014 - EBI-EMBL
-#
-#  File author(s):
-#      Thomas Cokelaer <cokelaer@ebi.ac.uk>
-#
-#  Distributed under the GPLv3 License.
-#  See accompanying file LICENSE.txt or copy at
-#      http://www.gnu.org/licenses/gpl-3.0.html
-#
-#  website: https://github.com/cokelaer/bioservices
-#  documentation: http://packages.python.org/bioservices
-#
-##############################################################################
-# $Id$
-"""Interface to the Reactome webs services
-
-.. topic:: What is Reactome?
-
-    :URL: http://www.reactome.org/ReactomeGWT/entrypoint.html
-    :Citation: http://www.reactome.org/citation.html
-    :REST: http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS
-
-    .. highlights::
-
-        "REACTOME is an open-source, open access, manually curated and peer-reviewed
-        pathway database. Pathway annotations are authored by expert biologists, in
-        collaboration with Reactome editorial staff and cross-referenced to many
-        bioinformatics databases. These include NCBI Entrez Gene, Ensembl and UniProt
-        databases, the UCSC and HapMap Genome Browsers, the KEGG Compound and ChEBI
-        small molecule databases, PubMed, and Gene Ontology. ... "
-
-        -- from Reactome web site
-
-"""
 from bioservices.services import REST
 
-__all__ = ['Reactome', 'ReactomeAnalysis']
-
-
-# for reactome, content-type could be
-#  "Content-Type", "multipart/form-data; boundary=" +    boundary);
+__all__ = ['Reactome']
 
 
 class Reactome(REST):
     """Reactome interface
 
-    some data can be download on the main `website <http://www.reactome.org/pages/download-data/>`_
+    some data can be download on the main `website <http://www._reactome.org/pages/download-data/>`_
     """
 
     _url = "http://reactomews.oicr.on.ca:8080/ReactomeRESTfulAPI/RESTfulWS"
 
     def __init__(self, verbose=True, cache=False):
         super(Reactome, self).__init__("Reactome(URL)", url=Reactome._url,
-                                       verbose="ERROR", cache=False)
+                                       verbose="ERROR", cache=cache)
         self.debugLevel = verbose
         self.test = 2
 
         # for buffering
-        self._list_pathways = None
+        self._list_pathways = []
+        self._content_url = 'http://_reactome.org/ContentService/data/'
 
     def _download_list_pathways(self):
-        if self._list_pathways is None:
-            res = self.session.get(
-                    "http://www.reactome.org/download/current/ReactomePathways.txt")
+        url = "http://www._reactome.org/download/current/ReactomePathways.txt"
+        if len(self._list_pathways) == 0:
+            res = self.session.get(url)
             if res.status_code == 200:
                 res = res.text  # content does not work in python 3.3
                 res = res.strip()
@@ -75,9 +34,9 @@ class Reactome(REST):
         return self._list_pathways
 
     def get_list_pathways(self):
-        """Return list of pathways from reactome website
+        """Return list of pathways from _reactome website
 
-        :return: list of lists. Each sub-lis contains 3 items: reactome pathway
+        :return: list of lists. Each sub-lis contains 3 items: _reactome pathway
             identifier, description and species
 
         """
@@ -86,10 +45,8 @@ class Reactome(REST):
 
     def get_species(self):
         """Return list of species from all pathways"""
-        res = self._download_list_pathways()
         res = set([x[2] for x in self.get_list_pathways()])
         return res
-
 
     def list_by_query(self, classname, **kargs):
         """Get list of objecs from Reactome database
@@ -252,7 +209,7 @@ class Reactome(REST):
         .. note:: draft version
         """
         res = self.http_get(
-                'http://www.reactome.org/content/detail/%s' % reaction)
+                'http://www._reactome.org/content/detail/%s' % reaction)
         res = res.content
 
         try:
@@ -276,15 +233,8 @@ class Reactome(REST):
 
         .. note:: draft version
         """
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/query/%s' % reaction,
-                frmt='json')
-        # compartment = ''
-        # if 'compartment' in res:
-        #     compartment = res['compartment']
-        # input = res['input']
-        # output= res['output']
-        # data = {'compartment': compartment, 'input':input, 'output':output}
+        q = 'query/{}'.format(reaction)
+        res = self.http_get(self._content_url + q, frmt='json')
         return res
 
     def get_entity_info(self, entity):
@@ -292,15 +242,8 @@ class Reactome(REST):
 
         .. note:: draft version
         """
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/query/%s/extended' % entity,
-                frmt='json')
-        # compartment = ''
-        # if 'compartment' in res:
-        #     compartment = res['compartment']
-        # input = res['input']
-        # output= res['output']
-        # data = {'compartment': compartment, 'input':input, 'output':output}
+        q = 'query/{}/extended'.format(entity)
+        res = self.http_get(self._content_url+q, frmt='json')
         return res
 
     def get_entity_attribute(self, entity, attribute):
@@ -308,23 +251,19 @@ class Reactome(REST):
 
         .. note:: draft version
         """
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/query/%s/%s' % (
-                entity, attribute),
-                frmt='string')
+        q = 'query/{}/{}'.format(entity, attribute)
+        res = self.http_get(self._content_url+q, frmt='string')
 
         return res
 
     def get_event_participants(self, event):
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/event/%s/participants' % event,
-                frmt='json')
+        q = 'event/{}/participants'.format(event)
+        res = self.http_get(self._content_url+q, frmt='json')
         return res
 
     def get_event_participating_phys_entities(self, event):
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/event/%s/participatingPhysicalEntities' % event,
-                frmt='json')
+        q = 'event/{}/participatingPhysicalEntities'.format(event)
+        res = self.http_get(self._content_url+q, frmt='json')
         return res
 
     def get_pathway(self, pathway_id):
@@ -332,9 +271,8 @@ class Reactome(REST):
 
         .. note:: draft version
         """
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/pathway/%s/Complex' % pathway_id,
-                frmt='json')
+        q = 'pathway/{}/Complex'.format(pathway_id)
+        res = self.http_get(self._content_url +q, frmt='json')
 
         return res
 
@@ -343,8 +281,6 @@ class Reactome(REST):
 
         .. note:: draft version
         """
-        res = self.http_get(
-                'http://reactome.org/ContentService/data/pathway/%s/containedEvents' % pathway_id,
-                frmt='json')
-
+        q = 'pathway/{}/containedEvents'.format(pathway_id)
+        res = self.http_get(self._content_url + q, frmt='json')
         return res

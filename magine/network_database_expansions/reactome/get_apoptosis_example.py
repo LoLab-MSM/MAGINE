@@ -5,11 +5,9 @@ Created on Fri Oct 21 11:19:59 2016
 @author: pinojc
 """
 
-import networkx as nx
-import pandas as pd
-import pygraphviz as pyg
 
-from magine.bioservices_local.reactome_changes import Reactome
+import pandas as pd
+from magine.reactome.reactome_changes import Reactome
 
 pd.set_option('expand_frame_repr', False)
 pd.set_option('display.width', 10000)
@@ -17,7 +15,7 @@ pd.set_option('display.max_rows', 5000)
 pd.set_option('display.max_columns', 5000)
 pd.options.display.max_colwidth = 5000
 
-reactome = Reactome()
+_reactome = Reactome()
 
 verbose = True
 """
@@ -103,7 +101,7 @@ def extract_list_from_key(keyword, y):
 
 
 def get_entity_info(species):
-    x = reactome.get_entity_info(species)
+    x = _reactome.get_entity_info(species)
 
     info_needed = ['referenceType', 'className', 'startCoordinate',
                    'endCoordinate', 'referenceEntity', 'compartment',
@@ -165,7 +163,7 @@ def count_entites(list_of_object):
         else:
             count_dict[i] = 1
     for i in count_dict:
-        x = reactome.get_entity_attribute(i, 'displayName')
+        x = _reactome.get_entity_attribute(i, 'displayName')
         name_dict[i] = x
         # get_entity_info(i)
     return name_dict, count_dict
@@ -264,7 +262,7 @@ def get_reaction_info(reaction, graph):
         return None, None
 
     # get all reaction info
-    y = reactome.get_reaction_info(reaction['dbId'])
+    y = _reactome.get_reaction_info(reaction['dbId'])
 
     # check to see if compartment exists
     if 'compartment' not in y:
@@ -310,7 +308,7 @@ def get_reaction_info(reaction, graph):
         catalyst = y['catalystActivity'][0]['dbId']
         if verbose:
             print(catalyst, 1)
-        test = reactome.get_event_participating_phys_entities(catalyst)
+        test = _reactome.get_event_participating_phys_entities(catalyst)
         # print('TEST', test)
         for n in test:
             if verbose:
@@ -389,74 +387,3 @@ def extract_pathways(pathway_events):
         if i['className'] == 'Pathway':
             pathways.append(i['dbId'])
     return pathways
-
-
-if __name__ == "__main__":
-
-    save_name = 'apoptosis'
-    save_name = 'bad_activation'
-    save_name = 'apoptosis'
-    save_name = 'test'
-
-    apoptosis = 109581
-    simple_bax_trans = 114294
-    necrosis = 5218859
-    bad_activation = 111447
-
-    g = pyg.AGraph(directed=True)
-    g.graph_attr['rankdir'] = 'LR'
-    g.graph_attr['splines'] = 'true'
-
-    # apoptosis_complex = reactome.pathway_complexes(109581)
-    x = reactome.get_pathway_events(195721)
-
-    pathways = extract_pathways(x)
-    print(pathways)
-    # quit()
-
-    reactions = []
-    all_info = []
-    all_df = []
-
-
-    def extract_list_of_events(events):
-        for i in events[:10]:
-            info, rxn = get_reaction_info(i)
-
-            # df = pd.DataFrame(info)
-            if info is None:
-                continue
-            all_info.append(info)
-            reactions.append(rxn)
-
-
-    extract_list_of_events(x)
-
-    pathways = [111457]
-    for i in pathways:
-        x = reactome.get_pathway_events(i)
-        extract_list_of_events(x)
-
-    df = pd.DataFrame(all_info)
-
-    df.to_csv('reactome_df_{}.csv'.format(save_name))
-    # """
-    # df = pd.read_csv('reactome_df.csv')
-
-    translocations = df[df['compartment'].map(len) > 1]
-    print("Translocations found")
-    print(translocations.shape)
-
-    gml_g = nx.nx_agraph.from_agraph(g)
-    nx.write_gml(gml_g, '{}.gml'.format(save_name), )
-    print("Created GML file!")
-    node_species = []
-    for i in g.nodes():
-        if i not in reactions:
-            node_species.append(i)
-
-    # g.add_subgraph(reactions, name='cluster1', label='Reactions')
-    # g.add_subgraph(species, name='cluster2', label='Species')
-
-    g.write('{}.dot'.format(save_name), )
-    # g.draw('{}.png'.format(save_name), prog='dot')

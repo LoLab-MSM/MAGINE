@@ -160,7 +160,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     all_measured_list : list
         list of all species that should be considered in network
     use_reactome : bool
-        use reactome functional interaction to expand network
+        use _reactome functional interaction to expand network
     use_hmdb : bool
         use hmdb to expand network incorporating metabolites provided in
         all_measured_list
@@ -390,7 +390,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
 
 def add_reactome(network, measured_list):
     """
-    add reactome functional interaction network to network
+    add _reactome functional interaction network to network
     Parameters
     ----------
     network : nx.DiGraph

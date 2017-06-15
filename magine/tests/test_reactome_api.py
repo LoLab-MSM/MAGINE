@@ -5,7 +5,7 @@ import pandas as pd
 import pygraphviz as pyg
 
 import \
-    magine.network_database_expansions.reactome_expansion.get_apoptosis_example as reactome_api
+    magine.network_database_expansions.reactome.get_apoptosis_example as reactome_api
 
 
 def test_reactome():
@@ -19,7 +19,7 @@ def test_reactome():
     # g.graph_attr['rankdir'] = 'LR'
     g.graph_attr['splines'] = 'true'
 
-    x = reactome_api.reactome.get_pathway_events(apoptosis)
+    x = reactome_api._reactome.get_pathway_events(apoptosis)
     reactions = []
     all_info = []
 
@@ -31,7 +31,7 @@ def test_reactome():
             all_info.append(info)
             reactions.append(rxn)
 
-    x = reactome_api.reactome.get_pathway_events(apoptosis)
+    x = reactome_api._reactome.get_pathway_events(apoptosis)
     print("{} has {} events".format(save_name, len(x)))
     print("Extracting events")
     extract_list_of_events(x)

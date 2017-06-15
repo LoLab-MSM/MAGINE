@@ -2,13 +2,13 @@ import os
 
 import networkx as nx
 
-from magine.network_database_expansions.reactome_expansion.reactome_functional_interaction \
+from magine.network_database_expansions.reactome.reactome_functional_interaction \
     import ReactomeFunctionalInteraction
 
 
 def load_reactome_fi():
     path = os.path.join(os.path.dirname(__file__),
-                        'reactome_expansion',
+                        '_reactome',
                         'reactome_fi.gml')
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")

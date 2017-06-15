@@ -70,14 +70,14 @@ def write_single_table(table, save_name, title):
 
 
 def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir='Figures'):
+                                     out_dir='Figures', run_parallel=True):
     # create plots of everything
     if isinstance(data, str):
         data = pd.read_csv(data)
     from magine.plotting.species_plotting import create_gene_plots_per_go
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
                                                    out_dir, exp_data,
-                                                   run_parallel=True
+                                                   run_parallel=run_parallel
                                                    )
     for i in fig_dict:
         data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]

@@ -53,7 +53,7 @@ class Analyzer(object):
         if not os.path.exists(os.path.join(self.out_dir, 'Network_files')):
             os.mkdir(os.path.join(self.out_dir, 'Network_files'))
 
-    def generate_network(self, save_name):
+    def generate_network(self, save_name, use_hmdb=True, use_reactome=True):
         """
         Generates network with default parameters
 
@@ -61,6 +61,10 @@ class Analyzer(object):
         ----------
         save_name : str
             name of network to be saved
+        use_hmdb : bool
+            Use HMDB to create network
+        use_reactome : bool
+            Use Reactome to build network
 
         Returns
         -------
@@ -68,8 +72,14 @@ class Analyzer(object):
         """
         from magine.networks.network_generator import build_network
         proteins = self.exp_data.list_sig_proteins
-        self.network = build_network(proteins, num_overlap=1,
-                                     save_name=save_name, species=self.species)
+        metabolites = None
+        if len(self.exp_data.list_metabolites) != 0:
+            metabolites = self.exp_data.list_metabolites
+        self.network = build_network(
+            proteins, num_overlap=1, save_name=save_name, species=self.species,
+            metabolite_list=metabolites,
+            all_measured_list=self.exp_data.list_species,
+            use_reactome=use_reactome, use_hmdb=use_hmdb)
 
     def run_single_go(self, data_type='proteomics', fold_change='up',
                       save=True):
@@ -154,7 +164,7 @@ class Analyzer(object):
         return list_of_go_dict
 
     def run_go_and_create_html(self, html_name, visualize=False,
-                               create_figure=True):
+                               create_figure=True, run_parallel=True):
 
         list_of_go_dict = self.run_proteomics_go()
         for i in list_of_go_dict:
@@ -167,7 +177,8 @@ class Analyzer(object):
             if create_figure:
                 write_table_to_html_with_figures(file_name, self.exp_data,
                                                  save_name,
-                                                 out_dir=self.out_dir
+                                                 out_dir=self.out_dir,
+                                                 run_parallel=run_parallel
                                                  )
             if visualize:
                 self.create_selected_go_network(file_name, save_name,

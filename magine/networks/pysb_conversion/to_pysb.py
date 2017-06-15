@@ -1,38 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Thu Jun 18 20:36:51 2015
-
-@author: pinojc
-"""
-
-arrowType = {
-    'activation':          'onormal', 'indirect effect': 'odiamondodiamond',
-    'expression':          'normal', 'inhibition': 'tee',
-    'binding/association': 'curve', 'phosphorylation': 'dot',
-    'missing interaction': 'odiamond', 'compound': 'dotodot',
-    'dissociation':        'diamond', 'ubiquitination': 'oldiamond',
-    'state change':        'teetee', 'dephosphorylation': 'onormal',
-             'repression': 'obox'}
-
-colorType = {
-    'activation':          'black', 'indirect effect': 'black',
-    'expression':          'black', 'inhibition': 'red',
-    'binding/association': 'green', 'phosphorylation': 'blue',
-    'missing interaction': 'pink', 'compound': 'pink',
-    'dissociation':        'pink', 'ubiquitination': 'red',
-    'state change':        'red', 'dephosphorylation': 'red',
-             'repression': 'red'}
-
-shapeType = {'gene': 'oval', 'compound': 'box'}
-
-"""
-ECrel	enzyme-enzyme relation, indicating two enzymes catalyzing successive reaction steps
-PPrel	protein-protein interaction, such as binding and modification
-GErel	gene expression interaction, indicating relation of transcription factor and target gene product
-PCrel	protein-compound interaction
-maplink link to another map]
-
-"""
 
 
 def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
@@ -59,7 +24,7 @@ def translate(X, Y, option, param_counter, parameters, rules, gene_monomers,
     X = str(X)
     Y = str(Y)
     split = option.split("_")
-    print(split)
+
     if split[0] == 'inhibition':
         rate1 = "kf%s" % str(param_counter)
         rate2 = "kr%s" % str(param_counter)
