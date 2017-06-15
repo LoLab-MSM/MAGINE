@@ -77,14 +77,22 @@ class Enrichr(object):
             tmp_dict['combined_score'] = i[4]
             tmp_dict['overlapping_genes'] = i[5]
             tmp_dict['adj_p_value'] = i[6]
-            tmp_dict['old_p_value'] = i[7]
-            tmp_dict['old_adj_p_value'] = i[8]
+            # tmp_dict['old_p_value'] = i[7]
+            # tmp_dict['old_adj_p_value'] = i[8]
             list_of_dict.append(tmp_dict)
         cols = ['term_name', 'rank', 'p_value', 'z_score', 'combined_score',
-                'adj_p_value', 'overlapping_genes', 'old_adj_p_value',
-                'old_p_value']
+                'adj_p_value', 'overlapping_genes',
+                # 'old_adj_p_value', 'old_p_value'
+                ]
         df = pd.DataFrame(list_of_dict, columns=cols)
+        if gene_set_lib.startswith('GO'):
+            def get_go_id(row):
+                s = row['term_name']
+                return s[s.find("(") + 1:s.find(")")]
 
+            df['GO_id'] = df.apply(get_go_id, axis=1)
+            cols.insert(0, 'GO_id')
+            df = df[cols]
         return df
 
 if __name__ == '__main__':
