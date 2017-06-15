@@ -1,4 +1,5 @@
 include README.md
+include magine/ontology/_valid_enricher_libs.txt
 include magine/html_templates/*.html
 include magine/html_templates/templates/*.html
 include magine/tests/Data/*
