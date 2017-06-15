@@ -229,10 +229,10 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
     # Place a link to the species for each key
     for i in figure_locations:
-        exp_data.loc[exp_data[idx_key] == i, idx_key] = figure_locations[i]
+        local_data.loc[exp_data[idx_key] == i, idx_key] = figure_locations[i]
 
     # Pivot the pandas df to be samples vs species
-    genes_out, meta_out = pivot_tables_for_export(exp_data)
+    genes_out, meta_out = pivot_tables_for_export(local_data)
 
     if type_of_species == 'protein':
         output = genes_out
