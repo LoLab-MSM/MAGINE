@@ -5,7 +5,6 @@ import pandas as pd
 
 from magine.data.formatter import pivot_table_for_export
 
-
 env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(
                     searchpath=os.path.join(
@@ -72,7 +71,7 @@ def write_single_table(table, save_name, title):
 
 
 def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir='Figures'):
+                                     out_dir='Figures', run_parallel=True):
     # create plots of everything
     if isinstance(data, str):
         data = pd.read_csv(data)
@@ -80,11 +79,10 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     tmp = pivot_table_for_export(data)
     print(tmp.dtypes)
 
-    """
     from magine.plotting.species_plotting import create_gene_plots_per_go
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
                                                    out_dir, exp_data,
-                                                   run_parallel=True
+                                                   run_parallel=run_parallel
                                                    )
 
     for i in fig_dict:
@@ -120,6 +118,7 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     html_out = enrich_template.render(header=keys, items=items)
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
+    """
 
 
 def write_filter_table(table, save_name, title):
