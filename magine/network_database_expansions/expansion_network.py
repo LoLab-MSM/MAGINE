@@ -8,7 +8,7 @@ from magine.network_database_expansions.reactome.reactome_functional_interaction
 
 def load_reactome_fi():
     path = os.path.join(os.path.dirname(__file__),
-                        '_reactome',
+                        'reactome',
                         'reactome_fi.gml')
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")
