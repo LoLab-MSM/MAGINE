@@ -5,7 +5,7 @@ import pandas as pd
 import pygraphviz as pyg
 
 import \
-    magine.network_database_expansions.reactome.get_apoptosis_example as reactome_api
+    magine.network_database_expansions.reactome.reactome_api as reactome_api
 
 
 def test_reactome():

@@ -2,7 +2,7 @@ import os
 
 import networkx as nx
 
-from magine.network_database_expansions.reactome.reactome_functional_interaction \
+from magine.network_database_expansions.reactome \
     import ReactomeFunctionalInteraction
 
 

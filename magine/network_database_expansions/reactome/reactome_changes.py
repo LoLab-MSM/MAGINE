@@ -19,7 +19,7 @@ class Reactome(REST):
 
         # for buffering
         self._list_pathways = []
-        self._content_url = 'http://_reactome.org/ContentService/data/'
+        self._content_url = 'http://reactome.org/ContentService/data/'
 
     def _download_list_pathways(self):
         url = "http://www._reactome.org/download/current/ReactomePathways.txt"

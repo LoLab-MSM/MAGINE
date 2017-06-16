@@ -11,8 +11,7 @@ from bioservices import KEGG
 
 import magine.mappings.maps as mapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.network_database_expansions.expansion_network import \
-    load_reactome_fi
+from magine.network_database_expansions import load_reactome_fi
 from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:

@@ -460,9 +460,7 @@ def pivot_table_for_export(data, save_name=None):
     tmp = pd.pivot_table(data, index=index, columns='sample_index',
                          aggfunc='first'
                          )
-    print(tmp.head(10))
     tmp = tmp[['pvalue', 'enrichment_score', 'genes', 'n_genes', ]]
-    print(tmp.head(10))
     if save_name:
         tmp.to_excel('{}.xlsx'.format(save_name),
                      merge_cells=True)

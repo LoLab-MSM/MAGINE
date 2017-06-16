@@ -7,7 +7,9 @@ Created on Fri Oct 21 11:19:59 2016
 
 
 import pandas as pd
-from magine.reactome.reactome_changes import Reactome
+
+from magine.network_database_expansions.reactome.reactome_changes import \
+    Reactome
 
 pd.set_option('expand_frame_repr', False)
 pd.set_option('display.width', 10000)

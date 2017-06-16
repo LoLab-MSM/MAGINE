@@ -15,6 +15,8 @@ env = jinja2.Environment(
 plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
 filter_template = env.get_template('filter_table.html')
+enrich_template = env.get_template('enrichment_template.html')
+
 
 range_number = """column_number:{},
 filter_type: "range_number" """
@@ -70,15 +72,21 @@ def write_single_table(table, save_name, title):
 
 
 def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir='Figures', run_parallel=True):
+                                     out_dir='Figures'):
     # create plots of everything
     if isinstance(data, str):
         data = pd.read_csv(data)
+    print(data.dtypes)
+    tmp = pivot_table_for_export(data)
+    print(tmp.dtypes)
+
+    """
     from magine.plotting.species_plotting import create_gene_plots_per_go
     fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
                                                    out_dir, exp_data,
-                                                   run_parallel=run_parallel
+                                                   run_parallel=True
                                                    )
+
     for i in fig_dict:
         data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
 
@@ -93,6 +101,25 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
 
     html_out = os.path.join(out_dir, save_name + '_filter')
     write_filter_table(tmp, html_out, 'MAGINE GO analysis')
+    """
+    items = []
+    for i, row in data.iterrows():
+        if i > 100:
+            continue
+        i = str(i)
+
+        an_item = dict(GO_id=row['GO_id'], id_num=i,
+                       enrichment_score=row['enrichment_score'],
+                       pvalue=row['pvalue'],
+                       genes=row['genes'],
+                       n_genes=row['n_genes'],
+                       )
+        items.append(an_item)
+
+    keys = ['GO_ID', 'enrichment_score', 'p-value', 'n_genes']
+    html_out = enrich_template.render(header=keys, items=items)
+    with open('{}.html'.format(save_name), 'w') as f:
+        f.write(html_out)
 
 
 def write_filter_table(table, save_name, title):
@@ -135,6 +162,7 @@ def write_filter_table(table, save_name, title):
 
     # formats output to less precision and ints rather than floats
     tmp_table, format_dict = _format_data_table(table)
+    
     html_table = tmp_table.to_html(escape=False,
                                    # na_rep='-',
                                    formatters=format_dict
