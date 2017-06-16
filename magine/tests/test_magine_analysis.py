@@ -12,7 +12,7 @@ def test_html_array():
                            save_name='test')
 
     go_analyzer.generate_network('test_2')
-    go_analyzer.run_go_and_create_html('test_del')
+    go_analyzer.run_go_and_create_html('test_del', create_figure=False)
 
 
 if __name__ == '__main__':
