@@ -24,7 +24,6 @@ class ReactomeFunctionalInteraction(object):
         self.out_dir = directory
         self.target_file = 'FIsInGene_031516_with_annotations.txt.zip'
         self.url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2015/FIsInGene_031516_with_annotations.txt.zip'
-        self.out_path = os.path.join(self.tmp_dir, self.target_file)
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
 

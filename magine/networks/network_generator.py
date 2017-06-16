@@ -11,7 +11,8 @@ from bioservices import KEGG
 
 import magine.mappings.maps as mapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.network_database_expansions import load_reactome_fi
+from magine.network_database_expansions.reactome \
+    import ReactomeFunctionalInteraction
 from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:
@@ -584,6 +585,27 @@ def _create_all_of_kegg(output_dir, species='hsa'):
     all_of_kegg = nx.relabel_nodes(all_of_kegg, name_dict)
     nx.write_gml(all_of_kegg, 'all_of_kegg.gml')
 
+
+
+def load_reactome_fi():
+    """
+    Load reactome functional interaction network
+    Returns
+    -------
+
+    """
+    path = os.path.join(os.path.dirname(__file__), '..',
+                        'network_database_expansions'
+                        'reactome',
+                        'reactome_fi.gml')
+    if not os.path.exists(path):
+        print("Downloading Reactome Functional interaction network!")
+        rfi = ReactomeFunctionalInteraction()
+        rfi.parse_network()
+    if not os.path.exists(path):
+        print('Failed!')
+        quit()
+    return nx.read_gml(path)
 
 if __name__ == '__main__':
     _download_all_of_kegg('DELETE')
