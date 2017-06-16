@@ -1,5 +1,7 @@
 import subprocess
+
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from pandas.plotting import table
@@ -59,6 +61,7 @@ class ExperimentalData(object):
         self.list_metabolites = []
         self.list_sig_metabolites = []
         self.metabolite_sign = []
+        self.exp_methods_metabolite = []
 
         if metabolites in self.data[species_type].unique():
             self._set_up_metabolites()
@@ -198,6 +201,8 @@ class ExperimentalData(object):
                 self.metabolite_sign['compound_id'].unique())
         self.exp_methods_metabolite = self.metabolites[exp_method].unique()
 
+        self.metabolomics_time_points = \
+            np.sort(self.metabolites[sample_id].unique())
     def return_proteomics(self, sample_id_name=0.0, significant=False,
                           fold_change_value=None):
         """
@@ -341,19 +346,25 @@ class ExperimentalData(object):
         if sig:
             tmp_data = tmp_data[tmp_data[flag]]
         meta_d = tmp_data[tmp_data[species_type] == metabolites].copy()
+
+        do_metab = True
+        if len(meta_d) == 0:
+            do_metab = False
+
         gene_d = tmp_data[tmp_data[species_type] == protein].copy()
 
         if unique:
-
-            tmp_data1 = meta_d.pivot_table(values='compound', index=exp_method,
-                                           columns='time',
-                                           aggfunc=lambda x:
-                                           len(x.dropna().unique()))
+            if do_metab:
+                tmp_data1 = meta_d.pivot_table(values='compound',
+                                               index=exp_method, columns='time',
+                                               aggfunc=lambda x:
+                                               x.dropna().nunique())
 
             tmp_data2 = gene_d.pivot_table(values='gene', index=exp_method,
                                            columns='time',
                                            aggfunc=lambda x:
-                                           len(x.dropna().unique()))
+                                           x.dropna().nunique())
+
             unique_col = []
             for i in self.exp_methods:
                 if i in self.exp_methods_metabolite:
@@ -362,18 +373,18 @@ class ExperimentalData(object):
                 else:
                     n = len(tmp_data[tmp_data[exp_method] == i][
                                 'gene'].dropna().unique())
-                unique_col.append(n)
+                unique_col.append(int(n))
         else:
-
-            tmp_data1 = meta_d.pivot_table(values='compound_id',
-                                           index=exp_method,
-                                           columns='time',
-                                           aggfunc=lambda x:
-                                           len(x.dropna().unique()))
+            if do_metab:
+                tmp_data1 = meta_d.pivot_table(values='compound_id',
+                                               index=exp_method,
+                                               columns='time',
+                                               aggfunc=lambda x:
+                                               x.dropna().nunique())
             tmp_data2 = gene_d.pivot_table(values='protein', index=exp_method,
                                            columns='time',
                                            aggfunc=lambda x:
-                                           len(x.dropna().unique()))
+                                           x.dropna().nunique())
             unique_col = []
             for i in self.exp_methods:
                 if i in self.exp_methods_metabolite:
@@ -382,26 +393,32 @@ class ExperimentalData(object):
                 else:
                     n = len(tmp_data[tmp_data[exp_method] == i][
                                 'protein'].dropna().unique())
-                unique_col.append(n)
-        t = pandas.concat([tmp_data1, tmp_data2]).fillna('-')
+                unique_col.append(int(n))
+
+        if do_metab:
+            t = pandas.concat([tmp_data1, tmp_data2]).fillna('-')
+        else:
+            t = tmp_data2.fillna('-')
 
         t['Total Unique Across '] = pandas.Series(unique_col, index=t.index)
 
         ax = plt.subplot(111, frame_on=False)
-        # pandas.tools.plotting.table(ax, t, loc='center')
-        # t.plot(table=True, ax=ax)
+
         table(ax, t, loc='center')
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
-        # plt.tight_layout()
+        plt.tight_layout()
         plt.savefig('{}.png'.format(save_name), dpi=300)
         plt.close()
         t.to_csv('{0}.csv'.format(save_name))
         filename = '{0}.tex'.format(save_name)
 
         with open(filename, 'wt') as f:
-            f.write(template.format(t.to_latex(
-                    column_format='*{}{{c}}'.format(str(len(timepoints) + 1)))))
+            st = t.to_latex(
+                    column_format='*{{{}}}{{c}}'.format(
+                        str(len(timepoints) + 2)))
+            print(st)
+            f.write(template.format(st))
 
         if _which('pdflatex'):
         # t = True
@@ -410,7 +427,8 @@ class ExperimentalData(object):
             with open(os.devnull, "w") as fnull:
                 subprocess.call(['pdflatex', filename],
                                 stderr=subprocess.STDOUT,
-                                stdout=fnull)
+                                stdout=fnull
+                                )
 
                 # subprocess.call(['rm',
                 #                  '{0}.aux'.format(save_name),
@@ -602,6 +620,7 @@ class ExperimentalData(object):
 
         data = self.data[self.data[exp_method] == exp_data_type].copy()
         n_sample = np.sort(data[sample_id].unique())
+
         if len(n_sample) > 8:
             n_cols = 3
         else:
@@ -612,6 +631,7 @@ class ExperimentalData(object):
                 n_rows += 1
             else:
                 n_cols += 1
+
         fig = plt.figure(figsize=(3 * n_rows, 3 * n_cols))
         for n, i in enumerate(n_sample):
             sample = data[data[sample_id] == i].copy()
@@ -730,7 +750,7 @@ template = r'''
 \usepackage{{geometry}}
 \usepackage{{pdflscape}}
 %\usepackage{{nopageno}}
-\geometry{{ papersize={{4.444in,8.681in}},total={{3.8in,6.8in}} }}
+\geometry{{ papersize={{4.444in,12.681in}},total={{2.8in,6.8in}} }}
 \begin{{document}}
 \begin{{landscape}}
 \begin{{table}}
