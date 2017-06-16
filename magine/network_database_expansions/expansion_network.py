@@ -7,6 +7,12 @@ from magine.network_database_expansions.reactome.reactome_functional_interaction
 
 
 def load_reactome_fi():
+    """
+    Load reactome functional interaction network
+    Returns
+    -------
+
+    """
     path = os.path.join(os.path.dirname(__file__),
                         'reactome',
                         'reactome_fi.gml')
