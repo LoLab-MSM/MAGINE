@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+
+{#    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet" media="screen">#}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css"/>
+    <link href="https://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css"
+      rel="stylesheet"/>
+    <link href="https://cdn.datatables.net/r/bs-3.3.5/dt-1.10.9/datatables.min.css"
+          rel="stylesheet" type="text/css"/>
+
+    <link href="https://yadcf-showcase.appspot.com/resources/css/jquery.dataTables.yadcf.css"
+          rel="stylesheet" type="text/css"/>
+    <style>
+        .gene-list {display:none}
+    </style>
+</head>
+<body>
+<table id="table" class="table table-striped">
+<tr>
+    {% for cell in header %}
+      <td><b>{{ cell }}</b></td>
+    {% endfor %}
+</tr>
+
+{% for item in items %}
+<tr>
+   <th>{{item.GO_id}}</th>
+   <td>{{item.enrichment_score}}</td>
+   <td>{{item.pvalue}}</td>
+   <td>{{item.n_genes}}[<a onclick = "$('#gene-list-{{item.id_num }}').toggle()" > show </a>]
+       <span class="gene-list" id="gene-list-{{item.id_num }}"> {{item.genes }}</span>
+
+   </td>
+</tr>
+{% endfor %}
+</table>
+
+
+</body>
+
+<script src="https://code.jquery.com/jquery-3.1.1.min.js" crossorigin="anonymous"></script>
+<script src="//cdn.datatables.net/1.10.13/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function () {
+        $('table').DataTable({
+            searchDelay: 250
+        });
+    });
+</script>
+
+<!--
+% for row_index in range(x['date']|count) %}
+    <tr>
+      <td>{ x['date'][row_index]|tojson|safe }}</td>
+      <td>{ x['users'][row_index] }}</td>
+    </tr>
+% endfor %}
+
+https://stackoverflow.com/questions/9198334/how-to-build-up-a-html-table-with-a-simple-for-loop-in-jinja2
+
+items = []
+for i in range(1, 11):
+    i = str(i)
+
+    # dict == {}
+    # you just don't have to quote the keys
+    an_item = dict(date="2012-02-" + i, id=i, position="here", status="waiting")
+    items.append(an_item)
+
+# ... your code here ...
+
+template.render(items=items)
+
+
+-->
