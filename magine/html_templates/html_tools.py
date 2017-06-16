@@ -92,7 +92,8 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
 
     tmp = pivot_table_for_export(data)
 
-    html_out = os.path.join(out_dir, save_name)
+    # html_out = os.path.join(out_dir, save_name)
+    html_out = save_name
     print("Saving to : {}".format(html_out))
 
     write_single_table(tmp, html_out, 'MAGINE GO analysis')
