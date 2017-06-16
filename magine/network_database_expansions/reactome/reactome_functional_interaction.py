@@ -27,7 +27,7 @@ class ReactomeFunctionalInteraction(object):
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
 
-    def parse_network(self):
+    def parse_network(self, path):
         """
         Parses tab delimited file to networkx.DiGraph
 
@@ -78,7 +78,7 @@ class ReactomeFunctionalInteraction(object):
 
         print("Reactome network has {} nodes ".format(len(g.nodes())))
         print("Reactome network has {} edges ".format(len(g.edges())))
-        nx.write_gml(g, os.path.join(directory, 'reactome_fi.gml'))
+        nx.write_gml(g, path)
 
     def return_direction(self, text, gene1, gene2):
         if text in self._reverse:

@@ -586,7 +586,6 @@ def _create_all_of_kegg(output_dir, species='hsa'):
     nx.write_gml(all_of_kegg, 'all_of_kegg.gml')
 
 
-
 def load_reactome_fi():
     """
     Load reactome functional interaction network
@@ -595,13 +594,13 @@ def load_reactome_fi():
 
     """
     path = os.path.join(os.path.dirname(__file__), '..',
-                        'network_database_expansions'
+                        'network_database_expansions',
                         'reactome',
                         'reactome_fi.gml')
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")
         rfi = ReactomeFunctionalInteraction()
-        rfi.parse_network()
+        rfi.parse_network(path)
     if not os.path.exists(path):
         print('Failed!')
         quit()
