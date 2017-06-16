@@ -20,6 +20,14 @@ progensis_list_of_attributes = ['compound', 'compound_id', 'name', 'formula',
                                 'description_food', 'description_drug',
                                 'species_type']
 
+cols = ['compound', 'compound_id', 'name', 'formula',
+        'score', 'top_score', 'treated_control_fold_change',
+        'p_value_group_1_and_group_2', 'significant_flag', 'data_type',
+        'time', 'time_points', 'species_type'
+        # 'origin_endogenous', 'origin_food',
+        #  'origin_drug', 'description_food', 'description_drug',
+        ]
+
 rename_met_dict = {
     'max_fold_change_treated_vs_control': "treated_control_fold_change",
     "anova_p":                            "p_value_group_1_and_group_2",
@@ -29,6 +37,10 @@ rename_met_dict = {
 
 valid_exp_data_types = ['label_free', 'ph_silac', 'silac', 'rna_seq',
                         'metabolomics']
+
+out_gene_cols = ['gene', 'protein', 'time', 'treated_control_fold_change',
+                 'time_points', 'p_value_group_1_and_group_2',
+                 'significant_flag', 'species_type', 'data_type']
 
 
 def load_csv(directory=None, filename=None):
@@ -114,7 +126,7 @@ def merge_metabolite_row(row):
     return row['name']
 
 
-def load_directory(dir_name):
+def load_directory(dir_name, dtype='silac'):
     """ loads all files in a provided directory
 
     Parameters
@@ -132,6 +144,16 @@ def load_directory(dir_name):
         for i in os.listdir(dir_name):
             all_df.append(load_csv(dir_name, i))
         df = pd.concat(all_df, ignore_index=True)
+        if dtype == 'silac':
+            return _process_silac(df)
+        if dtype == 'rna_seq':
+            return _process_rna_seq(df)
+        if dtype == 'metabolites':
+            return _process_metabolites(df)
+        if dtype == 'label_free':
+            return _process_label_free(df)
+        if dtype == 'ph_silac':
+            return _process_phsilac(df)
         return df
     except OSError:
         warnings.warn('Directory {} does not exist'.format(dir_name))
@@ -170,38 +192,6 @@ def convert_time_to_hours(d):
     return time
 
 
-def load_silac(directory):
-    silac = load_directory(directory)
-    return _process_silac(silac)
-
-
-def load_rna_data(directory):
-    data = load_directory(directory)
-    return _process_rna_seq(data)
-
-
-def load_metabolite_dir(dirname):
-    cols = ['compound', 'compound_id', 'name', 'formula',
-            'score', 'top_score', 'treated_control_fold_change',
-            'p_value_group_1_and_group_2', 'significant_flag', 'data_type',
-            'time', 'time_points', 'species_type'
-            # 'origin_endogenous', 'origin_food',
-            # 'origin_drug', 'description_food', 'description_drug',
-            ]
-    data = load_directory(dirname)
-    return _process_metabolites(data)
-
-
-def load_label_free(directory):
-    data = load_directory(dir_name=directory)
-    return _process_label_free(data)
-
-
-def load_phsilac(directory):
-    phsilac = load_directory(dir_name=directory)
-    return _process_phsilac(phsilac)
-
-
 _names = {}
 for i in range(16):
     _names['{0}-Sep'.format(i)] = 'SEPT{0}'.format(i)
@@ -220,6 +210,8 @@ def check_data(data, keyword):
 def process_list_of_dir_and_add_attribute(list_dim2):
     all_df = []
     for entry in list_dim2:
+        print(entry)
+
         if isinstance(entry, dict):
             for i in ['filename', 'directory', 'sample_id', 'data_type']:
                 assert i in entry, "Entry missing {}".format(i)
@@ -244,7 +236,7 @@ def process_list_of_dir_and_add_attribute(list_dim2):
         elif data_type == 'rna_seq':
             d = _process_rna_seq(d)
         elif data_type == 'metabolomics':
-            d = _process_metabolites(d)
+            pass
 
         d['sample_id'] = sample_id
         # d['time'] = d['sample_id'].astype(str) + '_' + d['time'].astype(str)
@@ -264,24 +256,22 @@ def _process_rna_seq(data):
     pandas.Dataframe
     """
     data = data[data['status'] == 'OK']
-    print(data.dtypes)
-    print(np.shape(data))
-    data = data[data.gene.str.contains(',') == False]
-    print(np.shape(data))
-    data['p_value_group_1_and_group_2'] = data['q_value']
-
+    data = data[~data.gene.str.contains(',')]
+    print("Check above line to see if it is doing the opposite of include")
+    quit()
+    data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
     data['treated_control_fold_change'] = np.exp2(
             data['log2_fold_change'].astype(float))
-    data.loc[data['treated_control_fold_change'] < 1,
-             'treated_control_fold_change'] = -1. / data[
-        data['treated_control_fold_change'] < 1]['treated_control_fold_change']
-    data['protein'] = data['gene'] + '_rnaseq'
-    data['data_type'] = 'rna_seq'
-    data['species_type'] = 'protein'
-    data = data[['gene', 'protein', 'time', 'treated_control_fold_change',
-                 'time_points', 'p_value_group_1_and_group_2',
-                 'significant_flag', 'species_type', 'data_type']]
-    return data
+
+    crit_1 = data['treated_control_fold_change'] < 1
+    data.loc[crit_1, 'treated_control_fold_change'] = \
+        -1. / data[crit_1]['treated_control_fold_change']
+
+    data.loc[:, 'protein'] = data['gene'] + '_rnaseq'
+    data.loc[:, 'data_type'] = 'rna_seq'
+    data.loc[:, 'species_type'] = 'protein'
+
+    return data[out_gene_cols]
 
 
 def _process_metabolites(data):
@@ -297,8 +287,7 @@ def _process_metabolites(data):
     """
     data = data.copy()
     data = data.drop_duplicates(subset=['compound_id'])
-    names = data.apply(merge_metabolite_row, axis=1)
-    data['name'] = names
+    data['name'] = data.apply(merge_metabolite_row, axis=1)
     idx = data.groupby(['compound'])['score'].transform(max) == data['score']
 
     data.loc[:, 'top_score'] = False
@@ -361,30 +350,36 @@ def _process_label_free(data):
 
 
 def _process_silac(data):
-    data['data_type'] = 'silac'
-    data['gene'] = data['primary_genes']
+    data.loc[:, 'data_type'] = 'silac'
+    data.loc[:, 'gene'] = data['primary_genes']
+    data.loc[:, 'protein'] = data['primary_genes'] + '_silac'
 
-    data = data.loc[data['n_significant'] == 2]
-    data['treated_control_fold_change'] = data[
-        'mean_treated_untreated_fold_change']
-    data['protein'] = data['primary_genes'] + '_silac'
+    data = data[data['n_significant'] == 2]
+
+    data.loc[:, 'treated_control_fold_change'] = \
+        data['mean_treated_untreated_fold_change']
+
+
     # silac = silac.dropna(subset=['significant'])
-    data['species_type'] = 'protein'
-    data['significant_flag'] = False
-    data['p_value_group_1_and_group_2'] = 1.0
-    criteria = (data['tier_level'] == 1) & (data['fold_change_magnitude'] == 2)
+
+    data.loc[:, 'species_type'] = 'protein'
+    data.loc[:, 'significant_flag'] = False
+
+    data.loc[:, 'p_value_group_1_and_group_2'] = 1.0
+
+    criteria = (data['tier_level'] == 1) & \
+               (data['fold_change_magnitude'] == 2)
+
     data.loc[criteria, 'p_value_group_1_and_group_2'] = 0.049
     data.loc[criteria, 'significant_flag'] = True
-    cols = ['gene', 'protein', 'time', 'treated_control_fold_change',
-            'time_points', 'p_value_group_1_and_group_2',
-            'significant_flag', 'species_type', 'data_type']
 
-    return data[cols]
+    return data[out_gene_cols]
 
 
 def _process_phsilac(data):
-    data['phosphorylated_amino_acid'] = data[
-        'phosphorylated_amino_acid'].astype(str)
+    data.loc[:, 'phosphorylated_amino_acid'] = \
+        data['phosphorylated_amino_acid'].astype(str)
+
     mod_sites = data[['modified_sequence', 'modified_seq_location',
                       'phosphorylated_amino_acid']]
     protein_names = []
@@ -419,12 +414,11 @@ def _process_phsilac(data):
         s += 'phsilac'
         protein_names.append(s)
 
-    data['gene'] = data['primary_genes']
-    data['protein'] = data['primary_genes'] + protein_names
-    data['treated_control_fold_change'] = data['both_fold_change_mean']
-
-    data['p_value_group_1_and_group_2'] = 1.0
-    data['significant_flag'] = False
+    data.loc[:, 'protein'] = data['primary_genes'] + protein_names
+    data.loc[:, 'gene'] = data['primary_genes']
+    data.loc[:, 'treated_control_fold_change'] = data['both_fold_change_mean']
+    data.loc[:, 'p_value_group_1_and_group_2'] = 1.0
+    data.loc[:, 'significant_flag'] = False
 
     criteria = (data['overall_significance'].isin(['SIGNIFICANT',
                                                    'significant']))
@@ -432,13 +426,10 @@ def _process_phsilac(data):
     data.loc[criteria, 'p_value_group_1_and_group_2'] = 0.049
     data.loc[criteria, 'significant_flag'] = True
 
-    data['data_type'] = 'ph_silac'
-    data['species_type'] = 'protein'
-    headers = ['gene', 'treated_control_fold_change', 'protein',
-               'p_value_group_1_and_group_2', 'time', 'data_type',
-               'time_points', 'significant_flag', 'species_type']
-    data = data[headers]
-    return data
+    data.loc[:, 'data_type'] = 'ph_silac'
+    data.loc[:, 'species_type'] = 'protein'
+
+    return data[out_gene_cols]
 
 
 def pivot_table_for_export(data, save_name=None):
@@ -544,7 +535,7 @@ def log2_normalize_df(df, fold_change):
     greater_than = tmp_df[fold_change] > 0
     less_than = tmp_df[fold_change] < 0
     tmp_df.loc[greater_than, 'log2fc'] = np.log2(
-        tmp_df[greater_than][fold_change].astype(np.float64))
+            tmp_df[greater_than][fold_change].astype(np.float64))
     tmp_df.loc[less_than, 'log2fc'] = -np.log2(
-        -tmp_df[less_than][fold_change].astype(np.float64))
+            -tmp_df[less_than][fold_change].astype(np.float64))
     return tmp_df

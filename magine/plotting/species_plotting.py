@@ -10,12 +10,13 @@ import pathos.multiprocessing as mp
 import plotly
 import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
-import matplotlib.pyplot as plt
-from magine.data.formatter import log2_normalize_df
-import magine.html_templates.html_tools as html_tools
-from magine.data.formatter import pivot_tables_for_export
+
+from magine.data.formatter import log2_normalize_df, pivot_tables_for_export
+from magine.html_templates.html_tools import format_ploty, write_filter_table
 
 matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 
 plotly.plotly.sign_in(username='james.ch.pino',
                       api_key='BnUcJSpmPcMKZg0yEFaL')
@@ -31,7 +32,7 @@ flag = 'significant_flag'
 cm = plt.get_cmap('jet')
 
 
-def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
+def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
                              run_parallel=False, plot_type='plotly'):
     """ Creates a figure for each GO term in data
 
@@ -64,7 +65,15 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
 
     if isinstance(data, str):
         data = pd.read_csv(data)
-
+    if out_dir is not None:
+        if not os.path.exists(out_dir):
+            os.mkdir(out_dir)
+        if not os.path.exists(os.path.join(out_dir, 'Figures')):
+            os.mkdir(os.path.join(out_dir, 'Figures'))
+    data = data.copy()
+    figure_locations = {}
+    plots_to_create = []
+    to_remove = set()
     assert plot_type == ('plotly' or 'matplotlib')
     # get list of all terms
     list_of_go_terms = data['GO_id'].unique()
@@ -75,16 +84,16 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
                           (data['ref'] <= 2000)
                           &
                           (data['pvalue'] < 0.05)]['GO_id'].unique()
-
+    if len(list_of_sig_go) == 0:
+        print("No significant GO terms!!!")
+        return figure_locations, to_remove
     # here we are going to iterate through all sig GO terms and create
     # a list of plots to create. For the HTML side, we need to point to
     # a location
-    figure_locations = {}
-    plots_to_create = []
-    to_remove = set()
+
     # create plot of genes over time
     for n, i in enumerate(list_of_go_terms):
-
+        local_exp_data = exp_data.data.copy()
         # want to plot all species over time
         index = data['GO_id'] == i
 
@@ -107,25 +116,27 @@ def create_gene_plots_per_go(data, save_name, out_dir, exp_data,
             else:
                 each = literal_eval(g)
 
-            for j in each:
-                gene_set.add(j)
+            gene_set = {j for j in each}
+
         if plot_type == 'matplotlib':
             # too many genes isn't helpful on plots, so skip them
             if len(gene_set) > 100:
                 figure_locations[i] = '<a>{0}</a>'.format(name)
                 continue
-        out_point = '<a href="Figures/go_{0}_{1}.html">{2}</a>'
-        out_point = out_point.format(i, save_name, name).replace(':', '')
+        local_save_name = 'Figures/go_{0}_{1}'.format(i, save_name)
+        if out_dir is not None:
+            local_save_name = '{0}/{1}'.format(out_dir, local_save_name)
 
+        local_save_name = local_save_name.replace(':', '')
+        out_point = '<a href="{0}.html">{1}</a>'.format(local_save_name, name)
         figure_locations[i] = out_point
 
-        local_save_name = '{0}/Figures/go_{1}_{2}'.format(out_dir, i,
-                                                          save_name)
-        local_save_name = local_save_name.replace(':', '')
         title = "{0} : {1}".format(str(i), name)
-        local_df = exp_data.data[exp_data.data[gene].isin(list(gene_set))]
+        local_df = local_exp_data[
+            local_exp_data[gene].isin(list(gene_set))].copy()
         p_input = (local_df, list(gene_set), local_save_name, '.', title,
                    plot_type)
+
         plots_to_create.append(p_input)
 
     # return figure_locations, to_remove
@@ -242,7 +253,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     if out_dir is not None:
         html_filename = os.path.join(out_dir, html_filename)
 
-    html_tools.write_filter_table(output, html_filename, idx_key)
+    write_filter_table(output, html_filename, idx_key)
 
 
 def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
@@ -385,29 +396,29 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
 
     """
 
+    if list_of_genes is None:
+        dataframe, list_of_genes, save_name, out_dir, title, plot_type = dataframe
+
+    ldf = dataframe.copy(deep=True)
     if out_dir is not None:
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
 
-    if list_of_genes is None:
-        dataframe, list_of_genes, save_name, out_dir, title, plot_type = dataframe
-
-    if 'sample_id' not in dataframe.dtypes:
-        dataframe['sample_id'] = dataframe['time']
+    if 'sample_id' not in ldf.dtypes:
+        ldf['sample_id'] = ldf['time']
 
     # gather x axis points
-    x_points = sorted(dataframe[sample_id].unique())
-
+    x_points = sorted(ldf[sample_id].unique())
+    if len(x_points) == 0:
+        return
     if isinstance(x_points[0], np.float):
         x_point_dict = {i: x_points[n] for n, i
                         in enumerate(x_points)}
     else:
-        # x_point_dict = {i: 2 ** (n + 1) for n, i
-        #                 in enumerate(x_points)}
         x_point_dict = {i: n for n, i
                         in enumerate(x_points)}
 
-    local_df = dataframe[dataframe[gene].isin(list_of_genes)].copy()
+    local_df = ldf[ldf[gene].isin(list_of_genes)].copy(deep=True)
     local_df = log2_normalize_df(local_df, fold_change=fold_change)
 
     n_plots = len(local_df[gene].unique())
@@ -477,8 +488,8 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
                            plotly_list)
 
 
-def _save_matplotlib_output(ax,save_name, out_dir, image_format, x_point_dict,
-                            x_points,):
+def _save_matplotlib_output(ax, save_name, out_dir, image_format, x_point_dict,
+                            x_points, ):
     plt.xlim(min(x_point_dict.values()) - 2,
              max(x_point_dict.values()) + 2)
     ax.set_xticks(sorted(x_point_dict.values()))
@@ -492,11 +503,11 @@ def _save_matplotlib_output(ax,save_name, out_dir, image_format, x_point_dict,
     handles, labels = ax.get_legend_handles_labels()
     lgd = ax.legend(handles, labels, loc='best',
                     bbox_to_anchor=(1.01, 1.0))
-    if out_dir is None:
-        tmp_savename = "{}.{}".format(save_name, image_format)
-    else:
-        tmp_savename = os.path.join(out_dir, "{}.{}".format(save_name,
-                                                            image_format))
+
+    tmp_savename = "{}.{}".format(save_name, image_format)
+    if out_dir is not None:
+        tmp_savename = os.path.join(out_dir, tmp_savename)
+
     plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
                 bbox_inches='tight')
 
@@ -548,7 +559,7 @@ def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
 
     x = plot(fig, filename=tmp_savename, auto_open=False,
              include_plotlyjs=False, output_type='div')
-    html_tools.format_ploty(x, tmp_savename)
+    format_ploty(x, tmp_savename)
 
 
 def _create_ploty_graph(x, y, label, enum, color, marker='circle'):

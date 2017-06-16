@@ -203,6 +203,7 @@ class ExperimentalData(object):
 
         self.metabolomics_time_points = \
             np.sort(self.metabolites[sample_id].unique())
+
     def return_proteomics(self, sample_id_name=0.0, significant=False,
                           fold_change_value=None):
         """
@@ -420,9 +421,9 @@ class ExperimentalData(object):
             print(st)
             f.write(template.format(st))
 
-        if _which('pdflatex'):
-        # t = True
-        # if t:
+        # if _which('pdflatex'):
+        t = True
+        if t:
             print('Compiling table')
             with open(os.devnull, "w") as fnull:
                 subprocess.call(['pdflatex', filename],
@@ -635,6 +636,7 @@ class ExperimentalData(object):
         fig = plt.figure(figsize=(3 * n_rows, 3 * n_cols))
         for n, i in enumerate(n_sample):
             sample = data[data[sample_id] == i].copy()
+            print(sample)
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])

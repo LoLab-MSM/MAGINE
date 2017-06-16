@@ -1,7 +1,10 @@
-import magine.html_templates.html_tools as html_tools
-import pandas as pd
 import os
+
+import pandas as pd
+
+import magine.html_templates.html_tools as html_tools
 from magine.tests.sample_experimental_data import exp_data
+
 
 def test_filter():
     dirname = os.path.join(os.path.dirname(__file__),
@@ -18,11 +21,15 @@ def test_filter():
 
     html_tools.write_single_table(df, 'html_writer2', 'test2')
 
+
 def test_create_plots_per_go():
     dirname = os.path.join(os.path.dirname(__file__),
-                           'Data', 'test_proteomics_up_all_data.csv')
+                           'Data', 'proteomics_up_enrichment_array.csv')
 
-    html_tools.write_table_to_html_with_figures(dirname, exp_data)
+    html_tools.write_table_to_html_with_figures(dirname, exp_data,
+                                                out_dir='DEL',
+                                                run_parallel=False)
+
 
 if __name__ == '__main__':
     # test_filter()

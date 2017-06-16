@@ -2,14 +2,11 @@
 GO analysis function using orange bioinformatics
 """
 import os
+
 import numpy as np
 import pandas as pd
 
 import magine.html_templates.html_tools as html_tools
-
-import warnings
-
-
 from magine.ontology.enrichment_calculation import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
@@ -174,7 +171,8 @@ class GoAnalysis(object):
         self.data = results
         return results
 
-    def write_table_to_html(self, save_name='index', out_dir=None):
+    def write_table_to_html(self, save_name='index', out_dir=None,
+                            run_parallel=False):
         """
         Creates a table of all the plots of all genes for each GO term.
         
@@ -186,6 +184,8 @@ class GoAnalysis(object):
             name of html output file
         out_dir : str, optional
             output path for all plots
+        run_parallel : bool
+            Create plots in parallel
 
         Returns
         -------
@@ -193,9 +193,11 @@ class GoAnalysis(object):
         """
         if out_dir is None:
             out_dir = self.out_dir
-
+        print("Data", self.data)
+        print("exp_data", self.exp_data)
         html_tools.write_table_to_html_with_figures(
-            self.data, self.exp_data, save_name, out_dir=out_dir
+                self.data, self.exp_data, save_name, out_dir=out_dir,
+                run_parallel=run_parallel
         )
 
 

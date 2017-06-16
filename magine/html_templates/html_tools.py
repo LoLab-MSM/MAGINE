@@ -71,19 +71,17 @@ def write_single_table(table, save_name, title):
 
 
 def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir='Figures', run_parallel=True):
+                                     out_dir=None, run_parallel=True):
     # create plots of everything
     if isinstance(data, str):
         data = pd.read_csv(data)
     # print(data.dtypes)
     # tmp = pivot_table_for_export(data)
     # print(tmp.dtypes)
-
-    from magine.plotting.species_plotting import create_gene_plots_per_go
-    fig_dict, to_remove = create_gene_plots_per_go(data, save_name,
-                                                   out_dir, exp_data,
-                                                   run_parallel=run_parallel
-                                                   )
+    import magine.plotting.species_plotting as species_plotting
+    fig_dict, to_remove = species_plotting.create_gene_plots_per_go(
+            data, save_name, out_dir, exp_data, run_parallel=run_parallel
+    )
 
     for i in fig_dict:
         data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
@@ -92,13 +90,16 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
 
     tmp = pivot_table_for_export(data)
 
-    # html_out = os.path.join(out_dir, save_name)
     html_out = save_name
+    if out_dir is not None:
+        html_out = os.path.join(out_dir, html_out)
     print("Saving to : {}".format(html_out))
 
     write_single_table(tmp, html_out, 'MAGINE GO analysis')
+    html_out = save_name + '_filter'
+    if out_dir is not None:
+        html_out = os.path.join(out_dir, html_out)
 
-    html_out = os.path.join(out_dir, save_name + '_filter')
     write_filter_table(tmp, html_out, 'MAGINE GO analysis')
     """
     items = []
