@@ -126,7 +126,7 @@ def merge_metabolite_row(row):
     return row['name']
 
 
-def load_directory(dir_name, dtype='silac'):
+def load_directory(dir_name, dtype=None):
     """ loads all files in a provided directory
 
     Parameters
