@@ -9,3 +9,11 @@ def test_enrichr_go():
     df = e.run(list_2, 'GO_Biological_Process_2017')
     terms = df['term_name']
     assert len(terms) == 185
+
+
+def test_multi_sample():
+    e = Enrichr()
+    lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
+             ['BIM', 'CASP3']]
+    df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
+    assert df2.shape == (85, 18)
