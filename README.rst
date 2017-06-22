@@ -45,7 +45,7 @@ Install MAGINE natively on your computer
     :command:`conda create -n magine_env python=2`
     :command:`source activate magine_env`
     :command:`conda config --add channels conda-forge`
-    :command:`conda install orange jinja2 statsmodels networkx graphviz python-igraph`
+    :command:`conda install numba bottleneck orange jinja2 statsmodels networkx graphviz python-igraph`
 
 3. (Linux and MacOS only) **Install pygraphviz**
 
