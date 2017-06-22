@@ -4,9 +4,10 @@ MAGINE documentation
 Contents:
 
 .. toctree::
-:maxdepth: 3
-       installation
-       modules/index
+   :maxdepth: 3
+
+   installation
+   modules/index
 
 
 Indices and tables

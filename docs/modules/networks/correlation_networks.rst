@@ -1,22 +1,14 @@
-magine\.networks\.correlation\_networks package
-===============================================
+Correlation network package
+===========================
 
-Submodules
-----------
 
 magine\.networks\.correlation\_networks\.calculate\_correlation\_network module
 -------------------------------------------------------------------------------
 
 .. automodule:: magine.networks.correlation_networks.calculate_correlation_network
-:members:
-        :undoc-members:
-        :show-inheritance:
+
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 
-Module contents
----------------
-
-.. automodule:: magine.networks.correlation_networks
-:members:
-        :undoc-members:
-        :show-inheritance:

@@ -19,7 +19,7 @@ Install MAGINE natively on your computer
    are usually appropriate.
 
    .. note::
-**Windows users:** If you are unsure whether to use the 32-bit or
+       **Windows users:** If you are unsure whether to use the 32-bit or
        64-bit installer, press the Windows Start button, search for “About
        your PC”, and under “System type” it will specify 32-bit operating
        system or 64-bit operating system
@@ -53,7 +53,7 @@ Install MAGINE natively on your computer
        :command:`pip install git+git:https://github.com/LoLab-VU/Magine`
 
    .. note::
-**Mac users:** To open a terminal on a Mac, open Spotlight search
+       **Mac users:** To open a terminal on a Mac, open Spotlight search
        (press command key and space), type ``terminal`` and press enter.
 
 6. **Start Python and MAGINE**
@@ -65,36 +65,6 @@ Install MAGINE natively on your computer
    You will then be at the Python prompt. Type ``import magine`` to try
    loading magine. If no error messages appear and the next Python prompt
    appears, you have succeeded in installing magine!
-
-Recommended additional software
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The following software is not required for the basic operation of magine, but
-provides extra capabilities and features when installed.
-
-* `matplotlib`_
-
-  This Python package allows you to plot the results of your simulations. It
-  is not a hard requirement of magine but many of the example scripts use it.
-  `matplotlib`_ is included with `Anaconda`_. Otherwise, it can be installed
-  with :command:`pip install matplotlib`.
-
-* `pandas`_
-
-  This Python package provides extra capabilities for examining large
-  numerical datasets, with statistical summaries and database-like
-  manipulation capabilities. It is not a hard requirement of magine, but it is a
-  useful addition, particularly with large sets of simulation results.
-  `pandas`_ is included with `Anaconda`_. Otherwise, it can be installed with
-  :command:`pip install pandas`.
-
-* `IPython`_
-
-  An alternate interactive Python shell, much improved over the standard one.
-  `IPython`_ is included with `Anaconda`_. Otherwise, it can be installed
-  with :command:`pip install ipython`.
-
-
 
 
 .. _Anaconda: https://www.continuum.io/downloads
