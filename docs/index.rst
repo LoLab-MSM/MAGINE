@@ -5,7 +5,6 @@ Contents:
 
 .. toctree::
 :maxdepth: 3
-
        installation
        modules/index
 

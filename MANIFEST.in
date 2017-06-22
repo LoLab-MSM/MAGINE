@@ -1,5 +1,3 @@
-graft doc
-prune doc/_build
 include README.rst
 include magine/ontology/_valid_enricher_libs.txt
 include magine/html_templates/*.html
@@ -9,3 +7,6 @@ include magine/tests/Data/hilic/*
 include magine/tests/Network_files/*
 include magine/tests/KEGG/*
 include magine/mappings/*mapper.p
+include scripts/create_template_project
+graft doc
+prune doc/_build
