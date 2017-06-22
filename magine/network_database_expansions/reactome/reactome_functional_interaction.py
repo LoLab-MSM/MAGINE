@@ -51,20 +51,21 @@ class ReactomeFunctionalInteraction(object):
                 continue
             else:
                 if gene1 not in added_genes:
-                    g.add_node(gene1, sourceDB='ReactomeFI',
+                    g.add_node(gene1, databaseSource='ReactomeFI',
                                speciesType='gene')
                     added_genes.add(gene1)
                 if gene2 not in added_genes:
-                    g.add_node(gene2, sourceDB='ReactomeFI',
+                    g.add_node(gene2, databaseSource='ReactomeFI',
                                speciesType='gene')
                     added_genes.add(gene2)
                 if prediction:
                     g.add_edge(gene1, gene2, interactionType=inter,
                                ptm=mod, score=score, prediction='True',
-                               sourceDB='ReactomeFI')
+                               databaseSource='ReactomeFI')
                 else:
                     g.add_edge(gene1, gene2, interactionType=inter,
-                               ptm=mod, score=score, sourceDB='ReactomeFI')
+                               ptm=mod, score=score,
+                               databaseSource='ReactomeFI')
         ge = set(g.nodes())
         g1 = set(table[:, 0])
         g2 = set(table[:, 1])

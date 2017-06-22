@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import xml.etree.cElementTree as ET
 from sys import modules
 
 import networkx as nx
-import xml.etree.cElementTree as ET
 from bioservices import KEGG
 
 try:
@@ -53,14 +53,16 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
             name_label_dict[node_id] = names
             tmp = name_label_dict[node_id]
             for i in tmp.split(','):
-                pathway_local.add_node(i, speciesType=node_type)
+                pathway_local.add_node(i, speciesType=node_type,
+                                       databaseSource='KEGG', )
                 genes.add(i)
         elif node_type == 'compound':
             names = name.replace(' ', ",")
             name_label_dict[node_id] = names
             tmp = name_label_dict[node_id]
             for i in tmp.split(','):
-                pathway_local.add_node(i, speciesType=node_type)
+                pathway_local.add_node(i, speciesType=node_type,
+                                       databaseSource='KEGG', )
                 compounds_local.add(i)
         else:
             connecting_maps.append(node_id)
@@ -85,6 +87,7 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
         for i in one.split(','):
             for j in two.split(','):
                 pathway_local.add_edge(i, j,
+                                       databaseSource='KEGG',
                                        interactionType=type_of_interaction,
                                        intType=int_type)
 
@@ -107,10 +110,12 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
             for sub in substrates:
                 pathway_local.add_edge(sub, i, reactionType=reaction_type,
                                        interactionType='compound',
+                                       databaseSource='KEGG',
                                        intType='Reaction')
             for prod in products:
                 pathway_local.add_edge(i, prod, reactionType=reaction_type,
                                        interactionType='compound',
+                                       databaseSource='KEGG',
                                        intType='Reaction')
 
     return pathway_local, pathway_name, set()
