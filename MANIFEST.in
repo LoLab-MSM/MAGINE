@@ -1,4 +1,6 @@
-include README.md
+graft doc
+prune doc/_build
+include README.rst
 include magine/ontology/_valid_enricher_libs.txt
 include magine/html_templates/*.html
 include magine/html_templates/templates/*.html

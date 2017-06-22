@@ -1,0 +1,16 @@
+#!python
+
+import os
+
+if __name__ == '__main__':
+    os.mkdir('Data')
+    os.mkdir('Analysis')
+    template = """
+    import os
+    from magine.data.datatypes import ExperimentalData
+    directory = os.path.join(os.path.dirname(__file__), 'Data')
+    exp_data = ExperimentalData(proteomics_file='all_data.csv.gz',
+                                        data_directory=directory)
+    """
+    with open('exp_data.py', 'w') as f:
+        f.write(template)
