@@ -2,10 +2,10 @@ MAGINE
 ======
 
 .. image:: https://coveralls.io/repos/github/LoLab-VU/Magine/badge.svg?branch=master
-:target: https://coveralls.io/github/LoLab-VU/Magine?branch=master
+    :target: https://coveralls.io/github/LoLab-VU/Magine?branch=master
 
 .. image:: https://travis-ci.org/LoLab-VU/Magine.svg?branch=master
-:target: https://travis-ci.org/LoLab-VU/Magine
+    :target: https://travis-ci.org/LoLab-VU/Magine
 
 Mechanism of Action Generator involving Network Expansion
 
@@ -15,10 +15,6 @@ Python package that integrates omic style data.
 
 Installation
 ============
-
-
-Install MAGINE natively on your computer
-----------------------------------------
 
 1. **Install Anaconda**
 
@@ -34,18 +30,18 @@ Install MAGINE natively on your computer
    are usually appropriate.
 
    .. note::
-**Windows users:** If you are unsure whether to use the 32-bit or
-       64-bit installer, press the Windows Start button, search for “About
-       your PC”, and under “System type” it will specify 32-bit operating
-       system or 64-bit operating system
+        **Windows users:** If you are unsure whether to use the 32-bit or
+           64-bit installer, press the Windows Start button, search for “About
+           your PC”, and under “System type” it will specify 32-bit operating
+           system or 64-bit operating system
 
 2. **Open a terminal**
 
     We will install most packages with conda
-    :command:`conda create -n magine_env python=2`
-    :command:`source activate magine_env`
-    :command:`conda config --add channels conda-forge`
-    :command:`conda install numba bottleneck orange jinja2 statsmodels networkx graphviz python-igraph`
+        :command:`conda create -n magine_env python=2`
+        :command:`source activate magine_env`
+        :command:`conda config --add channels conda-forge`
+        :command:`conda install numba bottleneck orange jinja2 statsmodels networkx graphviz python-igraph`
 
 3. (Linux and MacOS only) **Install pygraphviz**
 
@@ -57,7 +53,7 @@ Install MAGINE natively on your computer
     install. Luckily there are binaries that can be downloaded from here
     http://www.lfd.uci.edu/~gohlke/pythonlibs/ . Select the same python version (27).
     One it is downloaded you can install with
-    :command:`pip install PATH_TO_DOWNlOAD`
+        :command:`pip install PATH_TO_DOWNlOAD`
     where you would type the .whl file that you download.
 
 
@@ -70,8 +66,8 @@ Install MAGINE natively on your computer
        :command:`export PYTHONPATH=`pwd`:$PYTHONPATH`
 
    .. note::
-**Mac users:** To open a terminal on a Mac, open Spotlight search
-       (press command key and space), type ``terminal`` and press enter.
+        **Mac users:** To open a terminal on a Mac, open Spotlight search
+            (press command key and space), type ``terminal`` and press enter.
 
 
 6. **Install MAGINE (not currently working, please follow step 5) **
@@ -82,8 +78,8 @@ Install MAGINE natively on your computer
        :command:`pip install git+git:https://github.com/LoLab-VU/Magine`
 
    .. note::
-**Mac users:** To open a terminal on a Mac, open Spotlight search
-       (press command key and space), type ``terminal`` and press enter.
+        **Mac users:** To open a terminal on a Mac, open Spotlight search
+          (press command key and space), type ``terminal`` and press enter.
 
 
 7. **Start Python and MAGINE**
