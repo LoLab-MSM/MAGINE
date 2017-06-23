@@ -13,6 +13,7 @@ dir_name = os.path.dirname(__file__)
 
 def download_uniprot_db(species='hsa'):
     """
+    `<https://www.uniprot.org/>`_
 
     Parameters
     ----------
@@ -20,9 +21,6 @@ def download_uniprot_db(species='hsa'):
         Species name. Currently only human is supported.
         Please let us know if you need other species
 
-    See Also
-    --------
-    `<http://www.uniprot.org/>`_
 
     """
     _url_h = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/{}'
@@ -49,9 +47,6 @@ def download_uniprot_db(species='hsa'):
 def download_hgnc():
     """
     Downloads HGNC and stores it as a pandas.DataFrame
-
-    See Also
-    --------
     `<http://www.genenames.org/>`_
 
     """
@@ -74,8 +69,6 @@ def download_ncbi():
     """
     Downloads data from NCBI
 
-    See Also
-    --------
     `<https://www.ncbi.nlm.nih.gov/>`_
 
     """
@@ -92,8 +85,6 @@ class HMDB(object):
     """
     Downloads and processes HMDB metabolites database
 
-    See Also
-    --------
     `<http://www.hmdb.ca/>`_
 
     """

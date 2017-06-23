@@ -1,28 +1,11 @@
-magine\.networks package
-========================
 
-.. toctree::
-   :maxdepth: 2
+Network Generators
+==================
 
-   correlation_networks
-   pysb_conversion
-   databases
+magine\.networks\.network\_generator module
+-------------------------------------------
 
-Submodules
-----------
-
-magine\.networks\.cytoscape\_mod\_layout module
------------------------------------------------
-
-.. automodule:: magine.networks.cytoscape_mod_layout
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-magine\.networks\.cytoscape\_view module
-----------------------------------------
-
-.. automodule:: magine.networks.cytoscape_view
+.. automodule:: magine.networks.network_generator
    :members:
    :undoc-members:
    :show-inheritance:
@@ -35,21 +18,6 @@ magine\.networks\.go\_network\_generator module
    :undoc-members:
    :show-inheritance:
 
-magine\.networks\.kgml\_to\_networkx\_parser module
----------------------------------------------------
-
-.. automodule:: magine.networks.kgml_to_networkx_parser
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-magine\.networks\.network\_generator module
--------------------------------------------
-
-.. automodule:: magine.networks.network_generator
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 magine\.networks\.network\_subgraphs module
 -------------------------------------------
@@ -59,3 +27,40 @@ magine\.networks\.network\_subgraphs module
    :undoc-members:
    :show-inheritance:
 
+magine\.networks\.kgml\_to\_networkx\_parser module
+---------------------------------------------------
+
+.. automodule:: magine.networks.kgml_to_networkx_parser
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Visualization tools
+===================
+
+magine\.networks\.cytoscape\_mod\_layout module
+-----------------------------------------------
+
+.. automodule:: magine.networks.cytoscape_mod_layout
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Cytoscape interface
+-------------------
+
+.. automodule:: magine.networks.cytoscape_view
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+magine\.networks package
+========================
+
+.. toctree::
+   :maxdepth: 2
+
+   correlation_networks
+   pysb_conversion
+   databases

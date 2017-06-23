@@ -1,4 +1,4 @@
-from matplotlib import pyplot as plt
+import matplotlib.pyplot as plt
 from matplotlib_venn import venn3 as _venn3
 from matplotlib_venn import venn2 as _venn2
 import os

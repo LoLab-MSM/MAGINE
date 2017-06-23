@@ -1,4 +1,3 @@
-import pickle
 from sys import modules
 
 try:

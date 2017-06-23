@@ -29,19 +29,15 @@
 
 import os
 import sys
-
+import mock
 sys.path.append(os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.napoleon',
-              'sphinx.ext.doctest',
-              'sphinx.ext.intersphinx',
-              'sphinx.ext.coverage',
-              'sphinx.ext.mathjax',
-              'sphinx.ext.viewcode']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.coverage',
+              'sphinx.ext.imgmath', 'sphinx.ext.ifconfig', 'numpydoc',
+              'sphinx.ext.viewcode', 'sphinx.ext.autosummary']
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
@@ -73,6 +69,44 @@ master_doc = 'index'
 project = u'magine'
 copyright = u'2017, James C. Pino'
 author = u'James C. Pino'
+
+
+# -- Mock out some problematic modules-------------------------------------
+
+# Note that for sub-modules, all parent modules must be listed explicitly.
+MOCK_MODULES = ['pandas', 'pandas.plotting',
+
+                'pygraphviz', 'numba',
+
+                'orangecontrib.bio.utils', 'orangecontrib.bio.utils.stats',
+                'orangecontrib.bio.utils.serverfiles',
+
+                'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
+                'scipy.special', 'scipy.optimize', 'scipy.stats',
+                'scipy.stats.stats' , 'scipy.stats.stats.distributions'
+
+                'mpl_toolkits.axes_grid1',
+
+                'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
+                'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
+                'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
+
+                'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
+
+                'statsmodels', 'statsmodels.sandbox',
+                'statsmodels.sandbox.stats',
+                'statsmodels.sandbox.stats.multicomp',
+                'statsmodels.sandbox.stats.multicomp.fdrcorrection0',
+                'statsmodels.stats', 'statsmodels.stats.proportion',
+                'statsmodels.stats.proportion.binom_test',
+                'Orange',
+                'magine.ontology.ontology_tools',
+                'magine.ontology.go_from_goatools'
+                ]
+
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.MagicMock()
+
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
