@@ -1,10 +1,5 @@
 import itertools
-import sys
-
 import networkx as nx
-
-sys.path.append('../..')
-
 import magine.networks.network_tools as nt
 
 
@@ -23,11 +18,10 @@ class NetworkSubgraphs(object):
         self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
         self.ig_graph = nt.networkx_to_igraph(self.network)
+        self._edges = set()
         self._ig_node_dict = dict()
-
         for i in self.nodes:
             self._ig_node_dict[i] = self.ig_graph.vs.find(name=i).index
-        # print(self.ig_graph.clusters(mode='weak'))
 
     def shortest_paths_between_two_proteins(self, node_1, node_2, draw=False,
                                             image_format='png'):
@@ -146,8 +140,6 @@ class NetworkSubgraphs(object):
                 _path.append(self.ig_graph.vs[e]['name'])
             self._add_edges_from_path(graph, _path)
 
-
-
     def shortest_paths_between_lists(self, species_list, save_name=None,
                                      single_path=False, draw=False,
                                      image_format='png'):
@@ -199,7 +191,7 @@ class NetworkSubgraphs(object):
             # counter += 1
             # self._ig_find_path2(node_1, node_2, graph)
 
-        if draw and (save_name is not None):
+        if save_name is not None:
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
@@ -208,8 +200,9 @@ class NetworkSubgraphs(object):
         self._nx_find_path(node2, node1, graph, single_path)
 
     def _nx_find_path(self, node1, node2, graph, single_path=False):
-        if nx.has_path(graph, node1, node2):
-            return
+        if node1 in graph.nodes() and node2 in graph.nodes():
+            if nx.has_path(graph, node1, node2):
+                return
         try:
             if not single_path:
                 for path in nx.all_shortest_paths(self.network, node1, node2):
@@ -223,7 +216,7 @@ class NetworkSubgraphs(object):
 
     def upstream_network_of_specie(self, species_1, include_list=None,
                                    save_name=None, compress=False,
-                                   draw=False, ):
+                                   draw=False, image_format='png'):
         """
         Generate network of all upstream species of provides species
 
@@ -267,6 +260,7 @@ class NetworkSubgraphs(object):
             include_list = self._check_node(include_list)
 
         graph = nx.DiGraph()
+        self._edges = set()
         for i in self.nodes:
             if i in include_list:
                 if nx.has_path(self.network, i, species_1):
@@ -275,8 +269,8 @@ class NetworkSubgraphs(object):
 
         if compress:
             graph = nt.compress_edges(graph)
-        if draw and (save_name is not None):
-            self._save_or_draw(graph, save_name, draw)
+        if save_name is not None:
+            self._save_or_draw(graph, save_name, draw, image_format)
 
         return graph
 
@@ -326,6 +320,7 @@ class NetworkSubgraphs(object):
             include_list = self._check_node(include_list)
 
         graph = nx.DiGraph()
+        self._edges = set()
         for i in self.nodes:
             if i in include_list:
                 if nx.has_path(self.network, species_1, i):
@@ -337,7 +332,7 @@ class NetworkSubgraphs(object):
         if compress:
             graph = nt.compress_edges(graph)
 
-        if draw and (save_name is not None):
+        if save_name is not None:
             self._save_or_draw(graph, save_name, draw)
 
         return graph
@@ -411,9 +406,7 @@ class NetworkSubgraphs(object):
         if len(missing_nodes) != 0:
             print("Warning : {} do not exist in graph\n"
                   "Removing from list".format(missing_nodes))
-            print(len(node_list))
             node_list.difference_update(missing_nodes)
-            print(len(node_list))
             return sorted(node_list)
         else:
             return sorted(node_list)

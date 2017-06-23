@@ -1,11 +1,8 @@
 import os
-import matplotlib
-matplotlib.use('Agg')
-
 import matplotlib.pyplot as plt
 import numpy as np
-
 from magine.data.formatter import log2_normalize_df
+
 
 fold_change = 'treated_control_fold_change'
 flag = 'significant_flag'

@@ -13,9 +13,9 @@ env = jinja2.Environment(
     )
 plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
-filter_template = env.get_template('filter_table.html')
+filter_template = env.get_template('filter_table_base.html')
+# filter_template = env.get_template('filter_table.html')
 enrich_template = env.get_template('enrichment_template.html')
-
 
 range_number = """column_number:{},
 filter_type: "range_number" """

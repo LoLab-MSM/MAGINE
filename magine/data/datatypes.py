@@ -1,8 +1,4 @@
 import subprocess
-
-import matplotlib
-
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from pandas.plotting import table
 import os

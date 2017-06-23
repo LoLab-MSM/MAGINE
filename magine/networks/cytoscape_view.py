@@ -1,8 +1,5 @@
 import os
-import matplotlib
-matplotlib.use('Agg')
 import matplotlib.image as mpimg
-
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np

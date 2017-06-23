@@ -3,8 +3,6 @@ import matplotlib
 matplotlib.use("Agg")
 import networkx as nx
 from nose.tools import raises
-import sys
-sys.path.append('../..')
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.tests.sample_experimental_data import exp_data
 
@@ -82,17 +80,16 @@ class TestNetworkSubgraphs(object):
         g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=False,
                                                       save_name='ns_test')
 
-
         assert set(g.edges()) == edges
 
         list_2 = {'CASP3', 'BAX', 'TP53'}
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
                                                       single_path=False,
                                                       save_name='smaller_list')
-        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10',
-                 'MAPK8', 'MAPK9', 'BCL2'}
+        nodes = {'TP53', 'CASP3', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8', 'MAPK9',
+                 'BCL2'}
+        print(g.nodes())
         assert set(g.nodes()) == nodes
-
 
 
 if __name__ == '__main__':

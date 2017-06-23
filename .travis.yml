@@ -13,6 +13,8 @@ before_install:
 - conda update --yes conda
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib sympy networkx
     nose h5py pexpect pandas numba graphviz
+- mkdir -p ~/.config/matplotlib
+- echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
 - if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
     pip install orange3;
   else
