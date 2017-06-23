@@ -70,8 +70,8 @@ Installation
       $ git clone https://github.com/LoLab-VU/magine
       $ pip install -r requirements.txt
       $ export PYTHONPATH=`pwd`:$PYTHONPATH
-    :
-        **Mac users:** To open a terminal on a Mac, open Spotlight search
+
+     **Mac users:** To open a terminal on a Mac, open Spotlight search
             (press command key and space), type ``terminal`` and press enter.
 
 
@@ -81,11 +81,6 @@ Installation
    following in a terminal::
 
       $ pip install git+git:https://github.com/LoLab-VU/Magine
-
-   :
-        **Mac users:** To open a terminal on a Mac, open Spotlight search
-          (press command key and space), type ``terminal`` and press enter.
-
 
 7. **Start Python and MAGINE**
 
