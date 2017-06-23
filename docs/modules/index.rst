@@ -8,7 +8,6 @@ MAGINE Modules Reference
    data/index.rst
    html_templates/index.rst
    mappings/index.rst
-   network_database_expansions/index.rst
    networks/index.rst
    ontology/index.rst
    plotting/index.rst
