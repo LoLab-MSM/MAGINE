@@ -89,6 +89,7 @@ class HMDB(object):
 
     """
 
+
     def __init__(self):
         self.tmp_dir = tempfile.mkdtemp()
         self.out_dir = dir_name
@@ -204,6 +205,18 @@ class HMDB(object):
 
     @staticmethod
     def _create_dict(elem):
+        categories = ['kegg_id', 'name', 'accession', 'chebi_id',
+                      'chemspider_id',
+                      'biocyc_id', 'synonyms', 'pubchem_compound_id',
+                      'protein_associations', 'inchikey', 'iupac_name',
+                      'ontology',  # 'cellular_location', 'biofunction'
+                      # 'cellular_location', 'biofunction', 'molecular_framework'
+                      # 'secondary_accessions',
+
+                      # 'normal_concentrations','chemical_formula', 'smiles',
+                      # 'drugbank_id', 'average_molecular_weight',
+                      # 'pathways', 'metlin_id',
+                      ]
         template = {}
         for i in categories:
             n = elem.find(i)
@@ -251,14 +264,3 @@ if __name__ == '__main__':
     st = time.time()
     human = download_uniprot_db()
     directory = os.path.dirname(__file__)
-    categories = ['kegg_id', 'name', 'accession', 'chebi_id', 'chemspider_id',
-              'biocyc_id', 'synonyms', 'pubchem_compound_id',
-              'protein_associations', 'inchikey', 'iupac_name',
-              'ontology',  # 'cellular_location', 'biofunction'
-              # 'cellular_location', 'biofunction', 'molecular_framework'
-              # 'secondary_accessions',
-
-              # 'normal_concentrations','chemical_formula', 'smiles',
-              # 'drugbank_id', 'average_molecular_weight',
-              # 'pathways', 'metlin_id',
-              ]
