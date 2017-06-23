@@ -228,8 +228,8 @@ def create_graph_to_root_from_list_terms(list_of_terms, check_child=False,
 
     Returns
     -------
-
     networkx.DiGraph
+
     """
     if check_child:
         list_of_terms = check_if_children(list_of_terms)
@@ -254,6 +254,17 @@ def create_graph_to_root_from_list_terms(list_of_terms, check_child=False,
 
 
 def check_term_list(list_of_terms, verbose=False):
+    """
+
+    Parameters
+    ----------
+    list_of_terms : list
+    verbose : bool
+
+    Returns
+    -------
+
+    """
     list_of_terms = check_depth_and_children(list_of_terms)
     combos = itertools.combinations(list_of_terms, 2)
     to_remove = set()

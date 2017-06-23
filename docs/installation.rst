@@ -44,8 +44,20 @@ Install MAGINE natively on your computer
     :command:`pip install PATH_TO_DOWNlOAD`
     where you would type the .whl file that you download.
 
+5. **Install MAGINE **
 
-5. **Install MAGINE**
+   The installation is very straightforward with ``pip`` - type the
+   following in a terminal:
+       :command:`git clone https://github.com/LoLab-VU/magine`
+       :command:`pip install -r requirements.txt`
+       :command:`export PYTHONPATH=`pwd`:$PYTHONPATH`
+
+   .. note::
+        **Mac users:** To open a terminal on a Mac, open Spotlight search
+            (press command key and space), type ``terminal`` and press enter.
+
+
+6. **Install MAGINE (not currently working, please follow step 5) **
 
    The installation is very straightforward with ``pip`` - type the
    following in a terminal:
@@ -53,10 +65,11 @@ Install MAGINE natively on your computer
        :command:`pip install git+git:https://github.com/LoLab-VU/Magine`
 
    .. note::
-       **Mac users:** To open a terminal on a Mac, open Spotlight search
-       (press command key and space), type ``terminal`` and press enter.
+        **Mac users:** To open a terminal on a Mac, open Spotlight search
+          (press command key and space), type ``terminal`` and press enter.
 
-6. **Start Python and MAGINE**
+
+7. **Start Python and MAGINE**
 
    If you installed Python using `Anaconda`_ on Windows, search for and select
    ``IPython`` from your Start Menu (Windows). Otherwise, open a terminal

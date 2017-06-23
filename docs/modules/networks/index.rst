@@ -35,32 +35,12 @@ magine\.networks\.kgml\_to\_networkx\_parser module
    :undoc-members:
    :show-inheritance:
 
-Visualization tools
-===================
 
-magine\.networks\.cytoscape\_mod\_layout module
------------------------------------------------
-
-.. automodule:: magine.networks.cytoscape_mod_layout
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-Cytoscape interface
--------------------
-
-.. automodule:: magine.networks.cytoscape_view
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-
-magine\.networks package
-========================
+Subpackages
+-----------
+The following subpackages to download and parse data
 
 .. toctree::
    :maxdepth: 2
 
-   correlation_networks
-   pysb_conversion
-   databases
+   databases.rst

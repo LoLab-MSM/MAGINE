@@ -13,17 +13,30 @@ from magine.ontology.ontology_analysis import GoAnalysis
 
 
 class Analyzer(object):
-    """
-    MAGINE analyzer
-    Class to perform entire MAGINE pipeline.
-    Creates a network
-    Performs gene enrichment analysis
-    Combines the two
-    Requires cytoscape session to be opened if you want the output networks
-    """
+    """ MAGINE analyzer
 
+    """
     def __init__(self, experimental_data, network=None, species='hsa',
                  output_directory='tmp', save_name='tmp', build_network=False):
+        """Class to perform entire MAGINE pipeline.
+
+        1. Creates a network
+        2. Performs gene enrichment analysis
+        3. Combines the two
+            .. note::
+                Requires cytoscape session to be opened if you want the output networks
+
+        Parameters
+        ----------
+        experimental_data : magine.data.ExperimentalData
+        network : nx.DiGraph
+        species : str
+        output_directory : str
+        save_name : str
+        build_network : bool
+            Build a network based on experimental_data
+
+        """
         self.exp_data = experimental_data
         self.species = species
         self.save_name = save_name
@@ -57,6 +70,7 @@ class Analyzer(object):
         """
         Generates network with default parameters
 
+
         Parameters
         ----------
         save_name : str
@@ -65,6 +79,7 @@ class Analyzer(object):
             Use HMDB to create network
         use_reactome : bool
             Use Reactome to build network
+
 
         Returns
         -------
@@ -85,12 +100,16 @@ class Analyzer(object):
                       save=True):
         """
         Runs enrichment analysis
+
+
         Parameters
         ----------
-        data_type : str, {'proteomics','rnaseq'}
+        data_type : {'proteomics','rnaseq'}
             data type to run enrichment analysis
-        fold_change: str {'up', 'down', 'both'}
-        save: boolean, saves enrichment array to file
+        fold_change: {'up', 'down', 'both'}
+        save: bool
+            saves enrichment array to file
+
 
         Returns
         -------
@@ -140,8 +159,8 @@ class Analyzer(object):
         return enrich_array, html_dict
 
     def run_proteomics_go(self):
-        """
-        Updated function to run all proteomics
+        """ Updated function to run all data
+
         Returns
         -------
 
@@ -165,6 +184,23 @@ class Analyzer(object):
 
     def run_go_and_create_html(self, html_name, visualize=False,
                                create_figure=True, run_parallel=True):
+        """
+        Runs GO analysis and creates an HTML output
+
+        Parameters
+        ----------
+        html_name : str
+        visualize : bool
+            Visualize with cytoscape, cytoscape must be open!
+        create_figure : bool
+            Create plots for each GO
+        run_parallel : bool
+            Create plots in parallel
+
+        Returns
+        -------
+
+        """
 
         list_of_go_dict = self.run_proteomics_go()
         for i in list_of_go_dict:
@@ -206,6 +242,7 @@ class Analyzer(object):
             Visualize the network after creation
         slim : bool
             Slim the ontology
+
         Returns
         --------
         tall: networkx.DiGraph
@@ -295,8 +332,6 @@ class Analyzer(object):
                                      labels=self.exp_data.timepoints,
                                      out_dir=self.out_dir)
 
-        def _plot_species_over_time():
-            self.exp_data
 
 def _create_names(n):
     names = []

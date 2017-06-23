@@ -30,6 +30,7 @@
 import os
 import sys
 import mock
+
 sys.path.append(os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -78,20 +79,26 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
 
                 'pygraphviz', 'numba',
 
-                'orangecontrib.bio.utils', 'orangecontrib.bio.utils.stats',
-                'orangecontrib.bio.utils.serverfiles',
+                # 'orangecontrib.bio.utils',
+
+                # 'orangecontrib.bio.utils.serverfiles',
+                # 'orangecontrib.bio.utils.stats',
+                # '.stats',
 
                 'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
                 'scipy.special', 'scipy.optimize', 'scipy.stats',
-                'scipy.stats.stats' , 'scipy.stats.stats.distributions'
+                'scipy.stats.stats', 'scipy.stats.stats.distributions',
+                'scipy.sparse', 'scipy.linalg',
 
-                'mpl_toolkits.axes_grid1',
+                'mpl_toolkits', 'mpl_toolkits.axes_grid1',
+                'mpl_toolkits.axes_grid1.make_axes_locatable',
 
                 'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
                 'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
                 'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
 
                 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
+                'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
 
                 'statsmodels', 'statsmodels.sandbox',
                 'statsmodels.sandbox.stats',
@@ -99,9 +106,9 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'statsmodels.sandbox.stats.multicomp.fdrcorrection0',
                 'statsmodels.stats', 'statsmodels.stats.proportion',
                 'statsmodels.stats.proportion.binom_test',
-                'Orange',
-                'magine.ontology.ontology_tools',
-                'magine.ontology.go_from_goatools'
+                # 'Orange',
+                # 'magine.ontology.ontology_tools',
+                # 'magine.ontology.go_from_goatools'
                 ]
 
 for mod_name in MOCK_MODULES:

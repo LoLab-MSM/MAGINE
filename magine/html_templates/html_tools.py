@@ -6,33 +6,27 @@ import pandas as pd
 from magine.data.formatter import pivot_table_for_export
 
 env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(
-                    searchpath=os.path.join(
-                            os.path.dirname(__file__),
-                            'templates'))
-    )
+   loader=jinja2.FileSystemLoader(
+           searchpath=os.path.join(os.path.dirname(__file__), 'templates')
+   )
+)
+
 plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
-filter_template = env.get_template('filter_table_base.html')
-# filter_template = env.get_template('filter_table.html')
+# filter_template = env.get_template('filter_table_base.html')
+filter_template = env.get_template('filter_table.html')
 enrich_template = env.get_template('enrichment_template.html')
 
-range_number = """column_number:{},
-filter_type: "range_number" """
+range_number = '"column_number:{},\
+filter_type: "range_number"'
 
-auto_complete = """column_number:{},
-    filter_type: "auto_complete",
-    text_data_delimiter: "," """
+auto_complete = 'column_number:{},' \
+                'filter_type: "auto_complete",' \
+                'text_data_delimiter: ","'
 
-chosen = """column_number:{},
-    filter_type: "chosen"
-     """  # text_data_delimiter: ","
-"""
-multi_select
-range_number
-filter_type:'select'
-select_type: 'chosen',
-"""
+chosen = 'column_number:{}, filter_type: "chosen"'
+
+
 dict_of_templates = dict()
 dict_of_templates['GO_id'] = range_number
 dict_of_templates['GO_name'] = auto_complete
@@ -124,6 +118,18 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
 
 
 def write_filter_table(table, save_name, title):
+    """
+
+    Parameters
+    ----------
+    table : pandas.DataFrame
+    save_name : str
+    title : str
+
+    Returns
+    -------
+
+    """
     """{column_number: 0},
     {column_number: 1, filter_type: "range_number_slider"},
     {column_number: 2, filter_type: "date"},

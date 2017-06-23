@@ -1,5 +1,6 @@
-magine\.network\_database\_expansions\.reactome\.reactome\_api module
----------------------------------------------------------------------
+
+Network Databases
+=================
 
 .. automodule:: magine.networks.databases
    :members:
@@ -14,4 +15,3 @@ interaction module
    :members:
    :undoc-members:
    :show-inheritance:
-

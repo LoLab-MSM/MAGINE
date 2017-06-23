@@ -2,15 +2,13 @@ import time
 from itertools import combinations
 
 import bottleneck as bn
-import matplotlib
-
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
 import scipy.special as special
-from matplotlib.ticker import FormatStrFormatter
+
 from numba import float64, jit
 from scipy.stats.stats import distributions
 from statsmodels.sandbox.stats.multicomp import multipletests
@@ -37,7 +35,6 @@ def calc_val_2(df, t):
     return df / (df + t * t)
 
 
-# @profile
 def spearmanr_optimized(x, y):
     n = x.size
     xy = x * y
@@ -62,8 +59,6 @@ def spearmanr_optimized(x, y):
         prob = special.betainc(0.5 * df, 0.5, value_2)
     return rho, prob
 
-
-# @profile
 
 def calculate_spearmanr(a, b):
     # new code

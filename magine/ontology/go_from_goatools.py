@@ -7,10 +7,10 @@ try:
 except KeyError:
     print('Loading GO')
     from goatools import obo_parser
-    from orangecontrib.bio.utils import serverfiles
+    from orangecontrib.bio.utils.serverfiles import localpath
     import os
 
-    default_database_path = os.path.join(serverfiles.localpath(), "GO")
+    default_database_path = os.path.join(localpath(), "GO")
 
     short_path = os.path.join(default_database_path,
                               "gene_ontology_edit.obo.tar.gz",
@@ -28,7 +28,6 @@ except KeyError:
 
 
 def load_termcount():
-    from goatools.associations import read_gaf
     from goatools.semantic import TermCounts
     """
     association_file = os.path.join(os.path.dirname(__file__),

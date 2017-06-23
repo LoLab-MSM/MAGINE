@@ -46,8 +46,8 @@ class NetworkSubgraphs(object):
         graph : networkx.DiGraph
 
 
-        Example
-        -------
+        Examples
+        --------
         >>> from networkx import DiGraph
         >>> from magine.networks.network_subgraphs import NetworkSubgraphs
         >>> g = DiGraph()
@@ -112,8 +112,8 @@ class NetworkSubgraphs(object):
             graph containing paths between species list provided
 
 
-        Example
-        -------
+        Examples
+        --------
         >>> from networkx import DiGraph
         >>> from magine.networks.network_subgraphs import NetworkSubgraphs
         >>> g = DiGraph()
@@ -180,8 +180,8 @@ class NetworkSubgraphs(object):
         graph : networkx.DiGraph
 
 
-        Example
-        -------
+        Examples
+        --------
         >>> from networkx import DiGraph
         >>> from magine.networks.network_subgraphs import NetworkSubgraphs
         >>> g = DiGraph()
@@ -240,8 +240,8 @@ class NetworkSubgraphs(object):
         graph : networkx.DiGraph
 
 
-        Example
-        -------
+        Examples
+        --------
         >>> from networkx import DiGraph
         >>> from magine.networks.network_subgraphs import NetworkSubgraphs
         >>> g = DiGraph()
@@ -444,7 +444,7 @@ class NetworkSubgraphs(object):
             name of first species
         node_2 :
             list of str containing species or single str containing specie
-        all_shortest_paths : bool
+        single_path : bool
             include all shortest paths
         Returns
         -------

@@ -6,7 +6,8 @@ import os
 
 import pandas as pd
 
-from magine.mappings.databases import download_hgnc, download_ncbi, download_uniprot_db
+from magine.mappings.databases import download_hgnc, download_ncbi, \
+    download_uniprot
 
 directory = os.path.dirname(__file__)
 
@@ -37,12 +38,58 @@ def _to_dict(data, key, value):
 
 class GeneMapper(object):
     """
-    converts chemical species
-    Datbase was creating by pulling down everything from HMDB
-    """
+    Mapping class between common gene ids
 
-    hgnc_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
-                       'alias_name', 'alias_symbol']
+    Database was creating by pulling down everything from HMDB
+
+    Attributes
+    ----------
+    gene_name_to_uniprot : dict
+    gene_name_to_alias_name : dict
+    gene_name_to_ensembl : dict
+    gene_name_to_kegg : dict
+
+    kegg_to_gene_name : dict
+    kegg_to_uniprot : dict
+
+    ncbi_to_symbol : dict
+
+    protein_name_to_gene_name : dict
+    protein_name_to_uniprot : dict
+
+    uniprot_to_gene_name : dict
+    uniprot_to_kegg : dict
+
+    """
+    ncbi_valid_categories = ['GeneID', 'Symbol', 'description']
+
+    hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
+                             'location', 'entrez_id', 'ucsc_id', 'vega_id',
+                             'alias_name', 'alias_symbol', 'status',
+                             'gene_family', 'gene_family_id', 'ena', 'iuphar',
+                             'cd', 'refseq_accession', 'ccds_id', 'pubmed_id',
+                             'mgd_id', 'rgd_id', 'lsdb', 'bioparadigms_slc',
+                             'enzyme_id',  'merops', 'horde_id',
+                             'pseudogene.org', 'cosmic', 'rna_central_ids',
+                             'omim_id', 'imgt', 'intermediate_filament_db',
+                             ]
+
+    valid_uniprot_cols = ['uniprot', 'Allergome', 'BioCyc', 'BioGrid',
+                          'BioMuta', 'CCDS', 'CRC64', 'ChEMBL', 'ChiTaRS',
+                          'CleanEx', 'DIP', 'DMDM', 'DNASU', 'DisProt',
+                          'DrugBank', 'EMBL', 'EMBL-CDS', 'ESTHER', 'Ensembl',
+                          'Ensembl_PRO', 'Ensembl_TRS', 'GI', 'GeneCards',
+                          'GeneDB', 'GeneID', 'GeneReviews', 'GeneTree',
+                          'GeneWiki', 'Gene_Name', 'Gene_ORFName',
+                          'Gene_Synonym', 'GenomeRNAi', 'GuidetoPHARMACOLOGY',
+                          'H-InvDB', 'HGNC', 'HOGENOM', 'HOVERGEN', 'HPA',
+                          'KEGG', 'KO', 'MEROPS', 'MIM', 'MINT', 'NCBI_TaxID',
+                          'OMA', 'Orphanet', 'OrthoDB', 'PATRIC', 'PDB',
+                          'PeroxiBase', 'PharmGKB', 'REBASE', 'Reactome',
+                          'RefSeq', 'RefSeq_NT', 'STRING', 'SwissLipids',
+                          'TCDB', 'TreeFam', 'UCSC', 'UniGene', 'UniParc',
+                          'UniPathway', 'UniProtKB-ID', 'UniRef100', 'UniRef50',
+                          'UniRef90', 'eggNOG', 'neXtProt']
 
     def __init__(self, species='hsa'):
         self.species = species
@@ -51,35 +98,27 @@ class GeneMapper(object):
 
         hgnc_name = os.path.join(directory, 'data', 'hgnc.gz')
         if not os.path.exists(hgnc_name):
-            download_hgnc()
+            self.hgnc = download_hgnc()
             assert os.path.exists(hgnc_name)
+        else:
 
-        # gather data from HGNC
-        hgnc = pd.read_csv(hgnc_name)
-        self.hgnc = hgnc
+            self.hgnc = pd.read_csv(hgnc_name, low_memory=False)
+        self.hgnc = self.hgnc[self.hgnc['status'] == 'Approved']
 
         ncbi_name = os.path.join(directory, 'data', 'ncbi.gz')
         if not os.path.exists(ncbi_name):
-            download_ncbi()
+            self.ncbi = download_ncbi()
             assert os.path.exists(ncbi_name)
-
-        ncbi = pd.read_csv(ncbi_name)
-        self.ncbi = ncbi
+        else:
+            self.ncbi = pd.read_csv(ncbi_name, low_memory=False)
 
         # gather data from uniprot
         uniprot_path = os.path.join(directory, 'data', 'human_uniprot.csv.gz')
-        # check to see if exists, if not create it
         if not os.path.exists(uniprot_path):
-            download_uniprot_db()
+            self.uniprot = download_uniprot()
             assert os.path.exists(uniprot_path)
-
-        uniprot = pd.read_csv(uniprot_path, index_col=0)
-        uniprot = pd.pivot_table(uniprot, columns='mapping_type',
-                                 index='uniprot', aggfunc='first')
-        uniprot.columns = uniprot.columns.droplevel()
-        uniprot.reset_index(inplace=True)
-
-        self.uniprot = uniprot
+        else:
+            self.uniprot = pd.read_csv(uniprot_path, low_memory=False)
 
         # All are empty until set in load or reload
         self.gene_name_to_uniprot = {}
@@ -88,8 +127,8 @@ class GeneMapper(object):
         self.gene_name_to_kegg = {}
         self.uniprot_to_gene_name = {}
         self.uniprot_to_kegg = {}
-        self.protein_name_to_gene_name = None
-        self.protein_name_to_uniprot = None
+        self.protein_name_to_gene_name = {}
+        self.protein_name_to_uniprot = {}
         self.kegg_to_gene_name = {}
         self.kegg_to_uniprot = {}
         self.ncbi_to_symbol = {}
@@ -103,21 +142,25 @@ class GeneMapper(object):
 
     def load(self):
 
+        # HGNC
         self.gene_name_to_uniprot = _to_dict(self.hgnc, 'symbol',
                                              'uniprot_ids')
         self.gene_name_to_alias_name = _to_dict(self.hgnc, 'symbol',
                                                 'alias_name')
         self.gene_name_to_ensembl = _to_dict(self.hgnc, 'symbol',
                                              'ensembl_gene_id')
-        self.gene_name_to_kegg = _to_dict(self.uniprot, 'Gene_Name', 'KEGG')
-        self.uniprot_to_kegg = _to_dict(self.uniprot, 'uniprot', 'KEGG')
         self.uniprot_to_gene_name = _to_dict(self.hgnc, 'uniprot_ids',
                                              'symbol')
 
-        self.protein_name_to_gene_name = None
-        self.protein_name_to_uniprot = None
+        # uniprot
+        self.gene_name_to_kegg = _to_dict(self.uniprot, 'Gene_Name', 'KEGG')
+        self.uniprot_to_kegg = _to_dict(self.uniprot, 'uniprot', 'KEGG')
         self.kegg_to_gene_name = _to_dict(self.uniprot, 'KEGG', 'Gene_Name')
         self.kegg_to_uniprot = _to_dict(self.uniprot, 'KEGG', 'uniprot')
+
+        self.protein_name_to_gene_name = None
+        self.protein_name_to_uniprot = None
+
         self.ncbi_to_symbol = _to_dict(self.ncbi, 'GeneID', 'Symbol')
         self.save()
 
@@ -140,5 +183,5 @@ class GeneMapper(object):
 
 if __name__ == '__main__':
     gm = GeneMapper()
-    gm.load()
-    print(gm.ncbi_to_symbol)
+    # gm.load()
+    # print(gm.ncbi_to_symbol)
