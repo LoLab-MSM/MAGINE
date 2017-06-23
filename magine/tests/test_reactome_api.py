@@ -4,8 +4,7 @@ import networkx as nx
 import pandas as pd
 import pygraphviz as pyg
 
-import \
-    magine.network_database_expansions.reactome.reactome_api as reactome_api
+import magine.networks.databases.reactome_api as reactome_api
 
 
 def test_reactome():

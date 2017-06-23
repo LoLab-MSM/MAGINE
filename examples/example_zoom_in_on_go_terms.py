@@ -10,6 +10,6 @@ t_all = gng.create_network_from_list(list_of_go_terms=go_hits,
                                      save_name='{0}_network'.format(
                                          'specific_go_network'),
                                      threshold=0, draw=False)
-from magine.network_tools import export_to_dot
+from magine.networks.network_tools import export_to_dot
 
 export_to_dot(t_all, 'dna-apoptosis')

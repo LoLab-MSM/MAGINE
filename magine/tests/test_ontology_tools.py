@@ -1,7 +1,9 @@
-import magine.ontology.ontology_tools as ot
-from magine.network_tools import export_to_dot
-import networkx as nx
 import textwrap
+
+import networkx as nx
+
+import magine.ontology.ontology_tools as ot
+from magine.networks.network_tools import export_to_dot
 
 example_cisplatin = ['GO:0097062', 'GO:0033523', 'GO:0031441', 'GO:1900364',
                      'GO:1900363', 'GO:0022027', 'GO:0090557', 'GO:1901077',

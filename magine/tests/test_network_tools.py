@@ -1,7 +1,3 @@
-import networkx as nx
-import numpy as np
-from magine.network_tools import trim_sink_source_nodes, export_to_dot
-
 """
 def test_compress():
     g = nx.DiGraph()

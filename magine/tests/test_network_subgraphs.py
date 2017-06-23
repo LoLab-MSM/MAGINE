@@ -1,8 +1,10 @@
 import os
-
+import matplotlib
+matplotlib.use("Agg")
 import networkx as nx
 from nose.tools import raises
-
+import sys
+sys.path.append('../..')
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.tests.sample_experimental_data import exp_data
 
@@ -33,28 +35,7 @@ class TestNetworkSubgraphs(object):
         up_nodes = {'MTMR4', 'MTMR14', 'MTMR3', 'ZFYVE1', 'HMDB03850'}
         for i in self.net_sub.upstream_network_of_specie('ZFYVE1').nodes():
             assert i in up_nodes
-
-    def test_paths_from_list(self):
-        """Test finding paths from a list."""
-        up_nodes = {'MTMR4', 'ZFYVE1', 'MTMR14', 'MTMR3', 'WIPI1'}
-        edges = {('MTMR14', 'HMDB03850'),
-                 ('HMDB03850', 'ZFYVE1'),
-                 ('HMDB03850', 'WIPI1'),
-                 ('MTMR4', 'HMDB03850'),
-                 ('MTMR3', 'HMDB03850')}
-        g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=False,
-                                                      save_name='ns_test')
-
-        assert set(g.edges()) == edges
-
-        list_2 = {'CASP3', 'BAX', 'TP53'}
-        g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
-                                                      single_path=False,
-                                                      save_name='smaller_list')
-        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10',
-                 'MAPK8', 'MAPK9', 'BCL2'}
-        assert set(g.nodes()) == nodes
-
+            
     @raises(RuntimeWarning)
     def test_path_between_two_does_not_exist(self):
         start = 'HSPA9'
@@ -88,3 +69,34 @@ class TestNetworkSubgraphs(object):
                                                       )
 
         self.net_sub.measured_networks_over_time_up_down(g, 'colored_updown')
+
+    def test_paths_from_list(self):
+        """Test finding paths from a list."""
+        up_nodes = {'MTMR4', 'ZFYVE1', 'MTMR14', 'MTMR3', 'WIPI1'}
+        edges = {('MTMR14', 'HMDB03850'),
+                 ('HMDB03850', 'ZFYVE1'),
+                 ('HMDB03850', 'WIPI1'),
+                 ('MTMR4', 'HMDB03850'),
+                 ('MTMR3', 'HMDB03850')}
+
+        g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=False,
+                                                      save_name='ns_test')
+
+
+        assert set(g.edges()) == edges
+
+        list_2 = {'CASP3', 'BAX', 'TP53'}
+        g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
+                                                      single_path=False,
+                                                      save_name='smaller_list')
+        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10',
+                 'MAPK8', 'MAPK9', 'BCL2'}
+        assert set(g.nodes()) == nodes
+
+
+
+if __name__ == '__main__':
+    t = TestNetworkSubgraphs()
+    t.setUp()
+    t.test_paths_from_list()
+

@@ -84,7 +84,7 @@ class ExperimentalData(object):
         self.proteomics_non_rna_sig = self.proteomics_non_rna[
             self.proteomics_non_rna[flag]]
 
-        self.list_proteins = list(self.proteomics[gene].unique())
+        self.list_proteins = list(self.proteomics[gene].astype(str).unique())
         self.list_rna = list(self.rna_seq[gene].unique())
         self.list_proteins_non_rna = list(
                 self.proteomics_non_rna[gene].unique())
@@ -195,10 +195,11 @@ class ExperimentalData(object):
         self.metabolites = self.metabolites.dropna(subset=['compound'])
         if 'compound_id' not in self.metabolites.dtypes:
             self.metabolites['compound_id'] = self.metabolites['compound']
+        self.metabolites.loc[:, 'compound_id'] = self.metabolites['compound_id'].astype(str)
         self.metabolite_sign = self.metabolites[self.metabolites[flag]]
         self.list_metabolites = list(self.metabolites['compound_id'].unique())
         self.list_sig_metabolites = list(
-                self.metabolite_sign['compound_id'].unique())
+                self.metabolite_sign['compound_id'].astype(str).unique())
         self.exp_methods_metabolite = self.metabolites[exp_method].unique()
 
         self.metabolomics_time_points = \
@@ -635,13 +636,14 @@ class ExperimentalData(object):
         fig = plt.figure(figsize=(3 * n_rows, 3 * n_cols))
         for n, i in enumerate(n_sample):
             sample = data[data[sample_id] == i].copy()
-            print(sample)
+            print(sample[[p_val, fold_change]])
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
-            filtered_data = v_plot.filter_data(sample, bh_critera, p_value,
-                                               fold_change_cutoff)
-            sec_0, sec_1, sec_2 = filtered_data
+            sec_0, sec_1, sec_2 = v_plot.filter_data(sample, bh_critera,
+                                                     p_value,
+                                                     fold_change_cutoff)
+
             ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
             v_plot.add_volcano_plot(ax, sec_0, sec_1, sec_2)
