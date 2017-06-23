@@ -27,7 +27,7 @@ class ChemicalMapper(object):
         self.filename = os.path.join(directory, 'data', 'hmdb_dataframe.csv')
 
         if not os.path.exists(self.filename):
-            from magine.mappings.HMDB_processing import HMDB
+            from magine.mappings.databases.download_libraries import HMDB
             HMDB().setup()
         hmdb_database = pd.read_csv(
                 self.filename, low_memory=False, encoding='utf-8',

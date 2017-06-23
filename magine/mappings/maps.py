@@ -252,8 +252,8 @@ def create_compound_dictionary(network):
     for i in still_unknown:
         if i.lstrip('cpd') in kegg_hmdb:
             cpd_to_hmdb[i] = kegg_hmdb[i.lstrip('cpd:')][0]
-        else:
-            print("Cannot find a HMDB mapping for %s " % i)
+        # else:
+        #     print("Cannot find a HMDB mapping for %s " % i)
     return cpd_to_hmdb
 
 

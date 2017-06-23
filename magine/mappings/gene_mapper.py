@@ -6,10 +6,7 @@ import os
 
 import pandas as pd
 
-from magine.mappings.Uniprot_mapping.create_uniprot_dictionaries \
-    import create_human_dataframe
-from magine.mappings.hgnc_mapping.create_hgnc_dictionaries \
-    import download_hgnc, download_ncbi
+from magine.mappings.databases import download_hgnc, download_ncbi, download_uniprot_db
 
 directory = os.path.dirname(__file__)
 
@@ -73,7 +70,7 @@ class GeneMapper(object):
         uniprot_path = os.path.join(directory, 'data', 'human_uniprot.csv.gz')
         # check to see if exists, if not create it
         if not os.path.exists(uniprot_path):
-            create_human_dataframe()
+            download_uniprot_db()
             assert os.path.exists(uniprot_path)
 
         uniprot = pd.read_csv(uniprot_path, index_col=0)
