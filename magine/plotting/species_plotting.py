@@ -4,6 +4,9 @@ from ast import literal_eval
 from textwrap import wrap
 
 import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
@@ -14,8 +17,7 @@ from plotly.offline import plot
 from magine.data.formatter import log2_normalize_df, pivot_tables_for_export
 from magine.html_templates.html_tools import format_ploty, write_filter_table
 
-matplotlib.use('Agg')
-import matplotlib.pyplot as plt
+
 
 
 plotly.plotly.sign_in(username='james.ch.pino',
