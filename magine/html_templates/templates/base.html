@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flask Template Example</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet"
+          href="https://cdn.datatables.net/1.10.13/css/jquery.dataTables.min.css"/>
+    <link href="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap.min.css"
+          rel="stylesheet" media="screen">
+    <link href="https://code.jquery.com/ui/1.9.2/themes/smoothness/jquery-ui.css"
+          rel="stylesheet"/>
+    <link href="https://cdn.datatables.net/r/bs-3.3.5/dt-1.10.9/datatables.min.css"
+          rel="stylesheet" type="text/css"/>
+
+    <link href="https://yadcf-showcase.appspot.com/resources/css/jquery.dataTables.yadcf.css"
+          rel="stylesheet" type="text/css"/>
+    <style type="text/css">
+        .container {
+            max-width: 500px;
+            padding-top: 100px;
+        }
+
+        h2 {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>This is part of my base template</h2>
+    <br>
+    {% block content %}{% endblock %}
+    <br>
+    <h2>This is part of my base template</h2>
+</div>
+<script src="http://netdna.bootstrapcdn.com/bootstrap/3.0.0/js/bootstrap.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+<script src="https://code.jquery.com/ui/1.9.0/jquery-ui.min.js"></script>
+<script src="https://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+<script src="https://cdn.datatables.net/r/bs-3.3.5/dt-1.10.9/datatables.min.js"></script>
+<script src="https://yadcf-showcase.appspot.com/resources/js/jquery.dataTables.yadcf.js"></script>
+
+<script>
+    $(document).ready(function () {
+
+        var table = $('table').DataTable();
+
+        yadcf.init(table, [
+            {{filter_table}}]);
+
+        // BOOTSTRAP: Tweaks
+        $('.yadcf-filter-wrapper').addClass('input-group');
+        $('.yadcf-filter, .yadcf-filter-date', this).addClass('form-control input-sm');
+        $('.yadcf-filter-reset-button', this).addClass('btn btn-default btn-sm').wrap('<span class="input-group-btn"></span>');
+    });
+</script>
+</body>
+</html>

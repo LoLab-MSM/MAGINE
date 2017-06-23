@@ -91,7 +91,7 @@ class HMDB(object):
 
     def __init__(self):
         self.tmp_dir = tempfile.mkdtemp()
-        self.out_dir = directory
+        self.out_dir = dir_name
         self.target_file = 'hmdb_metabolites.zip'
         self.out_name = os.path.join(self.out_dir, '..', 'data',
                                      'hmdb_dataframe.csv')
