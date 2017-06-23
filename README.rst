@@ -37,33 +37,39 @@ Installation
 
 2. **Open a terminal**
 
-    We will install most packages with conda
-        :command:`conda create -n magine_env python=2`
-        :command:`source activate magine_env`
-        :command:`conda config --add channels conda-forge`
-        :command:`conda install numba bottleneck orange jinja2 statsmodels networkx graphviz python-igraph`
+    We will install most packages with conda::
+
+       $ conda create -n magine_env python=2
+       $ source activate magine_env
+       $ conda config --add channels conda-forge
+       $ conda install numba bottleneck orange jinja2 statsmodels networkx graphviz python-igraph
 
 3. (Linux and MacOS only) **Install pygraphviz**
+    ::
 
-    :command:`conda install -c pdrops pygraphviz=1.2`
+     $conda install -c pdrops pygraphviz=1.2
+
 
 4. (Windows only) **Install pygraphviz**
 
     Windows users pygraphviz on Windows can be a little troublesome to
     install. Luckily there are binaries that can be downloaded from here
     http://www.lfd.uci.edu/~gohlke/pythonlibs/ . Select the same python version (27).
-    One it is downloaded you can install with
-        :command:`pip install PATH_TO_DOWNlOAD`
+    One it is downloaded you can install with::
+
+      $ pip install PATH_TO_DOWNlOAD
+
     where you would type the .whl file that you download.
 
 
 5. **Install MAGINE **
 
    The installation is very straightforward with ``pip`` - type the
-   following in a terminal:
-       :command:`git clone https://github.com/LoLab-VU/magine`
-       :command:`pip install -r requirements.txt`
-       :command:`export PYTHONPATH=`pwd`:$PYTHONPATH`
+   following in a terminal::
+
+      $ git clone https://github.com/LoLab-VU/magine
+      $ pip install -r requirements.txt
+      $ export PYTHONPATH=`pwd`:$PYTHONPATH
 
    .. note::
         **Mac users:** To open a terminal on a Mac, open Spotlight search
@@ -73,9 +79,9 @@ Installation
 6. **Install MAGINE (not currently working, please follow step 5) **
 
    The installation is very straightforward with ``pip`` - type the
-   following in a terminal:
+   following in a terminal::
 
-       :command:`pip install git+git:https://github.com/LoLab-VU/Magine`
+      $ pip install git+git:https://github.com/LoLab-VU/Magine
 
    .. note::
         **Mac users:** To open a terminal on a Mac, open Spotlight search
