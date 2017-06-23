@@ -86,7 +86,7 @@ class TestNetworkSubgraphs(object):
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
                                                       single_path=False,
                                                       save_name='smaller_list')
-        nodes = {'TP53', 'CASP3', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8', 'MAPK9',
+        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8', 'MAPK9',
                  'BCL2'}
         print(g.nodes())
         assert set(g.nodes()) == nodes

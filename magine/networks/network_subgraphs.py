@@ -89,57 +89,6 @@ class NetworkSubgraphs(object):
 
         return graph
 
-    def _ig_find_path(self, node_1, node_2, graph, single_path=False):
-
-        """
-        Generates a graph based on all shortest paths between two species
-
-
-        Parameters
-        ----------
-        node_1 : str
-            name of first species
-        node_2 :
-            list of str containing species or single str containing specie
-        all_shortest_paths : bool
-            include all shortest paths
-        Returns
-        -------
-        graph : networkx.DiGraph
-
-        """
-        # for i in (node_1, node_2):
-        #     if i not in self.nodes:
-        #         print("{} is not in network!")
-        #         return
-        # n1 = self._ig_node_dict[node_1]
-        # n2 = self._ig_node_dict[node_2]
-
-        # if self.ig_graph.vertex_connectivity(n1, n2, neighbors='ignore') != 0:
-        if single_path:
-            path = self.ig_graph.get_shortest_paths(node_1, node_2, mode='OUT')
-        else:
-            path = self.ig_graph.get_all_shortest_paths(node_1, node_2,
-                                                        mode='OUT')
-
-        for p in path:
-            _path = []
-            for e in p:
-                _path.append(self.ig_graph.vs[e]['name'])
-            self._add_edges_from_path(graph, _path)
-        # if self.ig_graph.vertex_connectivity(n2, n1, neighbors='ignore') != 0:
-        if single_path:
-            path = self.ig_graph.get_shortest_paths(node_2, node_1, mode='OUT')
-        else:
-            path = self.ig_graph.get_all_shortest_paths(node_2, node_1,
-                                                        mode='OUT')
-
-        for p in path:
-            _path = []
-            for e in p:
-                _path.append(self.ig_graph.vs[e]['name'])
-            self._add_edges_from_path(graph, _path)
-
     def shortest_paths_between_lists(self, species_list, save_name=None,
                                      single_path=False, draw=False,
                                      image_format='png'):
@@ -182,13 +131,9 @@ class NetworkSubgraphs(object):
         self._edges = set()
         tmp_species_list = list(self._check_node(species_list))
 
-        # counter=1
         for node_1, node_2 in itertools.combinations(tmp_species_list, 2):
-            self._nx_find_path(node_1, node_2, graph, single_path)
+            self._find_nx_path(node_1, node_2, graph, single_path)
             # self._ig_find_path(node_1, node_2, graph, single_path)
-            # if counter == 1000:
-            #     return
-            # counter += 1
             # self._ig_find_path2(node_1, node_2, graph)
 
         if save_name is not None:
@@ -200,9 +145,6 @@ class NetworkSubgraphs(object):
         self._nx_find_path(node2, node1, graph, single_path)
 
     def _nx_find_path(self, node1, node2, graph, single_path=False):
-        if node1 in graph.nodes() and node2 in graph.nodes():
-            if nx.has_path(graph, node1, node2):
-                return
         try:
             if not single_path:
                 for path in nx.all_shortest_paths(self.network, node1, node2):
@@ -489,6 +431,57 @@ class NetworkSubgraphs(object):
 
         for edge in edges:
             self._add_edges_from_path(graph, edge)
+
+    def _ig_find_path(self, node_1, node_2, graph, single_path=False):
+
+        """
+        Generates a graph based on all shortest paths between two species
+
+
+        Parameters
+        ----------
+        node_1 : str
+            name of first species
+        node_2 :
+            list of str containing species or single str containing specie
+        all_shortest_paths : bool
+            include all shortest paths
+        Returns
+        -------
+        graph : networkx.DiGraph
+
+        """
+        # for i in (node_1, node_2):
+        #     if i not in self.nodes:
+        #         print("{} is not in network!")
+        #         return
+        # n1 = self._ig_node_dict[node_1]
+        # n2 = self._ig_node_dict[node_2]
+
+        # if self.ig_graph.vertex_connectivity(n1, n2, neighbors='ignore') != 0:
+        if single_path:
+            path = self.ig_graph.get_shortest_paths(node_1, node_2, mode='OUT')
+        else:
+            path = self.ig_graph.get_all_shortest_paths(node_1, node_2,
+                                                        mode='OUT')
+
+        for p in path:
+            _path = []
+            for e in p:
+                _path.append(self.ig_graph.vs[e]['name'])
+            self._add_edges_from_path(graph, _path)
+        # if self.ig_graph.vertex_connectivity(n2, n1, neighbors='ignore') != 0:
+        if single_path:
+            path = self.ig_graph.get_shortest_paths(node_2, node_1, mode='OUT')
+        else:
+            path = self.ig_graph.get_all_shortest_paths(node_2, node_1,
+                                                        mode='OUT')
+
+        for p in path:
+            _path = []
+            for e in p:
+                _path.append(self.ig_graph.vs[e]['name'])
+            self._add_edges_from_path(graph, _path)
 
 
 if __name__ == '__main__':
