@@ -1,19 +1,21 @@
 import os
-
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.image as mpimg
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import requests
-
+import time
 from magine.networks.cytoscape_mod_layout import LayoutClient
 from py2cytoscape.data.cyrest_client import CyRestClient
 from py2cytoscape.data.style import StyleUtil
 from py2cytoscape.data.util_network import NetworkUtil as util
 
 
-class RenderModel:
+class RenderModel(object):
     def __init__(self, graph, layout="attributes-layout", style='Directed'):
         # name='FromMAGINE'):
         # force-directed
@@ -33,7 +35,7 @@ class RenderModel:
         self.g_cy = self.cy.network.create_from_networkx(
             self.graph, )  # name=name,
         # collection=name)
-        import time
+
         time.sleep(2)
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], format='view')

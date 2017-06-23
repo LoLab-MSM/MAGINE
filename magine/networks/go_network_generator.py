@@ -3,7 +3,7 @@ import os
 
 import networkx as nx
 
-from magine.network_tools import export_to_dot
+from magine.networks.network_tools import export_to_dot
 from magine.ontology.enrichment_calculation import MagineGO
 
 

@@ -1,7 +1,6 @@
 import io
 import os
 import sys
-import tempfile
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
@@ -20,9 +19,7 @@ directory = os.path.dirname(__file__)
 
 class ReactomeFunctionalInteraction(object):
     def __init__(self):
-        self.tmp_dir = tempfile.mkdtemp()
         self.out_dir = directory
-        self.target_file = 'FIsInGene_031516_with_annotations.txt.zip'
         self.url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2015/FIsInGene_031516_with_annotations.txt.zip'
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
@@ -81,7 +78,7 @@ class ReactomeFunctionalInteraction(object):
         print("Reactome network has {} edges ".format(len(g.edges())))
         nx.write_gml(g, path)
 
-    def return_direction(self, text, gene1, gene2):
+    def _return_direction(self, text, gene1, gene2):
         if text in self._reverse:
             return gene2, gene1
         if text in self._forward:
@@ -94,7 +91,7 @@ class ReactomeFunctionalInteraction(object):
         prediction = False
         interaction_type = None
         annotation = row[2]
-        g1, g2 = self.return_direction(row[3], row[0], row[1])
+        g1, g2 = self._return_direction(row[3], row[0], row[1])
         score = row[4]
         modification = ''
         if 'predicted' in annotation:
@@ -151,7 +148,7 @@ if __name__ == '__main__':
 
     st = time.time()
     rfi = ReactomeFunctionalInteraction()
-    rfi.parse_network()
+    rfi.parse_network('.')
     end_time = time.time()
     print(end_time - st)
     # 33.48 seconds with set

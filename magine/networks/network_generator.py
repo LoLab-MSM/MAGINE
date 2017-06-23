@@ -11,8 +11,7 @@ from bioservices import KEGG
 
 import magine.mappings.maps as mapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.network_database_expansions.reactome \
-    import ReactomeFunctionalInteraction
+from magine.networks.databases import ReactomeFunctionalInteraction
 from magine.networks.kgml_to_networkx_parser import kgml_to_graph
 
 try:
@@ -231,12 +230,13 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     end_network = mapper.convert_all(end_network, species=species,
                                      use_hmdb=use_hmdb)
 
-    if all_measured_list is not None:
-        all_measured_list = set(x.upper() for x in all_measured_list)
-        end_network = add_reactome(end_network, all_measured_list)
-    elif use_reactome:
-        end_network = add_reactome(end_network, gene_list)
-
+    if use_reactome:
+        if all_measured_list is None:
+            end_network = add_reactome(end_network, gene_list)
+        else:
+            all_measured_list = set(str(x).upper() for x in all_measured_list)
+            end_network = add_reactome(end_network, all_measured_list)
+    # quit()
     if use_hmdb:
         print("warning: automatic integration currently in progress.\n")
         if metabolite_list is None:
@@ -284,8 +284,8 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
         if i not in start_nodes:
             if i.startswith('HMDB'):
                 missing_metabolites.append(i)
-            else:
-                print('Not an HMDB : {}'.format(i))
+            # else:
+            #     print('Not an HMDB : {}'.format(i))
 
     count_in_network, count_not_in_network = 0, 0
     missing_edge = 0
@@ -309,12 +309,15 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                     continue
 
                 for each in tmp_list:
+                    for each in tmp_list:
+                        if isinstance(each, int):
+                            print(each, i)
                     if each is None:
                         continue
                     elif each not in tmp_nodes:
                         added_proteins.add(each)
                     missing_edge += 1
-                    tmp_graph.add_node(i, speciesType='gene',
+                    tmp_graph.add_node(i, speciesType='compound',
                                        databaseSource='HMDB')
                     tmp_nodes.add(i)
                     tmp_graph.add_edge(each, i, interactionType='chemical',
@@ -331,6 +334,9 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                     continue
 
                 for each in tmp_list:
+                    if isinstance(each, int):
+
+                        print(each, i)
                     if each is None:
                         pass
                     elif each in start_nodes:
@@ -340,7 +346,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                                            databaseSource='HMDB')
 
                         tmp_graph.add_node(i,
-                                           speciesType='metabolite',
+                                           speciesType='compound',
                                            databaseSource='HMDB')
 
                         tmp_graph.add_edge(i, each, interactionType='chemical',
@@ -380,6 +386,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     print('\n')
     print('Number of proteins not in KEGG = {0}'.format(len(missing_proteins)))
     print('Number of add proteins = {0}'.format(len(added_proteins)))
+    print(added_proteins)
     print('Proteins added that were measured = {0}'.format(count))
     print('\n')
     print('missing metabolites-protein info = {0}'.format(
@@ -402,6 +409,7 @@ def add_reactome(network, measured_list):
     -------
 
     """
+    print("Checking for Reactome edges to add to network.")
     combined_network = network.copy()
     existing_nodes = set(network.nodes())
     existing_edges = set(network.edges())
@@ -448,10 +456,16 @@ def add_reactome(network, measured_list):
         if i in measured_set and j in measured_set:
             combined_network.add_edge(i, j, k)
             added_edges += 1
-        elif i in nodes_to_check or j in measured_list:
-            combined_network.add_edge(i, j, k)
+        elif i in nodes_to_check and j in measured_list:
+            combined_network.add_node(i, databaseSource='ReactomeFI',
+                                      speciesType='gene')
+            combined_network.add_edge(i, j, attr_dict=k)
             added_edges += 1
-
+        elif j in nodes_to_check and i in measured_list:
+            combined_network.add_node(j, databaseSource='ReactomeFI',
+                                      speciesType='gene')
+            combined_network.add_edge(i, j, attr_dict=k)
+            added_edges += 1
     print("Found {} nodes in REACTOME not in KEGG".format(added_nodes))
     print("Added {} edges from REACTOME".format(added_edges))
 
@@ -593,10 +607,9 @@ def load_reactome_fi():
     -------
 
     """
-    path = os.path.join(os.path.dirname(__file__), '..',
-                        'network_database_expansions',
-                        'reactome',
+    path = os.path.join(os.path.dirname(__file__), 'databases',
                         'reactome_fi.gml')
+
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")
         rfi = ReactomeFunctionalInteraction()

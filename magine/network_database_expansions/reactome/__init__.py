@@ -1,3 +1,0 @@
-from magine.network_database_expansions.reactome.reactome_functional_interaction import ReactomeFunctionalInteraction
-
-__all__ = ['ReactomeFunctionalInteraction']

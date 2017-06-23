@@ -68,7 +68,6 @@ class BioGridDownload(object):
                                        })
 
 
-        quit()
         table = pd.read_csv(io.BytesIO(urlopen(self.url).read()),
                             compression='zip',
                             delimiter='\t',
@@ -87,7 +86,6 @@ class BioGridDownload(object):
                         'Experimental System Type']
         table = table[protein_cols]
         print(table.head(10))
-        quit()
         table = table.as_matrix()
         g = nx.DiGraph()
         added_genes = set()

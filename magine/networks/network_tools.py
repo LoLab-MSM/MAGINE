@@ -4,6 +4,7 @@ from sys import modules
 
 import networkx as nx
 from bioservices import KEGG, UniProt
+import igraph as ig
 
 try:
     kegg = modules['kegg']
@@ -297,7 +298,7 @@ def add_attribute_to_network(graph, list_to_add_attribute, attribute,
 
 
     >>> from networkx import DiGraph
-    >>> from magine.network_tools import add_attribute_to_network
+    >>> from magine.networks.network_tools import add_attribute_to_network
     >>> g = DiGraph()
     >>> g.add_nodes_from(['a', 'b', 'c'])
     >>> new_g = add_attribute_to_network(g, ['a','b'], 'inTest', 'true')
@@ -339,7 +340,7 @@ def append_attribute_to_network(graph, list_to_add_attribute, attribute,
 
 
     >>> from networkx import DiGraph
-    >>> from magine.network_tools import append_attribute_to_network
+    >>> from magine.networks.network_tools import append_attribute_to_network
     >>> g = DiGraph()
     >>> g.add_nodes_from(['a'])
     >>> new_g = append_attribute_to_network(g, ['a'], 'attribute', 'one')
@@ -415,6 +416,18 @@ def _trim(network, list_of_nodes):
     print("{} found, {} not found".format(found, not_found))
     print("{}% of {} nodes".format(found / len_nodes * 100, len_nodes))
     return len_nodes
+
+
+def networkx_to_igraph(network):
+    igraph_network = ig.Graph(directed=True)
+    for i, data in network.nodes(data=True):
+        igraph_network.add_vertex(name=i, kwds=data)
+    for edge in network.edges(data=True):
+        e1 = edge[0]
+        e2 = edge[1]
+        data = edge[2]
+        igraph_network.add_edge(e1, e2, kwds=data)
+    return igraph_network
 
 
 def subtract_network_from_network(net1, net2):
@@ -520,6 +533,69 @@ def _nx_to_dot(network):
         except ImportError:
             print("Need to install pygraphviz")
             return network
+
+def print_network_stats(network, exp_data):
+    """
+
+    Parameters
+    ----------
+    network : nx.DiGraph
+    exp_data : magine.data.datatypes.ExperimentalData
+
+    Returns
+    -------
+
+    """
+    nodes = set(network.nodes())
+    g_nodes = set()
+    m_nodes = set()
+    for i, d in network.nodes(data=True):
+
+        if 'speciesType' not in d:
+            print("Doesn't have species type... {} = {}".format(i, d))
+            continue
+        if d['speciesType'] == 'gene':
+            g_nodes.add(i)
+        elif d['speciesType'] == 'compound' or d['speciesType'] == 'metabolite':
+            m_nodes.add(i)
+        else:
+            g_nodes.add(i)
+            print(i, d)
+
+    total_species = set(exp_data.list_species)
+    sig_total_species = set(exp_data.list_sig_species)
+    sig_genes = set(exp_data.list_sig_proteins)
+    genes = set(exp_data.list_proteins)
+    sig_met = set(exp_data.list_sig_metabolites)
+    met = set(exp_data.list_metabolites)
+    n_measured = len(nodes.intersection(total_species))
+    n_genes = len(nodes.intersection(sig_genes))
+    n_meta = len(nodes.intersection(sig_met))
+    n_sig_measured = len(nodes.intersection(sig_total_species))
+    n_nodes = len(nodes)
+    st = ''
+    st += 'Number of nodes = {}\n'.format(n_nodes)
+    st += 'Number of edges = {}\n'.format(len(network.edges()))
+    st += "Number of total nodes measured = {}\n".format(n_measured)
+    st += "Fraction of total nodes measured = {}\n".format(100.*n_measured/n_nodes)
+    st += "Number of total nodes sig. changed = {}\n".format(n_sig_measured)
+    st += "Fraction of total nodes sig. changed = {}\n".format(100.*n_sig_measured/n_nodes )
+    st += "Number of protein nodes sig. changed = {}\n".format(n_genes)
+    st += "Fraction of protein nodes measured = {}\n".format(
+            100. * n_genes / len(g_nodes))
+    st += "Number of metabolite nodes sig. changed = {}\n".format(n_meta)
+    st += "Fraction of total nodes measured = {}\n".format(
+            100. * n_meta / len(m_nodes))
+
+    print(st)
+
+
+
+def add_pvalue_and_fold_change():
+    # -log10pvalue,
+    # # log2fold_change,
+    return
+
 
 '''
 # deprecated
