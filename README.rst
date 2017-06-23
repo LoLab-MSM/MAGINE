@@ -29,7 +29,7 @@ Installation
    and download the **Python 2.7 version**. The default installer options
    are usually appropriate.
 
-   .. note::
+
         **Windows users:** If you are unsure whether to use the 32-bit or
            64-bit installer, press the Windows Start button, search for “About
            your PC”, and under “System type” it will specify 32-bit operating
@@ -62,7 +62,7 @@ Installation
     where you would type the .whl file that you download.
 
 
-5. **Install MAGINE **
+5. **Install MAGINE**
 
    The installation is very straightforward with ``pip`` - type the
    following in a terminal::
@@ -70,20 +70,19 @@ Installation
       $ git clone https://github.com/LoLab-VU/magine
       $ pip install -r requirements.txt
       $ export PYTHONPATH=`pwd`:$PYTHONPATH
-
-   .. note::
+    :
         **Mac users:** To open a terminal on a Mac, open Spotlight search
             (press command key and space), type ``terminal`` and press enter.
 
 
-6. **Install MAGINE (not currently working, please follow step 5) **
+6. **Install MAGINE (not currently working, please follow step 5)**
 
    The installation is very straightforward with ``pip`` - type the
    following in a terminal::
 
       $ pip install git+git:https://github.com/LoLab-VU/Magine
 
-   .. note::
+   :
         **Mac users:** To open a terminal on a Mac, open Spotlight search
           (press command key and space), type ``terminal`` and press enter.
 
