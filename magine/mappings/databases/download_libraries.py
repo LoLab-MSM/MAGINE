@@ -138,8 +138,8 @@ class HMDB(object):
         """ parse HMDB to Pandas.DataFrame
 
         """
-        out_dir = b'c:\users\jamesp~1\\appdata\local\\temp\\tmp_zxgyw\HMDB'
-        # out_dir = os.path.join(self.tmp_dir, 'HMDB')
+        # out_dir = b'c:\users\jamesp~1\\appdata\local\\temp\\tmp_zxgyw\HMDB'
+        out_dir = os.path.join(self.tmp_dir, 'HMDB')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
             self._unzip_hmdb(out_dir)
