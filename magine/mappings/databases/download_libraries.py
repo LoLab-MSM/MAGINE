@@ -172,8 +172,6 @@ class HMDB(object):
                     #     break
                     # """
                     template = self._create_dict(elem)
-                    print(template)
-                    quit()
                     tmp_all[count] = template
 
                     count += 1
