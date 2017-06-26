@@ -7,8 +7,8 @@ import pandas as pd
 from magine.data.formatter import pivot_table_for_export
 from magine.html_templates.html_tools import write_single_table, \
     write_table_to_html_with_figures
-from magine.networks.cytoscape_view import RenderModel
 from magine.networks.go_network_generator import GoNetworkGenerator
+from magine.networks.visualization.cytoscape_view import RenderModel
 from magine.ontology.ontology_analysis import GoAnalysis
 
 
@@ -124,7 +124,7 @@ class Analyzer(object):
                 data = self.exp_data.proteomics_down_over_time
             elif fold_change == 'both':
                 data = self.exp_data.proteomics_over_time
-            labels = list(self.exp_data.protomics_time_points)
+            labels = list(self.exp_data.proteomics_time_points)
         elif data_type == 'rnaseq':
             if fold_change == 'up':
                 data = self.exp_data.rna_up_over_time

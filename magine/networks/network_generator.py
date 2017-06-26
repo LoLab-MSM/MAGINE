@@ -12,7 +12,7 @@ from bioservices import KEGG
 import magine.mappings.maps as mapper
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import ReactomeFunctionalInteraction
-from magine.networks.kgml_to_networkx_parser import kgml_to_graph
+from magine.networks.databases.kgml_to_networkx_parser import kgml_to_graph
 
 try:
     import cPickle as pickle

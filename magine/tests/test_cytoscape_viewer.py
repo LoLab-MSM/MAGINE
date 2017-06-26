@@ -1,6 +1,8 @@
-import networkx as nx
-from magine.networks.cytoscape_view import RenderModel
 import os
+
+import networkx as nx
+
+from magine.networks.visualization.cytoscape_view import RenderModel
 
 
 def test_by_time():

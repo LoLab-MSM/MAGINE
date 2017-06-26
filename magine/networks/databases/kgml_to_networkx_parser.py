@@ -16,9 +16,15 @@ except:
 def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
     """ Converts a kgml to networkx DiGraph
 
-    :param xmlfile: to be translated
-    :param species: string, of species that the network is to be translated. Is used for dictionary purposes.
-    :return: networkx graph - graph of xmlfile, list - pathway_name, list - species_in_network
+    Parameters
+    ----------
+    xmlfile : str
+    output_dir : str
+    species : str
+
+    Returns
+    -------
+
     """
     try:
         tree = ET.parse(os.path.join(output_dir, xmlfile))

@@ -8,7 +8,7 @@ ID Mapping
 
 Subpackages
 -----------
-The following subpackages to download and parse data
+The following subpackages download and parse data
 
 .. toctree::
    :maxdepth: 2
