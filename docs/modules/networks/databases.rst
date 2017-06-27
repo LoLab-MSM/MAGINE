@@ -8,10 +8,11 @@ Network Databases
    :show-inheritance:
 
 
-interaction module
-------------------
+Reactome API
+------------
 
 .. automodule:: magine.networks.databases.reactome_api
    :members:
    :undoc-members:
    :show-inheritance:
+

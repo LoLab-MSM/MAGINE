@@ -27,13 +27,7 @@ magine\.networks\.network\_subgraphs module
    :undoc-members:
    :show-inheritance:
 
-magine\.networks\.kgml\_to\_networkx\_parser module
----------------------------------------------------
 
-.. automodule:: magine.networks.kgml_to_networkx_parser
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 
 Subpackages
@@ -44,3 +38,4 @@ The following subpackages to download and parse data
    :maxdepth: 2
 
    databases.rst
+          visualization.rst
