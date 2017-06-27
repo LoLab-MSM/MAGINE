@@ -1,20 +1,35 @@
 import itertools
-from sys import modules
+import os
 
 import networkx as nx
 import pandas as pd
-from goatools.semantic import ic, resnik_sim, semantic_similarity
+from goatools import obo_parser
+from goatools.semantic import TermCounts, ic, resnik_sim, semantic_similarity
+from orangecontrib.bio.utils.serverfiles import localpath
 
-from magine.ontology.go_from_goatools import go
+from magine.ontology.enrichment_calculation import MagineGO
 
-try:
-    termcounts = modules['termcounts']
-except:
-    from magine.ontology.go_from_goatools import load_termcount
+default_database_path = os.path.join(localpath(), "GO")
 
-    print("Loading termcounts")
-    termcounts, associations = load_termcount()
-    print("Loaded termcounts")
+short_path = os.path.join(default_database_path,
+                          "gene_ontology_edit.obo.tar.gz",
+                          "gene_ontology_edit.obo")
+
+if not os.path.exists(short_path):
+    from orangecontrib.bio.go import Ontology
+
+    print("Using ontology for first time")
+    print("Downloading files via Orange.bio")
+    Ontology()
+    assert os.path.exists(short_path)
+
+go = obo_parser.GODag(short_path)
+
+mg = MagineGO()
+print("Loading termcounts")
+associations = mg.gene_to_go
+termcounts = TermCounts(go, associations)
+print("Loaded termcounts")
 
 
 def path_to_root(go_term):
@@ -151,8 +166,8 @@ def add_children(go_term, graph, gene_set_of_interest):
 def check_if_children(list_of_terms, verbose=False):
     """
     Checks to see if any term is a child of another
-    
-    
+
+
     Parameters
     ----------
     list_of_terms : list
@@ -181,7 +196,7 @@ def check_if_children(list_of_terms, verbose=False):
 def check_depth_level(list_of_terms, verbose=False):
     """
     Checks to see if any terms are too deep in graph
-    
+
     Parameters
     ----------
     list_of_terms : list
@@ -222,9 +237,9 @@ def create_graph_to_root_from_list_terms(list_of_terms, check_child=False,
         if you want to check if there are terms that are children of other
         terms within your list
     check_depth: bool
-        check for maximum depth value. Depth larger than 10 usually 
+        check for maximum depth value. Depth larger than 10 usually
         takes a long time to find all paths.
-    
+
 
     Returns
     -------
@@ -441,6 +456,10 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         minimum number of references for GO ontology term
     max_ref : int
         maximum number of references for GO ontology term
+    variable_of_interest : str, {"enrichment_score", "pvalue}
+
+
+
     Returns
     -------
 
@@ -476,10 +495,6 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     if min_depth is not None:
         data = data[data['depth'] >= min_depth]
 
-    # normalize maximum enrichment to 20
-    # done for simplicity, may not be desired
-    # data.loc[data['enrichment_score'] > 20, 'enrichment_score'] = 20
-
     # filter out non-signficant terms
     tmp = data[data['pvalue'] <= pvalue]
 
@@ -490,7 +505,7 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
     ascend = False
     if variable_of_interest == 'pvalue':
         ascend = True
-    # enrichment_list = [('pvalue', i) for i in labels]
+
     list_all_go = tmp['GO_id'].unique()
     if n_hits_per_time is not None:
         tmp = pd.pivot_table(tmp, index=['GO_id', ], columns='sample_index')
@@ -503,16 +518,13 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
         list_all_go = set()
         for i in enrichment_list:
             tmp = tmp.sort_values(by=i, ascending=ascend)
-            # tmp = tmp.sort_values(by=i, ascending=True)
             list_of_go = set(tmp.head(n_hits_per_time).index)
             if trim_nodes:
                 list_of_go = check_term_list(list_of_go)
-                print("start {}", format(list_of_go))
                 count = n_hits_per_time
                 while len(list_of_go) < n_hits_per_time:
                     list_of_go = find_n_go_terms(list_of_go, count)
                     count += 1
-                    # count += len(list_of_go)
 
             list_all_go.update(list_of_go)
 
@@ -561,8 +573,7 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
         minimum number of references for GO ontology term
     max_ref : int
         maximum number of references for GO ontology term
-    variable_of_interest : str
-        "enrichment_score" or "pvalue"
+    variable_of_interest : str, {"enrichment_score", "pvalue"}
     Returns
     -------
 
@@ -643,27 +654,3 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
 
     return data
 
-
-def get_go_compartments():
-    nuc = 'GO:0005634'
-    cyt = 'GO:0005737'
-    pm = 'GO:0005886'
-    nuc_set = set()
-    pm_set = set()
-    cyt_set = set()
-    for i in associations:
-        l_ass = associations[i]
-        if nuc in l_ass:
-            nuc_set.add(i)
-        if cyt in l_ass:
-            cyt_set.add(i)
-        if pm in l_ass:
-            pm_set.add(i)
-    print(len(nuc_set))
-    print(len(cyt_set))
-    print(len(nuc_set.intersection(cyt_set)))
-    from magine.plotting.venn_diagram_maker import create_venn3
-    create_venn3(nuc_set, cyt_set, pm_set, 'Nuclear', 'Cyto', 'PlasmaMembrane',
-                 'go_overlap')
-
-# get_go_compartments()

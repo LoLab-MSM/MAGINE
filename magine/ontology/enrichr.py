@@ -1,21 +1,21 @@
 import json
 import os
 import re
+import time
+
 import numpy as np
 import pandas as pd
-import requests
-import magine.html_templates.html_tools as html_tools
-
 import pathos.multiprocessing as mp
-import time
+import requests
+
+import magine.html_templates.html_tools as html_tools
 from magine.plotting.species_plotting import plot_list_of_genes
-from magine.data.formatter import pivot_table_for_export
 
 _path = os.path.dirname(__file__)
 
 _valid_libs = set()
 with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
-    for n in f.read().split('\n'):
+    for n in f.read().splitlines():
         _valid_libs.add(n)
 
 gene = 'gene'
