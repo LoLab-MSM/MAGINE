@@ -18,8 +18,8 @@ Currently supported options
 """
 
 import os
-from .chemical_mapper import ChemicalMapper
-from .gene_mapper import GeneMapper
+from magine.mappings.chemical_mapper import ChemicalMapper
+from magine.mappings.gene_mapper import GeneMapper
 
 __all__ = ['ChemicalMapper', 'GeneMapper']
 
