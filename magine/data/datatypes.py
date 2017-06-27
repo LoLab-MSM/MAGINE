@@ -28,20 +28,98 @@ valid_cols = [fold_change, flag, p_val, protein, gene, species_type, sample_id]
 class ExperimentalData(object):
     """
     Manages all experimental data
+
+    Attributes
+    ----------
+    data : pd.DataFrame
+        Original dataframe provided to class
+
+    proteomics : pd.DataFrame
+        pandas dataframe containing only species=='proteins'
+
+    exp_methods : list
+        List of all experimental methods in data
+    list_metabolites
+    metabolites
+    list_sig_metabolites
+    timepoints
+    rna_seq
+    proteomics_non_rna
+    proteomics_sign
+    rna_seq_sign
+    proteomics_non_rna_sig
+    list_proteins
+    list_rna
+    list_proteins_non_rna
+    list_species
+    list_sig_proteins
+    list_sig_rna
+    list_sig_proteins_non_rna
+    list_sig_species
+    n_sig_proteins
+    n_sig_rnaseq
+    n_sig_proteins_non_rna
+    n_sig_metabolites
+    n_sig_species
+    total_unique_genes_proteomics
+    total_sign_rna
+    proteins_measured
+    prot_up
+    prot_down
+    sign_changed_proteomics
+    proteomics_up
+    proteomics_down
+    proteomics_sign_changed
+    proteomics_time_points
+    rna_time_points
+    proteomics_over_time
+    proteomics_up_over_time
+    proteomics_down_over_time
+    sig_species_over_time
+    sig_species_up_over_time
+    sig_species_down_over_time
+    genes_over_time
+    genes_up_over_time
+    genes_down_over_time
+    rna_up
+    rna_down
+    rna_sign_changed
+    rna_over_time
+    rna_down_over_time
+    rna_up_over_time
+    rna_down_over_time
+
+
     """
 
-    def __init__(self, proteomics_file, data_directory=os.getcwd(),
+    def __init__(self, data_file, data_directory=os.getcwd(),
                  file_object=None):
+        """
+
+        Parameters
+        ----------
+        data_file : str, pandas.DataFrame
+            Name of file, generally csv.
+            If provided a str, the file will be read in as a pandas.DataFrame
+        data_directory : str
+            Directory of csv file
+        file_object : object
+            File object used for web interface
+
+
+
+
+        """
         if file_object:
             raw_df = pandas.read_csv(
                 file_object,
                 parse_dates=False, low_memory=False
                 )
-        elif isinstance(proteomics_file, pandas.DataFrame):
-            raw_df = proteomics_file.copy()
+        elif isinstance(data_file, pandas.DataFrame):
+            raw_df = data_file.copy()
         else:
             raw_df = pandas.read_csv(
-                os.path.join(data_directory, proteomics_file),
+                os.path.join(data_directory, data_file),
                 parse_dates=False, low_memory=False
                 )
         for i in valid_cols:
@@ -106,8 +184,6 @@ class ExperimentalData(object):
         self.total_sign_rna = len(
                 self.rna_seq[self.rna_seq[flag]][gene].unique())
 
-        self.gene_fold_change = None
-
         self.proteins_measured = self.return_proteomics()
 
         self.prot_up = self.return_proteomics(significant=True,
@@ -120,7 +196,7 @@ class ExperimentalData(object):
         self.proteomics_up = {}
         self.proteomics_down = {}
         self.proteomics_sign_changed = {}
-        self.protomics_time_points = \
+        self.proteomics_time_points = \
             np.sort(self.proteomics[sample_id].unique())
         self.rna_time_points = np.sort(self.rna_seq[sample_id].unique())
 
@@ -140,7 +216,7 @@ class ExperimentalData(object):
         self.rna_down_over_time = []
         self.rna_up_over_time = []
         self.rna_down_over_time = []
-        for i in self.protomics_time_points:
+        for i in self.proteomics_time_points:
             self.proteomics_up[i] = self.return_proteomics(sample_id_name=i,
                                                            significant=True,
                                                            fold_change_value=1)
@@ -526,7 +602,7 @@ class ExperimentalData(object):
 
         species_plotter.plot_dataframe(self.data, html_filename=html_file_name,
                                        out_dir=out_dir, plot_type=plot_type,
-                                       type_of_species='proteins',
+                                       type_of_species='protein',
                                        run_parallel=run_parallel)
 
     def plot_all_metabolites(self, html_file_name, out_dir='metabolites',
