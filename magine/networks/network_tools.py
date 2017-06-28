@@ -2,9 +2,9 @@
 import os
 from sys import modules
 
+import igraph as ig
 import networkx as nx
 from bioservices import KEGG, UniProt
-import igraph as ig
 
 try:
     kegg = modules['kegg']
@@ -17,6 +17,28 @@ try:
 except KeyError:
     uniprot = UniProt()
     uniprot.TIMEOUT = 100
+
+
+def delete_disconnected_network(full_graph, verbose=False):
+    """
+    Delete disconnected parts of a provided network
+
+    Parameters
+    ----------
+    full_graph : networkx.DiGraph
+    verbose : bool
+        Prints all nodes that are removed
+
+    """
+
+    tmp_g = full_graph.to_undirected()
+    sorted_graphs = sorted(nx.connected_component_subgraphs(tmp_g), key=len,
+                           reverse=True)
+    for i in range(1, len(sorted_graphs)):
+        for node in sorted_graphs[i].nodes():
+            if verbose:
+                print("Removing disconnected node %s", node)
+            full_graph.remove_node(node)
 
 
 def paint_network_overtime(graph, list_of_lists, color_list, save_name,

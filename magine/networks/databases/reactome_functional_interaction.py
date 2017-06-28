@@ -2,6 +2,9 @@ import io
 import os
 import sys
 
+import networkx as nx
+import pandas as pd
+
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
 else:
@@ -11,15 +14,41 @@ else:
     from urllib import urlopen
 
 
-import networkx as nx
-import pandas as pd
+def load_reactome_fi():
+    """
+    Load reactome functional interaction network
+    Returns
+    -------
 
-directory = os.path.dirname(__file__)
+    """
+    path = os.path.join(os.path.dirname(__file__),
+                        'reactome_fi.gml')
+
+    if not os.path.exists(path):
+        print("Downloading Reactome Functional interaction network!")
+        download_reactome_functional_interaction()
+    if not os.path.exists(path):
+        print('Failed!')
+        quit()
+    return nx.read_gml(path)
+
+
+def download_reactome_functional_interaction():
+    """
+    Downloads reactome functional interaction network
+
+
+    Returns
+    -------
+
+    """
+    gml_file = os.path.join(os.path.dirname(__file__), 'reactome_fi.gml')
+    if os.path.exists(gml_file):
+        ReactomeFunctionalInteraction().parse_network(gml_file)
 
 
 class ReactomeFunctionalInteraction(object):
     def __init__(self):
-        self.out_dir = directory
         self.url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2015/FIsInGene_031516_with_annotations.txt.zip'
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}

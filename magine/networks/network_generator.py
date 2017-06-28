@@ -3,7 +3,6 @@
 File that generates networks
 """
 import os
-import warnings
 from sys import modules
 
 import networkx as nx
@@ -11,8 +10,8 @@ from bioservices import KEGG
 
 import magine.mappings.maps as mapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.networks.databases import ReactomeFunctionalInteraction
-from magine.networks.databases.kgml_to_networkx_parser import kgml_to_graph
+from magine.networks.databases import download_all_of_kegg, load_reactome_fi
+from magine.networks.network_tools import delete_disconnected_network
 
 try:
     import cPickle as pickle
@@ -23,117 +22,6 @@ try:
     kegg = modules['kegg']
 except KeyError:
     kegg = KEGG()
-
-
-dirname = os.path.join(os.path.dirname(__file__), 'node_to_pathway.p')
-
-
-def find_kegg_pathways(protein_names, num_overlap=1, download=True,
-                       species='hsa', overwrite=True):
-    """
-    
-    Parameters
-    ----------
-    protein_names : list
-        list of gene names to map to KEGG pathways
-    num_overlap : int
-        number of species that must exist in multiple pathways in order
-        to add to larger pathway
-    download : bool
-        Download the pathways
-    species : str   
-        which species pathways to consider
-    overwrite : bool
-        overwrite previous kgml files if they exist
-
-    Returns
-    -------
-
-    """
-
-    pathway_list = []
-    list_not_found = []
-    for i in protein_names:
-        tmp = kegg.get_pathway_by_gene(i, species)
-        list2 = []
-        if tmp is None:
-            print("%s not in KEGG?" % i)
-            list_not_found.append(i)
-            continue
-        for each in tmp:
-            list2.append(str(each))
-        pathway_list.append(list2)
-    overlap = {}
-    for i in range(len(pathway_list)):
-        for each in pathway_list[i]:
-            if each in overlap:
-                overlap[each] += 1
-            else:
-                overlap[each] = 1
-    results = []
-    for name, count in overlap.items():
-        if count > num_overlap:
-            results.append(name)
-    if download:
-        for i in results:
-            download_kegg_pathway(i, overwrite=overwrite)
-    if len(list_not_found) != 0:
-        print("Not found in KEGG", list_not_found)
-    return results
-
-
-def delete_disconnected_network(full_graph, verbose=False):
-    """
-    Delete disconnected parts of a provided network
-    
-    Parameters
-    ----------
-    full_graph : networkx.DiGraph
-    verbose : bool
-        Prints all nodes that are removed
-    
-    """
-
-    tmp_g = full_graph.to_undirected()
-    sorted_graphs = sorted(nx.connected_component_subgraphs(tmp_g), key=len,
-                           reverse=True)
-    for i in range(1, len(sorted_graphs)):
-        for node in sorted_graphs[i].nodes():
-            if verbose:
-                print("Removing disconnected node %s", node)
-            full_graph.remove_node(node)
-
-
-def download_kegg_pathway(pathway, overwrite=True):
-    """
-    
-    Parameters
-    ----------
-    pathway : str
-        kegg pathway to download
-    overwrite : bool
-        overwrite file if is exists
-    """
-    download = True
-    if os.path.exists("KEGG"):
-        pass
-    else:
-        os.mkdir("KEGG")
-    fname = os.path.join("KEGG", '{}.xml'.format(pathway))
-    if os.path.exists(fname):
-        if overwrite:
-            warnings.warn('Removing KEGG pathway to download new one, '
-                          'can change behavior if you set "overwrite"=False')
-        else:
-            print("%s already downloaded" % pathway)
-            download = False
-    if download:
-        file_string = kegg.get(pathway, "kgml")
-        if file_string == 404:
-            print("{} ended with 404 error".format(pathway))
-        else:
-            with open(fname, 'w') as f:
-                f.write(file_string)
 
 
 def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
@@ -172,9 +60,11 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     end_network = nx.DiGraph()
     gm = GeneMapper()
     # gm.load()
-    tmp_dir = os.path.join(os.path.dirname(__file__), 'TMP_KEGG')
+    tmp_dir = os.path.join(os.path.dirname(__file__), 'databases', 'KEGG')
+    dirname = os.path.join(os.path.dirname(__file__), 'databases',
+                           'node_to_pathway.p')
     if not os.path.exists(dirname):
-        _download_all_of_kegg(tmp_dir)
+        download_all_of_kegg(species=species)
 
     node_to_path = pickle.load(open(dirname, 'rb'))
 
@@ -232,10 +122,10 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
 
     if use_reactome:
         if all_measured_list is None:
-            end_network = add_reactome(end_network, gene_list)
+            end_network = expand_by_reactome(end_network, gene_list)
         else:
             all_measured_list = set(str(x).upper() for x in all_measured_list)
-            end_network = add_reactome(end_network, all_measured_list)
+            end_network = expand_by_reactome(end_network, all_measured_list)
     # quit()
     if use_hmdb:
         print("warning: automatic integration currently in progress.\n")
@@ -395,7 +285,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     return tmp_graph
 
 
-def add_reactome(network, measured_list):
+def expand_by_reactome(network, measured_list):
     """
     add _reactome functional interaction network to network
     Parameters
@@ -499,126 +389,3 @@ def _add_edges_from_path(network, graph, path):
             graph.add_edge(previous, protein,
                            **network.edge[previous][protein])
             previous = protein
-
-
-def _download_all_of_kegg(output_dir, species='hsa'):
-    """
-    Downloads every KEGG pathway to provided directory
-    
-    
-    Parameters
-    ----------
-    output_dir : str
-        path to download pathways
-
-    """
-    print("Downloading KEGG")
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    kegg.organism = species
-    list_of_kegg_pathways = kegg.pathwayIds
-    print("Number of pathways  = {}".format(len(list_of_kegg_pathways)))
-    # keys are KEGG pathway ids, values are nodes
-    pathway_dict = dict()
-    for i in list_of_kegg_pathways:
-        pathway = i[5:]
-        file_name = kegg.get(pathway, "kgml")
-        if file_name == 404:
-            print("%s ended with 404 error" % pathway)
-        else:
-            with open(os.path.join(output_dir, '%s.xml' % pathway), 'w') as f:
-                f.write(file_name)
-
-        graph, pathway_name, _ = kgml_to_graph('%s.xml' % pathway,
-                                               output_dir,
-                                               species='hsa')
-        pathway_dict[i] = graph.nodes()
-        print('{} has {} nodes and {} edges'.format(pathway_name,
-                                                    len(graph.nodes()),
-                                                    len(graph.edges())))
-        output_name = os.path.join(output_dir, '{}.gml'.format(pathway))
-        nx.write_gml(graph, output_name)
-
-    # create a dictionary mapping species to pathways
-    node_to_path = dict()
-    for i in pathway_dict:
-        for node in pathway_dict[i]:
-            if node in node_to_path:
-                node_to_path[node].add(i)
-            else:
-                node_to_path[node] = set()
-                node_to_path[node].add(i)
-    pickle.dump(node_to_path, open(dirname, 'wb'), )
-
-
-def _create_all_of_kegg(output_dir, species='hsa'):
-    kegg.organism = species
-    from magine.mappings.gene_mapper import GeneMapper
-    from magine.mappings.chemical_mapper import ChemicalMapper
-    gm = GeneMapper()
-    cm = ChemicalMapper()
-    list_of_kegg_pathways = kegg.pathwayIds
-    all_of_kegg = nx.DiGraph()
-    species_not_in_dict = set()
-    name_dict = {}
-    for i in list_of_kegg_pathways:
-        pathway = i[5:]
-        output_name = os.path.join(output_dir, '{}.gml'.format(pathway))
-        graph = nx.read_gml(output_name)
-        all_of_kegg = nx.compose(all_of_kegg, graph)
-        for j in graph.nodes():
-            if j.startswith(species):
-                if j in gm.kegg_to_gene_name:
-                    name_dict[j] = str(gm.kegg_to_gene_name[j][0])
-                    continue
-                else:
-                    species_not_in_dict.add(j)
-            elif j.startswith('cpd'):
-                if j in cm.kegg_to_hmdb_accession:
-                    name_dict[j] = str(cm.kegg_to_hmdb_accession[j][0])
-                    continue
-                else:
-                    species_not_in_dict.add(j)
-            elif j.startswith('dr'):
-                split_name = j.split(' ')
-                if len(split_name) > 1:
-                    if split_name[1].startswith('cpd:'):
-                        name_dict[j] = split_name[1]
-                        graph.node[j]['drug'] = str(split_name[0])
-                    else:
-                        species_not_in_dict.add(j)
-                else:
-                    species_not_in_dict.add(j)
-            else:
-                species_not_in_dict.add(j)
-
-    print(len(species_not_in_dict))
-    print('{} has {} nodes and {} edges'.format("all of kegg",
-                                                len(all_of_kegg.nodes()),
-                                                len(all_of_kegg.edges())))
-    all_of_kegg = nx.relabel_nodes(all_of_kegg, name_dict)
-    nx.write_gml(all_of_kegg, 'all_of_kegg.gml')
-
-
-def load_reactome_fi():
-    """
-    Load reactome functional interaction network
-    Returns
-    -------
-
-    """
-    path = os.path.join(os.path.dirname(__file__), 'databases',
-                        'reactome_fi.gml')
-
-    if not os.path.exists(path):
-        print("Downloading Reactome Functional interaction network!")
-        rfi = ReactomeFunctionalInteraction()
-        rfi.parse_network(path)
-    if not os.path.exists(path):
-        print('Failed!')
-        quit()
-    return nx.read_gml(path)
-
-if __name__ == '__main__':
-    _download_all_of_kegg('DELETE')
-    # _create_all_of_kegg('DELETE')
