@@ -1,6 +1,6 @@
 import os
 
-from magine.networks.databases.kgml_to_networkx_parser import kgml_to_graph
+from magine.networks.databases.kegg_kgml import kgml_to_graph
 from magine.networks.pysb_conversion.to_pysb import translate
 
 rel_dir = os.path.dirname(__file__)
