@@ -6,13 +6,6 @@ from magine.networks.network_generator import expand_by_hmdb
 cm = ChemicalMapper()
 
 
-# def test_init():
-#     cm.load()
-#     cm.reload()
-#     cm.print_info()
-
-
-# """
 
 def test_synonyms():
     hmdb = cm.check_synonym_dict(term='dodecene', format_name='accession')
@@ -31,7 +24,6 @@ def test_protein_network():
         assert protein in hit_list
 
 
-# """
 def test_expand_by_hmdb():
     g = nx.DiGraph()
     g.add_edge('PNLIP', 'LIPC')
@@ -41,10 +33,4 @@ def test_expand_by_hmdb():
                            )
     for i in new_g.nodes():
         print(i)
-    # """
-    # if __name__ == "__main__":
-    #     test_init()
-    # test_synonyms()
-    # test_protein_network()
 
-# """

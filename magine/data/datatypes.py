@@ -1,9 +1,11 @@
-import subprocess
-import matplotlib.pyplot as plt
-from pandas.plotting import table
 import os
+import subprocess
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas
+from pandas.plotting import table
+
 import magine.plotting.species_plotting as species_plotter
 import magine.plotting.volcano_plots as v_plot
 from magine.data.formatter import log2_normalize_df
@@ -575,7 +577,7 @@ class ExperimentalData(object):
 
         """
         species_plotter.plot_list_of_metabolites(
-            self.proteomics, list_of_metab=list_of_metabolites,
+                self.metabolites, list_of_metab=list_of_metabolites,
             save_name=save_name, out_dir=out_dir, title=title,
             plot_type=plot_type, image_format=image_format
         )
@@ -799,7 +801,7 @@ class ExperimentalData(object):
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])
-        tmp = np.array(log2_normalize_df(data)[fold_change])
+        tmp = np.array(log2_normalize_df(data, fold_change)[fold_change])
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
