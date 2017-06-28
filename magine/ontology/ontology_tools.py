@@ -7,7 +7,7 @@ from goatools import obo_parser
 from goatools.semantic import TermCounts, ic, resnik_sim, semantic_similarity
 from orangecontrib.bio.utils.serverfiles import localpath
 
-from magine.ontology.enrichment_calculation import MagineGO
+from magine.ontology.databases.gene_ontology import MagineGO
 
 default_database_path = os.path.join(localpath(), "GO")
 

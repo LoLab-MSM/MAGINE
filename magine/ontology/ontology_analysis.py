@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 import magine.html_templates.html_tools as html_tools
-from magine.ontology.enrichment_calculation import MagineGO
+from magine.ontology.databases.gene_ontology import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
 

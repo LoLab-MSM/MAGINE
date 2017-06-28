@@ -35,8 +35,7 @@ class MagineGO(object):
         self.go_aspect = pickle.load(open(go_aspect, 'rb'))
 
     def calculate_enrichment(self, genes, reference=None, evidence_codes=None,
-                             aspect=None,
-                             use_fdr=True, ):
+                             aspect=None, use_fdr=True):
         """
     
         Parameters
