@@ -27,7 +27,7 @@ before_install:
 install:
   python setup.py build --build-lib=build/lib
 script:
-  - python build/lib/download_databases.py
+  - python build/lib/scripts/download_databases.py
   - travis_wait 45 nosetests build/lib/magine/tests --with-coverage --cover-inclusive --cover-package=build/lib/magine --logging-level=INFO
 after_success:
   coveralls
