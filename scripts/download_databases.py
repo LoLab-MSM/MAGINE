@@ -1,3 +1,5 @@
+#!python
+
 import magine.mappings.databases.download_libraries as dl
 from magine.networks.databases import download_all_of_kegg, \
     download_reactome_functional_interaction

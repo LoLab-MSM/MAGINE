@@ -68,7 +68,8 @@ setup(
             'test': ['coverage'],
         },
         include_package_data=True,
-        scripts=['scripts/create_template_project'],
+        scripts=['scripts/create_template_project',
+                 'scripts/download_databases.py'],
 
         # If there are data files included in your packages that need to be
         # installed, specify them here.  If using Python 2.6 or less, then these
