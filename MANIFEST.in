@@ -7,6 +7,6 @@ include magine/tests/Data/hilic/*
 include magine/tests/Network_files/*
 include magine/tests/KEGG/*
 include magine/mappings/*mapper.p
-include scripts/create_template_project
+include scripts/*
 graft doc
 prune doc/_build
