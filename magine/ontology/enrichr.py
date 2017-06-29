@@ -111,12 +111,12 @@ class Enrichr(object):
 
                 return go_id
 
-            df['GO_id'] = df.apply(get_go_id, axis=1)
+            df['term_id'] = df.apply(get_go_id, axis=1)
 
-            term_names = df['term_name'].replace('(' + df['GO_id'] + ')', '')
+            term_names = df['term_name'].replace('(' + df['term_id'] + ')', '')
 
-            df['term_name'] = term_names
-            cols.insert(0, 'GO_id')
+            df.loc[:, 'term_name'] = term_names
+            cols.insert(0, 'term_id')
         if verbose:
             print("Done calling Enrichr.")
         return df[cols]
@@ -160,8 +160,8 @@ class Enrichr(object):
         df_all = pd.concat(df_all)
         index = ['term_name']
 
-        if 'GO_id' in list(df.columns):
-            index.insert(0, 'GO_id')
+        if 'term_id' in list(df.columns):
+            index.insert(0, 'term_id')
 
         p_df = pd.pivot_table(df_all, index=index,
                               columns='sample_id',
@@ -177,68 +177,68 @@ class Enrichr(object):
             if exp_data is None:
                 print("exp_data required to make plots over samples")
                 quit()
-            self.write_table_to_html(data=df_all, save_name=save_name,
-                                     out_dir=out_dir,
-                                     run_parallel=run_parallel,
-                                     exp_data=exp_data)
-
+            write_table_to_html(data=df_all, save_name=save_name,
+                                out_dir=out_dir, run_parallel=run_parallel,
+                                exp_data=exp_data)
         return p_df
 
-    def write_table_to_html(self, data, save_name='index', out_dir=None,
-                            run_parallel=False,  exp_data=None):
-        """
-        Creates a table of all the plots of all genes for each GO term.
 
-        Uses last calculated enrichment array.
+def write_table_to_html(data, save_name='index', out_dir=None,
+                        run_parallel=False, exp_data=None):
+    """
+    Creates a table of all the plots of all genes for each GO term.
 
-        Parameters
-        ----------
-        save_name : pandas.DataFrame
-            name of html output file
-        out_dir : str, optional
-            output path for all plots
-        run_parallel : bool
-            Create plots in parallel
+    Uses last calculated enrichment array.
 
-        Returns
-        -------
+    Parameters
+    ----------
+    data : pandas.DataFrame
+    save_name : str
+        name of html output file
+    out_dir : str, optional
+        output path for all plots
+    run_parallel : bool
+        Create plots in parallel
 
-        """
+    Returns
+    -------
 
-        # print(data.dtypes)
-        # tmp = pivot_table_for_export(data)
-        # print(tmp.dtypes)
-        list_of_terms = list(data['term_name'].unique())
-        fig_dict, to_remove = create_gene_plots(data=data,
-                                                list_of_terms=list_of_terms,
-                                                save_name=save_name,
-                                                out_dir=out_dir,
-                                                exp_data=exp_data,
-                                                run_parallel=run_parallel
-                                                )
+    """
 
-        for i in fig_dict:
-            data.loc[data['term_name'] == i, 'term_name'] = fig_dict[i]
+    # print(data.dtypes)
+    # tmp = pivot_table_for_export(data)
+    # print(tmp.dtypes)
+    list_of_terms = list(data['term_name'].unique())
+    fig_dict, to_remove = create_gene_plots(data=data,
+                                            list_of_terms=list_of_terms,
+                                            save_name=save_name,
+                                            out_dir=out_dir,
+                                            exp_data=exp_data,
+                                            run_parallel=run_parallel
+                                            )
 
-        data = data[~data['term_name'].isin(to_remove)]
+    for i in fig_dict:
+        data.loc[data['term_name'] == i, 'term_name'] = fig_dict[i]
 
-        index = ['term_name']
-        if 'GO_id' in list(data.columns):
-            index.insert(0, 'GO_id')
-        tmp = pd.pivot_table(data, index=index,
-                             columns='sample_id',
-                             values=['term_name', 'rank', 'p_value', 'z_score',
-                                     'combined_score', 'adj_p_value', 'genes'],
-                             aggfunc='first', fill_value=np.nan
-                             )
-        html_out = save_name
+    data = data[~data['term_name'].isin(to_remove)]
 
-        print("Saving to : {}".format(html_out))
+    index = ['term_name']
+    if 'GO_id' in list(data.columns):
+        index.insert(0, 'GO_id')
+    tmp = pd.pivot_table(data, index=index,
+                         columns='sample_id',
+                         values=['term_name', 'rank', 'p_value', 'z_score',
+                                 'combined_score', 'adj_p_value', 'genes'],
+                         aggfunc='first', fill_value=np.nan
+                         )
+    html_out = save_name
 
-        html_tools.write_single_table(tmp, html_out, 'MAGINE GO analysis')
-        html_out = save_name + '_filter'
+    print("Saving to : {}".format(html_out))
 
-        html_tools.write_filter_table(tmp, html_out, 'MAGINE GO analysis')
+    html_tools.write_single_table(tmp, html_out, 'MAGINE GO analysis')
+    html_out = save_name + '_filter'
+
+    html_tools.write_filter_table(tmp, html_out, 'MAGINE GO analysis')
 
 
 def create_gene_plots(data, list_of_terms, save_name, out_dir=None, exp_data=None,

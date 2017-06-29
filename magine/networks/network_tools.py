@@ -443,7 +443,7 @@ def _trim(network, list_of_nodes):
 def networkx_to_igraph(network):
     igraph_network = ig.Graph(directed=True)
     for i, data in network.nodes(data=True):
-        igraph_network.add_vertex(name=i, kwds=data)
+        igraph_network.add_vertex(name=i, **data)
     for edge in network.edges(data=True):
         e1 = edge[0]
         e2 = edge[1]

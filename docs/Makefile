@@ -1,6 +1,6 @@
 # Makefile for Sphinx documentation
 #
-
+GH_PAGES_SOURCES = modules
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = sphinx-build
@@ -11,6 +11,7 @@ BUILDDIR      = _build
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
 ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+
 
 .PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest
 
@@ -128,3 +129,16 @@ doctest:
 	$(SPHINXBUILD) -b doctest $(ALLSPHINXOPTS) $(BUILDDIR)/doctest
 	@echo "Testing of doctests in the sources finished, look at the " \
 	      "results in $(BUILDDIR)/doctest/output.txt."
+
+gh-pages:
+	git checkout gh-pages
+	rm -rf build _sources _static
+	git checkout master $(GH_PAGES_SOURCES)
+	git reset HEAD
+	make html
+	mv -fv build/html/* ./
+	rm -rf $(GH_PAGES_SOURCES) build
+	git add -A
+	git ci -m "Generated gh-pages for `git log master -1 --pretty=short --abbrev-commit`"
+	git push origin gh-pages
+	git checkout master

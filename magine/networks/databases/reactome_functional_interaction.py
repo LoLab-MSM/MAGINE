@@ -18,15 +18,12 @@ def load_reactome_fi():
     -------
 
     """
-    path = os.path.join(os.path.dirname(__file__),
-                        'reactome_fi.gml')
+    path = os.path.join(os.path.dirname(__file__), 'reactome_fi.gml')
 
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")
         download_reactome_functional_interaction(path)
-    if not os.path.exists(path):
-        print('Failed!')
-        quit()
+        assert os.path.exists(path), "Error downloading reactome FI. "
     return nx.read_gml(path)
 
 

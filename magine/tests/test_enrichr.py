@@ -1,7 +1,7 @@
 from magine.ontology.enrichr import Enrichr
 from magine.tests.sample_experimental_data import exp_data
 
-"""
+
 def test_enrichr_go():
     e = Enrichr()
     list_2 = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR', 'BAD',
@@ -18,7 +18,6 @@ def test_multi_sample():
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
     assert df2.shape == (85, 18)
-"""
 
 
 def test_multi_sample_plotting():

@@ -81,8 +81,6 @@ class NetworkSubgraphs(object):
                 self._add_edges_from_path(graph, path)
 
         if not direction_1 and not direction_2:
-            raise RuntimeWarning("No paths between {} and {}. Returning "
-                                 "None".format(node_1, node_2))
             return None
 
         if draw is not None:
@@ -156,6 +154,7 @@ class NetworkSubgraphs(object):
                                           nx.shortest_path(self.network, node1,
                                                            node2))
         except nx.NetworkXNoPath:
+            print("Path does NOT exist between {} and {}".format(node1, node2))
             return
 
     def upstream_network_of_specie(self, species_1, include_list=None,
@@ -385,7 +384,7 @@ class NetworkSubgraphs(object):
                 previous = protein
 
     @staticmethod
-    def _save_or_draw(graph, save_name, draw, img_format):
+    def _save_or_draw(graph, save_name, draw, img_format='png'):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
             graph = nt._format_to_directions(graph)
