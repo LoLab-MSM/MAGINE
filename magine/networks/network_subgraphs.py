@@ -19,11 +19,11 @@ class NetworkSubgraphs(object):
         self.network = network
         self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
-        self.ig_graph = nt.networkx_to_igraph(self.network)
+        # self.ig_graph = nt.networkx_to_igraph(self.network)
         self._edges = set()
         self._ig_node_dict = dict()
-        for i in self.nodes:
-            self._ig_node_dict[i] = self.ig_graph.vs.find(name=i).index
+        # for i in self.nodes:
+        #     self._ig_node_dict[i] = self.ig_graph.vs.find(name=i).index
 
     def shortest_paths_between_two_proteins(self, node_1, node_2, draw=False,
                                             image_format='png'):
