@@ -11,6 +11,7 @@ from bioservices import KEGG
 import magine.mappings.maps as mapper
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
+from magine.networks.databases.kegg_kgml import create_all_of_kegg
 from magine.networks.network_tools import delete_disconnected_network
 
 try:
@@ -366,6 +367,64 @@ def expand_by_reactome(network, measured_list):
     return combined_network
 
 
+def create_background_network(save_name='background_network'):
+    reactome_network = load_reactome_fi()
+    hmdb_network = create_hmdb_network()
+    kegg_network = create_all_of_kegg()
+    full_network = nx.compose_all(
+            [reactome_network, hmdb_network, kegg_network])
+    print(len(full_network.nodes()))
+    print(len(full_network.edges()))
+    nx.write_gml(full_network, '{}.gml'.format(save_name))
+
+
+def create_hmdb_network():
+    tmp_dir = os.path.join(os.path.dirname(__file__), 'databases')
+    out_name = os.path.join(tmp_dir, 'hmdb_graph.gml')
+    if os.path.exists(out_name):
+        return nx.read_gml(out_name)
+    from magine.mappings.chemical_mapper import ChemicalMapper
+
+    try:
+        cm = modules['cm']
+    except:
+        cm = ChemicalMapper()
+
+    tmp_graph = nx.DiGraph()
+    nodes = set()
+    for i in cm.hmdb_accession_to_protein:
+        genes = cm.hmdb_accession_to_protein[i]
+        if len(genes) == 1:
+            if genes[0] == u'':
+                continue
+            else:
+                if i not in nodes:
+                    tmp_graph.add_node(i, speciesType='compound',
+                                       databaseSource='HMDB')
+                    nodes.add(i)
+                if genes[0] not in nodes:
+                    tmp_graph.add_node(i, speciesType='gene',
+                                       databaseSource='HMDB')
+                    nodes.add(i)
+
+                tmp_graph.add_edge(i, genes[0])
+        else:
+            for g in genes:
+                if g != u'':
+                    if i not in nodes:
+                        tmp_graph.add_node(i, speciesType='compound',
+                                           databaseSource='HMDB')
+                        nodes.add(i)
+                    if g not in nodes:
+                        tmp_graph.add_node(i, speciesType='gene',
+                                           databaseSource='HMDB')
+                        nodes.add(i)
+                    tmp_graph.add_edge(i, g, interactionType='chemical',
+                                       databaseSource='HMDB')
+    nx.write_gml(tmp_graph, out_name)
+    return tmp_graph
+
+
 def _add_edges_from_path(network, graph, path):
     """
     Adds a path to a graph
@@ -389,3 +448,7 @@ def _add_edges_from_path(network, graph, path):
             graph.add_edge(previous, protein,
                            **network.edge[previous][protein])
             previous = protein
+
+
+if __name__ == '__main__':
+    create_background_network()

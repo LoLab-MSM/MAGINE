@@ -6,6 +6,8 @@ from sys import modules
 import networkx as nx
 from bioservices import KEGG
 
+import magine.mappings.maps as mapper
+
 try:
     kegg = modules['kegg']
 except:
@@ -156,53 +158,40 @@ def find_kegg_pathways(protein_names, num_overlap=1, download=True,
     return results
 
 
-def _create_all_of_kegg(output_dir, species='hsa'):
-    kegg.organism = species
-    from magine.mappings.gene_mapper import GeneMapper
-    from magine.mappings.chemical_mapper import ChemicalMapper
-    gm = GeneMapper()
-    cm = ChemicalMapper()
-    list_of_kegg_pathways = kegg.pathwayIds
-    all_of_kegg = nx.DiGraph()
-    species_not_in_dict = set()
-    name_dict = {}
-    for i in list_of_kegg_pathways:
-        pathway = i[5:]
-        output_name = os.path.join(output_dir, '{}.gml'.format(pathway))
-        graph = nx.read_gml(output_name)
-        all_of_kegg = nx.compose(all_of_kegg, graph)
-        for j in graph.nodes():
-            if j.startswith(species):
-                if j in gm.kegg_to_gene_name:
-                    name_dict[j] = str(gm.kegg_to_gene_name[j][0])
-                    continue
-                else:
-                    species_not_in_dict.add(j)
-            elif j.startswith('cpd'):
-                if j in cm.kegg_to_hmdb_accession:
-                    name_dict[j] = str(cm.kegg_to_hmdb_accession[j][0])
-                    continue
-                else:
-                    species_not_in_dict.add(j)
-            elif j.startswith('dr'):
-                split_name = j.split(' ')
-                if len(split_name) > 1:
-                    if split_name[1].startswith('cpd:'):
-                        name_dict[j] = split_name[1]
-                        graph.node[j]['drug'] = str(split_name[0])
-                    else:
-                        species_not_in_dict.add(j)
-                else:
-                    species_not_in_dict.add(j)
-            else:
-                species_not_in_dict.add(j)
+def create_all_of_kegg(species='hsa'):
+    dirname = os.path.join(os.path.dirname(__file__), 'node_to_pathway.p')
+    tmp_dir = os.path.join(os.path.dirname(__file__), 'KEGG')
+    if not os.path.exists(dirname):
+        download_all_of_kegg(species=species)
 
-    print(len(species_not_in_dict))
+    node_to_path = pickle.load(open(dirname, 'rb'))
+    pathway_list = set()
+    for n in node_to_path:
+        if n in node_to_path:
+            for j in node_to_path[n]:
+                pathway_list.add(str(j.replace(':', '')[4:]))
+    all_of_kegg = nx.DiGraph()
+    for each in pathway_list:
+        tmp = nx.read_gml(os.path.join(tmp_dir, "{}.gml".format(each)))
+        all_of_kegg = nx.compose(all_of_kegg, tmp)
+
+    drug_dict = {}
+    for i in all_of_kegg.nodes():
+        if i.startswith('dr'):
+            split_name = i.split(' ')
+            if len(split_name) > 1:
+                if split_name[1].startswith('cpd:'):
+                    drug_dict[i] = split_name[1]
+                    all_of_kegg.node[i]['drug'] = split_name[0]
+    all_of_kegg = nx.relabel_nodes(all_of_kegg, drug_dict)
+    all_of_kegg = mapper.convert_all(all_of_kegg, species=species,
+                                     use_hmdb=True)
+
     print('{} has {} nodes and {} edges'.format("all of kegg",
                                                 len(all_of_kegg.nodes()),
                                                 len(all_of_kegg.edges())))
-    all_of_kegg = nx.relabel_nodes(all_of_kegg, name_dict)
     nx.write_gml(all_of_kegg, 'all_of_kegg.gml')
+    return all_of_kegg
 
 
 def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
