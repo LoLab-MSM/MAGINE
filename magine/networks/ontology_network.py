@@ -2,7 +2,6 @@ import itertools
 import os
 from random import randint
 
-import igraph
 import networkx as nx
 
 from magine.networks.network_tools import export_to_dot, networkx_to_igraph
@@ -226,7 +225,7 @@ class OntologyNetworkGenerator(object):
 
             if draw:
                 export_to_dot(go_graph, save_name)
-                export_to_dot(mol_net, save_name + '_subgraph')
+                # export_to_dot(mol_net, save_name + '_subgraph')
 
                 plot(mol_net, save_name + '_subgraph_igraph')
 
@@ -234,7 +233,12 @@ class OntologyNetworkGenerator(object):
 
 
 def plot(mol_net, save_name):
-    import cairo
+    try:
+        import cairo
+    except ImportError:
+        print("Please install pycairo to use igraph plotting")
+        return
+    import igraph
     from igraph.drawing.text import TextDrawer
     from igraph.drawing.colors import color_name_to_rgba
 
@@ -254,6 +258,9 @@ def plot(mol_net, save_name):
                 edges_colors.append("black")
         gcopy.delete_edges(edges)
         layout = gcopy.layout("kk")
+        # layout = gcopy.layout("tree")
+        # layout = gcopy.layout("drl")
+        # layout = gcopy.layout("fr")
         g.es["color"] = edges_colors
     visual_style = dict()
     visual_style["vertex_label_dist"] = 0
@@ -277,7 +284,7 @@ def plot(mol_net, save_name):
         _groups[vertex.index] = colors[membership[vertex.index]]
         vertex["color"] = colors[membership[vertex.index]]
     _mark_groups = dict()
-    print(_groups)
+    # print(_groups)
     for i in _groups:
         co = _groups[i]
         if co in _mark_groups:
@@ -287,13 +294,13 @@ def plot(mol_net, save_name):
     mark_groups = dict()
     for i in _mark_groups:
         mark_groups[tuple(_mark_groups[i])] = i
-    print(_mark_groups)
-    print(mark_groups)
+    # print(_mark_groups)
+    # print(mark_groups)
 
     visual_style["vertex_color"] = g.vs["color"]
 
     # igraph.plot(cl, "{}.pdf".format(save_name), mark_groups=True, **visual_style)
-    plot = igraph.Plot("{}2.pdf".format(save_name), bbox=(3000, 2200),
+    plot = igraph.Plot("{}2.png".format(save_name), bbox=(3000, 2200),
                        background="white")
     plot.add(cl, mark_groups=mark_groups, **visual_style)
     # plot = igraph.plot(cl, mark_groups=True, **visual_style)

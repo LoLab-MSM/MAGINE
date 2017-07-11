@@ -15,5 +15,4 @@ goatools==0.6.10
 plotly
 numba
 bottleneck
-pycairo
 python-igraph
