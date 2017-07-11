@@ -1,8 +1,7 @@
 import os
-import matplotlib
-matplotlib.use("Agg")
+
 import networkx as nx
-from nose.tools import raises
+
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.tests.sample_experimental_data import exp_data
 
@@ -33,8 +32,7 @@ class TestNetworkSubgraphs(object):
         up_nodes = {'MTMR4', 'MTMR14', 'MTMR3', 'ZFYVE1', 'HMDB03850'}
         for i in self.net_sub.upstream_network_of_specie('ZFYVE1').nodes():
             assert i in up_nodes
-            
-    @raises(RuntimeWarning)
+
     def test_path_between_two_does_not_exist(self):
         start = 'HSPA9'
         end = 'ZFYVE1'
@@ -88,7 +86,6 @@ class TestNetworkSubgraphs(object):
                                                       save_name='smaller_list')
         nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8', 'MAPK9',
                  'BCL2'}
-        print(g.nodes())
         assert set(g.nodes()) == nodes
 
 
