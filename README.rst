@@ -7,7 +7,12 @@ MAGINE
 .. image:: https://travis-ci.org/LoLab-VU/Magine.svg?branch=master
     :target: https://travis-ci.org/LoLab-VU/Magine
 
-Mechanism of Action Generator involving Network Expansion
+.. image:: https://landscape.io/github/LoLab-VU/Magine/master/landscape.svg?style=flat
+:target: https://landscape.io/github/LoLab-VU/Magine/master
+   :alt: Code Health
+
+
+    Mechanism of Action Generator involving Network Expansion
 
 Python package that integrates omic style data.
 
