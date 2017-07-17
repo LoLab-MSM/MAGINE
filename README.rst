@@ -8,7 +8,7 @@ MAGINE
     :target: https://travis-ci.org/LoLab-VU/Magine
 
 .. image:: https://landscape.io/github/LoLab-VU/Magine/master/landscape.svg?style=flat
-:target: https://landscape.io/github/LoLab-VU/Magine/master
+   :target: https://landscape.io/github/LoLab-VU/Magine/master
    :alt: Code Health
 
 
