@@ -42,6 +42,7 @@ class ChemicalMapper(object):
         self.kegg_to_hmdb_accession = {}
         self.hmdb_accession_to_protein = {}
         self.synonyms_to_hmdb = {}
+        self.drugbank_to_hmdb = {}
         _filename = os.path.join(directory, 'data', 'hmdb_dataframe.csv')
 
         if not os.path.exists(_filename):
@@ -75,6 +76,7 @@ class ChemicalMapper(object):
         self.chemical_name_to_hmdb_accession = self._to_dict("name",
                                                              "accession")
         self.hmdb_accession_to_kegg = self._to_dict("accession", "kegg_id")
+        self.drugbank_to_hmdb = self._to_dict("drugbank_id", "accession")
         self.kegg_to_hmdb_accession = self._to_dict("kegg_id", "accession")
         self.hmdb_accession_to_protein = self.convert_to_dict_from_list(
                 "accession", "protein_associations")
