@@ -11,8 +11,8 @@ import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
 
 from magine.data.formatter import log2_normalize_df, pivot_tables_for_export
-from magine.html_templates.html_tools import format_ploty, write_filter_table
 
+# import magine.html_templates.html_tools as ht
 
 plotly.plotly.sign_in(username='james.ch.pino',
                       api_key='BnUcJSpmPcMKZg0yEFaL')
@@ -184,6 +184,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     -------
 
     """
+    from magine.html_templates.html_tools import write_filter_table
     if os.path.exists(out_dir):
         pass
     else:
@@ -510,6 +511,7 @@ def _save_matplotlib_output(ax, save_name, out_dir, image_format, x_point_dict,
 
 def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
                        x_point_dict, title, x_points, plotly_list):
+    from magine.html_templates.html_tools import format_ploty
     true_list = [True] * total_counter
     scroll_list = [dict(args=['visible', true_list],
                         label='All',
