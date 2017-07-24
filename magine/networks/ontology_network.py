@@ -207,7 +207,9 @@ class OntologyNetworkGenerator(object):
                 if b_to_a > threshold:
                     go_graph.add_edge(label_2, label_1, label=str(b_to_a),
                                       weight=b_to_a)
+        # print(sp_to_term)
         for i in sp_to_term:
+            # print(i)
             labels = sp_to_label[i]
             terms = sp_to_term[i]
             assert len(labels) == len(terms), \
@@ -252,8 +254,9 @@ def plot(mol_net, save_name):
         edges_colors = []
         for edge in g.es():
             if membership[edge.tuple[0]] != membership[edge.tuple[1]]:
-                edges.append(edge)
-                edges_colors.append("gray")
+                # edges.append(edge)
+                # edges_colors.append("gray")
+                edges_colors.append("black")
             else:
                 edges_colors.append("black")
         gcopy.delete_edges(edges)
