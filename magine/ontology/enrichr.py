@@ -100,8 +100,8 @@ class Enrichr(object):
             tmp_dict['adj_p_value'] = i[6]
             list_of_dict.append(tmp_dict)
         cols = ['term_name', 'rank', 'p_value', 'z_score', 'combined_score',
-                'adj_p_value', 'genes',
-                ]
+                'adj_p_value', 'genes']
+
         df = pd.DataFrame(list_of_dict, columns=cols)
 
         if gene_set_lib.startswith('GO'):
@@ -154,10 +154,20 @@ class Enrichr(object):
         assert isinstance(sample_lists[0], list), "Please provide list of lists"
         df_all = []
         for i, j in zip(sample_lists, sample_ids):
+            print("{} / {}".format(j, sample_ids))
             df = self.run(i, gene_set_lib)
             df['sample_id'] = j
             df_all.append(df)
         df_all = pd.concat(df_all)
+        group = df_all.groupby('term_name')
+        non_sig = []
+        for i, g in group:
+            if len(g[g['adj_p_value'] < 0.05]) == 0:
+                non_sig.append(i)
+        df_all = df_all[~df_all['term_name'].isin(non_sig)]
+        if df_all.shape[1] == 0:
+            print("No significant terms for {}".format(gene_set_lib))
+            return None
         index = ['term_name']
 
         if 'term_id' in list(df.columns):
@@ -173,6 +183,7 @@ class Enrichr(object):
         if save_name:
             p_df.to_excel('{}_enricher.xlsx'.format(save_name),
                           merge_cells=True)
+            df_all.to_csv('{}_enrichr.csv'.format(save_name))
         if create_html:
             if exp_data is None:
                 print("exp_data required to make plots over samples")
@@ -181,6 +192,58 @@ class Enrichr(object):
                                 out_dir=out_dir, run_parallel=run_parallel,
                                 exp_data=exp_data)
         return p_df
+
+    def run_key_dbs(self, list_g, labels, save_name):
+        """
+
+        Parameters
+        ----------
+        list_g : list_like
+            List of lists of genes
+        labels : list_like
+            List of lists of labels
+        save_name : str
+            prefix of names
+
+        Returns
+        -------
+
+        """
+        list_to_search = [
+            'MGI_Mammalian_Phenotype_2017',
+            'GO_Biological_Process_2017',
+            'Human_Phenotype_Ontology',
+            'Tissue_Protein_Expression_from_ProteomicsDB',
+            'WikiPathways_2016',
+            'Humancyc_2016',
+            'DrugMatrix',
+            'Transcription_Factor_PPIs',
+            'Human_Gene_Atlas',
+            'Drug_Perturbations_from_GEO_2014',
+            'KEGG_2016',
+            'KEA_2015',
+            'OMIM_Disease',
+            'OMIM_Expanded',
+            'NCI-Nature_2016'
+        ]
+
+        # Create a Pandas Excel writer using XlsxWriter as the engine.
+        writer = pd.ExcelWriter('{}_multiple.xlsx'.format(save_name),
+                                engine='xlsxwriter')
+
+        for i in list_to_search:
+            print("Running {}".format(i))
+            df = self.run_samples(sample_lists=list_g, sample_ids=labels,
+                                  gene_set_lib=i, create_html=False)
+            if df is None:
+                continue
+            if len(i) > 30:
+                i = i[:30]
+
+            df.to_excel(writer, sheet_name=i)
+
+        # Close the Pandas Excel writer and output the Excel file.
+        writer.save()
 
 
 def write_table_to_html(data, save_name='index', out_dir=None,

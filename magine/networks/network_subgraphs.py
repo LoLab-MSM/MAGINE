@@ -62,6 +62,7 @@ class NetworkSubgraphs(object):
 
         """
         graph = nx.DiGraph()
+        self._edges = set()
         direction_1, direction_2 = True, True
         for i in (node_1, node_2):
             if i not in self.nodes:
