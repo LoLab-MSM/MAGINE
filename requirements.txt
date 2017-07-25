@@ -16,3 +16,4 @@ plotly
 numba
 bottleneck
 python-igraph
+appdirs
