@@ -3,28 +3,25 @@ import os
 import sys
 import networkx as nx
 import pandas as pd
+from magine.mappings import ChemicalMapper
+from magine.data.storage import network_data_dir
+
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
 else:
     from urllib import urlopen
-from magine.mappings.chemical_mapper import ChemicalMapper
-
-
-
-directory = os.path.dirname(__file__)
 
 
 class BioGridDownload(object):
 
-
     def __init__(self):
-        self.out_dir = directory
         self.url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-ALL-LATEST.tab2.zip'
         self.url2 = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-CHEMICALS-LATEST.chemtab.zip'
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
         self._db_name = 'BioGrid'
         self.cm = ChemicalMapper()
+
     def _create_chemical_network(self):
         chemical_int = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
                                    compression='zip',
@@ -151,7 +148,7 @@ class BioGridDownload(object):
 
         print("BIOGRID network has {} nodes ".format(len(g.nodes())))
         print("BIOGRID network has {} edges ".format(len(g.edges())))
-        nx.write_gml(g, os.path.join(directory, 'biogrid.gml'))
+        nx.write_gml(g, os.path.join(network_data_dir, 'biogrid.gml'))
 
 
 if __name__ == '__main__':

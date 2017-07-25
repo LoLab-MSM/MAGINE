@@ -13,6 +13,8 @@ from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
 from magine.networks.databases.kegg_kgml import create_all_of_kegg
 from magine.networks.network_tools import delete_disconnected_network
+from magine.data.storage import network_data_dir,  id_mapping_dir
+
 
 try:
     import cPickle as pickle
@@ -61,13 +63,13 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     end_network = nx.DiGraph()
     gm = GeneMapper()
     # gm.load()
-    tmp_dir = os.path.join(os.path.dirname(__file__), 'databases', 'KEGG')
-    dirname = os.path.join(os.path.dirname(__file__), 'databases',
-                           'node_to_pathway.p')
-    if not os.path.exists(dirname):
+    _kegg_raw_out_path = os.path.join(network_data_dir, 'KEGG')
+    _kegg_node_to_pathway = os.path.join(network_data_dir, 'kegg_node_to_pathway.p')
+
+    if not os.path.exists(_kegg_raw_out_path):
         download_all_of_kegg(species=species)
 
-    node_to_path = pickle.load(open(dirname, 'rb'))
+    node_to_path = pickle.load(open(_kegg_node_to_pathway, 'rb'))
 
     to_remove = set()
     pathway_list = set()
@@ -100,7 +102,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
         networks_added.append(each)
         # tmp, pathways_to_add, compounds = kgml_to_graph("{}.xml".format(each),
         #                                                 species=species)
-        tmp = nx.read_gml(os.path.join(tmp_dir, "{}.gml".format(each)))
+        tmp = nx.read_gml(os.path.join(_kegg_raw_out_path, "{}.gml".format(each)))
         end_network = nx.compose(end_network, tmp)
         list_of_graphs.append(tmp)
     # for tmp in list_of_graphs:
@@ -379,8 +381,8 @@ def create_background_network(save_name='background_network'):
 
 
 def create_hmdb_network():
-    tmp_dir = os.path.join(os.path.dirname(__file__), 'databases')
-    out_name = os.path.join(tmp_dir, 'hmdb_graph.gml')
+
+    out_name = os.path.join(id_mapping_dir, 'hmdb_graph.gml')
     if os.path.exists(out_name):
         return nx.read_gml(out_name)
     from magine.mappings.chemical_mapper import ChemicalMapper

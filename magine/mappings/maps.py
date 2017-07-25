@@ -7,19 +7,14 @@ try:
 except:
     import pickle as pickle
 import os
-from sys import modules
-
 import networkx as nx
 from bioservices import HGNC, KEGG, UniChem, UniProt
-
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
+from magine.data.storage import network_data_dir
 
-try:
-    kegg = modules['kegg']
-except KeyError:
-    kegg = KEGG()
 
+kegg = KEGG()
 uniprot = UniProt()
 hugo = HGNC()
 chem = UniChem()
@@ -27,7 +22,6 @@ chem = UniChem()
 
 # TODO create a database to store all of this
 # TODO create a kegg to uniprot identifier dictionary
-directory = os.path.dirname(__file__)
 
 
 # creation of a manual dictionary because of kegg to uniprot errors.
@@ -82,14 +76,7 @@ def create_gene_dictionaries(network, species='hsa'):
 
     gm = GeneMapper(species)
     # first we will check the pre-created dictionaries
-    if species == 'hsa':
-        dictionary = pickle.load(open(
-                os.path.join(directory, 'human_kegg_mapper.p'), 'rb')
-        )
-    elif species == 'mmu':
-        dictionary = pickle.load(open(
-                os.path.join(directory, 'mouse_kegg_mapper.p'), 'rb')
-        )
+
     # Create the dictionary to store all conversions to be returned
     kegg_to_gene_name = {}
     # List to store things not in the initial dictionary
@@ -110,8 +97,6 @@ def create_gene_dictionaries(network, species='hsa'):
                         if g in gm.gene_name_to_uniprot:
                             kegg_to_gene_name[str_gene] = g
 
-            elif i in dictionary:
-                kegg_to_gene_name[str_gene] = dictionary[str_gene]
             elif i in manual_dict:
                 kegg_to_gene_name[str_gene] = manual_dict[str_gene]
 

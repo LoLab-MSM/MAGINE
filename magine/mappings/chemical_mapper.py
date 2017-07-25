@@ -4,10 +4,8 @@ except:  # python3 doesnt have cPickle
     import pickle
 import os
 from ast import literal_eval
-
+from magine.data.storage import id_mapping_dir
 import pandas as pd
-
-directory = os.path.dirname(__file__)
 
 
 class ChemicalMapper(object):
@@ -43,7 +41,7 @@ class ChemicalMapper(object):
         self.hmdb_accession_to_protein = {}
         self.synonyms_to_hmdb = {}
         self.drugbank_to_hmdb = {}
-        _filename = os.path.join(directory, 'data', 'hmdb_dataframe.csv')
+        _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv')
 
         if not os.path.exists(_filename):
             from magine.mappings.databases.download_libraries import HMDB
@@ -59,7 +57,7 @@ class ChemicalMapper(object):
         )
 
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
-        self._instance_filename = os.path.join(directory, 'data',
+        self._instance_filename = os.path.join(id_mapping_dir,
                                                'hmdb_instance.p')
         try:
             self.reload()

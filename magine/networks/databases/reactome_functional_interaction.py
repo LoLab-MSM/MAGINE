@@ -1,7 +1,7 @@
 import io
 import os
 import sys
-
+from magine.data.storage import network_data_dir
 import networkx as nx
 import pandas as pd
 
@@ -18,7 +18,7 @@ def load_reactome_fi():
     -------
 
     """
-    path = os.path.join(os.path.dirname(__file__), 'reactome_fi.gml')
+    path = os.path.join(network_data_dir, 'reactome_fi.gml')
 
     if not os.path.exists(path):
         print("Downloading Reactome Functional interaction network!")

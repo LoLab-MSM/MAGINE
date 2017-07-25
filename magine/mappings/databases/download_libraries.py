@@ -2,12 +2,10 @@ import os
 import tempfile
 import zipfile
 from xml.etree import cElementTree as ElementTree
+from magine.data.storage import id_mapping_dir
 import numpy as np
 import pandas as pd
 import requests
-
-dir_name = os.path.dirname(__file__)
-out_dir = os.path.join(dir_name, '..', 'data')
 
 
 def download_uniprot(species='hsa'):
@@ -60,7 +58,7 @@ def download_uniprot(species='hsa'):
                           'UniPathway', 'UniProtKB-ID', 'UniRef100', 'UniRef50',
                           'UniRef90', 'eggNOG', 'neXtProt']
 
-    outfile = os.path.join(out_dir, 'human_uniprot.csv.gz')
+    outfile = os.path.join(id_mapping_dir, 'human_uniprot.csv.gz')
     uniprot.to_csv(outfile, compression='gzip', columns=valid_uniprot_cols,
                    header=True, index=False)
 
@@ -111,7 +109,7 @@ def _download(url, columns, name, save=True, names=None, compression=None):
                            names=names, compression=compression)
     df = df[columns]
     if save:
-        outfile = os.path.join(out_dir, '{}.gz'.format(name))
+        outfile = os.path.join(id_mapping_dir, '{}.gz'.format(name))
         df.to_csv(outfile, compression='gzip', header=True, index=False)
     return df
 
@@ -127,7 +125,7 @@ class HMDB(object):
     def __init__(self):
         self.tmp_dir = tempfile.mkdtemp()
         self.target_file = 'hmdb_metabolites.zip'
-        self.out_name = os.path.join(out_dir, 'hmdb_dataframe.csv')
+        self.out_name = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv')
         self._setup()
 
     def load_db(self):

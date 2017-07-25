@@ -9,7 +9,7 @@ import pandas as pd
 from magine.mappings.databases import download_hgnc, download_ncbi, \
     download_uniprot
 
-directory = os.path.dirname(__file__)
+from magine.data.storage import id_mapping_dir
 
 pd.set_option('display.width', 20000)
 
@@ -93,19 +93,19 @@ class GeneMapper(object):
 
     def __init__(self, species='hsa'):
         self.species = species
-        self._reload_fname = os.path.join(directory, 'data',
+        self._reload_fname = os.path.join(id_mapping_dir,
                                           'gene_mapping_instance.p')
 
-        hgnc_name = os.path.join(directory, 'data', 'hgnc.gz')
+        hgnc_name = os.path.join(id_mapping_dir, 'hgnc.gz')
         if not os.path.exists(hgnc_name):
             self.hgnc = download_hgnc()
             assert os.path.exists(hgnc_name)
         else:
-
             self.hgnc = pd.read_csv(hgnc_name, low_memory=False)
+
         self.hgnc = self.hgnc[self.hgnc['status'] == 'Approved']
 
-        ncbi_name = os.path.join(directory, 'data', 'ncbi.gz')
+        ncbi_name = os.path.join(id_mapping_dir, 'ncbi.gz')
         if not os.path.exists(ncbi_name):
             self.ncbi = download_ncbi()
             assert os.path.exists(ncbi_name)
@@ -113,7 +113,7 @@ class GeneMapper(object):
             self.ncbi = pd.read_csv(ncbi_name, low_memory=False)
 
         # gather data from uniprot
-        uniprot_path = os.path.join(directory, 'data', 'human_uniprot.csv.gz')
+        uniprot_path = os.path.join(id_mapping_dir, 'human_uniprot.csv.gz')
         if not os.path.exists(uniprot_path):
             self.uniprot = download_uniprot()
             assert os.path.exists(uniprot_path)
