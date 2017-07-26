@@ -2,17 +2,16 @@ import os
 
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
-
+from magine.data.storage import network_data_dir
 try:
     import cPickle as pickle
 except:
     import pickle
 
-dirname = os.path.dirname(__file__)
-
 
 class MagineGO(object):
     def __init__(self, species='hsa'):
+        dirname = network_data_dir
         gene_to_go_name = os.path.join(dirname,
                                        '{}_gene_to_go.p'.format(species))
         go_to_gene_name = os.path.join(dirname,
@@ -137,6 +136,8 @@ def create_dicts_through_orange(species='hsa', rev=None, rev_ass=None):
     goid_to_name = dict()
     go_aspect = dict()
     go_depth = dict()
+
+    dirname = network_data_dir
     go_slims = ont.named_slims_subset('goslim_pir')
 
     go_to_gene_name = os.path.join(dirname,
