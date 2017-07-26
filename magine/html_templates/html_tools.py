@@ -17,8 +17,8 @@ single_template = env.get_template('single_table_view.html')
 filter_template = env.get_template('filter_table.html')
 enrich_template = env.get_template('enrichment_template.html')
 
-range_number = '"column_number:{},\
-filter_type: "range_number"'
+range_number = 'column_number:{},'\
+'filter_type: "range_number"'
 
 auto_complete = 'column_number:{},' \
                 'filter_type: "auto_complete",' \
@@ -28,13 +28,26 @@ chosen = 'column_number:{}, filter_type: "chosen"'
 
 
 dict_of_templates = dict()
+# GO
 dict_of_templates['GO_id'] = range_number
 dict_of_templates['GO_name'] = auto_complete
-dict_of_templates['slim'] = auto_complete
-dict_of_templates['aspect'] = auto_complete
+dict_of_templates['slim'] = chosen
+dict_of_templates['aspect'] = chosen
 
-dict_of_templates['significant_flag'] = auto_complete
-dict_of_templates['data_type'] = auto_complete
+# enrichr
+dict_of_templates['term_name'] = auto_complete
+dict_of_templates['term_id'] = auto_complete
+dict_of_templates['rank'] = range_number
+dict_of_templates['p_value'] = range_number
+dict_of_templates['adj_p_value'] = range_number
+dict_of_templates['combined_score'] = range_number
+dict_of_templates['genes'] = auto_complete
+dict_of_templates['n_genes'] = range_number
+dict_of_templates['z_score'] = range_number
+
+
+dict_of_templates['significant_flag'] = chosen
+dict_of_templates['data_type'] = chosen
 dict_of_templates['ref'] = range_number
 dict_of_templates['depth'] = range_number
 dict_of_templates['enrichment_score'] = range_number

@@ -326,8 +326,9 @@ def write_table_to_html(data, save_name='index', out_dir=None,
     data = data[~data['term_name'].isin(to_remove)]
 
     index = ['term_name']
-    if 'GO_id' in list(data.columns):
-        index.insert(0, 'GO_id')
+    if 'term_id' in list(data.columns):
+        index.insert(0, 'term_id')
+
     tmp = pd.pivot_table(data, index=index,
                          columns='sample_id',
                          values=['term_name', 'rank', 'p_value', 'z_score',

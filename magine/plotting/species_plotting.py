@@ -247,8 +247,8 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     elif type_of_species == 'metabolites':
         output = meta_out
 
-    if out_dir is not None:
-        html_filename = os.path.join(out_dir, html_filename)
+    # if out_dir is not None:
+    #     html_filename = os.path.join(out_dir, html_filename)
 
     write_filter_table(output, html_filename, idx_key)
 

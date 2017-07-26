@@ -14,15 +14,22 @@ def test_enrichr_go():
 
 def test_multi_sample():
     e = Enrichr()
-    lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
+    lists = [['BAX', 'BCL2', 'CASP3'],
+             ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
-    df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
-    assert df2.shape == (85, 18)
+    df2 = e.run_samples(lists,
+                        ['1', '2', '3']
+                        , save_name='enrichr_test')
+    assert df2.shape == (85, 21)
 
 
 def test_multi_sample_plotting():
     e = Enrichr()
     up = exp_data.proteomics_up_over_time
-    df2 = e.run_samples(up, ['1', '2', '3'], save_name='enrichr_test', exp_data=exp_data,
-                        create_html=True, out_dir='html_output2')
+    df2 = e.run_samples(up,
+                        ['1', '2', '3'],
+                        save_name='enrichr_test',
+                        exp_data=exp_data,
+                        create_html=True,
+                        out_dir='html_output2')
 
