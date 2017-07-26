@@ -76,7 +76,9 @@ def load_csv(directory=None, filename=None):
         print("Right now we can use xlsx and csv files one")
         quit()
     if 'time_points' in data:
-        time = convert_time_to_hours(data['time_points'])
+        # time = convert_time_to_hours(data['time_points'])
+        time = data.apply(convert_time_to_hours, axis=1)
+
         data.loc[:, 'time'] = time
 
     if 'gene' in data.dtypes:
@@ -172,12 +174,9 @@ def convert_time_to_hours(d):
     -------
 
     """
-    t = d.unique()
-    if len(t) != 1:
-        print("Non-unique timepoints in this file!")
-        print("Must handle separately")
-
-    t = t[0]
+    t = d['time_points']
+    if isinstance(t, float):
+        return t
     if 's' in t:
         time = float(t.replace('s', '')) / 3600.
     elif 'min' in t:
@@ -305,9 +304,10 @@ def _process_metabolites(data):
     return data[progensis_list_of_attributes]
 
 
-def _process_label_free(data):
+def _process_label_free(data, subcell=False):
     label_free = data.copy()
     label_free['data_type'] = 'label_free'
+    print(label_free.dtypes)
     label_free['gene'] = label_free['primary_genes'].astype(str)
     label_free = label_free[label_free['gene'] != 'nan']
     mod_sites = label_free[['gene', 'protein']]
@@ -339,7 +339,8 @@ def _process_label_free(data):
     #     label_free['Final Significance'] == 1, 'significant_flag'] = True
 
     label_free['species_type'] = 'protein'
-
+    if subcell:
+        label_free['data_type'] = label_free['data_type'] + label_free['sample_component']
     headers = ['gene', 'treated_control_fold_change', 'protein',
                'p_value_group_1_and_group_2', 'time', 'data_type',
                'time_points', 'significant_flag', 'species_type']
@@ -468,7 +469,7 @@ def pivot_raw_gene_data(data, save_name=None):
             'data_type', 'time', 'time_points',
             ]
     prot = data[data['species_type'] == 'protein'][headers1]
-    meta = data[data['species_type'] == 'metabolites'][cols]
+
     tmp = pd.pivot_table(prot, index=['gene', 'protein', 'data_type'],
                          columns='time', aggfunc='first')
 
@@ -477,6 +478,7 @@ def pivot_raw_gene_data(data, save_name=None):
         tmp.to_excel('{}.xlsx'.format(save_name),
                      merge_cells=True)
     return tmp
+    meta = data[data['species_type'] == 'metabolites'][cols]
     tmp = pd.pivot_table(meta, index=['compound', 'compound_id'],
                          columns='time', aggfunc='first')
 

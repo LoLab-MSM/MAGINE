@@ -96,11 +96,12 @@ class Enrichr(object):
             tmp_dict['p_value'] = i[2]
             tmp_dict['z_score'] = i[3]
             tmp_dict['combined_score'] = i[4]
-            tmp_dict['genes'] = ','.join(g for g in i[5])
+            tmp_dict['genes'] = ','.join(g for g in sorted(i[5]))
+            tmp_dict['n_genes'] = len(i[5])
             tmp_dict['adj_p_value'] = i[6]
             list_of_dict.append(tmp_dict)
         cols = ['term_name', 'rank', 'p_value', 'z_score', 'combined_score',
-                'adj_p_value', 'genes']
+                'adj_p_value', 'genes', 'n_genes']
 
         df = pd.DataFrame(list_of_dict, columns=cols)
 
@@ -108,14 +109,18 @@ class Enrichr(object):
             def get_go_id(row):
                 s = row['term_name']
                 go_id = re.search(r'\((GO.*?)\)', s).group(1)
-
                 return go_id
+
+            def remove_term_id(row):
+                s = row['term_id']
+                term = row['term_name'].replace('(' + s + ')', '')
+                return term
 
             df['term_id'] = df.apply(get_go_id, axis=1)
 
-            term_names = df['term_name'].replace('(' + df['term_id'] + ')', '')
+            term_names = df.apply(remove_term_id, axis=1)
 
-            df.loc[:, 'term_name'] = term_names
+            df['term_name'] = term_names
             cols.insert(0, 'term_id')
         if verbose:
             print("Done calling Enrichr.")
@@ -183,7 +188,8 @@ class Enrichr(object):
         if save_name:
             p_df.to_excel('{}_enricher.xlsx'.format(save_name),
                           merge_cells=True)
-            df_all.to_csv('{}_enrichr.csv'.format(save_name))
+            df_all.to_csv('{}_enrichr.csv'.format(save_name), nan_rep=np.nan,
+                          index=False)
         if create_html:
             if exp_data is None:
                 print("exp_data required to make plots over samples")
@@ -209,41 +215,75 @@ class Enrichr(object):
         -------
 
         """
-        list_to_search = [
-            'MGI_Mammalian_Phenotype_2017',
-            'GO_Biological_Process_2017',
-            'Human_Phenotype_Ontology',
-            'Tissue_Protein_Expression_from_ProteomicsDB',
-            'WikiPathways_2016',
-            'Humancyc_2016',
+
+        disease_drug = [
             'DrugMatrix',
-            'Transcription_Factor_PPIs',
-            'Human_Gene_Atlas',
             'Drug_Perturbations_from_GEO_2014',
-            'KEGG_2016',
-            'KEA_2015',
+            'LINCS_L1000_Chem_Pert_down',
+            'LINCS_L1000_Chem_Pert_up',
             'OMIM_Disease',
             'OMIM_Expanded',
-            'NCI-Nature_2016'
         ]
 
-        # Create a Pandas Excel writer using XlsxWriter as the engine.
-        writer = pd.ExcelWriter('{}_multiple.xlsx'.format(save_name),
-                                engine='xlsxwriter')
+        ontologies = [
 
-        for i in list_to_search:
-            print("Running {}".format(i))
-            df = self.run_samples(sample_lists=list_g, sample_ids=labels,
-                                  gene_set_lib=i, create_html=False)
-            if df is None:
-                continue
-            if len(i) > 30:
-                i = i[:30]
+            'HMDB_Metabolites',
+            'Tissue_Protein_Expression_from_ProteomicsDB',
+            'GO_Biological_Process_2017',
+            'GO_Molecular_Function_2017',
+            'GO_Cellular_Component_2017',
+            'Human_Phenotype_Ontology',
+            'MGI_Mammalian_Phenotype_2017',
+        ]
 
-            df.to_excel(writer, sheet_name=i)
+        pathways = [
+            'BioCarta_2016',
+            'Humancyc_2016',
+            'KEGG_2016',
+            'NCI-Nature_2016',
+            'Panther_2016',
+            'WikiPathways_2016',
+        ]
 
-        # Close the Pandas Excel writer and output the Excel file.
-        writer.save()
+        kinase = [
+            'LINCS_L1000_Kinase_Perturbations_down',
+            'LINCS_L1000_Kinase_Perturbations_up',
+            'Kinase_Perturbations_from_GEO_down',
+            'Kinase_Perturbations_from_GEO_up',
+            'KEA_2015',
+        ]
+        transcription_factors = [
+            'ChEA_2016',  # should use RNAseq
+            'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+            'ENCODE_TF_ChIP-seq_2015',
+            'Transcription_Factor_PPIs',
+            'TRANSFAC_and_JASPAR_PWMs',
+        ]
+
+        def _run(list_dbs, db_name):
+            # Create a Pandas Excel writer using XlsxWriter as the engine.
+            writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
+                                    engine='xlsxwriter')
+
+            for i in list_dbs:
+                print("Running {}".format(i))
+                df = self.run_samples(sample_lists=list_g, sample_ids=labels,
+                                      gene_set_lib=i, create_html=False)
+                if df is None:
+                    continue
+                if len(i) > 30:
+                    i = i[:30]
+
+                df.to_excel(writer, sheet_name=i, freeze_panes=(2, 2))
+
+            # Close the Pandas Excel writer and output the Excel file.
+            writer.save()
+
+        _run(transcription_factors, 'transcription_factors')
+        _run(pathways, 'pathways')
+        _run(kinase, 'kinases')
+        _run(disease_drug, 'drug_and_disease')
+        _run(ontologies, 'ontologies')
 
 
 def write_table_to_html(data, save_name='index', out_dir=None,
