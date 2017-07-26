@@ -3,6 +3,8 @@ import os
 
 dir_name = user_data_dir('magine')
 
+dir_name = os.getenv('MAGINE_DATA', dir_name)
+
 network_data_dir = os.path.join(dir_name, 'network_data')
 id_mapping_dir = os.path.join(dir_name, 'id_data')
 
