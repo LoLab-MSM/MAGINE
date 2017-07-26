@@ -186,9 +186,9 @@ class Enrichr(object):
                               )
 
         if save_name:
-            p_df.to_excel('{}_enricher.xlsx'.format(save_name),
+            p_df.to_excel('{}_enricher.xlsx'.format(save_name),na_rep=np.nan,
                           merge_cells=True)
-            df_all.to_csv('{}_enrichr.csv'.format(save_name), nan_rep=np.nan,
+            df_all.to_csv('{}_enrichr.csv'.format(save_name), na_rep=np.nan,
                           index=False)
         if create_html:
             if exp_data is None:
