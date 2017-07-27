@@ -135,7 +135,8 @@ def load_directory(dir_name, dtype=None):
     ----------
     dir_name: str
         path to directory containing all files
-
+    dtype : str
+        type of data
     Returns
     -------
     pandas.Dataframe
@@ -204,6 +205,35 @@ def check_data(data, keyword):
         if n in genes:
             data.loc[data[keyword] == n, keyword] = _names[n]
     return data
+
+
+def process_raptr_folder(directory):
+    all_data = []
+    for i in os.listdir(directory):
+        if 'subcell' in i:
+            df = load_csv(directory, i)
+            df = _process_label_free(df, subcell=True)
+            all_data.append(df)
+        elif '_silac' in i:
+            df = load_csv(directory, i)
+            df = _process_silac(df)
+            all_data.append(df)
+        elif 'ph-silac' in i:
+            df = load_csv(directory, i)
+            df = _process_phsilac(df)
+            all_data.append(df)
+        elif 'protalizer_protein' in i:
+            df = load_csv(directory, i)
+            df = _process_label_free(df, subcell=False)
+            all_data.append(df)
+        elif 'progenesis' in i:
+            df = load_csv(directory, i)
+            df = _process_metabolites(df)
+            all_data.append(df)
+        else:
+            print("Dont know {}".format(i))
+    return pd.concat(all_data, ignore_index=True)
+
 
 
 def process_list_of_dir_and_add_attribute(list_dim2):
@@ -307,20 +337,20 @@ def _process_metabolites(data):
 def _process_label_free(data, subcell=False):
     label_free = data.copy()
     label_free['data_type'] = 'label_free'
-    print(label_free.dtypes)
     label_free['gene'] = label_free['primary_genes'].astype(str)
     label_free = label_free[label_free['gene'] != 'nan']
-    mod_sites = label_free[['gene', 'protein']]
+
     protein_names = []
-    for i, row in mod_sites.iterrows():
+
+    def find_mod(row):
         s = str(row['protein'])
         if s.startswith('Acetylation'):
             change = 'ace'
             residue = s[s.find("(") + 1:s.find(")")]
             loc = re.findall('@\d+', s)[0].strip('@')
             name = "{0}_{1}({2}){3}_lf".format(row['gene'], residue, change,
-                                               loc, )
-            protein_names.append(name)
+                                               loc)
+
         elif s.startswith('Phosphorylation'):
             change = 'ph'
             residue = s[s.find("(") + 1:s.find(")")]
@@ -329,11 +359,10 @@ def _process_label_free(data, subcell=False):
                                                loc, )
             protein_names.append(name)
         else:
-            protein_names.append(row['gene'] + '_lf')
+            name = row['gene'] + '_lf'
+        return name
+    label_free['protein'] = label_free.apply(find_mod, axis=1)
 
-    label_free['p_value_group_1_and_group_2'] = label_free[
-        'p_value_group_1_and_group_2']
-    label_free['protein'] = protein_names
     # label_free['significant_flag'] = False
     # label_free.loc[
     #     label_free['Final Significance'] == 1, 'significant_flag'] = True
@@ -341,6 +370,12 @@ def _process_label_free(data, subcell=False):
     label_free['species_type'] = 'protein'
     if subcell:
         label_free['data_type'] = label_free['data_type'] + label_free['sample_component']
+        label_free['significant_flag'] = True
+        label_free['p_value_group_1_and_group_2'] = 0.049
+    else:
+        label_free['p_value_group_1_and_group_2'] = \
+            label_free['p_value_group_1_and_group_2']
+
     headers = ['gene', 'treated_control_fold_change', 'protein',
                'p_value_group_1_and_group_2', 'time', 'data_type',
                'time_points', 'significant_flag', 'species_type']
