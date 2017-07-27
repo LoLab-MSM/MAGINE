@@ -28,9 +28,6 @@ build_network(data.list_sig_proteins,
               save_name='example_network',
               all_measured_list=data.list_species,
               metabolite_list=data.list_metabolites,
-              use_reactome=True, use_hmdb=True,
-)
+              use_reactome=True, use_hmdb=True
+              )
 
-
-
-quit()
