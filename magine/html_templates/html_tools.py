@@ -24,7 +24,9 @@ auto_complete = 'column_number:{},' \
                 'filter_type: "auto_complete",' \
                 'text_data_delimiter: ","'
 
-chosen = 'column_number:{}, filter_type: "chosen"'
+chosen = 'column_number:{}, ' \
+         'filter_type: "multi_select",' \
+         'select_type: "chosen"'
 
 
 dict_of_templates = dict()
@@ -33,6 +35,9 @@ dict_of_templates['GO_id'] = range_number
 dict_of_templates['GO_name'] = auto_complete
 dict_of_templates['slim'] = chosen
 dict_of_templates['aspect'] = chosen
+dict_of_templates['ref'] = range_number
+dict_of_templates['depth'] = range_number
+dict_of_templates['enrichment_score'] = range_number
 
 # enrichr
 dict_of_templates['term_name'] = auto_complete
@@ -48,9 +53,6 @@ dict_of_templates['z_score'] = range_number
 
 dict_of_templates['significant_flag'] = chosen
 dict_of_templates['data_type'] = chosen
-dict_of_templates['ref'] = range_number
-dict_of_templates['depth'] = range_number
-dict_of_templates['enrichment_score'] = range_number
 dict_of_templates['pvalue'] = range_number
 dict_of_templates['n_genes'] = range_number
 
@@ -58,6 +60,8 @@ dict_of_templates['treated_control_fold_change'] = range_number
 dict_of_templates['p_value_group_1_and_group_2'] = range_number
 dict_of_templates['protein'] = auto_complete
 dict_of_templates['gene'] = auto_complete
+dict_of_templates['compound'] = auto_complete
+dict_of_templates['compound_id'] = auto_complete
 
 
 def write_single_table(table, save_name, title):
@@ -210,25 +214,29 @@ def _format_data_table(data):
     """
     tmp_table = data.copy()
     format_dict = {}
+    pvalue_float_type = ['pvalue', 'p_value_group_1_and_group_2',
+                         'adj_p_value']
+
+    float_type = ['z_score', 'combined_score', 'enrichment_score',
+                  'treated_control_fold_change']
+
+    int_type = ['n_genes', 'rank']
+
     for i in tmp_table.columns:
-        if i[0] == 'enrichment_score':
+        if i[0] in float_type:
             # format_dict[i] = '{:.2f}'.format
+            format_dict[i] = '{:.4g}'.format
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].round(2)
-        elif i[0] == 'pvalue':
+        elif i[0] in pvalue_float_type:
             format_dict[i] = '{:.2g}'.format
             tmp_table[i] = tmp_table[i].fillna(1)
             # tmp_table[i] = tmp_table[i].round(4)
-        elif i[0] == 'n_genes':
+        elif i[0] in int_type:
             format_dict[i] = '{:,d}'.format
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(int)
-        elif i[0] == 'p_value_group_1_and_group_2':
-            format_dict[i] = '{:.2g}'.format
-            tmp_table[i] = tmp_table[i].fillna(1)
-        elif i[0] == 'treated_control_fold_change':
-            format_dict[i] = '{:.4g}'.format
-            # tmp_table[i] = tmp_table[i].fillna(1)
+
     return tmp_table, format_dict
 
 
