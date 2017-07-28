@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bootstrap Example</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <style>
+        /* Set height of the grid so .sidenav can be 100% (adjust if needed) */
+        .row.content {
+            height: 1500px
+        }
+
+        table {
+            table-layout: fixed;
+            width: 100px;
+            border: 1px solid red;
+        }
+
+        /* Set gray background color and 100% height */
+        .sidenav {
+            background-color: #f1f1f1;
+            height: 100%;
+        }
+
+        /* Set black background color, white text and some padding */
+        footer {
+            background-color: #555;
+            color: white;
+            padding: 15px;
+        }
+
+        /* On small screens, set height to 'auto' for sidenav and grid */
+        @media screen and (max-width: 767px) {
+            .sidenav {
+                height: auto;
+                padding: 15px;
+            }
+
+            .row.content {
+                height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="page-header">
+        <h1>MAGINE</h1>
+    </div>
+    <div class="container-fluid">
+        <div class="row content">
+            <div class="col-sm-3 sidenav">
+                <h4>{{title}}</h4>
+                <ul class="nav nav-pills nav-stacked">
+                    <h3><span class="label label-default">Click below to view table of data</span></h3>
+                    <li class="active"><a href={{gene_table}} target="_blank">Genes</a></li>
+                    <li><a href={{meta_table}} target="_blank">Metabolites</a></li>
+                </ul>
+                <br>
+            </div>
+
+            <div class="col-sm-9">
+                <h2>{{ gene_up }}</h2>
+                <h3><span class="label label-default">Click to expand and collapse!</span></h3>
+                {% for item in gene_up_table %}
+                <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#demo{{loop.index0}}">
+                    {{item[0]}}
+                </button>
+                <div id="demo{{loop.index0}}" class="collapse">
+                    {% for data in item[1] %}
+                    <h3><a href="{{data.filename}}" target="_blank"> {{data.database}} </a></h3>
+                    {% endfor %}
+                    <a href="{{item[2]}}.xlsx" target="_blank">Download excel file with all from category</a>
+                </div>
+                <br>
+
+                {% endfor %}
+
+
+                <h2>{{ rna_up }}</h2>
+                <h3><span class="label label-default">Click to expand and collapse!</span></h3>
+                {% for item in rna_up_table %}
+                <button type="button" class="btn btn-info" data-toggle="collapse" data-target="#rna{{loop.index0}}">
+                    {{item[0]}}
+                </button>
+                <div id="rna{{loop.index0}}" class="collapse">
+                    {% for data in item[1] %}
+                    <h3><a href="{{data.filename}}" target="_blank"> {{data.database}} </a></h3>
+                    {% endfor %}
+                </div>
+                <br>
+
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>

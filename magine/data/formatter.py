@@ -4,6 +4,10 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import sys
+
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 progensis_list_of_attributes = ['compound', 'compound_id', 'name', 'formula',
 
@@ -30,9 +34,9 @@ cols = ['compound', 'compound_id', 'name', 'formula',
 
 rename_met_dict = {
     'max_fold_change_treated_vs_control': "treated_control_fold_change",
-    "anova_p":                            "p_value_group_1_and_group_2",
-    'phase':                              'data_type',
-    "experiment_type":                    "species_type"
+    "anova_p": "p_value_group_1_and_group_2",
+    'phase': 'data_type',
+    "experiment_type": "species_type"
 }
 
 valid_exp_data_types = ['label_free', 'ph_silac', 'silac', 'rna_seq',
@@ -211,18 +215,22 @@ def process_raptr_folder(directory):
     all_data = []
     for i in os.listdir(directory):
         if 'subcell' in i:
+            continue
             df = load_csv(directory, i)
             df = _process_label_free(df, subcell=True)
             all_data.append(df)
         elif '_silac' in i:
+            # continue
             df = load_csv(directory, i)
             df = _process_silac(df)
             all_data.append(df)
         elif 'ph-silac' in i:
+            # continue
             df = load_csv(directory, i)
             df = _process_phsilac(df)
             all_data.append(df)
         elif 'protalizer_protein' in i:
+            # continue
             df = load_csv(directory, i)
             df = _process_label_free(df, subcell=False)
             all_data.append(df)
@@ -230,10 +238,13 @@ def process_raptr_folder(directory):
             df = load_csv(directory, i)
             df = _process_metabolites(df)
             all_data.append(df)
+        elif 'cuttdiff' in i:
+            df = load_csv(directory, i)
+            df = _process_rna_seq(df)
+            all_data.append(df)
         else:
             print("Dont know {}".format(i))
     return pd.concat(all_data, ignore_index=True)
-
 
 
 def process_list_of_dir_and_add_attribute(list_dim2):
@@ -290,7 +301,7 @@ def _process_rna_seq(data):
     quit()
     data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
     data['treated_control_fold_change'] = np.exp2(
-            data['log2_fold_change'].astype(float))
+        data['log2_fold_change'].astype(float))
 
     crit_1 = data['treated_control_fold_change'] < 1
     data.loc[crit_1, 'treated_control_fold_change'] = \
@@ -315,14 +326,27 @@ def _process_metabolites(data):
     pandas.Dataframe
     """
     data = data.copy()
-    data = data.drop_duplicates(subset=['compound_id'])
+    # data = data.drop_duplicates(subset=['compound_id'])
     data['name'] = data.apply(merge_metabolite_row, axis=1)
     idx = data.groupby(['compound'])['score'].transform(max) == data['score']
 
     data.loc[:, 'top_score'] = False
     data.loc[idx, 'top_score'] = True
     data = data.rename(columns=rename_met_dict)
+    data['treated_control_fold_change'] = \
+        data['treated_control_fold_change'].apply(pd.to_numeric,
+                                                  errors='coerce')
 
+    criteria = np.isfinite(data['treated_control_fold_change'])
+    data = data[criteria]
+    crit_1 = data['treated_control_fold_change'] == np.inf
+    crit_2 = data['treated_control_fold_change'] == -np.inf
+    data.loc[crit_1, 'treated_control_fold_change'] = 1000.
+    data.loc[crit_2, 'treated_control_fold_change'] = -1000.
+
+    data['compound'] = data['compound'].str.encode('utf-8')
+    data['compound_id'] = data['compound_id'].str.decode('utf-8', 'replace')
+    # data.loc[] = np.nan
     # checks to see if all data types exist
     for i in progensis_list_of_attributes:
         if i not in data.dtypes:
@@ -361,6 +385,7 @@ def _process_label_free(data, subcell=False):
         else:
             name = row['gene'] + '_lf'
         return name
+
     label_free['protein'] = label_free.apply(find_mod, axis=1)
 
     # label_free['significant_flag'] = False
@@ -369,7 +394,8 @@ def _process_label_free(data, subcell=False):
 
     label_free['species_type'] = 'protein'
     if subcell:
-        label_free['data_type'] = label_free['data_type'] + label_free['sample_component']
+        label_free['data_type'] = label_free['data_type'] + label_free[
+            'sample_component']
         label_free['significant_flag'] = True
         label_free['p_value_group_1_and_group_2'] = 0.049
     else:
@@ -381,7 +407,7 @@ def _process_label_free(data, subcell=False):
                'time_points', 'significant_flag', 'species_type']
 
     label_free = label_free[headers]
-    label_free.to_csv('label_free.csv', index=False)
+    # label_free.to_csv('label_free.csv', index=False)
     return label_free
 
 
@@ -394,7 +420,6 @@ def _process_silac(data):
 
     data.loc[:, 'treated_control_fold_change'] = \
         data['mean_treated_untreated_fold_change']
-
 
     # silac = silac.dropna(subset=['significant'])
 
@@ -535,7 +560,7 @@ def pivot_tables_for_export(data, save_name=None):
     prot = data[data['species_type'] == 'protein'][headers1]
     meta = data[data['species_type'] == 'metabolites'][cols]
     genes = pd.pivot_table(prot, index=['gene', 'protein', 'data_type'],
-                           columns='time', aggfunc='first')
+                           columns='time', aggfunc='first', fill_value=np.nan)
 
     if save_name:
         genes.to_excel('{}_genes.xlsx'.format(save_name),
@@ -572,7 +597,7 @@ def log2_normalize_df(df, fold_change):
     greater_than = tmp_df[fold_change] > 0
     less_than = tmp_df[fold_change] < 0
     tmp_df.loc[greater_than, 'log2fc'] = np.log2(
-            tmp_df[greater_than][fold_change].astype(np.float64))
+        tmp_df[greater_than][fold_change].astype(np.float64))
     tmp_df.loc[less_than, 'log2fc'] = -np.log2(
-            -tmp_df[less_than][fold_change].astype(np.float64))
+        -tmp_df[less_than][fold_change].astype(np.float64))
     return tmp_df

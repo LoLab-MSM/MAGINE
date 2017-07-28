@@ -22,9 +22,10 @@ gene = 'gene'
 
 
 class Enrichr(object):
-    def __init__(self):
+    def __init__(self, exp_data=None):
         self._url = 'http://amp.pharm.mssm.edu/Enrichr/addList'
         self._valid_libs = _valid_libs
+        self.exp_data = exp_data
 
     def print_valid_libs(self):
         """
@@ -63,7 +64,7 @@ class Enrichr(object):
         description = 'Example gene list'
         genes_str = '\n'.join(list_of_genes)
         payload = {
-            'list':        (None, genes_str),
+            'list': (None, genes_str),
             'description': (None, description)
         }
 
@@ -77,7 +78,7 @@ class Enrichr(object):
         enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
         query_string = '?userListId=%s&backgroundType=%s'
         response = requests.get(
-                enrichment_url + query_string % (user_list_id, gene_set_lib)
+            enrichment_url + query_string % (user_list_id, gene_set_lib)
         )
         if not response.ok:
             raise Exception('Error fetching enrichment results')
@@ -156,7 +157,8 @@ class Enrichr(object):
 
         """
         assert isinstance(sample_lists, list), "Please provide list of lists"
-        assert isinstance(sample_lists[0], list), "Please provide list of lists"
+        assert isinstance(sample_lists[0],
+                          list), "Please provide list of lists"
         df_all = []
         for i, j in zip(sample_lists, sample_ids):
             print("{} / {}".format(j, sample_ids))
@@ -180,8 +182,10 @@ class Enrichr(object):
 
         p_df = pd.pivot_table(df_all, index=index,
                               columns='sample_id',
-                              values=['term_name', 'rank', 'p_value', 'z_score',
-                                      'combined_score', 'adj_p_value', 'genes'],
+                              values=['term_name', 'rank', 'p_value',
+                                      'z_score',
+                                      'combined_score', 'adj_p_value',
+                                      'genes'],
                               aggfunc='first', fill_value=np.nan
                               )
 
@@ -192,6 +196,9 @@ class Enrichr(object):
             df_all.to_csv('{}_enrichr.csv'.format(save_name), index=False)
         if create_html:
             if exp_data is None:
+                exp_data = self.exp_data
+
+            if exp_data is None:
                 print("exp_data required to make plots over samples")
                 quit()
             write_table_to_html(data=df_all, save_name=save_name,
@@ -199,7 +206,8 @@ class Enrichr(object):
                                 exp_data=exp_data)
         return p_df
 
-    def run_key_dbs(self, list_g, labels, save_name):
+    def run_key_dbs(self, list_g, labels, save_name, create_html=False,
+                    run_parallel=False):
         """
 
         Parameters
@@ -210,7 +218,10 @@ class Enrichr(object):
             List of lists of labels
         save_name : str
             prefix of names
-
+        create_html : bool
+            if you want to create html of all the outputs
+        run_parallel : bool
+            Create plots in parallel
         Returns
         -------
 
@@ -262,28 +273,45 @@ class Enrichr(object):
 
         def _run(list_dbs, db_name):
             # Create a Pandas Excel writer using XlsxWriter as the engine.
-            writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
-                                    engine='xlsxwriter')
-
+            # writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
+            #                         engine='xlsxwriter')
+            html_list = []
             for i in list_dbs:
                 print("Running {}".format(i))
+                if create_html:
+                    outdir = save_name + '_' + i
+                    if not os.path.exists(outdir):
+                        os.mkdir(outdir)
+                else:
+                    outdir = None
+                """
                 df = self.run_samples(sample_lists=list_g, sample_ids=labels,
-                                      gene_set_lib=i, create_html=False)
+                                      gene_set_lib=i, create_html=create_html,
+                                      save_name=outdir, out_dir=outdir,
+                                      run_parallel=run_parallel,
+                                      )
                 if df is None:
                     continue
-                if len(i) > 30:
-                    i = i[:30]
+                """
 
-                df.to_excel(writer, sheet_name=i, freeze_panes=(2, 2))
+                html_list.append(dict(database=i,
+                                      filename='{}_filter.html'.format(
+                                          outdir)))
+                # if len(i) > 30:
+                #     i = i[:30]
+                # df.to_excel(writer, sheet_name=i, freeze_panes=(2, 2))
 
             # Close the Pandas Excel writer and output the Excel file.
-            writer.save()
+            # writer.save()
+            return [db_name, html_list, save_name + '_' + db_name]
 
-        _run(transcription_factors, 'transcription_factors')
-        _run(pathways, 'pathways')
-        _run(kinase, 'kinases')
-        _run(disease_drug, 'drug_and_disease')
-        _run(ontologies, 'ontologies')
+        h1 = _run(transcription_factors, 'transcription_factors')
+        h2 = _run(pathways, 'pathways')
+        h3 = _run(kinase, 'kinases')
+        h4 = _run(disease_drug, 'drug_and_disease')
+        h5 = _run(ontologies, 'ontologies')
+
+        return [h1, h2, h3, h4, h5]
 
 
 def write_table_to_html(data, save_name='index', out_dir=None,
@@ -345,7 +373,8 @@ def write_table_to_html(data, save_name='index', out_dir=None,
     html_tools.write_filter_table(tmp, html_out, 'MAGINE GO analysis')
 
 
-def create_gene_plots(data, list_of_terms, save_name, out_dir=None, exp_data=None,
+def create_gene_plots(data, list_of_terms, save_name, out_dir=None,
+                      exp_data=None,
                       run_parallel=False, plot_type='plotly'):
     """ Creates a figure for each GO term in data
 
@@ -461,6 +490,7 @@ def create_gene_plots(data, list_of_terms, save_name, out_dir=None, exp_data=Non
         print("sequential time = {}".format(end1 - st1))
 
     return figure_locations, to_remove
+
 
 if __name__ == '__main__':
     e = Enrichr()

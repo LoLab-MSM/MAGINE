@@ -11,14 +11,15 @@ env = jinja2.Environment(
    )
 )
 
+workflow_template = env.get_template('workflow_template.html')
 plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
 # filter_template = env.get_template('filter_table_base.html')
 filter_template = env.get_template('filter_table.html')
 enrich_template = env.get_template('enrichment_template.html')
 
-range_number = 'column_number:{},'\
-'filter_type: "range_number"'
+range_number = 'column_number:{},' \
+               'filter_type: "range_number"'
 
 auto_complete = 'column_number:{},' \
                 'filter_type: "auto_complete",' \
@@ -28,6 +29,10 @@ chosen = 'column_number:{}, ' \
          'filter_type: "multi_select",' \
          'select_type: "chosen"'
 
+html_selector = 'column_number:{},' \
+                'column_data_type: "html",' \
+                'filter_type: "multi_select",' \
+                'select_type: "chosen"'
 
 dict_of_templates = dict()
 # GO
@@ -59,7 +64,8 @@ dict_of_templates['n_genes'] = range_number
 dict_of_templates['treated_control_fold_change'] = range_number
 dict_of_templates['p_value_group_1_and_group_2'] = range_number
 dict_of_templates['protein'] = auto_complete
-dict_of_templates['gene'] = auto_complete
+dict_of_templates['gene'] = html_selector
+dict_of_templates['time'] = chosen
 dict_of_templates['compound'] = auto_complete
 dict_of_templates['compound_id'] = auto_complete
 
@@ -175,12 +181,15 @@ def write_filter_table(table, save_name, title):
         out_string += '{' + new_string + '},\n'
 
     for m, i in enumerate(table.columns):
-        if i[0] in leave:
+        if isinstance(i, str):
+            new_string = dict_of_templates[i].format(n + m + 1)
+            out_string += '{' + new_string + '},\n'
             continue
-        if i[0] not in dict_of_templates:
+        elif i[0] in leave:
+            continue
+        elif i[0] not in dict_of_templates:
             print(i[0])
             continue
-
         new_string = dict_of_templates[i[0]].format(n + m + 1)
         out_string += '{' + new_string + '},\n'
 
@@ -210,7 +219,7 @@ def _format_data_table(data):
 
     Returns
     -------
-
+    pandas.DataFrame, dict
     """
     tmp_table = data.copy()
     format_dict = {}
@@ -227,6 +236,7 @@ def _format_data_table(data):
             # format_dict[i] = '{:.2f}'.format
             format_dict[i] = '{:.4g}'.format
             tmp_table[i] = tmp_table[i].fillna(0)
+            tmp_table[i] = tmp_table[i].astype(float)
             tmp_table[i] = tmp_table[i].round(2)
         elif i[0] in pvalue_float_type:
             format_dict[i] = '{:.2g}'.format
