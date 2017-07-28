@@ -9,7 +9,7 @@ import pathos.multiprocessing as mp
 import plotly
 import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
-
+import re
 from magine.data.formatter import log2_normalize_df, pivot_tables_for_export
 
 # import magine.html_templates.html_tools as ht
@@ -185,9 +185,8 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
     """
     from magine.html_templates.html_tools import write_filter_table
-    if os.path.exists(out_dir):
-        pass
-    else:
+    # from magine.html_templates.html_tools import write_single_table
+    if not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
     if type_of_species == 'protein':
@@ -207,15 +206,22 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     species_to_plot = local_data[idx_key].unique()
 
     print("Plotting {} {}".format(len(species_to_plot), type_of_species))
+    # """
     figure_locations = {}
     list_of_plots = []
     for i in species_to_plot:
-        list_of_plots.append((local_data, [i], i, out_dir, i, plot_type))
+        save_name = re.sub('[/_.]', '', i)
+        list_of_plots.append(
+            (local_data, [i], save_name, out_dir, i, plot_type)
+        )
+
         if plot_type == 'plotly':
-            out_point = '<a href="{0}/{1}.html">{1}</a>'.format(out_dir, i)
+            out_point = '<a href="{0}/{1}.html">{1}</a>'.format(out_dir,
+                                                                save_name)
             figure_locations[i] = out_point
         else:
-            out_point = '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir, i)
+            out_point = '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir,
+                                                               save_name)
             figure_locations[i] = out_point
 
     if run_parallel:
@@ -238,19 +244,35 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     # Place a link to the species for each key
     for i in figure_locations:
         local_data.loc[exp_data[idx_key] == i, idx_key] = figure_locations[i]
+    # """
 
     # Pivot the pandas df to be samples vs species
-    genes_out, meta_out = pivot_tables_for_export(local_data)
+    # genes_out, meta_out = pivot_tables_for_export(local_data)
 
     if type_of_species == 'protein':
-        output = genes_out
+        # output = genes_out
+        cols = ['gene', 'treated_control_fold_change', 'protein',
+                'p_value_group_1_and_group_2', 'time', 'data_type',
+                'significant_flag',  # 'time_points',
+                ]
     elif type_of_species == 'metabolites':
-        output = meta_out
+        # output = meta_out
+        cols = ['compound', 'compound_id',
+                'treated_control_fold_change',
+                'p_value_group_1_and_group_2', 'significant_flag',
+                'data_type', 'time',  # 'time_points',
+                ]
 
+        # output = output[['treated_control_fold_change',
+        #                  'p_value_group_1_and_group_2',
+        # 'data_type',
+        # 'significant_flag',
+        # ]]
+    local_data = local_data[cols]
     # if out_dir is not None:
     #     html_filename = os.path.join(out_dir, html_filename)
-
-    write_filter_table(output, html_filename, idx_key)
+    # write_single_table(local_data, html_filename, idx_key)
+    write_filter_table(local_data, html_filename, idx_key)
 
 
 def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
