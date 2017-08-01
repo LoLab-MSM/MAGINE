@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
 from sys import modules
+
 try:
     import igraph as ig
+
+    NO_IGRAPH = False
 except ImportError:
-    NO_IGRAPH=True
+    NO_IGRAPH = True
 import networkx as nx
 from bioservices import KEGG, UniProt
 
@@ -561,6 +564,7 @@ def _nx_to_dot(network):
             print("Need to install pygraphviz")
             return network
 
+
 def print_network_stats(network, exp_data):
     """
 
@@ -604,9 +608,11 @@ def print_network_stats(network, exp_data):
     st += 'Number of nodes = {}\n'.format(n_nodes)
     st += 'Number of edges = {}\n'.format(len(network.edges()))
     st += "Number of total nodes measured = {}\n".format(n_measured)
-    st += "Fraction of total nodes measured = {}\n".format(100.*n_measured/n_nodes)
+    st += "Fraction of total nodes measured = {}\n".format(
+        100. * n_measured / n_nodes)
     st += "Number of total nodes sig. changed = {}\n".format(n_sig_measured)
-    st += "Fraction of total nodes sig. changed = {}\n".format(100.*n_sig_measured/n_nodes )
+    st += "Fraction of total nodes sig. changed = {}\n".format(
+        100. * n_sig_measured / n_nodes)
     st += "Number of protein nodes sig. changed = {}\n".format(n_genes)
     st += "Fraction of protein nodes measured = {}\n".format(
             100. * n_genes / len(g_nodes))
@@ -615,7 +621,6 @@ def print_network_stats(network, exp_data):
             100. * n_meta / len(m_nodes))
 
     print(st)
-
 
 
 def add_pvalue_and_fold_change():
