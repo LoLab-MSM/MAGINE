@@ -245,6 +245,7 @@ def plot(mol_net, save_name):
     from igraph.drawing.colors import color_name_to_rgba
 
     g = networkx_to_igraph(mol_net)
+    print(g)
     cl = igraph.VertexClustering(g).FromAttribute(g, attribute='termName')
     membership = cl.membership
 

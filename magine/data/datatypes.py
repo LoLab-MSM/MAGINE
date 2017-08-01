@@ -6,7 +6,9 @@ import numpy as np
 import pandas
 from pandas.plotting import table
 
-import magine.plotting.species_plotting as species_plotter
+from magine.plotting.species_plotting import plot_dataframe, plot_list_of_genes, \
+    plot_list_of_metabolites
+
 import magine.plotting.volcano_plots as v_plot
 from magine.data.formatter import log2_normalize_df
 
@@ -546,7 +548,7 @@ class ExperimentalData(object):
         -------
 
         """
-        species_plotter.plot_list_of_genes(
+        plot_list_of_genes(
             self.proteomics, list_of_genes=list_of_genes, save_name=save_name,
             out_dir=out_dir, title=title, plot_type=plot_type,
             image_format=image_format
@@ -576,7 +578,7 @@ class ExperimentalData(object):
         -------
 
         """
-        species_plotter.plot_list_of_metabolites(
+        plot_list_of_metabolites(
                 self.metabolites, list_of_metab=list_of_metabolites,
             save_name=save_name, out_dir=out_dir, title=title,
             plot_type=plot_type, image_format=image_format
@@ -602,7 +604,7 @@ class ExperimentalData(object):
 
         """
 
-        species_plotter.plot_dataframe(self.data, html_filename=html_file_name,
+        plot_dataframe(self.data, html_filename=html_file_name,
                                        out_dir=out_dir, plot_type=plot_type,
                                        type_of_species='protein',
                                        run_parallel=run_parallel)
@@ -627,7 +629,7 @@ class ExperimentalData(object):
 
         """
 
-        species_plotter.plot_dataframe(self.data, html_filename=html_file_name,
+        plot_dataframe(self.data, html_filename=html_file_name,
                                        out_dir=out_dir, plot_type=plot_type,
                                        type_of_species='metabolites',
                                        run_parallel=run_parallel)
