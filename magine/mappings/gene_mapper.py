@@ -6,34 +6,11 @@ import os
 
 import pandas as pd
 
+from magine.data.storage import id_mapping_dir
 from magine.mappings.databases import download_hgnc, download_ncbi, \
     download_uniprot
 
-from magine.data.storage import id_mapping_dir
-
 pd.set_option('display.width', 20000)
-
-
-def _to_dict(data, key, value):
-    """
-    creates a dictionary with a list of values for each key
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-    key : str
-    value : str
-
-    Returns
-    -------
-
-    """
-    return_dict = {}
-    for k, v in data.groupby(key)[value]:
-        return_dict[k] = list(set(v))
-        if None in return_dict[k]:
-            return_dict[k].remove(None)
-    return return_dict
 
 
 class GeneMapper(object):
@@ -63,13 +40,14 @@ class GeneMapper(object):
     """
     ncbi_valid_categories = ['GeneID', 'Symbol', 'description']
 
-    hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
+    hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id',
+                             'name',
                              'location', 'entrez_id', 'ucsc_id', 'vega_id',
                              'alias_name', 'alias_symbol', 'status',
                              'gene_family', 'gene_family_id', 'ena', 'iuphar',
                              'cd', 'refseq_accession', 'ccds_id', 'pubmed_id',
                              'mgd_id', 'rgd_id', 'lsdb', 'bioparadigms_slc',
-                             'enzyme_id',  'merops', 'horde_id',
+                             'enzyme_id', 'merops', 'horde_id',
                              'pseudogene.org', 'cosmic', 'rna_central_ids',
                              'omim_id', 'imgt', 'intermediate_filament_db',
                              ]
@@ -88,7 +66,8 @@ class GeneMapper(object):
                           'PeroxiBase', 'PharmGKB', 'REBASE', 'Reactome',
                           'RefSeq', 'RefSeq_NT', 'STRING', 'SwissLipids',
                           'TCDB', 'TreeFam', 'UCSC', 'UniGene', 'UniParc',
-                          'UniPathway', 'UniProtKB-ID', 'UniRef100', 'UniRef50',
+                          'UniPathway', 'UniProtKB-ID', 'UniRef100',
+                          'UniRef50',
                           'UniRef90', 'eggNOG', 'neXtProt']
 
     def __init__(self, species='hsa'):
@@ -143,25 +122,27 @@ class GeneMapper(object):
     def load(self):
 
         # HGNC
-        self.gene_name_to_uniprot = _to_dict(self.hgnc, 'symbol',
-                                             'uniprot_ids')
-        self.gene_name_to_alias_name = _to_dict(self.hgnc, 'symbol',
-                                                'alias_name')
-        self.gene_name_to_ensembl = _to_dict(self.hgnc, 'symbol',
-                                             'ensembl_gene_id')
-        self.uniprot_to_gene_name = _to_dict(self.hgnc, 'uniprot_ids',
-                                             'symbol')
+        self.gene_name_to_uniprot = self.to_dict(self.hgnc, 'symbol',
+                                                 'uniprot_ids')
+        self.gene_name_to_alias_name = self.to_dict(self.hgnc, 'symbol',
+                                                    'alias_name')
+        self.gene_name_to_ensembl = self.to_dict(self.hgnc, 'symbol',
+                                                 'ensembl_gene_id')
+        self.uniprot_to_gene_name = self.to_dict(self.hgnc, 'uniprot_ids',
+                                                 'symbol')
 
         # uniprot
-        self.gene_name_to_kegg = _to_dict(self.uniprot, 'Gene_Name', 'KEGG')
-        self.uniprot_to_kegg = _to_dict(self.uniprot, 'uniprot', 'KEGG')
-        self.kegg_to_gene_name = _to_dict(self.uniprot, 'KEGG', 'Gene_Name')
-        self.kegg_to_uniprot = _to_dict(self.uniprot, 'KEGG', 'uniprot')
+        self.gene_name_to_kegg = self.to_dict(self.uniprot, 'Gene_Name',
+                                              'KEGG')
+        self.uniprot_to_kegg = self.to_dict(self.uniprot, 'uniprot', 'KEGG')
+        self.kegg_to_gene_name = self.to_dict(self.uniprot, 'KEGG',
+                                              'Gene_Name')
+        self.kegg_to_uniprot = self.to_dict(self.uniprot, 'KEGG', 'uniprot')
 
         self.protein_name_to_gene_name = None
         self.protein_name_to_uniprot = None
 
-        self.ncbi_to_symbol = _to_dict(self.ncbi, 'GeneID', 'Symbol')
+        self.ncbi_to_symbol = self.to_dict(self.ncbi, 'GeneID', 'Symbol')
         self.save()
 
     def save(self):
@@ -179,6 +160,28 @@ class GeneMapper(object):
             data = f.read()
             f.close()
         self.__dict__ = pickle.loads(data)
+
+    @staticmethod
+    def to_dict(data, key, value):
+        """
+        creates a dictionary with a list of values for each key
+
+        Parameters
+        ----------
+        data : pandas.DataFrame
+        key : str
+        value : str
+
+        Returns
+        -------
+
+        """
+        return_dict = {}
+        for k, v in data.groupby(key)[value]:
+            return_dict[k] = list(set(v))
+            if None in return_dict[k]:
+                return_dict[k].remove(None)
+        return return_dict
 
 
 if __name__ == '__main__':

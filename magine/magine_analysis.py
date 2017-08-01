@@ -5,11 +5,11 @@ import networkx as nx
 import pandas as pd
 
 from magine.data.formatter import pivot_table_for_export
-from magine.html_templates.html_tools import write_single_table, \
-    write_table_to_html_with_figures
+from magine.html_templates.html_tools import write_single_table
 from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.networks.visualization.cytoscape_view import RenderModel
 from magine.ontology.ontology_analysis import GoAnalysis
+from magine.plotting.species_plotting import write_table_to_html_with_figures
 
 
 class Analyzer(object):

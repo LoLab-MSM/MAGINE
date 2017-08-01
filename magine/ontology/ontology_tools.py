@@ -5,25 +5,20 @@ import networkx as nx
 import pandas as pd
 from goatools import obo_parser
 from goatools.semantic import TermCounts, ic, resnik_sim, semantic_similarity
-from orangecontrib.bio.utils.serverfiles import localpath
 
-from magine.ontology.databases.gene_ontology import MagineGO
+from magine.data.storage import id_mapping_dir
+from magine.ontology.databases.gene_ontology import MagineGO, \
+    download_and_process_go
 
-default_database_path = os.path.join(localpath(), "GO")
+obo_file = os.path.join(id_mapping_dir, 'go.obo')
 
-short_path = os.path.join(default_database_path,
-                          "gene_ontology_edit.obo.tar.gz",
-                          "gene_ontology_edit.obo")
-
-if not os.path.exists(short_path):
-    from orangecontrib.bio.go import Ontology
-
+if not os.path.exists(obo_file):
     print("Using ontology for first time")
     print("Downloading files via Orange.bio")
-    Ontology()
-    assert os.path.exists(short_path)
+    download_and_process_go()
+    assert os.path.exists(obo_file)
 
-go = obo_parser.GODag(short_path)
+go = obo_parser.GODag(obo_file)
 
 mg = MagineGO()
 print("Loading termcounts")
@@ -294,7 +289,6 @@ def check_term_list(list_of_terms, verbose=False):
         ic_dca = ic(dca, termcounts)
 
         if verbose:
-
             print("\nGO 1\t\t GO 2\t\t GO3")
             print("Min branch length = {}".format(min_branch_length(i, j)))
             print("{}\t{}\t{}".format(go[i].name, go[j].name, go[dca].name))
@@ -626,6 +620,7 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
             n_needed = n_top_hits - len(terms)
             terms.update(set(list(tmp.index)[:updated_index + n_needed]))
             return check_term_list(terms)
+
         list_all_go = set()
         tmp.set_index('GO_id', inplace=True)
         tmp.sort_values(by=enrichment_list, ascending=False, inplace=True)
@@ -653,4 +648,3 @@ def slim_ontology(data, pvalue=0.05, n_top_hits=None, go_aspects=None,
         data = data[data['GO_id'].isin(list_all_go)]
 
     return data
-

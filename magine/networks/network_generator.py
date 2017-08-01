@@ -6,15 +6,15 @@ import os
 from sys import modules
 
 import networkx as nx
+import numpy as np
 from bioservices import KEGG
 
 import magine.mappings.maps as mapper
+from magine.data.storage import network_data_dir, id_mapping_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
 from magine.networks.databases.kegg_kgml import create_all_of_kegg
 from magine.networks.network_tools import delete_disconnected_network
-from magine.data.storage import network_data_dir,  id_mapping_dir
-
 
 try:
     import cPickle as pickle
@@ -89,28 +89,17 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                         pathway_list.add(str(j.replace(':', '')[4:]))
     if len(to_remove) != 0:
         print("{} not found in KEGG".format(to_remove))
-    # pathway_list2 = find_kegg_pathways(to_remove, download=False,
-    #                                    species=species)
-    # pathway_list.update(pathway_list2)
-    # list_of_all = find_kegg_pathways(protein_names=gene_set,
-    #                                  num_overlap=num_overlap, species=species,
-    #                                  overwrite=overwrite)
-    list_of_graphs = []
-    networks_added = []
 
     for each in pathway_list:
-        networks_added.append(each)
-        # tmp, pathways_to_add, compounds = kgml_to_graph("{}.xml".format(each),
-        #                                                 species=species)
         tmp = nx.read_gml(os.path.join(_kegg_raw_out_path, "{}.gml".format(each)))
+        for n in tmp.nodes():
+            if isinstance(n, float):
+                print("Found the float... {}".format(each))
+                tmp.remove_node(np.nan)
+        if len(tmp.edges()) == 0:
+            continue
         end_network = nx.compose(end_network, tmp)
-        list_of_graphs.append(tmp)
-    # for tmp in list_of_graphs:
-    #     for nd in tmp.nodes():
-    #         end_network.add_node(nd, **tmp.node[nd])
-    #     for edge in tmp.edges():
-    #         one, two = edge[0], edge[1]
-    #         end_network.add_edge(one, two, **tmp.edge[one][two])
+
     drug_dict = {}
     for i in end_network.nodes():
         if i.startswith('dr'):
@@ -119,7 +108,12 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
                 if split_name[1].startswith('cpd:'):
                     drug_dict[i] = split_name[1]
                     end_network.node[i]['drug'] = split_name[0]
+        elif i == 'nan':
+            end_network.remove_node(i)
+        elif isinstance(i, float):
+            end_network.remove_node(i)
     end_network = nx.relabel_nodes(end_network, drug_dict)
+
     end_network = mapper.convert_all(end_network, species=species,
                                      use_hmdb=use_hmdb)
 
@@ -129,7 +123,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
         else:
             all_measured_list = set(str(x).upper() for x in all_measured_list)
             end_network = expand_by_reactome(end_network, all_measured_list)
-    # quit()
+
     if use_hmdb:
         print("warning: automatic integration currently in progress.\n")
         if metabolite_list is None:
@@ -142,7 +136,6 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     print('Number of nodes {}'.format(len(end_network.nodes())))
     print('Number of edges {}'.format(len(end_network.edges())))
     nx.write_gml(end_network, '{}.gml'.format(save_name))
-    # nx.nx.nx_agraph.write_dot(end_network, '{}.dot'.format(save_name))
 
     return end_network
 
@@ -189,13 +182,17 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     tmp_nodes = set(tmp_graph.nodes())
     metabolite_set = set(metabolite_list)
     for i in metabolite_set:
+        if i == np.nan:
+            continue
         # checks if metabolite is in the network
         # if it is, it can add an associated gene
         if i in tmp_nodes:
             count_in_network += 1
 
             if i in cm.hmdb_accession_to_protein:
-
+                if not isinstance(i, str):
+                    print("Found and integer in hmdb")
+                    print(type(i), i)
                 tmp_list = cm.hmdb_accession_to_protein[i]
                 if tmp_list is None:
                     missing_protein_info += 1
@@ -203,8 +200,9 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
 
                 for each in tmp_list:
                     for each in tmp_list:
-                        if isinstance(each, int):
-                            print(each, i)
+                        if not isinstance(each, str):
+                            print("Found and integer in hmdb")
+                            print(type(each), each)
                     if each is None:
                         continue
                     elif each not in tmp_nodes:
@@ -221,15 +219,18 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
         else:
             count_not_in_network += 1
             if i in cm.hmdb_accession_to_protein:
+                if not isinstance(i, str):
+                    print("Found and integer in hmdb")
+                    print(type(i), i)
                 tmp_list = cm.hmdb_accession_to_protein[i]
                 if tmp_list is None or len(tmp_list) == 0:
                     missing_protein_info += 1
                     continue
 
                 for each in tmp_list:
-                    if isinstance(each, int):
-
-                        print(each, i)
+                    if not isinstance(each, str):
+                        print("Found and integer in hmdb")
+                        print(type(each), each)
                     if each is None:
                         pass
                     elif each in start_nodes:
@@ -344,6 +345,13 @@ def expand_by_reactome(network, measured_list):
     #             _add_edges_from_path(fi_network, combined_network, path)
 
     for i, j, k in reactome_edges:
+        if not isinstance(i, str):
+            print("Found nan in reactome")
+            continue
+        if not isinstance(j, str):
+            print("Found nan in reactome")
+            continue
+
         if (i, j) in existing_edges:
             continue
         if i in measured_set and j in measured_set:

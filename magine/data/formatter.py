@@ -4,10 +4,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import sys
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+# reload(sys)
+# sys.setdefaultencoding('utf-8')
 
 progensis_list_of_attributes = ['compound', 'compound_id', 'name', 'formula',
 
@@ -99,10 +98,7 @@ def load_csv(directory=None, filename=None):
         print(list(tmp_sort[0:5]), list(tmp_sort[-5:]))
         return data
 
-    elif 'compound' in data.dtypes:
-        return _process_metabolites(data)
     else:
-        print("Data does not have the correct headers!")
         return data
 
 
@@ -276,7 +272,7 @@ def process_list_of_dir_and_add_attribute(list_dim2):
         elif data_type == 'rna_seq':
             d = _process_rna_seq(d)
         elif data_type == 'metabolomics':
-            pass
+            d = _process_metabolites(d)
 
         d['sample_id'] = sample_id
         # d['time'] = d['sample_id'].astype(str) + '_' + d['time'].astype(str)
@@ -343,9 +339,11 @@ def _process_metabolites(data):
     crit_2 = data['treated_control_fold_change'] == -np.inf
     data.loc[crit_1, 'treated_control_fold_change'] = 1000.
     data.loc[crit_2, 'treated_control_fold_change'] = -1000.
-
+    data['compound'] = data['compound'].astype(str)
     data['compound'] = data['compound'].str.encode('utf-8')
-    data['compound_id'] = data['compound_id'].str.decode('utf-8', 'replace')
+
+    data['compound_id'] = data['compound_id'].astype(str)
+    # data['compound_id'] = data['compound_id'].str.decode('utf-8', 'replace')
     # data.loc[] = np.nan
     # checks to see if all data types exist
     for i in progensis_list_of_attributes:
@@ -508,7 +506,7 @@ def pivot_table_for_export(data, save_name=None):
     -------
 
     """
-    index = ['GO_id', 'GO_name', 'depth', 'ref', 'slim', 'aspect']
+    index = ['GO_id', 'GO_name', 'depth', 'ref', 'aspect']
     tmp = pd.pivot_table(data, index=index, columns='sample_index',
                          aggfunc='first'
                          )

@@ -1,7 +1,6 @@
 pygraphviz
 networkx
 py2cytoscape
-orange-bioinformatics==2.6.21
 jinja2
 scipy
 numpy

@@ -1,9 +1,11 @@
 import os
 import warnings
 import xml.etree.cElementTree as ET
+
 import networkx as nx
-import magine.mappings.maps as mapper
 from bioservices import KEGG
+
+import magine.mappings.maps as mapper
 from magine.data.storage import network_data_dir
 
 try:
@@ -236,6 +238,7 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
             name_label_dict[node_id] = names
             tmp = name_label_dict[node_id]
             for i in tmp.split(','):
+                i = str(i)
                 pathway_local.add_node(i, speciesType=node_type,
                                        databaseSource='KEGG', )
                 genes.add(i)
@@ -244,6 +247,7 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
             name_label_dict[node_id] = names
             tmp = name_label_dict[node_id]
             for i in tmp.split(','):
+                i = str(i)
                 pathway_local.add_node(i, speciesType=node_type,
                                        databaseSource='KEGG', )
                 compounds_local.add(i)
@@ -268,7 +272,9 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
             continue
         one, two = name_label_dict[e1], name_label_dict[e2]
         for i in one.split(','):
+            i = str(i)
             for j in two.split(','):
+                j = str(j)
                 pathway_local.add_edge(i, j,
                                        databaseSource='KEGG',
                                        interactionType=type_of_interaction,
@@ -290,12 +296,15 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
 
         enzyme = name_label_dict[id_local]
         for i in enzyme.split(','):
+            i = str(i)
             for sub in substrates:
+                sub = str(sub)
                 pathway_local.add_edge(sub, i, reactionType=reaction_type,
                                        interactionType='compound',
                                        databaseSource='KEGG',
                                        intType='Reaction')
             for prod in products:
+                prod = str(prod)
                 pathway_local.add_edge(i, prod, reactionType=reaction_type,
                                        interactionType='compound',
                                        databaseSource='KEGG',
