@@ -3,6 +3,7 @@ import os
 from collections import defaultdict
 
 import requests
+import wget
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
 
@@ -177,8 +178,6 @@ def download_ncbi_gene_file(out_dir, force_dnld=False):
     """Download a file from NCBI Gene's ftp server."""
     out_name = os.path.join(out_dir, "gene2go")
     if not os.path.exists(out_name) or force_dnld:
-        import wget
-        import gzip
         tmp_out = os.path.join(out_dir, 'tmp.gz')
 
         if os.path.exists(tmp_out):
