@@ -12,9 +12,8 @@ import plotly
 import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
 
-from magine.data.formatter import log2_normalize_df
-
-# import magine.html_templates.html_tools as ht
+import magine.html_templates.html_tools as ht
+from magine.data.formatter import pivot_table_for_export, log2_normalize_df
 
 plotly.plotly.sign_in(username='james.ch.pino',
                       api_key='BnUcJSpmPcMKZg0yEFaL')
@@ -164,6 +163,58 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
     return figure_locations, to_remove
 
 
+def write_table_to_html_with_figures(data, exp_data, save_name='index',
+                                     out_dir=None, run_parallel=True):
+    # create plots of everything
+    if isinstance(data, str):
+        data = pd.read_csv(data)
+    # print(data.dtypes)
+    # tmp = pivot_table_for_export(data)
+    # print(tmp.dtypes)
+
+    fig_dict, to_remove = create_gene_plots_per_go(
+        data, save_name, out_dir, exp_data, run_parallel=run_parallel
+    )
+
+    for i in fig_dict:
+        data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
+
+    data = data[~data['GO_id'].isin(to_remove)]
+
+    tmp = pivot_table_for_export(data)
+
+    html_out = save_name
+    if out_dir is not None:
+        html_out = os.path.join(out_dir, html_out)
+    print("Saving to : {}".format(html_out))
+
+    html_out = save_name + '_filter'
+    if out_dir is not None:
+        html_out = os.path.join(out_dir, html_out)
+
+    ht.write_filter_table(tmp, html_out, 'MAGINE GO analysis')
+    """
+    items = []
+    for i, row in data.iterrows():
+        if i > 100:
+            continue
+        i = str(i)
+
+        an_item = dict(GO_id=row['GO_id'], id_num=i,
+                       enrichment_score=row['enrichment_score'],
+                       pvalue=row['pvalue'],
+                       genes=row['genes'],
+                       n_genes=row['n_genes'],
+                       )
+        items.append(an_item)
+
+    keys = ['GO_ID', 'enrichment_score', 'p-value', 'n_genes']
+    html_out = enrich_template.render(header=keys, items=items)
+    with open('{}.html'.format(save_name), 'w') as f:
+        f.write(html_out)
+    """
+
+
 def plot_dataframe(exp_data, html_filename, out_dir='proteins',
                    plot_type='plotly', type_of_species='protein',
                    run_parallel=False):
@@ -186,8 +237,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     -------
 
     """
-    from magine.html_templates.html_tools import write_filter_table
-    # from magine.html_templates.html_tools import write_single_table
+
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
@@ -275,7 +325,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     # if out_dir is not None:
     #     html_filename = os.path.join(out_dir, html_filename)
     # write_single_table(local_data, html_filename, idx_key)
-    write_filter_table(local_data, html_filename, idx_key)
+    ht.write_filter_table(local_data, html_filename, idx_key)
 
 
 def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',

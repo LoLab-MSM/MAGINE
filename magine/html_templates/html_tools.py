@@ -1,9 +1,6 @@
 import os
 
 import jinja2
-import pandas as pd
-
-from magine.data.formatter import pivot_table_for_export
 
 env = jinja2.Environment(
    loader=jinja2.FileSystemLoader(
@@ -87,57 +84,7 @@ def write_single_table(table, save_name, title):
         f.write(html_out)
 
 
-def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir=None, run_parallel=True):
-    # create plots of everything
-    if isinstance(data, str):
-        data = pd.read_csv(data)
-    # print(data.dtypes)
-    # tmp = pivot_table_for_export(data)
-    # print(tmp.dtypes)
-    from magine.plotting.species_plotting import create_gene_plots_per_go
-    fig_dict, to_remove = create_gene_plots_per_go(
-            data, save_name, out_dir, exp_data, run_parallel=run_parallel
-    )
 
-    for i in fig_dict:
-        data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
-
-    data = data[~data['GO_id'].isin(to_remove)]
-
-    tmp = pivot_table_for_export(data)
-
-    html_out = save_name
-    if out_dir is not None:
-        html_out = os.path.join(out_dir, html_out)
-    print("Saving to : {}".format(html_out))
-
-    write_single_table(tmp, html_out, 'MAGINE GO analysis')
-    html_out = save_name + '_filter'
-    if out_dir is not None:
-        html_out = os.path.join(out_dir, html_out)
-
-    write_filter_table(tmp, html_out, 'MAGINE GO analysis')
-    """
-    items = []
-    for i, row in data.iterrows():
-        if i > 100:
-            continue
-        i = str(i)
-
-        an_item = dict(GO_id=row['GO_id'], id_num=i,
-                       enrichment_score=row['enrichment_score'],
-                       pvalue=row['pvalue'],
-                       genes=row['genes'],
-                       n_genes=row['n_genes'],
-                       )
-        items.append(an_item)
-
-    keys = ['GO_ID', 'enrichment_score', 'p-value', 'n_genes']
-    html_out = enrich_template.render(header=keys, items=items)
-    with open('{}.html'.format(save_name), 'w') as f:
-        f.write(html_out)
-    """
 
 
 def process_filter_table(table, title):
