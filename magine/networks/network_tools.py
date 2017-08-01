@@ -5,6 +5,8 @@ from sys import modules
 import igraph as ig
 import networkx as nx
 from bioservices import KEGG, UniProt
+import itertools
+
 
 try:
     kegg = modules['kegg']
@@ -548,6 +550,48 @@ def compress_edges(graph):
     return g
 
 
+def remove_unmeasured_nodes(graph, measured):
+    new_g = graph.copy()
+    edge_info_dict = dict()
+    for i, j, data in graph.edges(data=True):
+        edge_info_dict[(i, j)] = data
+    nodes = set(graph.nodes())
+    include = set(measured)
+    include.intersection_update(nodes)
+
+    import pathos.multiprocessing as mp
+    import networkx as nx
+    # for i, j in :
+    def find(d):
+        i, j = d
+        paths = []
+        if nx.has_path(graph, i, j):
+            for p in nx.all_shortest_paths(graph, i, j):
+                path = []
+                label = []
+                for n in p:
+                    if n in include:
+                        path.append(n)
+                    else:
+                        label.append(n)
+                if len(path) == 2:
+                    paths.append((path, '|'.join(l for l in label)))
+        return paths
+    x = mp.Pool(4)
+    paths = x.map(find, itertools.combinations(include, 2))
+    to_remove = set()
+    for p in paths:
+        if len(p) != 2:
+            continue
+        for path, label in p:
+            print(path, label)
+            for n in label.split('|'):
+                to_remove.add(n)
+            new_g.add_edge(path[0], path[1], label=label)
+    for n in to_remove:
+        new_g.remove_node(n)
+    return new_g
+
 def _nx_to_dot(network):
     if isinstance(network, nx.DiGraph):
         try:
@@ -720,3 +764,15 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     print("Number of subgraphs with 1 node = %s" % counter)
     return subgraph_species
 '''
+
+
+if __name__ == '__main__':
+    g = nx.DiGraph()
+    g.add_edge('A', 'B')
+    g.add_edge('B', 'C')
+    g.add_edge('B', 'E')
+    g.add_edge('C', 'D')
+    new_g = remove_unmeasured_nodes(g, ['A', 'D','E'])
+    export_to_dot(new_g, 'merged_node')
+    # new_g = remove_unmeasured_nodes(g, ['A', 'C', 'D'])
+    # export_to_dot(new_g, 'merged_node2')
