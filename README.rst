@@ -9,10 +9,10 @@ MAGINE
 
 .. image:: https://landscape.io/github/LoLab-VU/Magine/master/landscape.svg?style=flat
    :target: https://landscape.io/github/LoLab-VU/Magine/master
-   :alt: Code Health
 
 
-    Mechanism of Action Generator involving Network Expansion
+
+Mechanism of Action Generator involving Network Expansion
 
 Python package that integrates omic style data.
 
