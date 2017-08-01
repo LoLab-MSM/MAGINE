@@ -16,4 +16,3 @@ numba
 bottleneck
 python-igraph
 appdirs
-wget==3.2

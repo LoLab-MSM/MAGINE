@@ -3,7 +3,8 @@ import os
 from collections import defaultdict
 
 import requests
-import wget
+import pandas as pd
+
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
 
@@ -138,7 +139,7 @@ def download_and_process_go(species='hsa'):
     if not os.path.exists(obo_file):
         download_current_go()
     go = obo_parser.GODag(obo_file)
-    gene_to_go, go_to_gene, goid_to_name = create_annotations()
+    gene_to_go, go_to_gene, goid_to_name = download_ncbi_gene_file()
 
     go_aspect = dict()
     go_depth = dict()
@@ -174,66 +175,53 @@ def download_and_process_go(species='hsa'):
     print("Done creating GO files")
 
 
-def download_ncbi_gene_file(out_dir, force_dnld=False):
-    """Download a file from NCBI Gene's ftp server."""
-    out_name = os.path.join(out_dir, "gene2go")
-    if not os.path.exists(out_name) or force_dnld:
-        tmp_out = os.path.join(out_dir, 'tmp.gz')
+def download_ncbi_gene_file(tax_ids=None):
+    """ Downloads gene2go associations files from ncbi
 
-        if os.path.exists(tmp_out):
-            os.remove(tmp_out)
+    Parameters
+    ----------
+    tax_ids : list
+        list of tax ids to consider, default [9606], human
+    force_dnld
 
-        if os.path.exists(out_name):
-            os.remove(out_name)
-        fin_ftp = "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2go.gz"
+    Returns
+    -------
 
-        wget.download(fin_ftp, tmp_out)
+    """
 
-        with gzip.open(tmp_out, 'rb') as zstrm:
-            print("\n  READ:  {F}\n".format(F=tmp_out))
-            with open(out_name, 'wb') as ostrm:
-                ostrm.write(zstrm.read())
-                print("  WROTE: {F}\n".format(F=out_name))
-
-
-def read_ncbi_gene2go(fin_gene2go, taxids=None, **kws):
-    """Read NCBI's gene2go. Return gene2go data for user-specified taxids."""
     from magine.mappings.gene_mapper import GeneMapper
     gm = GeneMapper()
+
+    gene2go_url = "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2go.gz"
+    print("Downloading gene2go assocations file")
+    r = pd.read_table(gene2go_url, compression='gzip')
 
     id2gos = defaultdict(set)
     go2term = dict()
     go2genes = defaultdict(set)
 
-    evs = kws.get('evidence_set', None)
-    if taxids is None:  # Default taxid is Human
-        taxids = {9606}
-    with open(fin_gene2go) as ifstrm:
-        for line in ifstrm:
-            if line[0] != '#':  # Line contains data. Not a comment
-                line = line.rstrip()  # chomp
-                flds = line.split('\t')
-                if len(flds) >= 5:
-                    taxid_curr, geneid, go_id, evidence, qualifier, go_term = flds[
-                                                                              :6]
-                    taxid_curr = int(taxid_curr)
-                    if taxid_curr in taxids and qualifier != 'NOT' and evidence != 'ND':
+    if tax_ids is None:  # Default taxid is Human
+        tax_ids = {9606}
+    table = r.as_matrix()
+    for line in table:
+        t_id, gene_id, go_id, evidence, qual, go_term = line[:6]
 
-                        if evs is None or evidence in evs:
-                            geneid = int(geneid)
-                            symbol = gm.ncbi_to_symbol[geneid]
-                            if len(symbol) == 1:
-                                symbol = symbol[0]
-                            else:
-                                print(symbol)
-                            go2genes[go_id].add(symbol)
-                            id2gos[symbol].add(go_id)
-                            go2term[go_id] = go_term
+        t_id = int(t_id)
+        if t_id in tax_ids and qual != 'NOT' and evidence != 'ND':
+            gene_id = int(gene_id)
+            symbol = gm.ncbi_to_symbol[gene_id]
+            if len(symbol) == 1:
+                symbol = symbol[0]
+            else:
+                print(symbol)
+            go2genes[go_id].add(symbol)
+            id2gos[symbol].add(go_id)
+            go2term[go_id] = go_term
 
     return id2gos, go2genes, go2term
 
 
-def download_current_go(redownload=False):
+def download_current_go(redownload=True):
     go_url = 'http://purl.obolibrary.org/obo/go.obo'
     target_file = 'go.obo'
     out_path = os.path.join(id_mapping_dir, target_file)
@@ -255,44 +243,7 @@ def download_current_go(redownload=False):
 
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
-
         print("Downloaded {} and stored {}".format(go_url, out_path))
-
-
-def download_annotations(redownload=False):
-    annotations_file = 'http://geneontology.org/gene-associations/goa_human.gaf.gz'
-    annotations_target_file = 'goa_human.gaf.gz'
-    out_path = os.path.join(id_mapping_dir, annotations_target_file)
-    real_path = os.path.join(id_mapping_dir, 'annotations.gaf')
-    if not os.path.exists(out_path) or redownload:
-        r = requests.get(annotations_file, stream=True)
-        response = requests.head(annotations_file)
-        print(response.headers)
-        # file_size = int(response.headers['content-length'])
-        print("Downloading ontology file")
-        file_size_dl = 0
-        block_sz = 1024
-        # block_sz = 8024
-
-        with open(out_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=block_sz):
-                file_size_dl += len(chunk)
-
-                if chunk:  # filter out keep-alive new chunks
-                    f.write(chunk)
-
-        with gzip.open(out_path, 'rb') as f:
-            file_content = f.read()
-        with open(real_path, 'wb') as f:
-            f.write(file_content)
-
-
-def create_annotations():
-    out_path = os.path.join(id_mapping_dir, 'gene2go')
-    download_ncbi_gene_file(id_mapping_dir, force_dnld=True)
-    id2gos, go2genes, go2term = read_ncbi_gene2go(out_path, [9606])
-
-    return id2gos, go2genes, go2term
 
 
 if __name__ == '__main__':

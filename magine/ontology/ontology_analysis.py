@@ -2,11 +2,9 @@
 GO analysis function using orange bioinformatics
 """
 import os
-
 import numpy as np
 import pandas as pd
-
-import magine.html_templates.html_tools as html_tools
+from magine.plotting.species_plotting import write_table_to_html_with_figures
 from magine.ontology.databases.gene_ontology import MagineGO
 
 pd.set_option('display.max_colwidth', -1)
@@ -194,7 +192,7 @@ class GoAnalysis(object):
             out_dir = self.out_dir
         print("Data", self.data)
         print("exp_data", self.exp_data)
-        html_tools.write_table_to_html_with_figures(
+        write_table_to_html_with_figures(
                 self.data, self.exp_data, save_name, out_dir=out_dir,
                 run_parallel=run_parallel
         )
