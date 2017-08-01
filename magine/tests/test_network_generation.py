@@ -2,12 +2,14 @@ from magine.networks.network_generator import build_network
 
 
 def test_build_network():
-    graph = build_network(['Bax', 'tp53', 'JAK1', 'bad'], num_overlap=1,
+    graph = build_network(['BAX', 'TP53', 'JAK1', 'BAD'], num_overlap=1,
                           save_name='sample_network', species='hsa',
-                          overwrite=False, all_measured_list=['casp3', 'egfr'],
+                          overwrite=False, all_measured_list=['CASP3', 'EGFR'],
                           use_hmdb=False, use_reactome=True
                           )
     for i in graph.nodes():
+        # if isinstance(i, float):
+        #     print(i)
         if len(i.split(':')) > 1:
             print(i)
 
