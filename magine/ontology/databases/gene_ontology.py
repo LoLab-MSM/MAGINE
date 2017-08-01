@@ -1,8 +1,14 @@
+import gzip
 import os
+from collections import defaultdict
 
+import requests
 from statsmodels.sandbox.stats.multicomp import fdrcorrection0
 from statsmodels.stats.proportion import binom_test
+
+from magine.data.storage import id_mapping_dir
 from magine.data.storage import network_data_dir
+
 try:
     import cPickle as pickle
 except:
@@ -19,18 +25,16 @@ class MagineGO(object):
         go_to_go_name = os.path.join(dirname,
                                      '{}_goids_to_goname.p'.format(species))
         go_depth = os.path.join(dirname, '{}_godepth.p'.format(species))
-        go_slim = os.path.join(dirname, '{}_go_slims.p'.format(species))
         go_aspect = os.path.join(dirname, '{}_go_aspect.p'.format(species))
         for i in [gene_to_go_name, go_to_gene_name, go_to_go_name, go_depth,
                   go_aspect]:
             if not os.path.exists(i):
-                create_dicts_through_orange(species=species)
+                download_and_process_go(species=species)
 
         self.gene_to_go = pickle.load(open(gene_to_go_name, 'rb'))
         self.go_to_gene = pickle.load(open(go_to_gene_name, 'rb'))
         self.go_to_name = pickle.load(open(go_to_go_name, 'rb'))
         self.go_depth = pickle.load(open(go_depth, 'rb'))
-        self.go_slim = pickle.load(open(go_slim, 'rb'))
         self.go_aspect = pickle.load(open(go_aspect, 'rb'))
 
     def calculate_enrichment(self, genes, reference=None, evidence_codes=None,
@@ -126,19 +130,19 @@ class MagineGO(object):
         return res
 
 
-def create_dicts_through_orange(species='hsa', rev=None, rev_ass=None):
+def download_and_process_go(species='hsa'):
     print("Creating GO files")
-    from orangecontrib.bio import go
-    ont = go.Ontology(rev=rev)
-    ann = go.Annotations(species, ontology=ont, rev=rev_ass)
-    go_to_gene = dict()
-    gene_to_go = dict()
-    goid_to_name = dict()
+    from goatools import obo_parser
+    obo_file = os.path.join(id_mapping_dir, 'go.obo')
+    if not os.path.exists(obo_file):
+        download_current_go()
+    go = obo_parser.GODag(obo_file)
+    gene_to_go, go_to_gene, goid_to_name = create_annotations()
+
     go_aspect = dict()
     go_depth = dict()
 
     dirname = network_data_dir
-    go_slims = ont.named_slims_subset('goslim_pir')
 
     go_to_gene_name = os.path.join(dirname,
                                    '{}_goids_to_genes.p'.format(species))
@@ -146,18 +150,14 @@ def create_dicts_through_orange(species='hsa', rev=None, rev_ass=None):
                                  '{}_goids_to_goname.p'.format(species))
     gene_to_go_name = os.path.join(dirname, '{}_gene_to_go.p'.format(species))
     go_depth_name = os.path.join(dirname, '{}_godepth.p'.format(species))
-    go_slim_name = os.path.join(dirname, '{}_go_slims.p'.format(species))
     go_aspect_name = os.path.join(dirname, '{}_go_aspect.p'.format(species))
-    for i in ont.terms:
-        go_to_gene[i] = ann.get_all_genes(i)
-        goid_to_name[i] = ont[i].name
-        go_depth[i] = ont.term_depth(i)
-        go_aspect[i] = ont[i].namespace
+    for i in go_to_gene.keys():
+        go_depth[i] = go[i].depth
+        go_aspect[i] = go[i].namespace
 
     pickle.dump(go_to_gene, open(go_to_gene_name, 'wb'))
     pickle.dump(goid_to_name, open(go_to_go_name, 'wb'))
     pickle.dump(go_depth, open(go_depth_name, 'wb'))
-    pickle.dump(go_slims, open(go_slim_name, 'wb'))
     pickle.dump(go_aspect, open(go_aspect_name, 'wb'))
 
     for i in go_to_gene:
@@ -173,11 +173,135 @@ def create_dicts_through_orange(species='hsa', rev=None, rev_ass=None):
     print("Done creating GO files")
 
 
+def download_ncbi_gene_file(out_dir, force_dnld=False):
+    """Download a file from NCBI Gene's ftp server."""
+    out_name = os.path.join(out_dir, "gene2go")
+    if not os.path.exists(out_name) or force_dnld:
+        import wget
+        import gzip
+        tmp_out = os.path.join(out_dir, 'tmp.gz')
+
+        if os.path.exists(tmp_out):
+            os.remove(tmp_out)
+
+        if os.path.exists(out_name):
+            os.remove(out_name)
+        fin_ftp = "ftp://ftp.ncbi.nlm.nih.gov/gene/DATA/gene2go.gz"
+
+        wget.download(fin_ftp, tmp_out)
+
+        with gzip.open(tmp_out, 'rb') as zstrm:
+            print("\n  READ:  {F}\n".format(F=tmp_out))
+            with open(out_name, 'wb') as ostrm:
+                ostrm.write(zstrm.read())
+                print("  WROTE: {F}\n".format(F=out_name))
+
+
+def read_ncbi_gene2go(fin_gene2go, taxids=None, **kws):
+    """Read NCBI's gene2go. Return gene2go data for user-specified taxids."""
+    from magine.mappings.gene_mapper import GeneMapper
+    gm = GeneMapper()
+
+    id2gos = defaultdict(set)
+    go2term = dict()
+    go2genes = defaultdict(set)
+
+    evs = kws.get('evidence_set', None)
+    if taxids is None:  # Default taxid is Human
+        taxids = {9606}
+    with open(fin_gene2go) as ifstrm:
+        for line in ifstrm:
+            if line[0] != '#':  # Line contains data. Not a comment
+                line = line.rstrip()  # chomp
+                flds = line.split('\t')
+                if len(flds) >= 5:
+                    taxid_curr, geneid, go_id, evidence, qualifier, go_term = flds[
+                                                                              :6]
+                    taxid_curr = int(taxid_curr)
+                    if taxid_curr in taxids and qualifier != 'NOT' and evidence != 'ND':
+
+                        if evs is None or evidence in evs:
+                            geneid = int(geneid)
+                            symbol = gm.ncbi_to_symbol[geneid]
+                            if len(symbol) == 1:
+                                symbol = symbol[0]
+                            else:
+                                print(symbol)
+                            go2genes[go_id].add(symbol)
+                            id2gos[symbol].add(go_id)
+                            go2term[go_id] = go_term
+
+    return id2gos, go2genes, go2term
+
+
+def download_current_go(redownload=False):
+    go_url = 'http://purl.obolibrary.org/obo/go.obo'
+    target_file = 'go.obo'
+    out_path = os.path.join(id_mapping_dir, target_file)
+    if os.path.exists(out_path) and redownload:
+        print("GO exists, default behavior is to re-download.")
+
+        r = requests.get(go_url, stream=True)
+        response = requests.head(go_url)
+        print(response.headers)
+        # file_size = int(response.headers['content-length'])
+        print("Downloading ontology file")
+        file_size_dl = 0
+        block_sz = 1024
+        # block_sz = 8024
+
+        with open(out_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=block_sz):
+                file_size_dl += len(chunk)
+
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+
+        print("Downloaded {} and stored {}".format(go_url, out_path))
+
+
+def download_annotations(redownload=False):
+    annotations_file = 'http://geneontology.org/gene-associations/goa_human.gaf.gz'
+    annotations_target_file = 'goa_human.gaf.gz'
+    out_path = os.path.join(id_mapping_dir, annotations_target_file)
+    real_path = os.path.join(id_mapping_dir, 'annotations.gaf')
+    if os.path.exists(out_path) and redownload:
+        r = requests.get(annotations_file, stream=True)
+        response = requests.head(annotations_file)
+        print(response.headers)
+        # file_size = int(response.headers['content-length'])
+        print("Downloading ontology file")
+        file_size_dl = 0
+        block_sz = 1024
+        # block_sz = 8024
+
+        with open(out_path, 'wb') as f:
+            for chunk in r.iter_content(chunk_size=block_sz):
+                file_size_dl += len(chunk)
+
+                if chunk:  # filter out keep-alive new chunks
+                    f.write(chunk)
+
+        with gzip.open(out_path, 'rb') as f:
+            file_content = f.read()
+        with open(real_path, 'wb') as f:
+            f.write(file_content)
+
+
+def create_annotations():
+    out_path = os.path.join(id_mapping_dir, 'gene2go')
+    download_ncbi_gene_file(id_mapping_dir, force_dnld=True)
+    id2gos, go2genes, go2term = read_ncbi_gene2go(out_path, [9606])
+
+    return id2gos, go2genes, go2term
+
+
 if __name__ == '__main__':
-    create_dicts_through_orange()
+    # create_annotations()
+    download_and_process_go()
     go = MagineGO('hsa')
     terms = go.calculate_enrichment(['BAX'],
                                     reference=['BAX', "LL", 'BCL2', 'CASP1'])
-    # 'GO:0001569', (['BAX'], 0.78977569118414181, 1))
+    #    'GO:0001569', (['BAX'], 0.78977569118414181, 1))
     for t in terms:
         print(t, terms[t])

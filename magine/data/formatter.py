@@ -4,10 +4,9 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import sys
 
-reload(sys)
-sys.setdefaultencoding('utf-8')
+# reload(sys)
+# sys.setdefaultencoding('utf-8')
 
 progensis_list_of_attributes = ['compound', 'compound_id', 'name', 'formula',
 
@@ -508,7 +507,7 @@ def pivot_table_for_export(data, save_name=None):
     -------
 
     """
-    index = ['GO_id', 'GO_name', 'depth', 'ref', 'slim', 'aspect']
+    index = ['GO_id', 'GO_name', 'depth', 'ref', 'aspect']
     tmp = pd.pivot_table(data, index=index, columns='sample_index',
                          aggfunc='first'
                          )

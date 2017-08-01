@@ -1,14 +1,12 @@
+import tempfile
+
 from magine.ontology.ontology_analysis import GoAnalysis
 from magine.tests.sample_experimental_data import exp_data
 
-"""
-def test_create_dicts():
-    create_dicts_through_orange(species='hsa', rev="5.2795", rev_ass='1.353')
-    m_go = MagineGO()
-"""
 
 def test_html():
-    go = GoAnalysis(species='hsa', output_directory='html_output',
+    out_dir = tempfile.mkdtemp()
+    go = GoAnalysis(species='hsa', output_directory=out_dir,
                     verbose=False,
                     experimental_data=exp_data,
                     # reference=exp_data.list_species
@@ -18,7 +16,7 @@ def test_html():
                             exp_data.timepoints)
     enrich_array.to_csv('proteomics_up_enrichment_array.csv')
 
-    go.write_table_to_html('DEL', 'DEL')
+    go.write_table_to_html('DEL', out_dir)
 
 
 if __name__ == '__main__':

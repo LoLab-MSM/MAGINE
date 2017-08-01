@@ -95,8 +95,8 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     # print(data.dtypes)
     # tmp = pivot_table_for_export(data)
     # print(tmp.dtypes)
-    import magine.plotting.species_plotting as species_plotting
-    fig_dict, to_remove = species_plotting.create_gene_plots_per_go(
+    from magine.plotting.species_plotting import create_gene_plots_per_go
+    fig_dict, to_remove = create_gene_plots_per_go(
             data, save_name, out_dir, exp_data, run_parallel=run_parallel
     )
 
@@ -138,6 +138,72 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
     """
+
+
+def process_filter_table(table, title):
+    """
+
+    Parameters
+    ----------
+    table : pandas.DataFrame
+    save_name : str
+    title : str
+
+    Returns
+    -------
+
+    """
+    """{column_number: 0},
+    {column_number: 1, filter_type: "range_number_slider"},
+    {column_number: 2, filter_type: "date"},
+    {
+        column_number:       3,
+        filter_type:         "auto_complete",
+        text_data_delimiter: ","
+        },
+    {
+        column_number:        4,
+        column_data_type:     "html",
+        html_data_type:       "text",
+        filter_default_label: "Select tag"
+        }"""
+
+    out_string = ''
+    leave = ['GO_id', 'genes']
+    n = 0
+    for n, i in enumerate(table.index.names):
+        if i in leave:
+            continue
+        if i not in dict_of_templates:
+            print(i)
+            continue
+        new_string = dict_of_templates[i].format(n)
+        out_string += '{' + new_string + '},\n'
+
+    for m, i in enumerate(table.columns):
+        if isinstance(i, str):
+            new_string = dict_of_templates[i].format(n + m + 1)
+            out_string += '{' + new_string + '},\n'
+            continue
+        elif i[0] in leave:
+            continue
+        elif i[0] not in dict_of_templates:
+            print(i[0])
+            continue
+        new_string = dict_of_templates[i[0]].format(n + m + 1)
+        out_string += '{' + new_string + '},\n'
+
+    # formats output to less precision and ints rather than floats
+    tmp_table, format_dict = _format_data_table(table)
+
+    html_table = tmp_table.to_html(escape=False,
+                                   # na_rep='-',
+                                   formatters=format_dict
+                                   )
+    template_vars = {"title": title,
+                     "table_name": html_table,
+                     "filter_table": out_string}
+    return template_vars
 
 
 def write_filter_table(table, save_name, title):

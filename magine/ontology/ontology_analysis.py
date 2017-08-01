@@ -107,7 +107,6 @@ class GoAnalysis(object):
             go_row['ref'] = len(self.magine_go.go_to_gene[go_id])
             go_row['depth'] = self.magine_go.go_depth[go_id]
             go_row['GO_name'] = self.magine_go.go_to_name[go_id]
-            go_row['slim'] = go_id in self.magine_go.go_slim
 
             all_go_rows.append(go_row)
             if self.verbose:  # pragma: no cover
