@@ -238,7 +238,7 @@ def download_current_go(redownload=False):
     go_url = 'http://purl.obolibrary.org/obo/go.obo'
     target_file = 'go.obo'
     out_path = os.path.join(id_mapping_dir, target_file)
-    if os.path.exists(out_path) and redownload:
+    if not os.path.exists(out_path) or redownload:
         print("GO exists, default behavior is to re-download.")
 
         r = requests.get(go_url, stream=True)
@@ -265,7 +265,7 @@ def download_annotations(redownload=False):
     annotations_target_file = 'goa_human.gaf.gz'
     out_path = os.path.join(id_mapping_dir, annotations_target_file)
     real_path = os.path.join(id_mapping_dir, 'annotations.gaf')
-    if os.path.exists(out_path) and redownload:
+    if not os.path.exists(out_path) or redownload:
         r = requests.get(annotations_file, stream=True)
         response = requests.head(annotations_file)
         print(response.headers)
