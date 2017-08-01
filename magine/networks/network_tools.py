@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import os
 from sys import modules
-
-import igraph as ig
+try:
+    import igraph as ig
+except ImportError:
+    NO_IGRAPH=True
 import networkx as nx
 from bioservices import KEGG, UniProt
 
@@ -441,6 +443,9 @@ def _trim(network, list_of_nodes):
 
 
 def networkx_to_igraph(network):
+    if not NO_IGRAPH:
+        print("igraph not installed")
+        return False
     igraph_network = ig.Graph(directed=True)
     for i, data in network.nodes(data=True):
         igraph_network.add_vertex(name=i, **data)
