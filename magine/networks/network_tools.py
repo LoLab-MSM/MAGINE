@@ -448,7 +448,7 @@ def _trim(network, list_of_nodes):
 
 
 def networkx_to_igraph(network):
-    if not NO_IGRAPH:
+    if NO_IGRAPH:
         print("igraph not installed")
         return False
     igraph_network = ig.Graph(directed=True)
