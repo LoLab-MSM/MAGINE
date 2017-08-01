@@ -240,13 +240,14 @@ def plot(mol_net, save_name):
     except ImportError:
         print("Please install pycairo to use igraph plotting")
         return
+
     try:
         import igraph
         from igraph.drawing.text import TextDrawer
         from igraph.drawing.colors import color_name_to_rgba
     except ImportError:
         print("No igraph, cannot use plotting function")
-        quit()
+        return
 
     g = networkx_to_igraph(mol_net)
     cl = igraph.VertexClustering(g).FromAttribute(g, attribute='termName')
