@@ -240,9 +240,14 @@ def plot(mol_net, save_name):
     except ImportError:
         print("Please install pycairo to use igraph plotting")
         return
-    import igraph
-    from igraph.drawing.text import TextDrawer
-    from igraph.drawing.colors import color_name_to_rgba
+
+    try:
+        import igraph
+        from igraph.drawing.text import TextDrawer
+        from igraph.drawing.colors import color_name_to_rgba
+    except ImportError:
+        print("No igraph, cannot use plotting function")
+        return
 
     g = networkx_to_igraph(mol_net)
     print(g)

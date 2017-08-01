@@ -6,13 +6,11 @@ try:
     import cPickle as pickle
 except:
     import pickle as pickle
-import os
 import networkx as nx
 from bioservices import HGNC, KEGG, UniChem, UniProt
+
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.data.storage import network_data_dir
-
 
 kegg = KEGG()
 uniprot = UniProt()
@@ -101,8 +99,11 @@ def create_gene_dictionaries(network, species='hsa'):
                 kegg_to_gene_name[str_gene] = manual_dict[str_gene]
 
             elif int(tmp_name) in gm.ncbi_to_symbol:
-                kegg_to_gene_name[str_gene] = gm.ncbi_to_symbol[int(tmp_name)][
-                    0]
+                new = gm.ncbi_to_symbol[int(tmp_name)][0]
+                if isinstance(new, float):
+                    unknown_genes.add(i)
+                    continue
+                kegg_to_gene_name[str_gene] = str(new)
             else:
                 unknown_genes.add(i)
     if len(unknown_genes) == 0:
@@ -259,22 +260,39 @@ def convert_all(network, species='hsa', use_hmdb=False):
     -------
 
     """
-    renamed_network = nx.relabel_nodes(network, compound_manual)
+
+    change_dict = dict()
+    change_dict.update(compound_manual)
+    renamed_network = network.copy()
     if use_hmdb:
         print('Started converting kegg compounds to HMDB')
         dict1 = create_compound_dictionary(renamed_network)
-        renamed_network = nx.relabel_nodes(renamed_network, dict1)
+        change_dict.update(dict1)
+
     print('Started converting kegg genes to HGNC')
     dict2, found_all = create_gene_dictionaries(renamed_network,
                                                 species=species)
+    change_dict.update(dict2)
 
-    renamed_network = nx.relabel_nodes(renamed_network, dict2)
     if not found_all:
         print('Started to check for miRNAs')
         dict3 = hugo_mapper(renamed_network, species=species)
-        renamed_network = nx.relabel_nodes(renamed_network, dict3)
+        change_dict.update(dict3)
+    change_dict = _check_dict_for_int(change_dict)
+
+    renamed_network = nx.relabel_nodes(renamed_network, change_dict)
 
     return renamed_network
+
+
+def _check_dict_for_int(dic):
+    new_dic = dict()
+    for key, value in dic.items():
+        if isinstance(value, float):
+            continue
+        else:
+            new_dic[key] = value
+    return new_dic
 
 """
 def read_fasta(fp):

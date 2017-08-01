@@ -1,9 +1,6 @@
 import os
 
 import jinja2
-import pandas as pd
-
-from magine.data.formatter import pivot_table_for_export
 
 env = jinja2.Environment(
    loader=jinja2.FileSystemLoader(
@@ -87,57 +84,73 @@ def write_single_table(table, save_name, title):
         f.write(html_out)
 
 
-def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir=None, run_parallel=True):
-    # create plots of everything
-    if isinstance(data, str):
-        data = pd.read_csv(data)
-    # print(data.dtypes)
-    # tmp = pivot_table_for_export(data)
-    # print(tmp.dtypes)
-    import magine.plotting.species_plotting as species_plotting
-    fig_dict, to_remove = species_plotting.create_gene_plots_per_go(
-            data, save_name, out_dir, exp_data, run_parallel=run_parallel
-    )
 
-    for i in fig_dict:
-        data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
 
-    data = data[~data['GO_id'].isin(to_remove)]
 
-    tmp = pivot_table_for_export(data)
-
-    html_out = save_name
-    if out_dir is not None:
-        html_out = os.path.join(out_dir, html_out)
-    print("Saving to : {}".format(html_out))
-
-    write_single_table(tmp, html_out, 'MAGINE GO analysis')
-    html_out = save_name + '_filter'
-    if out_dir is not None:
-        html_out = os.path.join(out_dir, html_out)
-
-    write_filter_table(tmp, html_out, 'MAGINE GO analysis')
+def process_filter_table(table, title):
     """
-    items = []
-    for i, row in data.iterrows():
-        if i > 100:
+
+    Parameters
+    ----------
+    table : pandas.DataFrame
+    save_name : str
+    title : str
+
+    Returns
+    -------
+
+    """
+    """{column_number: 0},
+    {column_number: 1, filter_type: "range_number_slider"},
+    {column_number: 2, filter_type: "date"},
+    {
+        column_number:       3,
+        filter_type:         "auto_complete",
+        text_data_delimiter: ","
+        },
+    {
+        column_number:        4,
+        column_data_type:     "html",
+        html_data_type:       "text",
+        filter_default_label: "Select tag"
+        }"""
+
+    out_string = ''
+    leave = ['GO_id', 'genes']
+    n = 0
+    for n, i in enumerate(table.index.names):
+        if i in leave:
             continue
-        i = str(i)
+        if i not in dict_of_templates:
+            print(i)
+            continue
+        new_string = dict_of_templates[i].format(n)
+        out_string += '{' + new_string + '},\n'
 
-        an_item = dict(GO_id=row['GO_id'], id_num=i,
-                       enrichment_score=row['enrichment_score'],
-                       pvalue=row['pvalue'],
-                       genes=row['genes'],
-                       n_genes=row['n_genes'],
-                       )
-        items.append(an_item)
+    for m, i in enumerate(table.columns):
+        if isinstance(i, str):
+            new_string = dict_of_templates[i].format(n + m + 1)
+            out_string += '{' + new_string + '},\n'
+            continue
+        elif i[0] in leave:
+            continue
+        elif i[0] not in dict_of_templates:
+            print(i[0])
+            continue
+        new_string = dict_of_templates[i[0]].format(n + m + 1)
+        out_string += '{' + new_string + '},\n'
 
-    keys = ['GO_ID', 'enrichment_score', 'p-value', 'n_genes']
-    html_out = enrich_template.render(header=keys, items=items)
-    with open('{}.html'.format(save_name), 'w') as f:
-        f.write(html_out)
-    """
+    # formats output to less precision and ints rather than floats
+    tmp_table, format_dict = _format_data_table(table)
+
+    html_table = tmp_table.to_html(escape=False,
+                                   # na_rep='-',
+                                   formatters=format_dict
+                                   )
+    template_vars = {"title": title,
+                     "table_name": html_table,
+                     "filter_table": out_string}
+    return template_vars
 
 
 def write_filter_table(table, save_name, title):
