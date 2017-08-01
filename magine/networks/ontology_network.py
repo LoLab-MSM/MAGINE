@@ -250,7 +250,8 @@ def plot(mol_net, save_name):
         return
 
     g = networkx_to_igraph(mol_net)
-    print(g)
+    if not isinstance(g, igraph.Graph):
+        return
     cl = igraph.VertexClustering(g).FromAttribute(g, attribute='termName')
     membership = cl.membership
 
