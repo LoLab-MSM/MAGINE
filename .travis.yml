@@ -15,11 +15,6 @@ before_install:
     sympy networkx nose h5py pexpect pandas numba graphviz jinja2 plotly
 - mkdir -p ~/.config/matplotlib
 - echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
-- if [[ "$TRAVIS_PYTHON_VERSION" == "3.6" ]]; then
-    pip install orange3;
-  else
-    pip install orange;
-  fi
 - pip install python-coveralls
 - pip install -r requirements.txt
 - pip install nose-exclude
