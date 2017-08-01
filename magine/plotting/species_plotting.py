@@ -1,7 +1,9 @@
 import os
+import re
 import time
 from ast import literal_eval
 from textwrap import wrap
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -9,8 +11,8 @@ import pathos.multiprocessing as mp
 import plotly
 import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
-import re
-from magine.data.formatter import log2_normalize_df, pivot_tables_for_export
+
+from magine.data.formatter import log2_normalize_df
 
 # import magine.html_templates.html_tools as ht
 
@@ -257,12 +259,13 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
                 ]
     elif type_of_species == 'metabolites':
         # output = meta_out
-        cols = ['compound', 'compound_id',
+        cols = ['compound',
                 'treated_control_fold_change',
                 'p_value_group_1_and_group_2', 'significant_flag',
                 'data_type', 'time',  # 'time_points',
                 ]
-
+        if 'compound_id' in local_data.columns:
+            cols.insert(2, 'compound_id')
         # output = output[['treated_control_fold_change',
         #                  'p_value_group_1_and_group_2',
         # 'data_type',
