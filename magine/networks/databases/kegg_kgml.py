@@ -98,7 +98,7 @@ def download_kegg_pathway(pathway, overwrite=True):
         if file_string == 404:
             print("{} ended with 404 error".format(pathway))
         else:
-            with open(fname, 'wb') as f:
+            with open(fname, 'w') as f:
                 f.write(file_string)
 
 
