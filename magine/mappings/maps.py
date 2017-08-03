@@ -178,8 +178,7 @@ def hugo_mapper(network, species='hsa'):
             else:
                 not_found.add(i)
     if not_found != 0:
-        print(
-        "{} mappings not found after HGNC mapping".format(len(not_found)))
+        print("{} mappings not found after HGNC mapping".format(len(not_found)))
         print("{} ".format(not_found))
     return hugo_dict
 
@@ -198,8 +197,6 @@ def create_compound_dictionary(network):
     
     """
     cm = ChemicalMapper()
-
-    cm.reload()
     cpd_to_hmdb = {}  # he
     still_unknown = []
     nodes = set(network.nodes())
@@ -210,24 +207,24 @@ def create_compound_dictionary(network):
             if name_stripped in cm.kegg_to_hmdb_accession:
                 mapping = cm.kegg_to_hmdb_accession[name_stripped]
                 if type(mapping) == list:
-                    hmdb_options = mapping[0]
                     if len(mapping) == 1:
-                        cpd_to_hmdb[i] = hmdb_options
-                    else:
-                        cpd_to_hmdb[i] = hmdb_options
-                        for j in range(1, len(mapping)):
-                            hmdb_options += "__%s" % mapping[j]
-                    network.node[i]['hmdbNames'] = hmdb_options.rstrip('__')
-                    chem_names = ''
+                        cpd_to_hmdb[i] = mapping[0]
+
+                    names = '|'.join(i for i in mapping)
+                    network.node[i]['hmdbNames'] = names
+                    chem_names = []
                     for name in mapping:
                         if name in cm.hmdb_accession_to_chemical_name:
-                            for each in cm.hmdb_accession_to_chemical_name[name]:
-                                # print(each)
-                                chem_names += "%s__" % each
-                    network.node[i]['chemName'] = chem_names.rstrip('__')
+                            chem_names += [e for e in cm.hmdb_accession_to_chemical_name[name]]
+                    chem_names = '|'.join(e for e in chem_names)
+                    network.node[i]['chemName'] = chem_names.encode('ascii',
+                                                                    'ignore')
+
                 elif type(mapping) == str:
                     cpd_to_hmdb[i] = mapping
-                    network.node[i]['chemName'] = cm.hmdb_accession_to_chemical_name[mapping]
+                    chem_n = cm.hmdb_accession_to_chemical_name[mapping]
+                    print(chem_n)
+                    network.node[i]['chemName'] = chem_n
                 else:
                     print('Returned something else...', mapping)
             else:

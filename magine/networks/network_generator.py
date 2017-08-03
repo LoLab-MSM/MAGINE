@@ -7,13 +7,13 @@ from sys import modules
 
 import networkx as nx
 import numpy as np
-from bioservices import KEGG
+
 
 import magine.mappings.maps as mapper
-from magine.data.storage import network_data_dir, id_mapping_dir
+from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
-from magine.networks.databases.kegg_kgml import create_all_of_kegg
+
 from magine.networks.network_tools import delete_disconnected_network
 
 try:
@@ -21,10 +21,6 @@ try:
 except:
     import pickle
 
-try:
-    kegg = modules['kegg']
-except KeyError:
-    kegg = KEGG()
 
 
 def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
@@ -136,6 +132,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     print('Number of nodes {}'.format(len(end_network.nodes())))
     print('Number of edges {}'.format(len(end_network.edges())))
     nx.write_gml(end_network, '{}.gml'.format(save_name))
+    nx.write_gpickle(end_network, '{}.p'.format(save_name))
 
     return end_network
 
@@ -281,7 +278,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     print('Number of proteins not in KEGG = {0}'.format(len(missing_proteins)))
     print('Number of add proteins = {0}'.format(len(added_proteins)))
     print(added_proteins)
-    print('Proteins added that were measured = {0}'.format(count))
+    print('Proteins addeddow that were measured = {0}'.format(count))
     print('\n')
     print('missing metabolites-protein info = {0}'.format(
         missing_protein_info))
@@ -315,34 +312,13 @@ def expand_by_reactome(network, measured_list):
 
     added_nodes = 0
     added_edges = 0
-    measured_species_in_network = set()
+
     nodes_to_check = set()
     for i in measured_set:
         if i not in existing_nodes:
             if i in reactome_nodes:
                 nodes_to_check.add(i)
                 added_nodes += 1
-
-    # for i in reactome_nodes:
-    #     if i in measured_set:
-    #         nodes_to_check.add(i)
-
-    # for i in fi_network.nodes(data=True):
-    #     if i[0] in existing_nodes:
-    #         continue
-    #     elif i in measured_list:
-    #         measured_species_in_network.add(i)
-    #         nodes_to_check.add(i)
-
-
-
-    # for node_1, node_2 in itertools.combinations(nodes_to_check, 2):
-    #     if nx.has_path(fi_network, node_1, node_2):
-    #         for path in nx.all_shortest_paths(fi_network, node_1, node_2):
-    #             _add_edges_from_path(fi_network, combined_network, path)
-    #     if nx.has_path(fi_network, node_2, node_1):
-    #         for path in nx.all_shortest_paths(fi_network, node_2, node_1):
-    #             _add_edges_from_path(fi_network, combined_network, path)
 
     for i, j, k in reactome_edges:
         if not isinstance(i, str):
@@ -378,21 +354,44 @@ def expand_by_reactome(network, measured_list):
 
 
 def create_background_network(save_name='background_network'):
+    """
+
+    Parameters
+    ----------
+    save_name : str
+
+    Returns
+    -------
+
+    """
+    from magine.networks.databases.biogrid_interactions import \
+        create_biogrid_network
+    from magine.networks.databases.kegg_kgml import create_all_of_kegg
+    import magine.networks.network_tools as nt
+
     reactome_network = load_reactome_fi()
     hmdb_network = create_hmdb_network()
     kegg_network = create_all_of_kegg()
-    full_network = nx.compose_all(
-            [reactome_network, hmdb_network, kegg_network])
-    print(len(full_network.nodes()))
-    print(len(full_network.edges()))
-    nx.write_gml(full_network, '{}.gml'.format(save_name))
+    bgn = create_biogrid_network()
+    full_network = nt.compose_all(
+            [reactome_network, hmdb_network, kegg_network, bgn],
+            'background')
+
+    print("Background network "
+          "{} nodes and {} edges".format(
+            len(full_network.nodes()),
+            len(full_network.edges()))
+          )
+
+    nx.write_gpickle(full_network, '{}.p'.format(save_name))
+    # nx.write_gml(full_network, '{}.gml'.format(save_name))
 
 
 def create_hmdb_network():
 
-    out_name = os.path.join(id_mapping_dir, 'hmdb_graph.gml')
+    out_name = os.path.join(network_data_dir, 'hmdb_graph.p')
     if os.path.exists(out_name):
-        return nx.read_gml(out_name)
+        return nx.read_gpickle(out_name)
     from magine.mappings.chemical_mapper import ChemicalMapper
 
     try:
@@ -402,63 +401,42 @@ def create_hmdb_network():
 
     tmp_graph = nx.DiGraph()
     nodes = set()
-    for i in cm.hmdb_accession_to_protein:
-        genes = cm.hmdb_accession_to_protein[i]
-        if len(genes) == 1:
-            if genes[0] == u'':
-                continue
-            else:
-                if i not in nodes:
-                    tmp_graph.add_node(i, speciesType='compound',
-                                       databaseSource='HMDB')
-                    nodes.add(i)
-                if genes[0] not in nodes:
-                    tmp_graph.add_node(i, speciesType='gene',
-                                       databaseSource='HMDB')
-                    nodes.add(i)
 
-                tmp_graph.add_edge(i, genes[0])
-        else:
-            for g in genes:
-                if g != u'':
-                    if i not in nodes:
-                        tmp_graph.add_node(i, speciesType='compound',
-                                           databaseSource='HMDB')
-                        nodes.add(i)
-                    if g not in nodes:
-                        tmp_graph.add_node(i, speciesType='gene',
-                                           databaseSource='HMDB')
-                        nodes.add(i)
-                    tmp_graph.add_edge(i, g, interactionType='chemical',
-                                       databaseSource='HMDB')
+    def _add_node(node, node_type):
+        if node != u'':
+            if node not in nodes:
+                tmp_graph.add_node(node, speciesType=node_type,
+                                   databaseSource='HMDB')
+                nodes.add(node)
+
+    def _add_edge(source, target):
+        if source != u'' and target != u'':
+            tmp_graph.add_edge(source, target,
+                               interactionType='chemical',
+                               databaseSource='HMDB'
+                               )
+
+    for compound, genes in cm.hmdb_accession_to_protein.items():
+        _add_node(compound, 'compound')
+        for ge in genes:
+            _add_node(ge, 'gene')
+            _add_edge(compound, ge)
+
+    nx.write_gpickle(tmp_graph, out_name)
+    out_name = os.path.join(network_data_dir, 'hmdb_graph.gml')
     nx.write_gml(tmp_graph, out_name)
     return tmp_graph
 
 
-def _add_edges_from_path(network, graph, path):
-    """
-    Adds a path to a graph
-
-    Parameters
-    ----------
-    graph : networkx.DiGraph
-        graph to add paths
-    path : list_like
-        list of species that create a path
-
-    """
-    previous = None
-    for protein in list(path):
-        if previous is None:
-            previous = protein
-            continue
-        else:
-            graph.add_node(previous, **network.node[previous])
-            graph.add_node(protein, **network.node[protein])
-            graph.add_edge(previous, protein,
-                           **network.edge[previous][protein])
-            previous = protein
-
-
 if __name__ == '__main__':
     create_background_network()
+    # import time
+    # st = time.time()
+    # g = nx.read_gpickle('background_network.p')
+    # et = time.time()
+    # print(et-st)
+    # st = time.time()
+    # g = nx.read_gml('background_network.gml')
+    # et = time.time()
+    # print(et - st)
+

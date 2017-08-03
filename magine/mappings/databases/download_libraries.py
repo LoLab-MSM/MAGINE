@@ -1,5 +1,4 @@
 import os
-import tempfile
 import zipfile
 from xml.etree import cElementTree as ElementTree
 from magine.data.storage import id_mapping_dir
@@ -123,7 +122,7 @@ class HMDB(object):
     """
 
     def __init__(self):
-        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_dir = id_mapping_dir
         self.target_file = 'hmdb_metabolites.zip'
         self.out_name = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv')
         self._setup()
@@ -136,7 +135,6 @@ class HMDB(object):
         """ parse HMDB to Pandas.DataFrame
 
         """
-        # out_dir = b'c:\users\jamesp~1\\appdata\local\\temp\\tmp_zxgyw\HMDB'
         out_dir = os.path.join(self.tmp_dir, 'HMDB')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
@@ -238,9 +236,10 @@ class HMDB(object):
                       'protein_associations', 'inchikey', 'iupac_name',
                       'ontology', 'drugbank_id', 'chemical_formula', 'smiles',
                       'metlin_id', 'average_molecular_weight',
+                      'secondary_accessions',
                       # 'normal_concentrations',
                       # 'molecular_framework'
-                      # 'secondary_accessions', 'pathways',
+                      #  'pathways',
                       ]
         template = {}
         for i in categories:
@@ -273,7 +272,16 @@ class HMDB(object):
                         if cl_text is not None:
                             cl_all.append(cl.text)
                 template['cellular_locations'] = '|'.join(i for i in cl_all)
-
+            elif i == 'secondary_accessions':
+                accesion = n.findall('accession')
+                if len(accesion) == 0:
+                    accesion = ''
+                else:
+                    accesions = []
+                    for acc in accesion:
+                        accesions.append(acc.text)
+                    accesion = '|'.join(acc for acc in sorted(accesions))
+                template[i] = accesion
             else:
                 output = n.text
                 if output is not None:

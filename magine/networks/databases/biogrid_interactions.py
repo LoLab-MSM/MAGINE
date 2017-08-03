@@ -27,12 +27,20 @@ class BioGridDownload(object):
                                    compression='zip',
                                    delimiter='\t',
                                    error_bad_lines=False,
-                                   low_memory=False)
+                                   low_memory=False,
+                                   encoding='utf-8',
+                                   )
 
         chemical_int = chemical_int[chemical_int['Organism'] == 'Homo sapiens']
-        chem_cols = ['Official Symbol', 'Action',
-                     'Chemical Name', 'ATC Codes', 'CAS Number', 'Pubmed ID',
-                     'Chemical Type', 'Chemical Source', 'Chemical Source ID']
+        chem_cols = ['Official Symbol',
+                     'Action',
+                     'Chemical Name',
+                     'ATC Codes',
+                     'CAS Number',
+                     'Pubmed ID',
+                     'Chemical Type',
+                     'Chemical Source',
+                     'Chemical Source ID']
 
         chemical_int = chemical_int[chem_cols]
         chem_table = chemical_int.as_matrix()
@@ -41,6 +49,7 @@ class BioGridDownload(object):
         for row in chem_table:
             target = row[0]
             source = row[2]
+            name = source.encode('ascii', 'replace')
             action = row[1]
             atc_code = row[3]
             cas_num = row[4]
@@ -48,34 +57,47 @@ class BioGridDownload(object):
             chem_typed = row[6]
             chem_source = row[7]
             chem_source_id = row[8]
-            if chem_source == 'DRUGBANK':
-                name = target
-                source = self.cm.drugbank_to_hmdb[chem_source_id]
-            if source not in nodes_added:
-                if chem_typed == 'small molecule':
-                    node_type = 'compound'
-                else:
-                    node_type = 'biologic'
-                chem_g.add_node(source, speciesType=node_type,
-                                databaseSource='BioGrid',
-                                atcCode=atc_code,
-                                chemSource=chem_source,
-                                chemSourceId=chem_source_id,
-                                casNum=cas_num
-                                )
-                nodes_added.add(source)
+            if chem_typed == 'small molecule':
+                node_type = 'compound'
+            else:
+                node_type = 'biologic'
+
             if target not in nodes_added:
                 chem_g.add_node(target, speciesType='gene',
                                 databaseSource='BioGrid')
                 nodes_added.add(target)
 
-            chem_g.add_edge(source, target,
-                            attr_dict={
-                                'interactionType': action,
-                                'pubmed':          pubmed,
-                            })
-        print(len(chem_g.nodes()))
-        print(len(chem_g.edges()))
+            def _add_source_node(node):
+                if node not in nodes_added:
+                    chem_g.add_node(node,
+                                    speciesType=node_type,
+                                    chemicalName=name,
+                                    databaseSource='BioGrid',
+                                    atcCode=atc_code,
+                                    chemSource=chem_source,
+                                    chemSourceId=chem_source_id,
+                                    casNum=cas_num
+                                    )
+                    nodes_added.add(node)
+
+            def _add_edge(node):
+                chem_g.add_edge(node, target,
+                                interactionType=action,
+                                pubmed=pubmed,
+                                databaseSource='BioGrid'
+                                )
+
+            if chem_source == 'DRUGBANK':
+                if chem_source_id in self.cm.drugbank_to_hmdb:
+                    source = self.cm.drugbank_to_hmdb[chem_source_id]
+                    for n in source:
+                        _add_source_node(n)
+                        _add_edge(n)
+                else:
+                    _add_source_node(source)
+            else:
+                _add_source_node(source)
+
         return chem_g
 
     def parse_network(self):
@@ -94,17 +116,20 @@ class BioGridDownload(object):
                             error_bad_lines=False,
                             low_memory=False)
 
+        table = table[table['Organism Interactor A'].isin(['9606'])]
+        table = table[table['Organism Interactor B'].isin(['9606'])]
+
         protein_cols = ['Official Symbol Interactor A',
                         'Official Symbol Interactor B',
-                        'Pubmed ID', 'Score', 'Modification',
+                        'Modification',
+                        'Pubmed ID',
+                        'Score',
                         'Source Database',
                         'Experimental System Type']
         table = table[protein_cols]
-        print(table['Modification'].unique())
-        print(table.shape)
+
         table = table[~table['Modification'].isin(['-', 'No Modification'])]
-        print(table.shape)
-        print(table.head(10))
+
         table = table.as_matrix()
         g = self._create_chemical_network()
         added_genes = set()
@@ -115,25 +140,26 @@ class BioGridDownload(object):
             inter = r[2]
             pubchem = r[3]
             score = r[4]
-            mod = r[4]
-            source_db = r[4]
-            exp_system = r[4]
+            source_db = r[5]
+            exp_system = r[6]
 
-            if gene1 == gene2:
-                continue
-            else:
-                if gene1 not in added_genes:
-                    g.add_node(gene1, sourceDB=source_db,
-                               speciesType='gene')
-                    added_genes.add(gene1)
-                if gene2 not in added_genes:
-                    g.add_node(gene2, sourceDB=source_db,
-                               speciesType='gene')
-                    added_genes.add(gene2)
+            def _add_node(node):
+                if node not in added_genes:
+                    g.add_node(node,
+                               databaseSource=source_db,
+                               speciesType='gene'
+                               )
+                    added_genes.add(node)
+            _add_node(gene1)
+            _add_node(gene2)
 
-                g.add_edge(gene1, gene2, interactionType=inter,
-                           pubchem=pubchem, expSystem=exp_system,
-                           ptm=mod, score=score, sourceDB=source_db)
+            g.add_edge(gene1, gene2,
+                       interactionType=inter,
+                       pubchem=pubchem,
+                       expSystem=exp_system,
+                       ptm=inter,
+                       score=score,
+                       databaseSource=source_db)
 
         ge = set(g.nodes())
         g1 = set(table[:, 0])
@@ -146,17 +172,41 @@ class BioGridDownload(object):
             if i not in ge:
                 print(i)
 
-        print("BIOGRID network has {} nodes ".format(len(g.nodes())))
-        print("BIOGRID network has {} edges ".format(len(g.edges())))
+        print("BIOGRID network has {} nodes and {} edges "
+              "".format(len(g.nodes()), len(g.edges())))
+
+        nx.write_gpickle(g, os.path.join(network_data_dir, 'biogrid.p'))
         nx.write_gml(g, os.path.join(network_data_dir, 'biogrid.gml'))
+        return g
+
+
+def create_biogrid_network():
+    p_name = os.path.join(network_data_dir, 'biogrid.p')
+    if os.path.exists(p_name):
+        g = nx.read_gpickle(p_name)
+    else:
+
+        bgn = BioGridDownload()
+        g = bgn.parse_network()
+    return g
 
 
 if __name__ == '__main__':
     import time
 
+    bgn = BioGridDownload()
+    g = bgn.parse_network()
+    quit()
     st = time.time()
-    rfi = BioGridDownload()
-    rfi.parse_network()
+    create_biogrid_network()
+    end_time = time.time()
+    print(end_time - st)
+    st = time.time()
+    g = nx.read_gpickle(os.path.join(network_data_dir, 'biogrid.p'))
+    end_time = time.time()
+    print(end_time - st)
+    st = time.time()
+    g = nx.read_gml(os.path.join(network_data_dir, 'biogrid.gml'))
     end_time = time.time()
     print(end_time - st)
     # 33.48 seconds with set

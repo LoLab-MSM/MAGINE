@@ -29,7 +29,9 @@ class ChemicalMapper(object):
                      'chemspider_id', 'biocyc_id', 'synonyms', 'iupac_name',
                      'pubchem_compound_id', 'protein_associations',
                      'ontology', 'drugbank_id', 'chemical_formula',
-                     'smiles', 'metlin_id', 'average_molecular_weight']
+                     'smiles', 'metlin_id', 'average_molecular_weight',
+                     'secondary_accessions'
+                     ]
 
     def __init__(self):
 
@@ -37,8 +39,9 @@ class ChemicalMapper(object):
         self.hmdb_accession_to_chemical_name = {}
         self.chemical_name_to_hmdb_accession = {}
         self.hmdb_accession_to_kegg = {}
+        self.hmdb_accession_to_secondary_acc = {}
         self.kegg_to_hmdb_accession = {}
-        self.hmdb_accession_to_protein = {}
+        self.hmdb_acc_to_secondary_acc = {}
         self.synonyms_to_hmdb = {}
         self.drugbank_to_hmdb = {}
         _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv')
@@ -53,6 +56,7 @@ class ChemicalMapper(object):
                     "cellular_locations":   lambda x: x.split("|"),
                     "biofunction":          lambda x: x.split("|"),
                     "synonyms":             lambda x: x.split("|"),
+                    "secondary_accessions": lambda x: x.split("|"),
                 }
         )
 
@@ -75,11 +79,19 @@ class ChemicalMapper(object):
                                                              "accession")
         self.hmdb_accession_to_kegg = self._to_dict("accession", "kegg_id")
         self.drugbank_to_hmdb = self._to_dict("drugbank_id", "accession")
+        self.hmdb_acc_to_secondary_acc = self._to_dict('accession',
+                                                       'secondary_accessions')
         self.kegg_to_hmdb_accession = self._to_dict("kegg_id", "accession")
         self.hmdb_accession_to_protein = self.convert_to_dict_from_list(
                 "accession", "protein_associations")
         self.synonyms_to_hmdb = None
         self.save()
+
+    def merge_accesions(self, accesion):
+        secondary_acc = self.hmdb_acc_to_secondary_acc[accesion]
+        all_accesions = secondary_acc.append(secondary_acc)
+        all_accesions = set(all_accesions)
+        return '|'.join(i for i in all_accesions)
 
     def _to_dict(self, key, value):
         """ creates a dictionary with a list of values for each key
@@ -194,6 +206,7 @@ class ChemicalMapper(object):
             self.__dict__ = pickle.loads(data, encoding='utf-8')
         except:
             self.__dict__ = pickle.loads(data)
+
 
 if __name__ == "__main__":
     cm = ChemicalMapper()
