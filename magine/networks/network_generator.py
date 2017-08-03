@@ -87,7 +87,8 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
         print("{} not found in KEGG".format(to_remove))
 
     for each in pathway_list:
-        tmp = nx.read_gml(os.path.join(_kegg_raw_out_path, "{}.gml".format(each)))
+        tmp = nx.read_gpickle(
+            os.path.join(_kegg_raw_out_path, "{}.p".format(each)))
         for n in tmp.nodes():
             if isinstance(n, float):
                 print("Found the float... {}".format(each))
