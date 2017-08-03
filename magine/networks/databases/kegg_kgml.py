@@ -42,13 +42,14 @@ def download_all_of_kegg(species='hsa'):
     for i in list_of_kegg_pathways:
         pathway = i[5:]
         file_name = kegg.get(pathway, "kgml")
+        out = '{}.xml'.format(pathway)
         if file_name == 404:
             print("%s ended with 404 error" % pathway)
         else:
-            with open(os.path.join(_kegg_raw_out_path, '%s.xml' % pathway), 'w') as f:
+            with open(os.path.join(_kegg_raw_out_path, out), 'w') as f:
                 f.write(file_name)
 
-        graph, pathway_name = kgml_to_graph('%s.xml' % pathway,
+        graph, pathway_name = kgml_to_graph(out,
                                             _kegg_raw_out_path, species='hsa')
         pathway_dict[i] = graph.nodes()
         print('{} has {} nodes and {} edges'.format(pathway_name,
@@ -194,7 +195,7 @@ def create_all_of_kegg(species='hsa'):
     print('All of kegg has {} nodes and {} '
           'edges'.format(len(all_of_kegg.nodes()), len(all_of_kegg.edges())))
 
-    nx.write_gml(all_of_kegg, out_name)
+    # nx.write_gml(all_of_kegg, out_name)
     nx.write_gpickle(all_of_kegg, p_name)
     return all_of_kegg
 

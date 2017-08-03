@@ -132,7 +132,7 @@ def build_network(gene_list, num_overlap=1, save_name='tmp', species='hsa',
     delete_disconnected_network(end_network)
     print('Number of nodes {}'.format(len(end_network.nodes())))
     print('Number of edges {}'.format(len(end_network.edges())))
-    nx.write_gml(end_network, '{}.gml'.format(save_name))
+    # nx.write_gml(end_network, '{}.gml'.format(save_name))
     nx.write_gpickle(end_network, '{}.p'.format(save_name))
 
     return end_network
@@ -425,7 +425,7 @@ def create_hmdb_network():
 
     nx.write_gpickle(tmp_graph, out_name)
     out_name = os.path.join(network_data_dir, 'hmdb_graph.gml')
-    nx.write_gml(tmp_graph, out_name)
+    # nx.write_gml(tmp_graph, out_name)
     return tmp_graph
 
 

@@ -176,7 +176,7 @@ class BioGridDownload(object):
               "".format(len(g.nodes()), len(g.edges())))
 
         nx.write_gpickle(g, os.path.join(network_data_dir, 'biogrid.p'))
-        nx.write_gml(g, os.path.join(network_data_dir, 'biogrid.gml'))
+        # nx.write_gml(g, os.path.join(network_data_dir, 'biogrid.gml'))
         return g
 
 
