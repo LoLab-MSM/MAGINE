@@ -1,9 +1,10 @@
 import io
 import os
-import sys
 from magine.data.storage import network_data_dir
 import networkx as nx
 import pandas as pd
+import sys
+
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
@@ -18,13 +19,13 @@ def load_reactome_fi():
     -------
 
     """
-    path = os.path.join(network_data_dir, 'reactome_fi.gml')
+    p_name = os.path.join(network_data_dir, 'reactome_fi.p')
 
-    if not os.path.exists(path):
+    if not os.path.exists(p_name):
         print("Downloading Reactome Functional interaction network!")
-        download_reactome_functional_interaction(path)
-        assert os.path.exists(path), "Error downloading reactome FI. "
-    return nx.read_gml(path)
+        download_reactome_functional_interaction(p_name)
+        assert os.path.exists(p_name), "Error downloading reactome FI. "
+    return nx.read_gpickle(p_name)
 
 
 def download_reactome_functional_interaction(path):
@@ -39,32 +40,29 @@ def download_reactome_functional_interaction(path):
     url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2015/FIsInGene_031516_with_annotations.txt.zip'
 
     table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
-                        delimiter='\t', error_bad_lines=False)
+                        delimiter='\t', error_bad_lines=False,  encoding='utf-8'
+                        )
     table = table.as_matrix()
     g = nx.DiGraph()
     added_genes = set()
+
+    def _add_node(node):
+        if node not in added_genes:
+            g.add_node(node, databaseSource='ReactomeFI',
+                       speciesType='gene')
+            added_genes.add(node)
 
     for r in table:
         gene1, gene2, inter, prediction, mod, score = _check_rows2(r)
         if gene1 == gene2:
             continue
         else:
-            if gene1 not in added_genes:
-                g.add_node(gene1, databaseSource='ReactomeFI',
-                           speciesType='gene')
-                added_genes.add(gene1)
-            if gene2 not in added_genes:
-                g.add_node(gene2, databaseSource='ReactomeFI',
-                           speciesType='gene')
-                added_genes.add(gene2)
-            if prediction:
-                g.add_edge(gene1, gene2, interactionType=inter,
-                           ptm=mod, score=score, prediction='True',
-                           databaseSource='ReactomeFI')
-            else:
-                g.add_edge(gene1, gene2, interactionType=inter,
-                           ptm=mod, score=score,
-                           databaseSource='ReactomeFI')
+            _add_node(gene1)
+            _add_node(gene2)
+
+            g.add_edge(gene1, gene2, interactionType=inter,
+                       ptm=mod, score=score,
+                       databaseSource='ReactomeFI')
     ge = set(g.nodes())
     g1 = set(table[:, 0])
     g2 = set(table[:, 1])
@@ -76,9 +74,11 @@ def download_reactome_functional_interaction(path):
         if i not in ge:
             print(i)
 
-    print("Reactome network has {} nodes ".format(len(g.nodes())))
-    print("Reactome network has {} edges ".format(len(g.edges())))
-    nx.write_gml(g, path)
+    print("Reactome network has {} nodes "
+          "and {} edges".format(len(g.nodes()), len(g.edges())))
+
+    # nx.write_gml(g, path)
+    nx.write_gpickle(g, path)
 
 
 _reverse = {"<-", "?-"}
@@ -94,14 +94,14 @@ def _return_direction(text, gene1, gene2):
 
 def _check_rows2(row):
     # print(row)
-    prediction = False
+    prediction = ''
     interaction_type = None
     annotation = row[2]
     g1, g2 = _return_direction(row[3], row[0], row[1])
     score = row[4]
     modification = ''
     if 'predicted' in annotation:
-        prediction = True
+        prediction = 'True'
     if 'repress' in annotation:
         interaction_type = 'repression'
     elif 'express' in annotation:

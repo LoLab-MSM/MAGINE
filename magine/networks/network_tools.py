@@ -659,6 +659,103 @@ def add_pvalue_and_fold_change():
     return
 
 
+def compose(G, H, name=None):
+    """Return a new graph of G composed with H.
+
+    Composition is the simple union of the node sets and edge sets.
+    The node sets of G and H do not need to be disjoint.
+
+    Parameters
+    ----------
+    G,H : nx.DiGraph
+       A NetworkX graph
+
+    name : str
+       Specify name for new graph
+
+    Returns
+    -------
+    C: A new graph  with the same type as G
+
+    """
+
+    if name is None:
+        name = "compose( %s, %s )" % (G.name, H.name)
+    new_g = nx.DiGraph()
+    new_g.name = name
+    new_g.add_nodes_from(H.nodes())
+    new_g.add_nodes_from(G.nodes())
+    for i, j, data in G.edges_iter(data=True):
+        new_g.add_edge(i, j, **data)
+        # print(i, j, data)
+    edges = set(new_g.edges())
+    for i, j, data in H.edges_iter(data=True):
+        if (i, j) in edges:
+            existing_info = new_g.edge[i][j]
+            for n, d in data.items():
+                if n in existing_info:
+                    current = existing_info[n]
+                    new = '|'.join([str(current), str(d)])
+                    new_g[i][j][n] = new
+                else:
+                    new_g[i][j][n] = d
+        else:
+            new_g.add_edge(i, j, **data)
+    nodes = set(new_g.nodes())
+    for i, data in G.nodes_iter(data=True):
+        if i in nodes:
+            existing_info = new_g.node[i]
+            for n, d in data.items():
+                if n in existing_info:
+                    current = existing_info[n]
+                    new = '|'.join([str(current), str(d)])
+                    new_g.node[i][n] = new
+                else:
+                    new_g.node[i][n] = d
+        else:
+            new_g.add_node(i, **data)
+    nodes2 = set(new_g.nodes())
+    for i, data in H.nodes_iter(data=True):
+        if i in nodes2:
+            existing_info = new_g.node[i]
+            for n, d in data.items():
+                if n in existing_info:
+                    current = existing_info[n]
+                    new = '|'.join([str(current), str(d)])
+                    new_g.node[i][n] = new
+                else:
+                    new_g.node[i][n] = d
+        else:
+            new_g.add_node(i, **data)
+    return new_g
+
+
+def compose_all(graphs, name=None):
+    """Return the composition of all graphs.
+
+    Composition is the simple union of the node sets and edge sets.
+    The node sets of the supplied graphs need not be disjoint.
+
+    Parameters
+    ----------
+    graphs : list
+       List of NetworkX graphs
+
+    name : str
+       Specify name for new graph
+
+    Returns
+    -------
+    C : A graph with the same type as the first graph in list
+
+    """
+    graphs = iter(graphs)
+    C = next(graphs)
+    for H in graphs:
+        C = compose(C, H, name=name)
+    return C
+
+
 '''
 # deprecated
 def get_uniprot_info(name):
@@ -768,7 +865,7 @@ if __name__ == '__main__':
     g.add_edge('B', 'C')
     g.add_edge('B', 'E')
     g.add_edge('C', 'D')
-    new_g = remove_unmeasured_nodes(g, ['A', 'D','E'])
-    export_to_dot(new_g, 'merged_node')
+    test_g = remove_unmeasured_nodes(g, ['A', 'D','E'])
+    export_to_dot(test_g, 'merged_node')
     # new_g = remove_unmeasured_nodes(g, ['A', 'C', 'D'])
     # export_to_dot(new_g, 'merged_node2')

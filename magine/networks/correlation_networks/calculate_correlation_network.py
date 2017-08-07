@@ -1,24 +1,25 @@
 import time
 from itertools import combinations
-
-import bottleneck as bn
 import matplotlib.pyplot as plt
 from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
-import scipy.special as special
 
-from numba import float64, jit
-from scipy.stats.stats import distributions
 from statsmodels.sandbox.stats.multicomp import multipletests
+import scipy.special as special
+from scipy.stats.stats import distributions
 
+# from numba import float64, jit
+# import bottleneck as bn
+
+from scipy.stats.stats import spearmanr
 np.set_printoptions(linewidth=300)
 
 global_data = None
 samples = None
 
-
+"""
 @jit((float64, float64, float64), nopython=True, nogil=True)
 def calc_prob(n, dsq, df):
     denom = n * (n ** 2 - 1) / 6.
@@ -85,15 +86,15 @@ def calculate_spearmanr(a, b):
         return rs[1, 0], prob[1, 0]
     else:
         return rs, prob
-
+"""
 
 def calculate_spearman(pos):
     tmp = global_data[samples[pos, :], :]
     n_nans = np.isfinite(tmp[0, :] * tmp[1, :]).sum()
 
     if n_nans > 2:
-        cov_v, p_value = calculate_spearmanr(tmp[0, :], tmp[1, :])
-        # cov_v, p_value = spearmanr(tmp[0, :], tmp[1, :], nan_policy='omit')
+        # cov_v, p_value = calculate_spearmanr(tmp[0, :], tmp[1, :])
+        cov_v, p_value = spearmanr(tmp[0, :], tmp[1, :], nan_policy='omit')
         return cov_v, p_value
     else:
         return np.nan, np.nan

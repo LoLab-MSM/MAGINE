@@ -91,7 +91,7 @@ class Analyzer(object):
         if len(self.exp_data.list_metabolites) != 0:
             metabolites = self.exp_data.list_metabolites
         self.network = build_network(
-            proteins, num_overlap=1, save_name=save_name, species=self.species,
+            proteins, save_name=save_name, species=self.species,
             metabolite_list=metabolites,
             all_measured_list=self.exp_data.list_species,
             use_reactome=use_reactome, use_hmdb=use_hmdb)
