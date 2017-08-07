@@ -1,29 +1,15 @@
 # -*- coding: utf-8 -*-
+import itertools
 import os
-from sys import modules
+
+import networkx as nx
 
 try:
     import igraph as ig
-
     NO_IGRAPH = False
 except ImportError:
     NO_IGRAPH = True
-import networkx as nx
-from bioservices import KEGG, UniProt
-import itertools
 
-
-try:
-    kegg = modules['kegg']
-except KeyError:
-    kegg = KEGG()
-    kegg.TIMEOUT = 100
-
-try:
-    uniprot = modules['uniprot']
-except KeyError:
-    uniprot = UniProt()
-    uniprot.TIMEOUT = 100
 
 
 def delete_disconnected_network(full_graph, verbose=False):
