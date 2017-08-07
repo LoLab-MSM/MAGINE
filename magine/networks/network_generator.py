@@ -152,10 +152,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     """
     from magine.mappings.chemical_mapper import ChemicalMapper
 
-    try:
-        cm = modules['cm']
-    except ImportWarning:
-        cm = ChemicalMapper()
+    cm = ChemicalMapper()
     tmp_graph = graph.copy()
     start_nodes = set(tmp_graph.nodes())
     start_edges = tmp_graph.edges()
@@ -370,10 +367,7 @@ def create_hmdb_network():
         return nx.read_gpickle(out_name)
     from magine.mappings.chemical_mapper import ChemicalMapper
 
-    try:
-        cm = modules['cm']
-    except ImportWarning:
-        cm = ChemicalMapper()
+    cm = ChemicalMapper()
 
     tmp_graph = nx.DiGraph()
     nodes = set()
