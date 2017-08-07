@@ -13,7 +13,6 @@ from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
 
-
 try:
     import cPickle as pickle
 except:
@@ -51,7 +50,8 @@ def build_network(gene_list, save_name='tmp', species='hsa',
     end_network = nx.DiGraph()
     gm = GeneMapper()
     _kegg_raw_out_path = os.path.join(network_data_dir, 'KEGG')
-    _kegg_node_to_pathway = os.path.join(network_data_dir, 'kegg_node_to_pathway.p')
+    _kegg_node_to_pathway = os.path.join(network_data_dir,
+                                         'kegg_node_to_pathway.p')
 
     if not os.path.exists(_kegg_raw_out_path):
         download_all_of_kegg(species=species)
@@ -154,7 +154,7 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
 
     try:
         cm = modules['cm']
-    except:
+    except ImportWarning:
         cm = ChemicalMapper()
     tmp_graph = graph.copy()
     start_nodes = set(tmp_graph.nodes())
@@ -291,7 +291,7 @@ def expand_by_reactome(network, measured_list):
 
     """
     print("Checking for Reactome edges to add to network.")
-    combined_network = network.copy()
+    combined_network = nx.DiGraph()
     existing_nodes = set(network.nodes())
     existing_edges = set(network.edges())
     measured_set = set(measured_list)
@@ -303,46 +303,34 @@ def expand_by_reactome(network, measured_list):
     added_nodes = 0
     added_edges = 0
 
-    nodes_to_check = set()
-    for i in measured_set:
-        if i not in existing_nodes:
-            if i in reactome_nodes:
-                nodes_to_check.add(i)
-                added_nodes += 1
+    # new list in reactome_nodes
+    nodes_to_check = set(reactome_nodes).intersection(measured_set)
+    nodes_to_check.update(set(network.nodes()))
 
     def _add_node(node):
         combined_network.add_node(node,
                                   databaseSource='ReactomeFI',
                                   speciesType='gene')
+
     for i, j, k in reactome_edges:
-        if not isinstance(i, str):
-            print("Found nan in reactome")
-            continue
-        if not isinstance(j, str):
-            print("Found nan in reactome")
-            continue
 
         if (i, j) in existing_edges:
             continue
-        if i in measured_set and j in measured_set:
-            combined_network.add_edge(i, j, k)
-            added_edges += 1
-        elif i in nodes_to_check and j in measured_list:
+        if i in nodes_to_check and j in measured_list:
             _add_node(i)
             combined_network.add_edge(i, j, **k)
             added_edges += 1
-        elif j in nodes_to_check and i in measured_list:
-            _add_node(i)
-            combined_network.add_edge(i, j, **k)
-            added_edges += 1
-    print("Found {} nodes in REACTOME not in KEGG".format(added_nodes))
-    print("Added {} edges from REACTOME".format(added_edges))
+
+    new_graph = nt.compose(combined_network, network, "ReactomeExpansion")
 
     print("Nodes before Reactome expansion "
           "= {}, after = {}".format(len(existing_nodes),
-                                    len(combined_network.nodes())))
+                                    len(new_graph.nodes())))
 
-    return combined_network
+    print("Found {} nodes  and {} edges in REACTOME "
+          "not in KEGG".format(added_nodes, added_edges))
+
+    return new_graph
 
 
 def create_background_network(save_name='background_network'):
@@ -365,13 +353,11 @@ def create_background_network(save_name='background_network'):
     kegg_network = create_all_of_kegg()
     bgn = create_biogrid_network()
     full_network = nt.compose_all(
-            [reactome_network, hmdb_network, kegg_network, bgn],
-            'background')
+        [reactome_network, hmdb_network, kegg_network, bgn],
+        'background')
 
-    print("Background network "
-          "{} nodes and {} edges".format(
-            len(full_network.nodes()),
-            len(full_network.edges()))
+    print("Background network {} nodes and {} edges"
+          "".format(len(full_network.nodes()), len(full_network.edges()))
           )
 
     nx.write_gpickle(full_network, '{}.p'.format(save_name))
@@ -379,7 +365,6 @@ def create_background_network(save_name='background_network'):
 
 
 def create_hmdb_network():
-
     out_name = os.path.join(network_data_dir, 'hmdb_graph.p')
     if os.path.exists(out_name):
         return nx.read_gpickle(out_name)
@@ -387,7 +372,7 @@ def create_hmdb_network():
 
     try:
         cm = modules['cm']
-    except:
+    except ImportWarning:
         cm = ChemicalMapper()
 
     tmp_graph = nx.DiGraph()
@@ -428,4 +413,3 @@ if __name__ == '__main__':
     # g = nx.read_gml('background_network.gml')
     # et = time.time()
     # print(et - st)
-
