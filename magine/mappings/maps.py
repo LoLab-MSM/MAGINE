@@ -44,6 +44,7 @@ manual_dict = {'hsa:857'      : 'CAV1',
                'hsa:182': 'JAG1',
                'hsa:3708': 'ITPR1',
                'hsa:1293': 'COL6A3',
+               'hsa:93034': 'NT5C1B',
                }
 
 compound_manual = {'cpd:C07909': 'HMDB15015',
