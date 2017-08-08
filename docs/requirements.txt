@@ -1,0 +1,17 @@
+pygraphviz
+networkx
+py2cytoscape
+jinja2
+scipy
+numpy
+pandas
+xlrd
+matplotlib
+matplotlib-venn
+bioservices
+pathos
+goatools==0.6.10
+plotly
+python-igraph
+appdirs
+numpydoc
