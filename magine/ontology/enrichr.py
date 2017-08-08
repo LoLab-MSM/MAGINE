@@ -166,9 +166,8 @@ class Enrichr(object):
             df['sample_id'] = j
             df_all.append(df)
         df_all = pd.concat(df_all)
-        group = df_all.groupby('term_name')
         non_sig = []
-        for i, g in group:
+        for i, g in df_all.groupby('term_name'):
             if len(g[g['adj_p_value'] < 0.05]) == 0:
                 non_sig.append(i)
         df_all = df_all[~df_all['term_name'].isin(non_sig)]
@@ -273,8 +272,8 @@ class Enrichr(object):
 
         def _run(list_dbs, db_name):
             # Create a Pandas Excel writer using XlsxWriter as the engine.
-            # writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
-            #                         engine='xlsxwriter')
+            writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
+                                    engine='xlsxwriter')
             html_list = []
             for i in list_dbs:
                 print("Running {}".format(i))
@@ -284,7 +283,7 @@ class Enrichr(object):
                         os.mkdir(outdir)
                 else:
                     outdir = None
-                """
+
                 df = self.run_samples(sample_lists=list_g, sample_ids=labels,
                                       gene_set_lib=i, create_html=create_html,
                                       save_name=outdir, out_dir=outdir,
@@ -292,14 +291,13 @@ class Enrichr(object):
                                       )
                 if df is None:
                     continue
-                """
 
                 html_list.append(dict(database=i,
                                       filename='{}_filter.html'.format(
                                           outdir)))
-                # if len(i) > 30:
-                #     i = i[:30]
-                # df.to_excel(writer, sheet_name=i, freeze_panes=(2, 2))
+                if len(i) > 30:
+                    i = i[:30]
+                df.to_excel(writer, sheet_name=i, freeze_panes=(2, 2))
 
             # Close the Pandas Excel writer and output the Excel file.
             # writer.save()
