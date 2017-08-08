@@ -106,6 +106,9 @@ class Enrichr(object):
 
         df = pd.DataFrame(list_of_dict, columns=cols)
 
+        if df.shape[0] == 0:
+            return df[cols]
+
         if gene_set_lib.startswith('GO'):
             def get_go_id(row):
                 s = row['term_name']
@@ -171,7 +174,8 @@ class Enrichr(object):
             if len(g[g['adj_p_value'] < 0.05]) == 0:
                 non_sig.append(i)
         df_all = df_all[~df_all['term_name'].isin(non_sig)]
-        if df_all.shape[1] == 0:
+
+        if df_all.shape[0] == 0:
             print("No significant terms for {}".format(gene_set_lib))
             return None
         index = ['term_name']
@@ -237,30 +241,31 @@ class Enrichr(object):
 
         ontologies = [
 
-            'HMDB_Metabolites',
-            'Tissue_Protein_Expression_from_ProteomicsDB',
             'GO_Biological_Process_2017',
             'GO_Molecular_Function_2017',
             'GO_Cellular_Component_2017',
             'Human_Phenotype_Ontology',
             'MGI_Mammalian_Phenotype_2017',
+            'HMDB_Metabolites',
+            'Tissue_Protein_Expression_from_ProteomicsDB',
         ]
 
         pathways = [
-            'BioCarta_2016',
-            'Humancyc_2016',
             'KEGG_2016',
             'NCI-Nature_2016',
             'Panther_2016',
             'WikiPathways_2016',
+            'BioCarta_2016',
+            'Humancyc_2016',
         ]
 
         kinase = [
+            'KEA_2015',
             'LINCS_L1000_Kinase_Perturbations_down',
             'LINCS_L1000_Kinase_Perturbations_up',
             'Kinase_Perturbations_from_GEO_down',
             'Kinase_Perturbations_from_GEO_up',
-            'KEA_2015',
+
         ]
         transcription_factors = [
             'ChEA_2016',  # should use RNAseq

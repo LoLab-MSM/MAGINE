@@ -2,6 +2,10 @@
 omit =
     # omit anything in a .local directory anywhere
     *.html
+    build/lib/magine/magine_analysis.py
+    build/lib/magine/networks/go_network_generator.py
+    build/lib/magine/ontology/ontology_analysis.py
+    build/lib/magine/ontology/ontology_tools.py
 
 [report]
 ignore_errors = True
