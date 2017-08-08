@@ -10,6 +10,8 @@ MAGINE
 .. image:: https://landscape.io/github/LoLab-VU/Magine/master/landscape.svg?style=flat
    :target: https://landscape.io/github/LoLab-VU/Magine/master
 
+.. image:: https://readthedocs.org/projects/magine/badge/?version=latest
+    :target: http://magine.readthedocs.io/en/latest/?badge=latest
 
 
 Mechanism of Action Generator involving Network Expansion
