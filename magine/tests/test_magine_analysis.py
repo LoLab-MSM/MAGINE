@@ -1,3 +1,4 @@
+"""
 import os
 
 from magine.data.datatypes import ExperimentalData
@@ -17,3 +18,4 @@ def test_html_array():
 
 if __name__ == '__main__':
     test_html_array()
+"""

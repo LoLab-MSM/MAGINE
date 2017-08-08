@@ -1,3 +1,4 @@
+"""
 import textwrap
 
 import networkx as nx
@@ -144,3 +145,4 @@ if __name__ == "__main__":
     # test_create_graph_from_list()
     # test_find_common_ancestor_3_terms()
     # cisplatin_example()
+"""

@@ -1,3 +1,4 @@
+"""
 import os
 
 import networkx as nx
@@ -31,3 +32,4 @@ def test_network_required():
 if __name__ == '__main__':
     test_go_network_gen()
     test_network_required()
+"""

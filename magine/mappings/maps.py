@@ -55,8 +55,8 @@ compound_manual = {'cpd:C07909': 'HMDB15015',
                    'cpd:C04043': 'HMDB03791',
                    'cpd:C01165': 'HMDB02104',
                    'cpd:C00025' : 'HMDB00148',
-                   
-                   }
+
+}
 
 
 def create_gene_dictionaries(network, species='hsa'):

@@ -3,6 +3,7 @@ import itertools
 import os
 
 import networkx as nx
+import pathos.multiprocessing as mp
 
 try:
     import igraph as ig
@@ -553,8 +554,6 @@ def remove_unmeasured_nodes(graph, measured):
     include = set(measured)
     include.intersection_update(nodes)
 
-    import pathos.multiprocessing as mp
-    import networkx as nx
     # for i, j in :
     def find(d):
         i, j = d

@@ -1,3 +1,4 @@
+"""
 import tempfile
 
 from magine.ontology.ontology_analysis import GoAnalysis
@@ -21,3 +22,4 @@ def test_html():
 
 if __name__ == '__main__':
     test_html()
+"""
