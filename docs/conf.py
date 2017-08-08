@@ -29,6 +29,7 @@
 
 import os
 import sys
+
 import mock
 
 sys.path.append(os.path.abspath('..'))
@@ -77,13 +78,7 @@ author = u'James C. Pino'
 # Note that for sub-modules, all parent modules must be listed explicitly.
 MOCK_MODULES = ['pandas', 'pandas.plotting',
 
-                'pygraphviz', 'numba',
-
-                # 'orangecontrib.bio.utils',
-
-                # 'orangecontrib.bio.utils.serverfiles',
-                # 'orangecontrib.bio.utils.stats',
-                # '.stats',
+                'pygraphviz',
 
                 'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
                 'scipy.special', 'scipy.optimize', 'scipy.stats',
@@ -106,7 +101,7 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'statsmodels.sandbox.stats.multicomp.fdrcorrection0',
                 'statsmodels.stats', 'statsmodels.stats.proportion',
                 'statsmodels.stats.proportion.binom_test',
-                # 'Orange',
+                'pygraphviz',
                 # 'magine.ontology.ontology_tools',
                 # 'magine.ontology.go_from_goatools'
                 ]
