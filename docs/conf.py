@@ -85,8 +85,8 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'scipy.stats.stats', 'scipy.stats.stats.distributions',
                 'scipy.sparse', 'scipy.linalg',
 
-                'mpl_toolkits', 'mpl_toolkits.axes_grid1',
-                'mpl_toolkits.axes_grid1.make_axes_locatable',
+                # 'mpl_toolkits', 'mpl_toolkits.axes_grid1',
+                # 'mpl_toolkits.axes_grid1.make_axes_locatable',
 
                 'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
                 'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
