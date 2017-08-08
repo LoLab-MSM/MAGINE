@@ -234,7 +234,7 @@ def process_raptr_folder(directory):
             df = load_csv(directory, i)
             df = _process_metabolites(df)
             all_data.append(df)
-        elif 'cuttdiff' in i:
+        elif 'cuffdiff' in i:
             df = load_csv(directory, i)
             df = _process_rna_seq(df)
             all_data.append(df)
@@ -292,9 +292,7 @@ def _process_rna_seq(data):
     pandas.Dataframe
     """
     data = data[data['status'] == 'OK']
-    data = data[~data.gene.str.contains(',')]
-    print("Check above line to see if it is doing the opposite of include")
-    quit()
+    # data = data[~data.gene.str.contains(',')]
     data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
     data['treated_control_fold_change'] = np.exp2(
         data['log2_fold_change'].astype(float))
