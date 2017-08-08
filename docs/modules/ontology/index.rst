@@ -5,14 +5,6 @@ magine\.ontology package
    :maxdepth: 2
 
 
-magine\.ontology\.enrichment\_calculation module
-------------------------------------------------
-
-.. automodule:: magine.ontology.enrichment_calculation
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 magine\.ontology\.enrichr module
 --------------------------------
 
@@ -21,13 +13,6 @@ magine\.ontology\.enrichr module
    :undoc-members:
    :show-inheritance:
 
-magine\.ontology\.go\_from\_goatools module
--------------------------------------------
-
-.. automodule:: magine.ontology.go_from_goatools
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 magine\.ontology\.ontology\_analysis module
 -------------------------------------------

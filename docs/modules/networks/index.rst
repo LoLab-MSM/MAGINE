@@ -38,4 +38,4 @@ The following subpackages to download and parse data
    :maxdepth: 2
 
    databases.rst
-          visualization.rst
+   visualization.rst
