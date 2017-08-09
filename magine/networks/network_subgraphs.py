@@ -85,7 +85,7 @@ class NetworkSubgraphs(object):
         if not direction_1 and not direction_2:
             return None
 
-        if draw is not None:
+        if draw:
             save_name = "%s_and_%s" % (node_1, node_2)
             self._save_or_draw(graph, save_name, draw, image_format)
 
