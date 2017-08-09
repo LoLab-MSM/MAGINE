@@ -6,7 +6,11 @@ omit =
     build/lib/magine/networks/go_network_generator.py
     build/lib/magine/ontology/ontology_analysis.py
     build/lib/magine/ontology/ontology_tools.py
-
+    build/lib/magine/ontology/databases/gene_ontology.py
+    build/lib/magine/networks/visualization/cytoscape_view.py
+    build/lib/magine/data/formatter.py
+    build/lib/magine/mappings/databases/pubchem.py
+    build/lib/magine/networks/databases/pathwaycommons/convert_from_biopax.py
 [report]
 ignore_errors = True
 exclude_lines =
