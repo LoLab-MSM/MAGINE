@@ -1,11 +1,21 @@
 """
 GO analysis function using orange bioinformatics
 """
+
 import os
 import numpy as np
 import pandas as pd
+from magine.data.storage import network_data_dir
+from magine.ontology.databases.gene_ontology import download_and_process_go
 from magine.plotting.species_plotting import write_table_to_html_with_figures
-from magine.ontology.databases.gene_ontology import MagineGO
+
+from statsmodels.stats.proportion import binom_test
+from statsmodels.stats.multitest import fdrcorrection
+
+try:
+    import cPickle as pickle
+except:  # python3 doesnt have cPickle
+    import pickle
 
 pd.set_option('display.max_colwidth', -1)
 
@@ -197,6 +207,126 @@ class GoAnalysis(object):
                 run_parallel=run_parallel
         )
 
+
+class MagineGO(object):
+    def __init__(self, species='hsa'):
+        dirname = network_data_dir
+        gene_to_go_name = os.path.join(dirname,
+                                       '{}_gene_to_go.p'.format(species))
+        go_to_gene_name = os.path.join(dirname,
+                                       '{}_goids_to_genes.p'.format(
+                                           species))
+        go_to_go_name = os.path.join(dirname,
+                                     '{}_goids_to_goname.p'.format(
+                                         species))
+        go_depth = os.path.join(dirname, '{}_godepth.p'.format(species))
+        go_aspect = os.path.join(dirname, '{}_go_aspect.p'.format(species))
+        for i in [gene_to_go_name, go_to_gene_name, go_to_go_name,
+                  go_depth,
+                  go_aspect]:
+            if not os.path.exists(i):
+                download_and_process_go(species=species)
+
+        self.gene_to_go = pickle.load(open(gene_to_go_name, 'rb'))
+        self.go_to_gene = pickle.load(open(go_to_gene_name, 'rb'))
+        self.go_to_name = pickle.load(open(go_to_go_name, 'rb'))
+        self.go_depth = pickle.load(open(go_depth, 'rb'))
+        self.go_aspect = pickle.load(open(go_aspect, 'rb'))
+
+    def calculate_enrichment(self, genes, reference=None,
+                             evidence_codes=None,
+                             aspect=None, use_fdr=True):
+        """
+
+        Parameters
+        ----------
+        genes : list
+            list of genes
+        reference : list
+            reference list of species to calculate enrichment
+        evidence_codes : list
+            GO evidence codes
+        use_fdr : bool
+            Correct for multiple hypothesis testing
+
+        Returns
+        -------
+
+        """
+
+        # TODO check for alias for genes
+        genes = set(genes)
+        # TODO add aspects
+        term_reference = self.go_to_gene.keys()
+        aspect_dict = {
+            'P': 'biological_process',
+            'C': 'cellular_component',
+            'F': 'molecular_function'
+        }
+        if aspect is None:
+            term_reference = self.go_to_gene
+            gene_reference = self.gene_to_go
+        else:
+            term_reference = dict()
+            gene_reference = dict()
+
+        if aspect is not None:
+            for i in aspect:
+                if i not in ['P', 'C', 'F']:
+                    print("Error: Aspects are only 'P', 'C', and 'F' \n")
+                    quit()
+            for i in ['P', 'C', 'F']:
+                if i in aspect:
+                    term_reference = None
+
+        # TODO add reference
+        if reference:
+            # TODO check for reference alias
+            reference = set(reference)
+            reference.intersection_update(set(self.gene_to_go.keys()))
+        else:
+            reference = set(self.gene_to_go.keys())
+
+        # TODO add evidence_codes
+
+        terms = set()
+        for i in genes:
+            if i in self.gene_to_go:
+                for t in self.gene_to_go[i]:
+                    terms.add(t)
+
+        n_genes = len(genes)
+        n_ref = float(len(reference))
+        res = {}
+        for term in terms:
+
+            all_annotated_genes = set(self.go_to_gene[term])
+            mapped_genes = genes.intersection(all_annotated_genes)
+            n_mapped_genes = len(mapped_genes)
+
+            if n_ref > len(all_annotated_genes):
+                mapped_reference_genes = \
+                    reference.intersection(all_annotated_genes)
+            else:
+                mapped_reference_genes = \
+                    all_annotated_genes.intersection(reference)
+
+            n_mapped_ref = len(mapped_reference_genes)
+
+            prob = float(n_mapped_ref) / n_ref
+
+            p_value = binom_test(n_mapped_genes, n_genes, prob, 'larger')
+
+            res[term] = ([i for i in mapped_genes], p_value, n_mapped_ref)
+        if use_fdr:
+            res = sorted(res.items(), key=lambda x: x[1][1])
+            fdr = fdrcorrection([p for _, (_, p, _) in res],
+                                is_sorted=True)
+            values = fdr[1]
+            res = dict([(index, (genes, p, ref))
+                        for (index, (genes, _, ref)), p in
+                        zip(res, values)])
+        return res
 
 # All code below is old and will be removed. Keeping for just a bit longer.
 '''  

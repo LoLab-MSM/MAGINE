@@ -4,7 +4,7 @@ import os
 import networkx as nx
 
 from magine.networks.network_tools import export_to_dot
-from magine.ontology.databases.gene_ontology import MagineGO
+from magine.ontology.ontology_analysis import MagineGO
 
 
 class GoNetworkGenerator(object):
