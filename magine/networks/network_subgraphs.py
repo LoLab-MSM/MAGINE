@@ -25,8 +25,9 @@ class NetworkSubgraphs(object):
         # for i in self.nodes:
         #     self._ig_node_dict[i] = self.ig_graph.vs.find(name=i).index
 
-    def shortest_paths_between_two_proteins(self, node_1, node_2, draw=False,
-                                            image_format='png'):
+    def shortest_paths_between_two_proteins(self, node_1, node_2,
+                                            bidirectional=False,
+                                            draw=False, image_format='png'):
         """
         Generates a graph based on all shortest paths between two species
 
@@ -74,12 +75,12 @@ class NetworkSubgraphs(object):
         else:
             for path in nx.all_shortest_paths(self.network, node_1, node_2):
                 self._add_edges_from_path(graph, path)
-
-        if not nx.has_path(self.network, node_2, node_1):
-            direction_2 = False
-        else:
-            for path in nx.all_shortest_paths(self.network, node_2, node_1):
-                self._add_edges_from_path(graph, path)
+        if bidirectional:
+            if not nx.has_path(self.network, node_2, node_1):
+                direction_2 = False
+            else:
+                for path in nx.all_shortest_paths(self.network, node_2, node_1):
+                    self._add_edges_from_path(graph, path)
 
         if not direction_1 and not direction_2:
             return None
