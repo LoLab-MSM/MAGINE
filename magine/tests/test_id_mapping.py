@@ -1,9 +1,9 @@
-from magine.mappings.gene_mapper import GeneMapper
-from magine.mappings.chemical_mapper import ChemicalMapper
 import networkx as nx
 
-from magine.mappings.maps import create_gene_dictionaries
+from magine.mappings.chemical_mapper import ChemicalMapper
+from magine.mappings.gene_mapper import GeneMapper
 from magine.mappings.maps import create_compound_dictionary
+from magine.mappings.maps import create_gene_dictionaries
 
 
 class TestChemicalMapper(object):
@@ -60,8 +60,10 @@ def test_kegg_to_hmdb():
     g.add_edge('cpd:C15972', 'cpd:C00469')
     dic = create_compound_dictionary(g)
     g = nx.relabel_nodes(g, dic)
-    assert (g.node['HMDB60180'][
-                'chemName'] == '(2R)-2-Hydroxy-3-(phosphonatooxy)propanoate')
+
+    answer = b'(2R)-2-Hydroxy-3-(phosphonatooxy)propanoate'
+    assert (g.node['HMDB60180']['chemName'] == answer)
+
     assert (g.node['HMDB60180']['keggName'] == 'cpd:C00197')
 
 
