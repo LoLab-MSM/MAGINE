@@ -316,6 +316,47 @@ def expand_by_reactome(network, measured_list):
     return new_graph
 
 
+def create_hmdb_network():
+    out_name = os.path.join(network_data_dir, 'hmdb_graph.p')
+    if os.path.exists(out_name):
+        tmp_graph = nx.read_gpickle(out_name)
+        print("HMDB network {} nodes and {} edges"
+              "".format(len(tmp_graph.nodes()), len(tmp_graph.edges()))
+              )
+        return tmp_graph
+    from magine.mappings.chemical_mapper import ChemicalMapper
+
+    cm = ChemicalMapper()
+
+    tmp_graph = nx.DiGraph()
+    nodes = set()
+
+    def _add_node(node, node_type):
+        if node != u'':
+            if node not in nodes:
+                tmp_graph.add_node(node, speciesType=node_type,
+                                   databaseSource='HMDB')
+                nodes.add(node)
+
+    def _add_edge(source, target):
+        if source != u'' and target != u'':
+            tmp_graph.add_edge(source, target,
+                               interactionType='chemical',
+                               databaseSource='HMDB'
+                               )
+
+    for compound, genes in cm.hmdb_accession_to_protein.items():
+        _add_node(compound, 'compound')
+        for ge in genes:
+            _add_node(ge, 'gene')
+            _add_edge(compound, ge)
+    print("HMDB network {} nodes and {} edges"
+          "".format(len(tmp_graph.nodes()), len(tmp_graph.edges()))
+          )
+    nx.write_gpickle(tmp_graph, out_name)
+    return tmp_graph
+
+
 def create_background_network(save_name='background_network'):
     """
 
@@ -344,42 +385,6 @@ def create_background_network(save_name='background_network'):
           )
 
     nx.write_gpickle(full_network, '{}.p'.format(save_name))
-
-
-def create_hmdb_network():
-    out_name = os.path.join(network_data_dir, 'hmdb_graph.p')
-    if os.path.exists(out_name):
-        return nx.read_gpickle(out_name)
-    from magine.mappings.chemical_mapper import ChemicalMapper
-
-    cm = ChemicalMapper()
-
-    tmp_graph = nx.DiGraph()
-    nodes = set()
-
-    def _add_node(node, node_type):
-        if node != u'':
-            if node not in nodes:
-                tmp_graph.add_node(node, speciesType=node_type,
-                                   databaseSource='HMDB')
-                nodes.add(node)
-
-    def _add_edge(source, target):
-        if source != u'' and target != u'':
-            tmp_graph.add_edge(source, target,
-                               interactionType='chemical',
-                               databaseSource='HMDB'
-                               )
-
-    for compound, genes in cm.hmdb_accession_to_protein.items():
-        _add_node(compound, 'compound')
-        for ge in genes:
-            _add_node(ge, 'gene')
-            _add_edge(compound, ge)
-
-    nx.write_gpickle(tmp_graph, out_name)
-    return tmp_graph
-
 
 if __name__ == '__main__':
     create_background_network()

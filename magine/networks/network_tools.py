@@ -696,6 +696,8 @@ def compose(G, H, name=None):
             existing_info = new_g.edge[i][j]
             for n, d in data.items():
                 if n in existing_info:
+                    if isinstance(existing_info[n], float):
+                        print(n, d, i, j)
                     current = set(existing_info[n].split('|'))
                     additions = set(d.split('|'))
                     additions.update(current)

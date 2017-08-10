@@ -5,13 +5,13 @@ import networkx as nx
 import pandas as pd
 import sys
 
-
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
 else:
     from urllib import urlopen
 
 _p_name = os.path.join(network_data_dir, 'reactome_fi.p')
+
 
 def load_reactome_fi():
     """
@@ -25,7 +25,11 @@ def load_reactome_fi():
         print("Downloading Reactome Functional interaction network!")
         download_reactome_functional_interaction()
         assert os.path.exists(_p_name), "Error downloading reactome FI. "
-    return nx.read_gpickle(_p_name)
+    tmp_graph = nx.read_gpickle(_p_name)
+    print("Reactome network has {} nodes and {} edges".format(
+        len(tmp_graph.nodes()), len(tmp_graph.edges()))
+    )
+    return tmp_graph
 
 
 def download_reactome_functional_interaction():
@@ -40,7 +44,7 @@ def download_reactome_functional_interaction():
     url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2015/FIsInGene_031516_with_annotations.txt.zip'
 
     table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
-                        delimiter='\t', error_bad_lines=False,  encoding='utf-8'
+                        delimiter='\t', error_bad_lines=False, encoding='utf-8'
                         )
     table = table.as_matrix()
     g = nx.DiGraph()
@@ -57,12 +61,15 @@ def download_reactome_functional_interaction():
         if gene1 == gene2:
             continue
         else:
-            _add_node(gene1)
-            _add_node(gene2)
+            if inter != '?' and prediction != 'True':
+                _add_node(gene1)
+                _add_node(gene2)
+                if mod != '':
+                    inter = inter + '|' + mod
 
-            g.add_edge(gene1, gene2, interactionType=inter,
-                       ptm=mod, score=score,
-                       databaseSource='ReactomeFI')
+                g.add_edge(gene1, gene2, interactionType=inter, score=score,
+                           databaseSource='ReactomeFI')
+
     ge = set(g.nodes())
     g1 = set(table[:, 0])
     g2 = set(table[:, 1])
@@ -98,7 +105,7 @@ def _check_rows2(row):
     interaction_type = None
     annotation = row[2]
     g1, g2 = _return_direction(row[3], row[0], row[1])
-    score = row[4]
+    score = str(row[4])
     modification = ''
     if 'predicted' in annotation:
         prediction = 'True'
