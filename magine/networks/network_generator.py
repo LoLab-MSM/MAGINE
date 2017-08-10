@@ -3,14 +3,13 @@
 File that generates networks
 """
 import os
-from sys import modules
 import networkx as nx
 import numpy as np
 
 import magine.networks.network_tools as nt
-import magine.mappings.maps as mapper
 from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
+import magine.mappings.maps as mapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
 
 try:
@@ -53,7 +52,8 @@ def build_network(gene_list, save_name='tmp', species='hsa',
     _kegg_node_to_pathway = os.path.join(network_data_dir,
                                          'kegg_node_to_pathway.p')
 
-    if not os.path.exists(_kegg_raw_out_path):
+    if not os.path.exists(_kegg_raw_out_path) \
+            or not os.path.exists(_kegg_node_to_pathway):
         download_all_of_kegg(species=species)
 
     node_to_path = pickle.load(open(_kegg_node_to_pathway, 'rb'))
@@ -86,7 +86,7 @@ def build_network(gene_list, save_name='tmp', species='hsa',
                 tmp.remove_node(np.nan)
         if len(tmp.edges()) == 0:
             continue
-        end_network = nx.compose(end_network, tmp)
+        end_network = nt.compose(end_network, tmp)
 
     drug_dict = {}
     for i in end_network.nodes():
@@ -117,8 +117,7 @@ def build_network(gene_list, save_name='tmp', species='hsa',
         if metabolite_list is None:
             print("Please provide a list of metabolites")
         else:
-            end_network = expand_by_hmdb(end_network, metabolite_list,
-                                         all_measured_list)
+            end_network = expand_by_hmdb(end_network, metabolite_list)
     print("Trimming network")
     # removes everything not connected to the largest graph
     nt.delete_disconnected_network(end_network)
@@ -134,7 +133,7 @@ def build_network(gene_list, save_name='tmp', species='hsa',
     return end_network
 
 
-def expand_by_hmdb(graph, metabolite_list, all_measured):
+def expand_by_hmdb(graph, metabolite_list):
     """
     Expands a network using HMDB metabolites-protein information
 
@@ -143,24 +142,45 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     graph : nx.DiGraph
     metabolite_list : list
         List of HMDB ids
-    all_measured : list
-        list of all species measured, including proteins
+
     Returns
     -------
     nx.DiGraph
 
+    Examples
+    --------
+    >>> g = nx.DiGraph()
+    >>> g.add_edge('PNLIP', 'LIPC')
+    >>> new_g = expand_by_hmdb(graph=g, \
+                           metabolite_list=['HMDB42489', 'HMDB59874'], \
+                           )
+    Loading class data
+    Metabolites not in starting network = 2
+    Metabolites added to network = 1
+    Metabolites not able to add = 1
+    Before # of nodes = 2, edge = 1
+    After # of nodes = 3, edge = 3
+    Added 2 nodes and 1 edges
+    Number of proteins not in network = 33
+    Number of add proteins = 0
+    <BLANKLINE>
+    missing metabolites-protein info = 0
+    >>> len(new_g.nodes())
+    3
+    >>> len(new_g.edges())
+    2
     """
     from magine.mappings.chemical_mapper import ChemicalMapper
 
     cm = ChemicalMapper()
-    tmp_graph = graph.copy()
-    start_nodes = set(tmp_graph.nodes())
-    start_edges = tmp_graph.edges()
-    missing_metabolites = []
-    for i in metabolite_list:
-        if i not in start_nodes:
-            if i.startswith('HMDB'):
-                missing_metabolites.append(i)
+
+    tmp_graph = nx.DiGraph()
+    start_nodes = set(graph.nodes())
+    start_edges = set(graph.edges())
+
+    metabolite_set = set(i for i in metabolite_list if i.startswith('HMDB'))
+    metabolite_set = metabolite_set.intersection(cm.hmdb_accession_to_protein)
+    missing_metabolites = metabolite_set.difference(start_nodes)
 
     count_in_network, count_not_in_network = 0, 0
     missing_edge = 0
@@ -168,8 +188,6 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
     added_proteins = set()
     missing_protein_info = 0
     missing_proteins = set()
-    existing_nodes = set(tmp_graph.nodes())
-    metabolite_set = set(metabolite_list)
 
     def _add_node(node, node_type):
         if node != u'':
@@ -184,27 +202,19 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                                )
 
     for i in metabolite_set:
-        if not isinstance(i, str):
-            # metabolite is not a str, can't do anything with it
-            continue
-        if i not in cm.hmdb_accession_to_protein:
+        tmp_list = cm.hmdb_accession_to_protein[i]
+        if tmp_list is None or len(tmp_list) == 0:
             # No information to add so skip
             continue
-        else:
-            tmp_list = cm.hmdb_accession_to_protein[i]
-            if tmp_list is None or len(tmp_list) == 0:
-                # No information to add so skip
-                continue
 
         # checks if metabolite is in the network
         # if it is, it can add an associated gene
-        if i in existing_nodes:
+        if i in start_nodes:
             count_in_network += 1
-
             for each in tmp_list:
                 if each is None:
                     continue
-                elif each not in existing_nodes:
+                elif each not in start_nodes:
                     _add_node(each, 'gene')
                     added_proteins.add(each)
                 missing_edge += 1
@@ -225,51 +235,36 @@ def expand_by_hmdb(graph, metabolite_list, all_measured):
                 else:
                     missing_proteins.add(each)
 
-    end_nodes = set(tmp_graph.nodes())
-    end_edges = tmp_graph.edges()
-    metabolites_added = set()
-    still_missing = set()
-    for i in missing_metabolites:
-        if i in end_nodes:
-            metabolites_added.add(i)
-        else:
-            still_missing.add(i)
-
-    count = 0
-    all_measured = set(all_measured)
-    for each in added_proteins:
-        if each in all_measured:
-            count += 1
-
-    n_missing = len(missing_metabolites)
-    n_added = len(metabolites_added)
-    n_p_missing = len(missing_proteins)
-    n_still_missing = len(still_missing)
+    final_graph = nt.compose(graph, tmp_graph)
+    end_nodes = set(final_graph.nodes())
+    end_edges = set(final_graph.edges())
+    new_nodes = end_nodes.intersection(start_nodes)
+    new_edges = end_edges.intersection(start_edges)
+    metabolites_added = missing_metabolites.intersection(end_nodes)
+    still_missing = missing_metabolites.difference(end_nodes)
     out = list()
-    out.append('Metabolites not in starting network = {0}'.format(n_missing))
-    out.append('Metabolites added to network = {0}'.format(n_added))
-    out.append('Metabolites not able to add = {0}'.format(n_still_missing))
+    out.append('Metabolites not in starting network = {}'
+               ''.format(len(missing_metabolites)))
+    out.append('Metabolites added to network = {}'
+               ''.format(len(metabolites_added)))
+    out.append('Metabolites not able to add = {0}'.format(len(still_missing)))
 
-    out.append('Before number of nodes = {},'
-               ' edge = {}'.format(len(start_nodes), len(start_edges)))
+    out.append('Before # of nodes = {},'
+               ' edge = {}'.format(len(start_nodes), len(graph.edges())))
 
-    out.append('After number of nodes = {},'
-               ' edge = {}'.format(len(end_nodes), len(end_edges)))
+    out.append('After # of nodes = {},'
+               ' edge = {}'.format(len(end_nodes), len(final_graph.edges())))
 
-    out.append('Added {} nodes and {} edges'
-               ''.format(len(end_nodes) - len(start_nodes),
-                         len(end_edges) - len(start_edges)
-                         )
-               )
+    out.append('Added {} nodes and {} edges'.format(len(new_nodes),
+                                                    len(new_edges)))
 
-    out.append('Number of proteins not in network = {0}'.format(n_p_missing))
+    out.append('Number of proteins not in network'
+               ' = {}'.format(len(missing_proteins)))
     out.append('Number of add proteins = {0}'.format(len(added_proteins)))
-    out.append(','.join(i for i in added_proteins))
-    out.append('Proteins added that were measured = {0}'.format(count))
-    out.append('Proteins added that were measured = {0}'.format(count))
+    out.append(','.join(added_proteins))
     out.append('missing metabolites-protein info = {0}'.format(
         missing_protein_info))
-    print('\n'.join(i for i in out))
+    print('\n'.join(out))
     return tmp_graph
 
 
@@ -288,44 +283,35 @@ def expand_by_reactome(network, measured_list):
 
     """
     print("Checking for Reactome edges to add to network.")
-    combined_network = nx.DiGraph()
-    existing_nodes = set(network.nodes())
-    existing_edges = set(network.edges())
+    new_graph = nx.DiGraph()
     measured_set = set(measured_list)
 
     fi_network = load_reactome_fi()
-    reactome_nodes = set(fi_network.nodes())
     reactome_edges = fi_network.edges(data=True)
 
-    added_nodes = 0
-    added_edges = 0
-
     # new list in reactome_nodes
-    nodes_to_check = set(reactome_nodes).intersection(measured_set)
+    nodes_to_check = set(fi_network.nodes()).intersection(measured_set)
     nodes_to_check.update(set(network.nodes()))
 
     def _add_node(node):
-        combined_network.add_node(node,
-                                  databaseSource='ReactomeFI',
-                                  speciesType='gene')
+        new_graph.add_node(node,
+                           databaseSource='ReactomeFI',
+                           speciesType='gene')
 
     for i, j, k in reactome_edges:
-
-        if (i, j) in existing_edges:
-            continue
         if i in nodes_to_check and j in measured_list:
             _add_node(i)
-            combined_network.add_edge(i, j, **k)
-            added_edges += 1
+            new_graph.add_edge(i, j, **k)
 
-    new_graph = nt.compose(combined_network, network, "ReactomeExpansion")
+    new_graph = nt.compose(new_graph, network, "ReactomeExpansion")
 
-    print("Nodes before Reactome expansion "
-          "= {}, after = {}".format(len(existing_nodes),
-                                    len(new_graph.nodes())))
+    print("Nodes before Reactome expansion = {}, after = {}".format(
+        len(network.nodes()), len(new_graph.nodes()))
+    )
 
-    print("Found {} nodes  and {} edges in REACTOME "
-          "not in KEGG".format(added_nodes, added_edges))
+    print("Edges before Reactome expansion = {}, after = {}".format(
+        len(network.edges()), len(new_graph.edges()))
+    )
 
     return new_graph
 
@@ -358,7 +344,6 @@ def create_background_network(save_name='background_network'):
           )
 
     nx.write_gpickle(full_network, '{}.p'.format(save_name))
-    # nx.write_gml(full_network, '{}.gml'.format(save_name))
 
 
 def create_hmdb_network():
@@ -398,12 +383,3 @@ def create_hmdb_network():
 
 if __name__ == '__main__':
     create_background_network()
-    # import time
-    # st = time.time()
-    # g = nx.read_gpickle('background_network.p')
-    # et = time.time()
-    # print(et-st)
-    # st = time.time()
-    # g = nx.read_gml('background_network.gml')
-    # et = time.time()
-    # print(et - st)

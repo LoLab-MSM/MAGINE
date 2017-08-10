@@ -1,9 +1,7 @@
 #!python
 
 import magine.mappings.databases.download_libraries as dl
-from magine.networks.databases import download_all_of_kegg, \
-    download_reactome_functional_interaction
-from magine.ontology.databases.gene_ontology import create_dicts_through_orange
+import magine.networks.databases as nd
 
 
 def download_id_mapping():
@@ -13,13 +11,9 @@ def download_id_mapping():
 
 
 def download_network_dbs():
-    download_reactome_functional_interaction()
-    download_all_of_kegg()
+    nd.download_reactome_functional_interaction()
+    nd.download_all_of_kegg()
     dl.HMDB()
-
-
-def download_go():
-    create_dicts_through_orange()
 
 
 if __name__ == '__main__':
@@ -28,6 +22,5 @@ if __name__ == '__main__':
     st = time.time()
     download_id_mapping()
     download_network_dbs()
-    download_go()
     et = time.time()
     print(et - st)

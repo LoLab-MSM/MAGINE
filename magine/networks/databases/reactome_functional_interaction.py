@@ -11,6 +11,7 @@ if sys.version_info[0] == 3:
 else:
     from urllib import urlopen
 
+_p_name = os.path.join(network_data_dir, 'reactome_fi.p')
 
 def load_reactome_fi():
     """
@@ -19,16 +20,15 @@ def load_reactome_fi():
     -------
 
     """
-    p_name = os.path.join(network_data_dir, 'reactome_fi.p')
 
-    if not os.path.exists(p_name):
+    if not os.path.exists(_p_name):
         print("Downloading Reactome Functional interaction network!")
-        download_reactome_functional_interaction(p_name)
-        assert os.path.exists(p_name), "Error downloading reactome FI. "
-    return nx.read_gpickle(p_name)
+        download_reactome_functional_interaction()
+        assert os.path.exists(_p_name), "Error downloading reactome FI. "
+    return nx.read_gpickle(_p_name)
 
 
-def download_reactome_functional_interaction(path):
+def download_reactome_functional_interaction():
     """
     Downloads reactome functional interaction network
 
@@ -78,7 +78,7 @@ def download_reactome_functional_interaction(path):
           "and {} edges".format(len(g.nodes()), len(g.edges())))
 
     # nx.write_gml(g, path)
-    nx.write_gpickle(g, path)
+    nx.write_gpickle(g, _p_name)
 
 
 _reverse = {"<-", "?-"}

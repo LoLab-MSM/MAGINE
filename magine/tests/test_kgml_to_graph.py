@@ -1,4 +1,4 @@
-import networkx
+import networkx as nx
 
 from magine.networks.databases.kegg_kgml import download_kegg_pathway, \
     find_kegg_pathways, kgml_to_graph
@@ -18,5 +18,15 @@ def test_construction():
     download_kegg_pathway("hsa04071")
     pathway, pathways_to_add = kgml_to_graph("hsa04071.xml", output_dir='KEGG')
 
-    assert (type(pathway) == networkx.classes.digraph.DiGraph)
+    verbose = False
 
+    if verbose:
+        for i, data in pathway.nodes(data=True):
+            print(i, data)
+
+        for i, j, data in pathway.edges(data=True):
+            print(i, j, data)
+        print(len(pathway.nodes()))
+        print(len(pathway.edges()))
+
+    assert (type(pathway) == nx.classes.digraph.DiGraph)

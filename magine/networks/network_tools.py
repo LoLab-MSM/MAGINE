@@ -7,10 +7,10 @@ import pathos.multiprocessing as mp
 
 try:
     import igraph as ig
+
     NO_IGRAPH = False
 except ImportError:
     NO_IGRAPH = True
-
 
 
 def delete_disconnected_network(full_graph, verbose=False):
@@ -231,20 +231,20 @@ def create_legend(graph):
     :return:
     """
     dict_of_types = {
-        'activation':          'onormal',
-        'indirect effect':     'odiamondodiamond',
-        'expression':          'normal',
-        'inhibition':          'tee',
+        'activation': 'onormal',
+        'indirect effect': 'odiamondodiamond',
+        'expression': 'normal',
+        'inhibition': 'tee',
         'binding/association': 'curve',
-        'phosphorylation':     'dot',
+        'phosphorylation': 'dot',
         'missing interaction': 'odiamond',
-        'compound':            'dotodot',
-        'dissociation':        'diamond',
-        'ubiquitination':      'oldiamond',
-        'state change':        'teetee',
-        'dephosphorylation':   'onormal',
-        'repression':          'obox',
-        'glycosylation':       'dot'
+        'compound': 'dotodot',
+        'dissociation': 'diamond',
+        'ubiquitination': 'oldiamond',
+        'state change': 'teetee',
+        'dephosphorylation': 'onormal',
+        'repression': 'obox',
+        'glycosylation': 'dot'
     }
     subgraph = []
     len_dic = len(dict_of_types)
@@ -284,7 +284,7 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
         py_dot = nx.nx_agraph.to_agraph(graph)
         py_dot.write('{}.dot'.format(save_name))
         arg = '-Gdpi={} -Gconcentrate={}'.format(
-                dpi, 'true' if concentrate else 'false'
+            dpi, 'true' if concentrate else 'false'
         )
         py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
                     args=arg)
@@ -570,6 +570,7 @@ def remove_unmeasured_nodes(graph, measured):
                 if len(path) == 2:
                     paths.append((path, '|'.join(l for l in label)))
         return paths
+
     x = mp.Pool(4)
     paths = x.map(find, itertools.combinations(include, 2))
     to_remove = set()
@@ -584,6 +585,7 @@ def remove_unmeasured_nodes(graph, measured):
     for n in to_remove:
         new_g.remove_node(n)
     return new_g
+
 
 def _nx_to_dot(network):
     if isinstance(network, nx.DiGraph):
@@ -616,7 +618,8 @@ def print_network_stats(network, exp_data):
             continue
         if d['speciesType'] == 'gene':
             g_nodes.add(i)
-        elif d['speciesType'] == 'compound' or d['speciesType'] == 'metabolite':
+        elif d['speciesType'] == 'compound' or d[
+            'speciesType'] == 'metabolite':
             m_nodes.add(i)
         else:
             g_nodes.add(i)
@@ -644,10 +647,10 @@ def print_network_stats(network, exp_data):
         100. * n_sig_measured / n_nodes)
     st += "Number of protein nodes sig. changed = {}\n".format(n_genes)
     st += "Fraction of protein nodes measured = {}\n".format(
-            100. * n_genes / len(g_nodes))
+        100. * n_genes / len(g_nodes))
     st += "Number of metabolite nodes sig. changed = {}\n".format(n_meta)
     st += "Fraction of total nodes measured = {}\n".format(
-            100. * n_meta / len(m_nodes))
+        100. * n_meta / len(m_nodes))
 
     print(st)
 
@@ -693,8 +696,10 @@ def compose(G, H, name=None):
             existing_info = new_g.edge[i][j]
             for n, d in data.items():
                 if n in existing_info:
-                    current = existing_info[n]
-                    new = '|'.join([str(current), str(d)])
+                    current = set(existing_info[n].split('|'))
+                    additions = set(d.split('|'))
+                    additions.update(current)
+                    new = '|'.join(sorted(additions))
                     new_g[i][j][n] = new
                 else:
                     new_g[i][j][n] = d
@@ -706,8 +711,10 @@ def compose(G, H, name=None):
             existing_info = new_g.node[i]
             for n, d in data.items():
                 if n in existing_info:
-                    current = existing_info[n]
-                    new = '|'.join([str(current), str(d)])
+                    current = set(existing_info[n].split('|'))
+                    additions = set(d.split('|'))
+                    additions.update(current)
+                    new = '|'.join(sorted(additions))
                     new_g.node[i][n] = new
                 else:
                     new_g.node[i][n] = d
@@ -720,7 +727,7 @@ def compose(G, H, name=None):
             for n, d in data.items():
                 if n in existing_info:
                     current = existing_info[n]
-                    new = '|'.join([str(current), str(d)])
+                    new = '|'.join({str(current), str(d)})
                     new_g.node[i][n] = new
                 else:
                     new_g.node[i][n] = d
@@ -857,14 +864,13 @@ def create_lists_of_subgraphs(network, save_name, exp_data):
     return subgraph_species
 '''
 
-
 if __name__ == '__main__':
     g = nx.DiGraph()
     g.add_edge('A', 'B')
     g.add_edge('B', 'C')
     g.add_edge('B', 'E')
     g.add_edge('C', 'D')
-    test_g = remove_unmeasured_nodes(g, ['A', 'D','E'])
+    test_g = remove_unmeasured_nodes(g, ['A', 'D', 'E'])
     export_to_dot(test_g, 'merged_node')
     # new_g = remove_unmeasured_nodes(g, ['A', 'C', 'D'])
     # export_to_dot(new_g, 'merged_node2')

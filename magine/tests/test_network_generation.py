@@ -1,19 +1,22 @@
-from magine.networks.network_generator import build_network
+import magine.networks.network_generator as ng
+import networkx as nx
+
+
+def test_expand_by_hmdb():
+    g = nx.DiGraph()
+    g.add_edge('PNLIP', 'LIPC')
+    new_g = ng.expand_by_hmdb(graph=g,
+                              metabolite_list=['HMDB42489', 'HMDB59874']
+                              )
+    assert len(new_g.nodes()) == 3
+    assert len(new_g.edges()) == 2
 
 
 def test_build_network():
-    graph = build_network(['BAX', 'TP53', 'JAK1', 'BAD'],
-                          save_name='sample_network', species='hsa',
-                          all_measured_list=['CASP3', 'EGFR'],
-                          use_hmdb=False, use_reactome=True
-                          )
-    for i in graph.nodes():
-        # if isinstance(i, float):
-        #     print(i)
-        if len(i.split(':')) > 1:
-            print(i)
+    ng.build_network(['BAX', 'TP53', 'JAK1', 'BAD'],
+                     save_name='sample_network', species='hsa',
+                     all_measured_list=['CASP3', 'EGFR'],
+                     use_hmdb=True, use_reactome=True)
 
-
-# _download_all_of_kegg('test')
 if __name__ == '__main__':
     test_build_network()
