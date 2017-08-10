@@ -36,7 +36,8 @@ class TestNetworkSubgraphs(object):
     def test_path_between_two_does_not_exist(self):
         start = 'HSPA9'
         end = 'ZFYVE1'
-        g = self.net_sub.shortest_paths_between_two_proteins(start, end)
+        g = self.net_sub.shortest_paths_between_two_proteins(start, end,
+                                                             bidirectional=True)
         assert g is None
 
     def test_path_between_two(self):
@@ -47,7 +48,8 @@ class TestNetworkSubgraphs(object):
                  'PIK3CA', 'PIK3CB', 'MAP3K1', 'PIK3CD', 'PIK3R3',
                  'PIK3R2', 'PIK3R1', 'TP53', 'CASP3', 'PTEN', 'PAK1',
                  'PAK2', 'BCL2'}
-        g = self.net_sub.shortest_paths_between_two_proteins(start, end)
+        g = self.net_sub.shortest_paths_between_two_proteins(start, end,
+                                                             bidirectional=True)
         assert set(g.nodes()) == nodes
 
     def test_paint_over_time(self):
