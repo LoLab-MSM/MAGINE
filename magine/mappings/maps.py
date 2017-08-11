@@ -55,8 +55,9 @@ compound_manual = {'cpd:C07909': 'HMDB15015',
                    'cpd:C04043': 'HMDB03791',
                    'cpd:C01165': 'HMDB02104',
                    'cpd:C00025' : 'HMDB00148',
+                   'cpd:C00696': 'HMDB01403',
 
-}
+                   }
 
 
 def create_gene_dictionaries(network, species='hsa'):
@@ -86,8 +87,13 @@ def create_gene_dictionaries(network, species='hsa'):
     # check stores dictionaries
     for i in nodes:
         str_gene = str(i)
+        network.node[i]['keggName'] = str_gene
         if str_gene.startswith(species):
-            network.node[i]['keggName'] = str_gene
+            if str_gene in manual_dict:
+                kegg_to_gene_name[str_gene] = manual_dict[str_gene]
+                print(str_gene, manual_dict[str_gene])
+                continue
+
             tmp_name = str_gene.replace(species + ':', '')
             if str_gene in gm.kegg_to_gene_name:
                 if len(gm.kegg_to_gene_name[str_gene]) == 1:
@@ -96,9 +102,6 @@ def create_gene_dictionaries(network, species='hsa'):
                     for g in gm.kegg_to_gene_name[str_gene]:
                         if g in gm.gene_name_to_uniprot:
                             kegg_to_gene_name[str_gene] = g
-
-            elif i in manual_dict:
-                kegg_to_gene_name[str_gene] = manual_dict[str_gene]
 
             elif int(tmp_name) in gm.ncbi_to_symbol:
                 new = gm.ncbi_to_symbol[int(tmp_name)][0]
@@ -242,7 +245,7 @@ def create_compound_dictionary(network):
     return cpd_to_hmdb
 
 
-def convert_all(network, species='hsa', use_hmdb=False):
+def convert_all(network, species='hsa'):
     """ 
     Maps gene names to HGNC and kegg compound to HMDB
     
@@ -252,8 +255,6 @@ def convert_all(network, species='hsa', use_hmdb=False):
         network to convert mappings
     species : str   
         species of network (hsa, mmu)
-    use_hmdb : bool
-        convert to HMDB identifers
 
     Returns
     -------
@@ -263,10 +264,10 @@ def convert_all(network, species='hsa', use_hmdb=False):
     change_dict = dict()
     change_dict.update(compound_manual)
     renamed_network = network.copy()
-    if use_hmdb:
-        print('Started converting kegg compounds to HMDB')
-        dict1 = create_compound_dictionary(renamed_network)
-        change_dict.update(dict1)
+
+    print('Started converting kegg compounds to HMDB')
+    dict1 = create_compound_dictionary(renamed_network)
+    change_dict.update(dict1)
 
     print('Started converting kegg genes to HGNC')
     dict2, found_all = create_gene_dictionaries(renamed_network,

@@ -116,6 +116,9 @@ def build_network(gene_list, save_name='tmp', species='hsa',
         print("warning: automatic integration currently in progress.\n")
         if metabolite_list is None:
             print("Please provide a list of metabolites")
+            metabolite_list = list(set(i for i in end_network.nodes()
+                                       if i.startswith('HMDB')))
+            end_network = expand_by_hmdb(end_network, metabolite_list)
         else:
             end_network = expand_by_hmdb(end_network, metabolite_list)
     print("Trimming network")
@@ -215,8 +218,8 @@ def expand_by_hmdb(graph, metabolite_list):
                 if each is None:
                     continue
                 elif each not in start_nodes:
-                    _add_node(each, 'gene')
                     added_proteins.add(each)
+                _add_node(each, 'gene')
                 missing_edge += 1
                 _add_edge(each, i)
         # if the metabolite is NOT in the network,
