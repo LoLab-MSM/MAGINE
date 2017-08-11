@@ -102,8 +102,7 @@ def build_network(gene_list, save_name='tmp', species='hsa',
             end_network.remove_node(i)
     end_network = nx.relabel_nodes(end_network, drug_dict)
 
-    end_network = mapper.convert_all(end_network, species=species,
-                                     use_hmdb=use_hmdb)
+    end_network = mapper.convert_all(end_network, species=species)
 
     if use_reactome:
         if all_measured_list is None:

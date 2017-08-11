@@ -233,8 +233,8 @@ class Enrichr(object):
         disease_drug = [
             'DrugMatrix',
             'Drug_Perturbations_from_GEO_2014',
-            'LINCS_L1000_Chem_Pert_down',
-            'LINCS_L1000_Chem_Pert_up',
+            # 'LINCS_L1000_Chem_Pert_down',
+            # 'LINCS_L1000_Chem_Pert_up',
             'OMIM_Disease',
             'OMIM_Expanded',
         ]
