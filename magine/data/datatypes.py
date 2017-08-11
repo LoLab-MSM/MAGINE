@@ -398,7 +398,8 @@ class ExperimentalData(object):
                 return list(tmp[gene].unique()) + list(
                     tmp['compound_id'].unique())
 
-    def create_table_of_data(self, sig=False, save_name='tmp', unique=False):
+    def create_table_of_data(self, sig=False, unique=False, save_name=None,
+                             plot=False, write_latex=False):
         """
         Creates a summary table of data.
 
@@ -412,13 +413,17 @@ class ExperimentalData(object):
         unique: bool
             If you want to only consider unique species
             ie count gene species rather than PTMs
+        plot: bool
+            If you want to create a plot of the table
+        write_latex: bool
+            Create latex file of table
 
 
         Returns
         -------
+        pandas.DataFrame
 
         """
-        timepoints = list(self.timepoints)
         tmp_data = self.data.copy()
 
         if sig:
@@ -431,98 +436,53 @@ class ExperimentalData(object):
 
         gene_d = tmp_data[tmp_data[species_type] == protein].copy()
 
+        def _calculate_table(d, value, index):
+            d_return = d.pivot_table(values=value, index=index, columns='time',
+                                     aggfunc=lambda x: x.dropna().nunique())
+            return d_return
+
         if unique:
-            if do_metab:
-                tmp_data1 = meta_d.pivot_table(values='compound',
-                                               index=exp_method, columns='time',
-                                               aggfunc=lambda x:
-                                               x.dropna().nunique())
-
-            tmp_data2 = gene_d.pivot_table(values='gene', index=exp_method,
-                                           columns='time',
-                                           aggfunc=lambda x:
-                                           x.dropna().nunique())
-
-            unique_col = []
-            for i in self.exp_methods:
-                if i in self.exp_methods_metabolite:
-                    n = len(tmp_data[tmp_data[exp_method] == i][
-                                'compound'].dropna().unique())
-                else:
-                    n = len(tmp_data[tmp_data[exp_method] == i][
-                                'gene'].dropna().unique())
-                unique_col.append(int(n))
+            gene_index = 'gene'
+            compound_index = 'compound'
         else:
-            if do_metab:
-                tmp_data1 = meta_d.pivot_table(values='compound_id',
-                                               index=exp_method,
-                                               columns='time',
-                                               aggfunc=lambda x:
-                                               x.dropna().nunique())
-            tmp_data2 = gene_d.pivot_table(values='protein', index=exp_method,
-                                           columns='time',
-                                           aggfunc=lambda x:
-                                           x.dropna().nunique())
-            unique_col = []
-            for i in self.exp_methods:
-                if i in self.exp_methods_metabolite:
-                    n = len(tmp_data[tmp_data[exp_method] == i][
-                                'compound_id'].dropna().unique())
-                else:
-                    n = len(tmp_data[tmp_data[exp_method] == i][
-                                'protein'].dropna().unique())
-                unique_col.append(int(n))
+            gene_index = 'protein'
+            compound_index = 'compound_id'
+
+        tmp_data2 = _calculate_table(gene_d, gene_index, exp_method)
 
         if do_metab:
+            tmp_data1 = _calculate_table(meta_d, compound_index, exp_method)
             t = pandas.concat([tmp_data1, tmp_data2]).fillna('-')
         else:
             t = tmp_data2.fillna('-')
 
+        unique_col = {}
+        for i in t.index:
+            loc = tmp_data[tmp_data[exp_method] == i]
+            if i in self.exp_methods_metabolite:
+                n = len(loc[compound_index].dropna().unique())
+            else:
+                n = len(loc[gene_index].dropna().unique())
+            unique_col[i] = int(n)
+
         t['Total Unique Across '] = pandas.Series(unique_col, index=t.index)
 
-        ax = plt.subplot(111, frame_on=False)
+        if plot:
+            ax = plt.subplot(111, frame_on=False)
 
-        table(ax, t, loc='center')
-        ax.xaxis.set_visible(False)
-        ax.yaxis.set_visible(False)
-        plt.tight_layout()
-        plt.savefig('{}.png'.format(save_name), dpi=300)
-        plt.close()
-        t.to_csv('{0}.csv'.format(save_name))
-        filename = '{0}.tex'.format(save_name)
+            table(ax, t, loc='center')
+            ax.xaxis.set_visible(False)
+            ax.yaxis.set_visible(False)
+            plt.tight_layout()
+            plt.savefig('{}.png'.format(save_name), dpi=300,
+                        bbox_inches='tight')
+            plt.close()
+        if save_name is not None:
+            t.to_csv('{0}.csv'.format(save_name))
+        if write_latex and save_name is not None:
+            _write_to_latex(table=t, save_name=save_name)
+        return t
 
-        with open(filename, 'wt') as f:
-            st = t.to_latex(
-                    column_format='*{{{}}}{{c}}'.format(
-                        str(len(timepoints) + 2)))
-            f.write(template.format(st))
-
-        if _which('pdflatex'):
-            # t = True
-            # if t:
-            print('Compiling table')
-            with open(os.devnull, "w") as fnull:
-                subprocess.call(['pdflatex', filename],
-                                stderr=subprocess.STDOUT,
-                                stdout=fnull
-                                )
-
-                # subprocess.call(['rm',
-                #                  '{0}.aux'.format(save_name),
-                #                  '{0}.log'.format(save_name)],
-                #                 stderr=subprocess.STDOUT)
-                if _which('pdfcrop'):
-                    pdffile = '{0}.pdf'.format(save_name)
-                    subprocess.call(['pdfcrop', pdffile, pdffile],
-                                    stderr=subprocess.STDOUT, stdout=fnull)
-                    if _which('convert'):
-                        tmp_png_name = '{0}.png'.format(save_name)
-                        subprocess.call(['convert', '-density', '300', pdffile,
-                                         '-quality', '90', tmp_png_name],
-                                        stderr=subprocess.STDOUT, stdout=fnull)
-        else:
-            print('Install pdflatex to compile to pdf or png\n'
-                  'You can use the csv file for use in outside tools')
 
     def plot_list_of_genes(self, list_of_genes, save_name, out_dir=None,
                            title=None, plot_type='plotly', image_format='png'):
@@ -838,6 +798,35 @@ template = r'''
 \end{{landscape}}
 \end{{document}}
 '''
+
+
+def _write_to_latex(table, save_name):
+    filename = '{0}.tex'.format(save_name)
+
+    with open(filename, 'wt') as f:
+        st = table.to_latex(
+            column_format='*{{{}}}{{c}}'.format(
+                str(table.shape[0] + 2)))
+        f.write(template.format(st))
+
+    if _which('pdflatex'):
+        print('Compiling table')
+        with open(os.devnull, "w") as fnull:
+            subprocess.call(['pdflatex', filename], stderr=subprocess.STDOUT,
+                            stdout=fnull)
+
+            if _which('pdfcrop'):
+                pdffile = '{0}.pdf'.format(save_name)
+                subprocess.call(['pdfcrop', pdffile, pdffile],
+                                stderr=subprocess.STDOUT, stdout=fnull)
+                if _which('convert'):
+                    tmp_png_name = '{0}.png'.format(save_name)
+                    subprocess.call(['convert', '-density', '300', pdffile,
+                                     '-quality', '90', tmp_png_name],
+                                    stderr=subprocess.STDOUT, stdout=fnull)
+    else:
+        print('Install pdflatex to compile to pdf or png\n'
+              'You can use the csv file for use in outside tools')
 
 
 def _which(program):
