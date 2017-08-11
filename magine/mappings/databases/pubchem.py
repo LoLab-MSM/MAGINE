@@ -1,3 +1,4 @@
+'''
 from bioservices.services import REST
 
 
@@ -102,10 +103,4 @@ if __name__ == '__main__':
     # print(x)
 
     # x = pc.get_compound_by_name('Tazobactam')
-    print(x)
-    print(x.keys())
-    quit()
-
-
-
-
+'''

@@ -184,14 +184,13 @@ def create_all_of_kegg(species='hsa'):
     drug_dict = {}
     for i in all_of_kegg.nodes():
         if i.startswith('dr'):
-            split_name = i.split(' ')
+            split_name = i.split()
             if len(split_name) > 1:
                 if split_name[1].startswith('cpd:'):
                     drug_dict[i] = split_name[1]
                     all_of_kegg.node[i]['drug'] = split_name[0]
     all_of_kegg = nx.relabel_nodes(all_of_kegg, drug_dict)
-    all_of_kegg = mapper.convert_all(all_of_kegg, species=species,
-                                     use_hmdb=True)
+    all_of_kegg = mapper.convert_all(all_of_kegg, species=species)
 
     print('All of kegg has {} nodes and {} '
           'edges'.format(len(all_of_kegg.nodes()), len(all_of_kegg.edges())))
