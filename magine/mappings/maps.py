@@ -212,10 +212,8 @@ def create_compound_dictionary(network):
             if name_stripped in cm.kegg_to_hmdb_accession:
                 mapping = cm.kegg_to_hmdb_accession[name_stripped]
                 if type(mapping) == list:
-                    if len(mapping) == 1:
-                        cpd_to_hmdb[i] = mapping[0]
-
                     names = '|'.join(i for i in mapping)
+                    cpd_to_hmdb[i] = names
                     network.node[i]['hmdbNames'] = names
                     chem_names = []
                     for name in mapping:
