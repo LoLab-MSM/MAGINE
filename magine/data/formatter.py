@@ -412,12 +412,10 @@ def _process_silac(data):
     data.loc[:, 'gene'] = data['primary_genes']
     data.loc[:, 'protein'] = data['primary_genes'] + '_silac'
 
-    data = data[data['n_significant'] == 2]
+    # data = data[data['n_significant'] == 2]
 
     data.loc[:, 'treated_control_fold_change'] = \
         data['mean_treated_untreated_fold_change']
-
-    # silac = silac.dropna(subset=['significant'])
 
     data.loc[:, 'species_type'] = 'protein'
     data.loc[:, 'significant_flag'] = False
