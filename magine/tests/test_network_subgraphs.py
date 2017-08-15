@@ -9,15 +9,13 @@ _path = os.path.join(os.path.dirname(__file__), 'Network_files',
                      'sample_network.gml')
 
 
-class TestNetworkSubgraphs(object):
-    def setUp(self):
+# def test():
+#     return
 
+class TestSubgraphs(object):
+    def __init__(self):
         self.network = nx.read_gml(_path)
         self.net_sub = NetworkSubgraphs(self.network, exp_data)
-
-    def tearDown(self):
-        self.network = None
-        self.net_sub = None
 
     def test_downstream_nodes(self):
         """Test finding downstream nodes."""
@@ -86,13 +84,11 @@ class TestNetworkSubgraphs(object):
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
                                                       single_path=False,
                                                       save_name='smaller_list')
-        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8', 'MAPK9',
-                 'BCL2'}
+        nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8',
+                 'MAPK9', 'BCL2'}
         assert set(g.nodes()) == nodes
 
 
 if __name__ == '__main__':
-    t = TestNetworkSubgraphs()
-    t.setUp()
-    t.test_paths_from_list()
-
+    t = TestSubgraphs()
+    t.test_path_between_two_does_not_exist()
