@@ -211,10 +211,10 @@ def process_raptr_folder(directory):
     all_data = []
     for i in os.listdir(directory):
         if 'subcell' in i:
-            continue
             df = load_csv(directory, i)
-            df = _process_label_free(df, subcell=True)
+            df = _process_subcell_label_free(df)
             all_data.append(df)
+
         elif '_silac' in i:
             # continue
             df = load_csv(directory, i)
@@ -406,6 +406,56 @@ def _process_label_free(data, subcell=False):
     # label_free.to_csv('label_free.csv', index=False)
     return label_free
 
+
+def _process_subcell_label_free(data):
+    label_free = data.copy()
+
+    label_free.loc[
+        label_free['translocation'].isnull(), 'translocation'] = False
+    label_free = label_free[label_free['translocation']]
+
+    label_free['data_type'] = 'label_free_' + label_free['sample_component']
+    label_free['gene'] = label_free['primary_genes'].astype(str)
+    label_free = label_free[label_free['gene'] != 'nan']
+
+    protein_names = []
+
+    def find_mod(row):
+        s = str(row['protein'])
+        if s.startswith('Acetylation'):
+            change = 'ace'
+            residue = s[s.find("(") + 1:s.find(")")]
+            loc = re.findall('@\d+', s)[0].strip('@')
+            name = "{0}_{1}({2}){3}_lf".format(row['gene'], residue, change,
+                                               loc)
+
+        elif s.startswith('Phosphorylation'):
+            change = 'ph'
+            residue = s[s.find("(") + 1:s.find(")")]
+            loc = re.findall('@\d+', s)[0].strip('@')
+            name = "{0}_{1}({2}){3}_lf".format(row['gene'], residue, change,
+                                               loc, )
+            protein_names.append(name)
+        else:
+            name = row['gene'] + '_lf'
+        return name
+
+    label_free['protein'] = label_free.apply(find_mod, axis=1)
+    label_free['protein'] = label_free['protein'] + '_' + \
+                            label_free['from_components'] + '_to_' + \
+                            label_free['to_components']
+
+    label_free['species_type'] = 'protein'
+    label_free['significant_flag'] = True
+    label_free['p_value_group_1_and_group_2'] = np.nan
+    label_free['treated_control_fold_change'] = np.nan
+    headers = ['gene', 'treated_control_fold_change', 'protein',
+               'p_value_group_1_and_group_2', 'time', 'data_type',
+               'time_points', 'significant_flag', 'species_type']
+
+    label_free = label_free[headers]
+    # label_free.to_csv('label_free.csv', index=False)
+    return label_free
 
 def _process_silac(data):
     data.loc[:, 'data_type'] = 'silac'
