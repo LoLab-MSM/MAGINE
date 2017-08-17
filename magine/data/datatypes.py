@@ -423,9 +423,9 @@ class ExperimentalData(object):
         pandas.DataFrame
 
         """
-        return create_table_of_data(self.data, sig=False, unique=False,
-                                    save_name=None, plot=False,
-                                    write_latex=False)
+        return create_table_of_data(self.data, sig=sig, unique=unique,
+                                    save_name=save_name, plot=plot,
+                                    write_latex=write_latex)
 
 
     def plot_list_of_genes(self, list_of_genes, save_name, out_dir=None,
