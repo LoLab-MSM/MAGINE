@@ -316,6 +316,92 @@ class Enrichr(object):
 
         return [h1, h2, h3, h4, h5]
 
+    def run_set_of_dbs(self, list_g, db='drug'):
+        """
+
+        Parameters
+        ----------
+        list_g : list_like
+            List of lists of genes
+        db : str
+        Returns
+        -------
+
+        """
+
+        disease_drug = [
+            'DrugMatrix',
+            'Drug_Perturbations_from_GEO_2014',
+            'Drug_Perturbations_from_GEO_down',
+            'Drug_Perturbations_from_GEO_up',
+            'OMIM_Disease',
+            'OMIM_Expanded',
+        ]
+
+        ontologies = [
+
+            'GO_Biological_Process_2017',
+            'GO_Molecular_Function_2017',
+            'GO_Cellular_Component_2017',
+            'Human_Phenotype_Ontology',
+            'MGI_Mammalian_Phenotype_2017',
+            'HMDB_Metabolites',
+            'Tissue_Protein_Expression_from_ProteomicsDB',
+        ]
+
+        pathways = [
+            'KEGG_2016',
+            'NCI-Nature_2016',
+            'Panther_2016',
+            'WikiPathways_2016',
+            'BioCarta_2016',
+            'Humancyc_2016',
+        ]
+
+        kinase = [
+            'KEA_2015',
+            'LINCS_L1000_Kinase_Perturbations_down',
+            'LINCS_L1000_Kinase_Perturbations_up',
+            'Kinase_Perturbations_from_GEO_down',
+            'Kinase_Perturbations_from_GEO_up',
+
+        ]
+        transcription_factors = [
+            'ChEA_2016',  # should use RNAseq
+            'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+            'ENCODE_TF_ChIP-seq_2015',
+            'Transcription_Factor_PPIs',
+            'TRANSFAC_and_JASPAR_PWMs',
+        ]
+
+        def _run(list_dbs):
+            # Create a Pandas Excel writer using XlsxWriter as the engine.
+            all_df = []
+            for i in list_dbs:
+                print("Running {}".format(i))
+
+                df = self.run(list_of_genes=list_g, gene_set_lib=i)
+
+                if df is None:
+                    continue
+                df['db'] = i
+                all_df.append(df)
+
+            # Close the Pandas Excel writer and output the Excel file.
+            # writer.save()
+            return pd.concat(all_df, ignore_index=True)
+
+        if db == 'transcription_factors':
+            return _run(transcription_factors)
+        if db == 'pathways':
+            return _run(pathways)
+        if db == 'kinases':
+            return _run(kinase)
+        if db == 'drug':
+            return _run(disease_drug)
+        if db == 'ontologies':
+            return _run(ontologies)
+
 
 def write_table_to_html(data, save_name='index', out_dir=None,
                         run_parallel=False, exp_data=None):
