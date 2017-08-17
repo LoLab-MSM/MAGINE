@@ -24,47 +24,43 @@ auto_complete = 'column_number:{},' \
 
 chosen = 'column_number:{}, ' \
          'filter_type: "multi_select",' \
-         'select_type: "chosen"'
+         'select_type: "select2",' \
+         'select_type_options: {{width: \'150px\'}}, ' \
+         'text_data_delimiter: ","'
 
 html_selector = 'column_number:{},' \
                 'column_data_type: "html",' \
                 'filter_type: "multi_select",' \
                 'select_type: "chosen"'
 
-dict_of_templates = dict()
-# GO
-dict_of_templates['GO_id'] = range_number
-dict_of_templates['GO_name'] = auto_complete
-dict_of_templates['slim'] = chosen
-dict_of_templates['aspect'] = chosen
-dict_of_templates['ref'] = range_number
-dict_of_templates['depth'] = range_number
-dict_of_templates['enrichment_score'] = range_number
-
-# enrichr
-dict_of_templates['term_name'] = auto_complete
-dict_of_templates['term_id'] = auto_complete
-dict_of_templates['rank'] = range_number
-dict_of_templates['p_value'] = range_number
-dict_of_templates['adj_p_value'] = range_number
-dict_of_templates['combined_score'] = range_number
-dict_of_templates['genes'] = auto_complete
-dict_of_templates['n_genes'] = range_number
-dict_of_templates['z_score'] = range_number
-
-
-dict_of_templates['significant_flag'] = chosen
-dict_of_templates['data_type'] = chosen
-dict_of_templates['pvalue'] = range_number
-dict_of_templates['n_genes'] = range_number
-
-dict_of_templates['treated_control_fold_change'] = range_number
-dict_of_templates['p_value_group_1_and_group_2'] = range_number
-dict_of_templates['protein'] = auto_complete
-dict_of_templates['gene'] = html_selector
-dict_of_templates['time'] = chosen
-dict_of_templates['compound'] = auto_complete
-dict_of_templates['compound_id'] = auto_complete
+dict_of_templates = dict(GO_id=range_number,
+                         GO_name=chosen,
+                         slim=chosen,
+                         aspect=chosen,
+                         ref=range_number,
+                         depth=range_number,
+                         enrichment_score=range_number,
+                         term_name=chosen,
+                         term_id=chosen,
+                         rank=range_number,
+                         p_value=range_number,
+                         adj_p_value=range_number,
+                         combined_score=range_number,
+                         genes=chosen,
+                         n_genes=range_number,
+                         z_score=range_number,
+                         significant_flag=chosen,
+                         data_type=chosen,
+                         pvalue=range_number,
+                         treated_control_fold_change=range_number,
+                         p_value_group_1_and_group_2=range_number,
+                         protein=auto_complete,
+                         gene=chosen,
+                         time=chosen,
+                         compound=auto_complete,
+                         compound_id=auto_complete,
+                         db=chosen,
+                         )
 
 
 def write_single_table(table, save_name, title):
@@ -82,9 +78,6 @@ def write_single_table(table, save_name, title):
     html_out = single_template.render(template_vars)
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
-
-
-
 
 
 def process_filter_table(table, title):
