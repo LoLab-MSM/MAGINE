@@ -85,7 +85,7 @@ class NetworkSubgraphs(object):
 
     def shortest_paths_between_lists(self, species_list, save_name=None,
                                      single_path=False, draw=False,
-                                     image_format='png'):
+                                     image_format='png', parallel=False):
         """
 
         Parameters
@@ -122,13 +122,17 @@ class NetworkSubgraphs(object):
         pool = mp.Pool()
 
         def product_helper(args):
-            return self._find_nx_path(*args)
+            return self._find_nx_path(*args + (single_path,))
 
-        args = []
-        for i, j in itertools.combinations(tmp_species_list, 2):
-            args.append([i, j, single_path])
-        paths = pool.map(product_helper, args)
-        pool.close()
+        if parallel:
+            paths = pool.map(product_helper,
+                             itertools.combinations(tmp_species_list, 2))
+            pool.join()
+            pool.close()
+        else:
+            paths = list()
+            for i, j in itertools.combinations(tmp_species_list, 2):
+                paths.append(self._find_nx_path(i, j, single_path))
         graph = self._list_paths_to_graph(paths)
 
         if save_name is not None:
