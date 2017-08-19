@@ -20,6 +20,57 @@ with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
 
 gene = 'gene'
 
+ontologies = [
+
+    'GO_Biological_Process_2017b',
+    'GO_Molecular_Function_2017b',
+    'GO_Cellular_Component_2017b',
+
+    'GO_Biological_Process_2017',
+    'GO_Molecular_Function_2017',
+    'GO_Cellular_Component_2017',
+
+    'Human_Phenotype_Ontology',
+    'MGI_Mammalian_Phenotype_2017',
+    'HMDB_Metabolites',
+    'Tissue_Protein_Expression_from_ProteomicsDB',
+]
+
+pathways = [
+    'KEGG_2016',
+    'NCI-Nature_2016',
+    'Panther_2016',
+    'WikiPathways_2016',
+    'BioCarta_2016',
+    'Humancyc_2016',
+    'Reactome_2016',
+]
+
+kinase = [
+    'KEA_2015',
+    # 'LINCS_L1000_Kinase_Perturbations_down',
+    # 'LINCS_L1000_Kinase_Perturbations_up',
+    'Kinase_Perturbations_from_GEO_down',
+    'Kinase_Perturbations_from_GEO_up',
+
+]
+transcription_factors = [
+    'ChEA_2016',  # should use RNAseq
+    'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+    'ENCODE_TF_ChIP-seq_2015',
+    'Transcription_Factor_PPIs',
+    'TRANSFAC_and_JASPAR_PWMs',
+]
+
+disease_drug = [
+    'DrugMatrix',
+    'Drug_Perturbations_from_GEO_2014',
+    'Drug_Perturbations_from_GEO_down',
+    'Drug_Perturbations_from_GEO_up',
+    'OMIM_Disease',
+    'OMIM_Expanded',
+]
+
 
 class Enrichr(object):
     def __init__(self, exp_data=None):
@@ -55,16 +106,16 @@ class Enrichr(object):
 
         """
         assert isinstance(list_of_genes, list)
-        assert gene_set_lib in _valid_libs, \
-            "{} not in valid ids {}".format(gene_set_lib, _valid_libs)
-
+        if gene_set_lib not in _valid_libs:
+            print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
+            return pd.DataFrame()
         if verbose:
             print("Running Enrichr with gene set {}".format(gene_set_lib))
 
         description = 'Example gene list'
         genes_str = '\n'.join(list_of_genes)
         payload = {
-            'list': (None, genes_str),
+            'list':        (None, genes_str),
             'description': (None, description)
         }
 
@@ -78,10 +129,15 @@ class Enrichr(object):
         enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
         query_string = '?userListId=%s&backgroundType=%s'
         response = requests.get(
-            enrichment_url + query_string % (user_list_id, gene_set_lib)
+                enrichment_url + query_string % (user_list_id, gene_set_lib)
         )
         if not response.ok:
-            raise Exception('Error fetching enrichment results')
+            while not response.ok:
+                response = requests.get(
+                        enrichment_url + query_string % (
+                        user_list_id, gene_set_lib)
+                )
+                # raise Exception('Error fetching enrichment results')
 
         data = json.loads(response.text)
         #####
@@ -164,7 +220,7 @@ class Enrichr(object):
                           list), "Please provide list of lists"
         df_all = []
         for i, j in zip(sample_lists, sample_ids):
-            print("{} / {}".format(j, sample_ids))
+            # print("{} / {}".format(j, sample_ids))
             df = self.run(i, gene_set_lib)
             df['sample_id'] = j
             df_all.append(df)
@@ -230,58 +286,16 @@ class Enrichr(object):
 
         """
 
-        disease_drug = [
-            'DrugMatrix',
-            'Drug_Perturbations_from_GEO_2014',
-            # 'LINCS_L1000_Chem_Pert_down',
-            # 'LINCS_L1000_Chem_Pert_up',
-            'OMIM_Disease',
-            'OMIM_Expanded',
-        ]
-
-        ontologies = [
-
-            'GO_Biological_Process_2017',
-            'GO_Molecular_Function_2017',
-            'GO_Cellular_Component_2017',
-            'Human_Phenotype_Ontology',
-            'MGI_Mammalian_Phenotype_2017',
-            'HMDB_Metabolites',
-            'Tissue_Protein_Expression_from_ProteomicsDB',
-        ]
-
-        pathways = [
-            'KEGG_2016',
-            'NCI-Nature_2016',
-            'Panther_2016',
-            'WikiPathways_2016',
-            'BioCarta_2016',
-            'Humancyc_2016',
-        ]
-
-        kinase = [
-            'KEA_2015',
-            'LINCS_L1000_Kinase_Perturbations_down',
-            'LINCS_L1000_Kinase_Perturbations_up',
-            'Kinase_Perturbations_from_GEO_down',
-            'Kinase_Perturbations_from_GEO_up',
-
-        ]
-        transcription_factors = [
-            'ChEA_2016',  # should use RNAseq
-            'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-            'ENCODE_TF_ChIP-seq_2015',
-            'Transcription_Factor_PPIs',
-            'TRANSFAC_and_JASPAR_PWMs',
-        ]
+        print("Working on {}".format(save_name))
 
         def _run(list_dbs, db_name):
             # Create a Pandas Excel writer using XlsxWriter as the engine.
             writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
                                     engine='xlsxwriter')
+            print("\tWorking on {}".format(db_name))
             html_list = []
             for i in list_dbs:
-                print("Running {}".format(i))
+                print("\t\tRunning {}".format(i))
                 if create_html:
                     outdir = save_name + '_' + i
                     if not os.path.exists(outdir):
@@ -299,13 +313,13 @@ class Enrichr(object):
 
                 html_list.append(dict(database=i,
                                       filename='{}_filter.html'.format(
-                                          outdir)))
+                                              outdir)))
                 if len(i) > 30:
                     i = i[:30]
-                df.to_excel(writer, sheet_name=i, freeze_panes=(2, 2))
+                df.to_excel(writer, sheet_name=i, freeze_panes=(1, 2))
 
             # Close the Pandas Excel writer and output the Excel file.
-            # writer.save()
+            writer.save()
             return [db_name, html_list, save_name + '_' + db_name]
 
         h1 = _run(transcription_factors, 'transcription_factors')
@@ -329,51 +343,6 @@ class Enrichr(object):
 
         """
 
-        disease_drug = [
-            'DrugMatrix',
-            'Drug_Perturbations_from_GEO_2014',
-            'Drug_Perturbations_from_GEO_down',
-            'Drug_Perturbations_from_GEO_up',
-            'OMIM_Disease',
-            'OMIM_Expanded',
-        ]
-
-        ontologies = [
-
-            'GO_Biological_Process_2017',
-            'GO_Molecular_Function_2017',
-            'GO_Cellular_Component_2017',
-            'Human_Phenotype_Ontology',
-            'MGI_Mammalian_Phenotype_2017',
-            'HMDB_Metabolites',
-            'Tissue_Protein_Expression_from_ProteomicsDB',
-        ]
-
-        pathways = [
-            'KEGG_2016',
-            'NCI-Nature_2016',
-            'Panther_2016',
-            'WikiPathways_2016',
-            'BioCarta_2016',
-            'Humancyc_2016',
-        ]
-
-        kinase = [
-            'KEA_2015',
-            'LINCS_L1000_Kinase_Perturbations_down',
-            'LINCS_L1000_Kinase_Perturbations_up',
-            'Kinase_Perturbations_from_GEO_down',
-            'Kinase_Perturbations_from_GEO_up',
-
-        ]
-        transcription_factors = [
-            'ChEA_2016',  # should use RNAseq
-            'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-            'ENCODE_TF_ChIP-seq_2015',
-            'Transcription_Factor_PPIs',
-            'TRANSFAC_and_JASPAR_PWMs',
-        ]
-
         def _run(list_dbs):
             # Create a Pandas Excel writer using XlsxWriter as the engine.
             all_df = []
@@ -386,9 +355,6 @@ class Enrichr(object):
                     continue
                 df['db'] = i
                 all_df.append(df)
-
-            # Close the Pandas Excel writer and output the Excel file.
-            # writer.save()
             return pd.concat(all_df, ignore_index=True)
 
         if db == 'transcription_factors':
@@ -401,6 +367,131 @@ class Enrichr(object):
             return _run(disease_drug)
         if db == 'ontologies':
             return _run(ontologies)
+
+    def run_sample_set_of_dbs(self, sample_lists, sample_ids, save_name=None,
+                              db='pathways', ):
+        assert isinstance(sample_lists, list), "Please provide list of lists"
+        assert isinstance(sample_lists[0],
+                          list), "Please provide list of lists"
+        df_all = []
+        for i, j in zip(sample_lists, sample_ids):
+            # print("{} / {}".format(j, sample_ids))
+            df = self.run_set_of_dbs(i, db)
+            df['sample_id'] = j
+            df_all.append(df)
+        df_all = pd.concat(df_all)
+        non_sig = []
+        for i, g in df_all.groupby(['term_name', 'db']):
+            if len(g[g['adj_p_value'] < 0.05]) == 0:
+                non_sig.append(i[0])
+
+        df_all = df_all[~df_all['term_name'].isin(non_sig)]
+
+        if df_all.shape[0] == 0:
+            print("No significant terms for {}".format(db))
+            return None
+        index = ['term_name', 'db']
+
+        if 'term_id' in list(df.columns):
+            index.insert(0, 'term_id')
+
+        p_df = pd.pivot_table(df_all, index=index,
+                              columns='sample_id',
+                              values=['term_name', 'rank', 'p_value',
+                                      'z_score',
+                                      'combined_score', 'adj_p_value',
+                                      'genes'],
+                              aggfunc='first', fill_value=np.nan
+                              )
+
+        if save_name:
+            p_df.to_excel('{}_enricher.xlsx'.format(save_name),
+                          merge_cells=True)
+            df_all.to_csv('{}_enrichr.csv'.format(save_name), index=False,
+                          encoding='utf8')
+
+        return p_df
+
+    def run_dbs_testing(self, list_g, labels, save_name):
+        """
+
+        Parameters
+        ----------
+        list_g : list_like
+            List of lists of genes
+        labels : list_like
+            List of lists of labels
+        save_name : str
+            prefix of names
+        Returns
+        -------
+
+        """
+
+        print("Working on {}".format(save_name))
+
+        names = []
+
+        def _run(list_dbs, db_name):
+            # Create a Pandas Excel writer using XlsxWriter as the engine.
+
+            print("\tWorking on {}".format(db_name))
+            all_df = []
+            for i in list_dbs:
+                print("\t\tRunning {}".format(i))
+
+                df = self.run_samples(sample_lists=list_g, sample_ids=labels,
+                                      gene_set_lib=i
+                                      )
+                if df is None:
+                    continue
+                df['db'] = i
+                all_df.append(df)
+
+            all_df = pd.concat(all_df)
+            sn = '{}_{}.csv'.format(db_name, save_name)
+            all_df.to_csv(sn, encoding='utf8')
+            names.append(sn)
+
+        _run(transcription_factors, 'transcription_factors')
+        _run(pathways, 'pathways')
+        _run(kinase, 'kinases')
+        _run(disease_drug, 'drug_and_disease')
+        _run(ontologies, 'ontologies')
+
+        writer = pd.ExcelWriter('{}.xlsx'.format(save_name),
+                                engine='xlsxwriter')
+        for i in names:
+            df = pd.read_csv(i)
+            df.to_excel(writer, sheet_name=i.split('_')[0], merge_cells=True,
+                        freeze_panes=(2, 1), encoding='utf8')
+        writer.save()
+
+
+def get_background_list(lib_name):
+    """
+    Return reference list for given gene referecen set
+
+    Parameters
+    ----------
+    lib_name : str
+
+    Returns
+    -------
+
+    """
+
+    # http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?mode=text&libraryName=Genes_Associated_with_NIH_Grants
+
+    enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary'
+    query_string = '?userListId&libraryName=%s'
+    response = requests.get(
+            enrichment_url + query_string % lib_name
+    )
+    if not response.ok:
+        raise Exception('Error fetching enrichment results')
+
+    return json.loads(response.text)
 
 
 def write_table_to_html(data, save_name='index', out_dir=None,
@@ -590,8 +681,9 @@ if __name__ == '__main__':
               'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
               'ATF7', 'ATP5F1']
 
-    df = e.run(g_list, 'GO_Biological_Process_2017')
+    # df = e.run(g_list, 'GO_Biological_Process_2017')
     lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
-    df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
+    # df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
+    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')
     # print(df.head(10))
