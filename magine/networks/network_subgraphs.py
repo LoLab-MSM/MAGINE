@@ -234,11 +234,9 @@ class NetworkSubgraphs(object):
             max_dist = 3
 
         sg = nx.DiGraph()
-        print("Finding {} distance from {}".format(max_dist, node))
 
         def _get_upstream(n):
             upstream = self.network.predecessors(n)
-            print("Node = {}, Upstream = {}".format(n, upstream))
             for i in upstream:
                 if i != n:
                     sg.add_edge(i, n, **self.network[i][n])
@@ -254,7 +252,6 @@ class NetworkSubgraphs(object):
         up_layer = [node]
         down_layer = [node]
         for i in range(1, max_dist + 1):
-            print("Distance {}".format(i))
             if up:
                 new_up_layer = set()
                 for n in up_layer:

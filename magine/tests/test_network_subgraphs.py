@@ -89,9 +89,9 @@ class TestSubgraphs(object):
         assert set(g.nodes()) == nodes
 
     def test_neighbor(self):
-        gene = 'BAX'
+        gene = u'BAX'
         g = self.net_sub.neighbors(gene, True, False, 1)
-        layer_1_up = [u'BCL2L1', u'SIRT1', u'BCL2L11', u'BID', u'PRNP', 'BAX',
+        layer_1_up = [u'BCL2L1', u'SIRT1', u'BCL2L11', u'BID', u'PRNP', u'BAX',
                       u'MAPK14', u'MAPK10', u'MAPK11', u'MAPK12', u'MAPK13',
                       u'TP53', u'MAPK8', u'MAPK9', u'BCL2']
 
@@ -124,7 +124,8 @@ class TestSubgraphs(object):
                       u'DUSP6', u'HSPA1B', u'EIF2AK1', u'EIF2AK3', u'EIF2AK2',
                       u'BMPR1B', u'TP73', u'STAT5B', u'STAT5A', u'RIPK2',
                       u'ERN1', u'MIR125A', u'MAP2K6', u'TGFB1', u'TGFB2',
-                      u'PTK2', u'ACVR1', u'MIR30E', u'FCGR3A', 'BAX', u'FCGR3B',
+                      u'PTK2', u'ACVR1', u'MIR30E', u'FCGR3A', u'BAX',
+                      u'FCGR3B',
                       u'MAP2K3', u'BMPR1A', u'BAD', u'CTSK', u'MAP2K7', u'MCL1',
                       u'MAP2K4', u'BBC3', u'HSPA1L', u'RCHY1', u'CREB3L2',
                       u'BCL2L11', u'CREB3L3', u'BID', u'SOD1', u'NRAS',
@@ -138,7 +139,7 @@ class TestSubgraphs(object):
         assert g.nodes() == layer_2_up
 
         g = self.net_sub.neighbors(gene, False, True, 1)
-        layer_1_down = [u'CASP3', u'CYCS', 'BAX', u'CAPN2', u'CAPN1', u'BCL2']
+        layer_1_down = [u'CASP3', u'CYCS', u'BAX', u'CAPN2', u'CAPN1', u'BCL2']
         assert g.nodes() == layer_1_down
 
         g = self.net_sub.neighbors(gene, False, True, 2)
@@ -146,7 +147,7 @@ class TestSubgraphs(object):
                         u'CASP9', u'NLRP1', u'BIK', u'MAP3K1', u'TLN2', u'DCC',
                         u'TLN1', u'CDK5R1', u'CAPN2', u'CAPN1', u'APAF1',
                         u'PARP4', u'DFFA', u'PARP2', u'PARP1', u'STK3', u'STK4',
-                        'BAX', u'PARP3', u'CASP7', u'TP53', u'CASP3', u'BAD',
+                        u'BAX', u'PARP3', u'CASP7', u'TP53', u'CASP3', u'BAD',
                         u'BAK1', u'ACTB', u'PAK1', u'PAK2', u'BCL2']
 
         assert g.nodes() == layer_2_down
