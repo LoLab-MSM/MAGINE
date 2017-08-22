@@ -89,68 +89,65 @@ class TestSubgraphs(object):
         assert set(g.nodes()) == nodes
 
     def test_neighbor(self):
-        gene = u'BAX'
+        gene = 'BAX'
         g = self.net_sub.neighbors(gene, True, False, 1)
-        layer_1_up = [u'BCL2L1', u'SIRT1', u'BCL2L11', u'BID', u'PRNP', u'BAX',
-                      u'MAPK14', u'MAPK10', u'MAPK11', u'MAPK12', u'MAPK13',
-                      u'TP53', u'MAPK8', u'MAPK9', u'BCL2']
-
-        assert g.nodes() == layer_1_up
+        layer_1_up = {'BAX', 'BCL2', 'BCL2L1', 'BCL2L11', 'BID', 'MAPK10',
+                      'MAPK11', 'MAPK12', 'MAPK13', 'MAPK14', 'MAPK8',
+                      'MAPK9', 'PRNP', 'SIRT1', 'TP53'}
+        assert set(g.nodes()) == layer_1_up
 
         g = self.net_sub.neighbors(gene, True, False, 2)
-        layer_2_up = [u'BCL2L1', u'HSPA2', u'PMAIP1', u'HSPA6', u'MIR32',
-                      u'MIR30D', u'PPP2R3B', u'PPP2R3C', u'HSPA8', u'RAPGEF4',
-                      u'AKT1', u'AKT2', u'AKT3', u'ARAF', u'FCGR1A', u'RAPGEF3',
-                      u'MIR30A', u'MIR15A', u'EP300', u'HMDB03125', u'MAP3K1',
-                      u'PRNP', u'MAP3K7', u'PPP2R1B', u'MAP3K5', u'HSPA1A',
-                      u'MIR30C2', u'MIR30C1', u'RELA', u'KRAS', u'CTSH',
-                      u'DDIT3', u'CTSL', u'CTSO', u'PPP2R2D', u'CTSB', u'CTSC',
-                      u'CTSD', u'CTSF', u'PPP2R2B', u'MIR125B1', u'CTSZ',
-                      u'HMDB00902', u'MIR30B', u'MDM2', u'CTSS', u'MDM4',
-                      u'CTSV', u'CTSW', u'PPP2R3A', u'PPP2CA', u'PPP2CB',
-                      u'PPP2R5B', u'BMPR2', u'LAT', u'ATR', u'HRAS', u'EIF2AK4',
-                      u'TRAF3', u'PINK1', u'IL1R1', u'TRAF5', u'MIR223',
-                      u'MIR143', u'JUN', u'MAPK8IP1', u'CHEK2', u'CHEK1',
-                      u'SIRT1', u'NR4A1', u'FOS', u'PRKCD', u'RHOA', u'PTPN7',
-                      u'PTPN5', u'TP53', u'GZMB', u'TNF', u'PPP2R5D',
-                      u'PPP2R5E', u'CDC42', u'RALB', u'RALA', u'PPP2R5C',
-                      u'MAP2K1', u'PPP2R1A', u'MIR34A', u'ATM', u'RAP1B',
-                      u'RAP1A', u'PRKDC', u'MAPK14', u'TGFB3', u'MAPK10',
-                      u'MAPK11', u'MAPK12', u'MAPK13', u'RAF1', u'CREBBP',
-                      u'HMDB04947', u'MECOM', u'MAPK3', u'MAPK1', u'DUSP9',
-                      u'DUSP8', u'DUSP5', u'NFKB1', u'MAPK8', u'MAPK9',
-                      u'DUSP1', u'DUSP3', u'DUSP2', u'CREB1', u'PPP2R2C',
-                      u'DUSP4', u'USP7', u'NFKB2', u'MAPK8IP2', u'FOXO3',
-                      u'DUSP6', u'HSPA1B', u'EIF2AK1', u'EIF2AK3', u'EIF2AK2',
-                      u'BMPR1B', u'TP73', u'STAT5B', u'STAT5A', u'RIPK2',
-                      u'ERN1', u'MIR125A', u'MAP2K6', u'TGFB1', u'TGFB2',
-                      u'PTK2', u'ACVR1', u'MIR30E', u'FCGR3A', u'BAX',
-                      u'FCGR3B',
-                      u'MAP2K3', u'BMPR1A', u'BAD', u'CTSK', u'MAP2K7', u'MCL1',
-                      u'MAP2K4', u'BBC3', u'HSPA1L', u'RCHY1', u'CREB3L2',
-                      u'BCL2L11', u'CREB3L3', u'BID', u'SOD1', u'NRAS',
-                      u'CREB3L1', u'CREB5', u'TRAF1', u'TRAF2', u'NOS3',
-                      u'RAC2', u'RAC3', u'TRAF6', u'RAC1', u'PRKCA', u'CREB3',
-                      u'PRKCB', u'PRKCE', u'FCGR2C', u'FCGR2A', u'PRKCZ',
-                      u'HMDB03747', u'IL1RAP', u'DUSP16', u'DUSP10', u'PTPRR',
-                      u'MIR125B2', u'CASP8', u'PPP2R5A', u'PPP2R2A', u'MAP3K11',
-                      u'DUSP7', u'BRAF', u'CREB3L4', u'ATF4', u'ATF6B', u'ATF2',
-                      u'BCL2']
-        assert g.nodes() == layer_2_up
+        layer_2_up = {'BCL2L1', 'HSPA2', 'PMAIP1', 'HSPA6', 'MIR32', 'MIR30D',
+                      'PPP2R3B', 'PPP2R3C', 'HSPA8', 'RAPGEF4', 'AKT1', 'AKT2',
+                      'AKT3', 'ARAF', 'FCGR1A', 'RAPGEF3', 'MIR30A', 'MIR15A',
+                      'EP300', 'HMDB03125', 'MAP3K1', 'PRNP', 'MAP3K7',
+                      'PPP2R1B', 'MAP3K5', 'HSPA1A', 'MIR30C2', 'MIR30C1',
+                      'RELA', 'KRAS', 'CTSH', 'DDIT3', 'CTSL', 'CTSO',
+                      'PPP2R2D', 'CTSB', 'CTSC', 'CTSD', 'CTSF', 'PPP2R2B',
+                      'MIR125B1', 'CTSZ', 'HMDB00902', 'MIR30B', 'MDM2', 'CTSS',
+                      'MDM4', 'CTSV', 'CTSW', 'PPP2R3A', 'PPP2CA', 'PPP2CB',
+                      'PPP2R5B', 'BMPR2', 'LAT', 'ATR', 'HRAS', 'EIF2AK4',
+                      'TRAF3', 'PINK1', 'IL1R1', 'TRAF5', 'MIR223',
+                      'MIR143', 'JUN', 'MAPK8IP1', 'CHEK2', 'CHEK1',
+                      'SIRT1', 'NR4A1', 'FOS', 'PRKCD', 'RHOA', 'PTPN7',
+                      'PTPN5', 'TP53', 'GZMB', 'TNF', 'PPP2R5D',
+                      'PPP2R5E', 'CDC42', 'RALB', 'RALA', 'PPP2R5C',
+                      'MAP2K1', 'PPP2R1A', 'MIR34A', 'ATM', 'RAP1B',
+                      'RAP1A', 'PRKDC', 'MAPK14', 'TGFB3', 'MAPK10',
+                      'MAPK11', 'MAPK12', 'MAPK13', 'RAF1', 'CREBBP',
+                      'HMDB04947', 'MECOM', 'MAPK3', 'MAPK1', 'DUSP9',
+                      'DUSP8', 'DUSP5', 'NFKB1', 'MAPK8', 'MAPK9',
+                      'DUSP1', 'DUSP3', 'DUSP2', 'CREB1', 'PPP2R2C',
+                      'DUSP4', 'USP7', 'NFKB2', 'MAPK8IP2', 'FOXO3',
+                      'DUSP6', 'HSPA1B', 'EIF2AK1', 'EIF2AK3', 'EIF2AK2',
+                      'BMPR1B', 'TP73', 'STAT5B', 'STAT5A', 'RIPK2',
+                      'ERN1', 'MIR125A', 'MAP2K6', 'TGFB1', 'TGFB2',
+                      'PTK2', 'ACVR1', 'MIR30E', 'FCGR3A', 'BAX', 'MCL1',
+                      'FCGR3B', 'MAP2K3', 'BMPR1A', 'BAD', 'CTSK', 'MAP2K7',
+                      'MAP2K4', 'BBC3', 'HSPA1L', 'RCHY1', 'CREB3L2',
+                      'BCL2L11', 'CREB3L3', 'BID', 'SOD1', 'NRAS',
+                      'CREB3L1', 'CREB5', 'TRAF1', 'TRAF2', 'NOS3',
+                      'RAC2', 'RAC3', 'TRAF6', 'RAC1', 'PRKCA', 'CREB3',
+                      'PRKCB', 'PRKCE', 'FCGR2C', 'FCGR2A', 'PRKCZ',
+                      'HMDB03747', 'IL1RAP', 'DUSP16', 'DUSP10', 'PTPRR',
+                      'MIR125B2', 'CASP8', 'PPP2R5A', 'PPP2R2A', 'MAP3K11',
+                      'DUSP7', 'BRAF', 'CREB3L4', 'ATF4', 'ATF6B', 'ATF2',
+                      'BCL2'}
+        assert set(g.nodes()) == layer_2_up
 
         g = self.net_sub.neighbors(gene, False, True, 1)
-        layer_1_down = [u'CASP3', u'CYCS', u'BAX', u'CAPN2', u'CAPN1', u'BCL2']
-        assert g.nodes() == layer_1_down
+        layer_1_down = {'CASP3', 'CYCS', 'BAX', 'CAPN2', 'CAPN1', 'BCL2'}
+        assert set(g.nodes()) == layer_1_down
 
         g = self.net_sub.neighbors(gene, False, True, 2)
-        layer_2_down = [u'ACTG1', u'SPTAN1', u'CYCS', u'SPTA1', u'CASP12',
-                        u'CASP9', u'NLRP1', u'BIK', u'MAP3K1', u'TLN2', u'DCC',
-                        u'TLN1', u'CDK5R1', u'CAPN2', u'CAPN1', u'APAF1',
-                        u'PARP4', u'DFFA', u'PARP2', u'PARP1', u'STK3', u'STK4',
-                        u'BAX', u'PARP3', u'CASP7', u'TP53', u'CASP3', u'BAD',
-                        u'BAK1', u'ACTB', u'PAK1', u'PAK2', u'BCL2']
+        layer_2_down = {'ACTG1', 'SPTAN1', 'CYCS', 'SPTA1', 'CASP12',
+                        'CASP9', 'NLRP1', 'BIK', 'MAP3K1', 'TLN2', 'DCC',
+                        'TLN1', 'CDK5R1', 'CAPN2', 'CAPN1', 'APAF1',
+                        'PARP4', 'DFFA', 'PARP2', 'PARP1', 'STK3', 'STK4',
+                        'BAX', 'PARP3', 'CASP7', 'TP53', 'CASP3', 'BAD',
+                        'BAK1', 'ACTB', 'PAK1', 'PAK2', 'BCL2'}
 
-        assert g.nodes() == layer_2_down
+        assert set(g.nodes()) == layer_2_down
 
 
 if __name__ == '__main__':
