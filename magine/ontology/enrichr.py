@@ -71,7 +71,23 @@ disease_drug = [
     'OMIM_Expanded',
 ]
 
+all_dbs = [
+    'GO_Biological_Process_2017',
+    'GO_Molecular_Function_2017',
+    'GO_Cellular_Component_2017',
+    'KEGG_2016',
+    'NCI-Nature_2016',
+    'Panther_2016',
+    'WikiPathways_2016',
+    'BioCarta_2016',
+    'Humancyc_2016',
+    'Reactome_2016',
+    'KEA_2015',
+    'ChEA_2016',
+    'DrugMatrix',
+    'Drug_Perturbations_from_GEO_2014',
 
+]
 class Enrichr(object):
     def __init__(self, exp_data=None):
         self._url = 'http://amp.pharm.mssm.edu/Enrichr/addList'
@@ -161,11 +177,10 @@ class Enrichr(object):
                 'adj_p_value', 'genes', 'n_genes']
 
         df = pd.DataFrame(list_of_dict, columns=cols)
-
         if df.shape[0] == 0:
             return df[cols]
 
-        if gene_set_lib.startswith('GO'):
+        if gene_set_lib.startswith('GO') and not gene_set_lib.endswith('b'):
             def get_go_id(row):
                 s = row['term_name']
                 go_id = re.search(r'\((GO.*?)\)', s).group(1)
@@ -177,10 +192,8 @@ class Enrichr(object):
                 return term
 
             df['term_id'] = df.apply(get_go_id, axis=1)
+            df['term_name'] = df.apply(remove_term_id, axis=1)
 
-            term_names = df.apply(remove_term_id, axis=1)
-
-            df['term_name'] = term_names
             cols.insert(0, 'term_id')
         if verbose:
             print("Done calling Enrichr.")
@@ -324,11 +337,11 @@ class Enrichr(object):
 
         h1 = _run(transcription_factors, 'transcription_factors')
         h2 = _run(pathways, 'pathways')
-        h3 = _run(kinase, 'kinases')
-        h4 = _run(disease_drug, 'drug_and_disease')
-        h5 = _run(ontologies, 'ontologies')
+        # h3 = _run(kinase, 'kinases')
+        # h4 = _run(disease_drug, 'drug_and_disease')
+        # h5 = _run(ontologies, 'ontologies')
 
-        return [h1, h2, h3, h4, h5]
+        # return [h1, h2, h3, h4, h5]
 
     def run_set_of_dbs(self, list_g, db='drug'):
         """
@@ -367,6 +380,8 @@ class Enrichr(object):
             return _run(disease_drug)
         if db == 'ontologies':
             return _run(ontologies)
+        if db == 'all':
+            return _run(all_dbs)
 
     def run_sample_set_of_dbs(self, sample_lists, sample_ids, save_name=None,
                               db='pathways', ):
