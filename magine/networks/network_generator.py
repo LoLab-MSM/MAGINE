@@ -3,13 +3,14 @@
 File that generates networks
 """
 import os
+
 import networkx as nx
 import numpy as np
 
+import magine.mappings.maps as mapper
 import magine.networks.network_tools as nt
 from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
-import magine.mappings.maps as mapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
 
 try:
@@ -79,7 +80,7 @@ def build_network(gene_list, save_name='tmp', species='hsa',
 
     for each in pathway_list:
         tmp = nx.read_gpickle(
-            os.path.join(_kegg_raw_out_path, "{}.p".format(each)))
+                os.path.join(_kegg_raw_out_path, "{}.p".format(each)))
         for n in tmp.nodes():
             if isinstance(n, float):
                 print("Found the float... {}".format(each))
@@ -193,8 +194,15 @@ def expand_by_hmdb(graph, metabolite_list):
 
     def _add_node(node, node_type):
         if node != u'':
-            tmp_graph.add_node(node, speciesType=node_type,
-                               databaseSource='HMDB')
+            attrs = dict()
+            attrs['databaseSource'] = 'HMDB'
+            attrs['speciesType'] = node_type
+            if node_type == 'compound':
+                if node in cm.hmdb_accession_to_chemical_name:
+                    name = cm.hmdb_accession_to_chemical_name[node]
+                    attrs['chemName'] = name
+
+            tmp_graph.add_node(node, **attrs)
 
     def _add_edge(source, target):
         if source != u'' and target != u'':
@@ -265,7 +273,7 @@ def expand_by_hmdb(graph, metabolite_list):
     out.append('Number of add proteins = {0}'.format(len(added_proteins)))
     out.append(','.join(added_proteins))
     out.append('missing metabolites-protein info = {0}'.format(
-        missing_protein_info))
+            missing_protein_info))
     print('\n'.join(out))
     return tmp_graph
 
@@ -308,11 +316,11 @@ def expand_by_reactome(network, measured_list):
     new_graph = nt.compose(new_graph, network, "ReactomeExpansion")
 
     print("Nodes before Reactome expansion = {}, after = {}".format(
-        len(network.nodes()), len(new_graph.nodes()))
+            len(network.nodes()), len(new_graph.nodes()))
     )
 
     print("Edges before Reactome expansion = {}, after = {}".format(
-        len(network.edges()), len(new_graph.edges()))
+            len(network.edges()), len(new_graph.edges()))
     )
 
     return new_graph
@@ -331,14 +339,18 @@ def create_hmdb_network():
     cm = ChemicalMapper()
 
     tmp_graph = nx.DiGraph()
-    nodes = set()
 
     def _add_node(node, node_type):
         if node != u'':
-            if node not in nodes:
-                tmp_graph.add_node(node, speciesType=node_type,
-                                   databaseSource='HMDB')
-                nodes.add(node)
+            attrs = dict()
+            attrs['databaseSource'] = 'HMDB'
+            attrs['speciesType'] = node_type
+            if node_type == 'compound':
+                if node in cm.hmdb_accession_to_chemical_name:
+                    name = cm.hmdb_accession_to_chemical_name[node]
+                    attrs['chemName'] = name
+
+            tmp_graph.add_node(node, **attrs)
 
     def _add_edge(source, target):
         if source != u'' and target != u'':
@@ -379,14 +391,15 @@ def create_background_network(save_name='background_network'):
     kegg_network = create_all_of_kegg()
     bgn = create_biogrid_network()
     full_network = nt.compose_all(
-        [reactome_network, hmdb_network, kegg_network, bgn],
-        'background')
+            [reactome_network, hmdb_network, kegg_network, bgn],
+            'background')
 
     print("Background network {} nodes and {} edges"
           "".format(len(full_network.nodes()), len(full_network.edges()))
           )
 
     nx.write_gpickle(full_network, '{}.p'.format(save_name))
+
 
 if __name__ == '__main__':
     create_background_network()

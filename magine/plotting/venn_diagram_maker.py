@@ -1,11 +1,11 @@
-import matplotlib.pyplot as plt
-from matplotlib_venn import venn3 as _venn3
-from matplotlib_venn import venn2 as _venn2
 import os
+
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2 as _venn2, venn3 as _venn3
 
 
 def create_venn3(list1, list2, list3, label1, label2, label3, save_name,
-                 out_dir=None, image_format='png'):
+                 out_dir=None, image_format='png', title=None):
     """
     
     Parameters
@@ -22,6 +22,7 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name,
         location to save figure
     image_format : str
         default png
+    title: str
 
     Returns
     -------
@@ -37,11 +38,13 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name,
     save_name = "{}.{}".format(save_name, image_format)
     if out_dir is not None:
         save_name = os.path.join(out_dir, save_name)
+    if title:
+        plt.title(title)
     plt.savefig(save_name, bbox_inches='tight')
     plt.close()
 
 
-def create_venn2(list1, list2, label1, label2,  save_name,
+def create_venn2(list1, list2, label1, label2, save_name, title=None,
                  out_dir=None, image_format='png'):
     """
     
@@ -68,5 +71,7 @@ def create_venn2(list1, list2, label1, label2,  save_name,
     save_name = "{}.{}".format(save_name, image_format)
     if out_dir is not None:
         save_name = os.path.join(out_dir, save_name)
+    if title is not None:
+        plt.title(title)
     plt.savefig(save_name, bbox_inches='tight')
     plt.close()

@@ -232,8 +232,9 @@ class NetworkSubgraphs(object):
         if max_dist > 3:
             print("Max distance is 3. Big networks")
             max_dist = 3
-
         sg = nx.DiGraph()
+        if node not in self.nodes:
+            return sg
 
         def _get_upstream(n):
             upstream = self.network.predecessors(n)

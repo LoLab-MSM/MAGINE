@@ -1,10 +1,12 @@
 import io
 import os
 import sys
+
 import networkx as nx
 import pandas as pd
-from magine.mappings import ChemicalMapper
+
 from magine.data.storage import network_data_dir
+from magine.mappings import ChemicalMapper
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
@@ -13,7 +15,6 @@ else:
 
 
 class BioGridDownload(object):
-
     def __init__(self):
         self.url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-ALL-LATEST.tab2.zip'
         self.url2 = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-CHEMICALS-LATEST.chemtab.zip'
@@ -71,7 +72,7 @@ class BioGridDownload(object):
                 if node not in nodes_added:
                     chem_g.add_node(node,
                                     speciesType=node_type,
-                                    chemicalName=name,
+                                    chemName=name,
                                     databaseSource='BioGrid',
                                     atcCode=atc_code,
                                     chemSource=chem_source,
@@ -150,6 +151,7 @@ class BioGridDownload(object):
                                speciesType='gene'
                                )
                     added_genes.add(node)
+
             _add_node(gene1)
             _add_node(gene2)
 
@@ -176,7 +178,6 @@ class BioGridDownload(object):
               "".format(len(g.nodes()), len(g.edges())))
 
         nx.write_gpickle(g, os.path.join(network_data_dir, 'biogrid.p'))
-        # nx.write_gml(g, os.path.join(network_data_dir, 'biogrid.gml'))
         return g
 
 

@@ -613,7 +613,7 @@ class ExperimentalData(object):
             else:
                 n_cols += 1
 
-        fig = plt.figure(figsize=(3 * n_rows, 3 * n_cols))
+        fig = plt.figure(figsize=(4 * n_rows, 3 * n_cols))
         for n, i in enumerate(n_sample):
             sample = data[data[sample_id] == i].copy()
             print(sample[[p_val, fold_change]])

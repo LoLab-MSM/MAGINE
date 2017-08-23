@@ -33,9 +33,9 @@ cols = ['compound', 'compound_id', 'name', 'formula',
 
 rename_met_dict = {
     'max_fold_change_treated_vs_control': "treated_control_fold_change",
-    "anova_p": "p_value_group_1_and_group_2",
-    'phase': 'data_type',
-    "experiment_type": "species_type"
+    "anova_p":                            "p_value_group_1_and_group_2",
+    'phase':                              'data_type',
+    "experiment_type":                    "species_type"
 }
 
 valid_exp_data_types = ['label_free', 'ph_silac', 'silac', 'rna_seq',
@@ -295,7 +295,7 @@ def _process_rna_seq(data):
     # data = data[~data.gene.str.contains(',')]
     data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
     data['treated_control_fold_change'] = np.exp2(
-        data['log2_fold_change'].astype(float))
+            data['log2_fold_change'].astype(float))
 
     crit_1 = data['treated_control_fold_change'] < 1
     data.loc[crit_1, 'treated_control_fold_change'] = \
@@ -356,7 +356,7 @@ def _process_metabolites(data):
 
 def _process_label_free(data, subcell=False):
     label_free = data.copy()
-    label_free['data_type'] = 'label_free'
+
     label_free['gene'] = label_free['primary_genes'].astype(str)
     label_free = label_free[label_free['gene'] != 'nan']
 
@@ -389,6 +389,12 @@ def _process_label_free(data, subcell=False):
     #     label_free['Final Significance'] == 1, 'significant_flag'] = True
 
     label_free['species_type'] = 'protein'
+    if 'experiment_type' in label_free:
+        label_free['data_type'] = \
+            'label_free_' + label_free['experiment_type'].str.replace(' ', '_')
+    else:
+        label_free['data_type'] = 'label_free'
+
     if subcell:
         label_free['data_type'] = label_free['data_type'] + label_free[
             'sample_component']
@@ -414,7 +420,7 @@ def _process_subcell_label_free(data):
         label_free['translocation'].isnull(), 'translocation'] = False
     label_free = label_free[label_free['translocation']]
 
-    label_free['data_type'] = 'label_free_' + label_free['sample_component']
+    label_free['data_type'] = 'label_free_translocation'
     label_free['gene'] = label_free['primary_genes'].astype(str)
     label_free = label_free[label_free['gene'] != 'nan']
 
@@ -456,6 +462,7 @@ def _process_subcell_label_free(data):
     label_free = label_free[headers]
     # label_free.to_csv('label_free.csv', index=False)
     return label_free
+
 
 def _process_silac(data):
     data.loc[:, 'data_type'] = 'silac'
@@ -570,7 +577,7 @@ def pivot_raw_gene_data(data, save_name=None):
     cols = ['compound', 'compound_id',
             'treated_control_fold_change',
             'p_value_group_1_and_group_2', 'significant_flag',
-            'data_type', 'time', 'time_points',
+            'data_type', 'time',  # 'time_points',
             ]
     prot = data[data['species_type'] == 'protein'][headers1]
 
@@ -641,7 +648,7 @@ def log2_normalize_df(df, fold_change):
     greater_than = tmp_df[fold_change] > 0
     less_than = tmp_df[fold_change] < 0
     tmp_df.loc[greater_than, 'log2fc'] = np.log2(
-        tmp_df[greater_than][fold_change].astype(np.float64))
+            tmp_df[greater_than][fold_change].astype(np.float64))
     tmp_df.loc[less_than, 'log2fc'] = -np.log2(
-        -tmp_df[less_than][fold_change].astype(np.float64))
+            -tmp_df[less_than][fold_change].astype(np.float64))
     return tmp_df
