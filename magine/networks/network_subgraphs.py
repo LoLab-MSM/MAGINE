@@ -233,20 +233,25 @@ class NetworkSubgraphs(object):
             print("Max distance is 3. Big networks")
             max_dist = 3
         sg = nx.DiGraph()
+
         if node not in self.nodes:
             return sg
 
-        def _get_upstream(n):
-            upstream = self.network.predecessors(n)
+        sg.add_node(node, **self.network.node[node])
+
+        def _get_upstream(new_node):
+            upstream = self.network.predecessors(new_node)
             for i in upstream:
-                if i != n:
-                    sg.add_edge(i, n, **self.network[i][n])
+                if i != new_node:
+                    sg.add_node(i, **self.network.node[i])
+                    sg.add_edge(i, new_node, **self.network[i][new_node])
             return set(upstream)
 
         def _get_downstream(n):
             downstream = self.network.successors(n)
             for i in downstream:
                 if i != n:
+                    sg.add_node(i, **self.network.node[i])
                     sg.add_edge(n, i, **self.network[n][i])
             return set(downstream)
 
