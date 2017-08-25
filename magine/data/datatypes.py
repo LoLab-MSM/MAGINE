@@ -811,7 +811,7 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
             n = len(loc[gene_index].dropna().unique())
         unique_col[i] = int(n)
 
-    t['Total Unique Across '] = pandas.Series(unique_col, index=t.index)
+    t['Total Unique Across'] = pandas.Series(unique_col, index=t.index)
 
     if plot:
         ax = plt.subplot(111, frame_on=False)

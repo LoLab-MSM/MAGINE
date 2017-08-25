@@ -25,12 +25,6 @@ def download_all_of_kegg(species='hsa'):
     """
     Downloads every KEGG pathway to provided directory
 
-
-    Parameters
-    ----------
-    output_dir : str
-        path to download pathways
-
     """
     print("Downloading KEGG")
     if not os.path.exists(_kegg_raw_out_path):
@@ -160,43 +154,42 @@ def find_kegg_pathways(protein_names, num_overlap=1, download=True,
 
 def create_all_of_kegg(species='hsa'):
     p_name = os.path.join(_kegg_raw_out_path, 'all_of_kegg.p')
-    out_name = os.path.join(_kegg_raw_out_path, "all_of_kegg.gml")
 
     if os.path.exists(p_name):
-        return nx.read_gpickle(p_name)
+        all_of_kegg = nx.read_gpickle(p_name)
 
-    if not os.path.exists(_kegg_node_to_pathway):
-        download_all_of_kegg(species=species)
+    else:
+        if not os.path.exists(_kegg_node_to_pathway):
+            download_all_of_kegg(species=species)
 
-    node_to_path = pickle.load(open(_kegg_node_to_pathway, 'rb'))
-    pathway_list = set()
-    for nodes, paths in node_to_path.items():
-        for j in paths:
-            pathway_list.add(str(j.replace(':', '')[4:]))
-    all_of_kegg = nx.DiGraph()
+        node_to_path = pickle.load(open(_kegg_node_to_pathway, 'rb'))
+        pathway_list = set()
+        for nodes, paths in node_to_path.items():
+            for j in paths:
+                pathway_list.add(str(j.replace(':', '')[4:]))
+        all_of_kegg = nx.DiGraph()
 
-    for each in pathway_list:
-        tmp = nx.read_gpickle(
-                os.path.join(_kegg_raw_out_path, "{}.p".format(each))
-        )
-        all_of_kegg = nx.compose(all_of_kegg, tmp)
+        for each in pathway_list:
+            tmp = nx.read_gpickle(
+                    os.path.join(_kegg_raw_out_path, "{}.p".format(each))
+            )
+            all_of_kegg = nx.compose(all_of_kegg, tmp)
 
-    drug_dict = {}
-    for i in all_of_kegg.nodes():
-        if i.startswith('dr'):
-            split_name = i.split()
-            if len(split_name) > 1:
-                if split_name[1].startswith('cpd:'):
-                    drug_dict[i] = split_name[1]
-                    all_of_kegg.node[i]['drug'] = split_name[0]
-    all_of_kegg = nx.relabel_nodes(all_of_kegg, drug_dict)
-    all_of_kegg = mapper.convert_all(all_of_kegg, species=species)
+        drug_dict = {}
+        for i in all_of_kegg.nodes():
+            if i.startswith('dr'):
+                split_name = i.split()
+                if len(split_name) > 1:
+                    if split_name[1].startswith('cpd:'):
+                        drug_dict[i] = split_name[1]
+                        all_of_kegg.node[i]['drug'] = split_name[0]
+        all_of_kegg = nx.relabel_nodes(all_of_kegg, drug_dict)
+        all_of_kegg = mapper.convert_all(all_of_kegg, species=species)
+        nx.write_gpickle(all_of_kegg, p_name)
 
-    print('All of kegg has {} nodes and {} '
-          'edges'.format(len(all_of_kegg.nodes()), len(all_of_kegg.edges())))
-
-    # nx.write_gml(all_of_kegg, out_name)
-    nx.write_gpickle(all_of_kegg, p_name)
+    print("KEGG network {} nodes and {} edges"
+          "".format(len(all_of_kegg.nodes()), len(all_of_kegg.edges()))
+          )
     return all_of_kegg
 
 

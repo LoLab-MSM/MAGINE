@@ -54,10 +54,12 @@ compound_manual = {'cpd:C07909': 'HMDB15015',
                    'cpd:C01561': 'HMDB03550',
                    'cpd:C04043': 'HMDB03791',
                    'cpd:C01165': 'HMDB02104',
-                   'cpd:C00025' : 'HMDB00148',
+                   'cpd:C00025': 'HMDB00148',
                    'cpd:C00696': 'HMDB01403',
+                   'cpd:C00124': 'HMDB00143',
 
                    }
+common_names_not_in_hmdb = {'cpd:C00124': 'D-Galactose'}
 
 
 def create_gene_dictionaries(network, species='hsa'):
@@ -91,7 +93,6 @@ def create_gene_dictionaries(network, species='hsa'):
         if str_gene.startswith(species):
             if str_gene in manual_dict:
                 kegg_to_gene_name[str_gene] = manual_dict[str_gene]
-                print(str_gene, manual_dict[str_gene])
                 continue
 
             tmp_name = str_gene.replace(species + ':', '')
@@ -208,26 +209,50 @@ def create_compound_dictionary(network):
     for i in nodes:
         if i.startswith('cpd:'):
             network.node[i]['keggName'] = i
+            if i in compound_manual:
+                loc = compound_manual[i]
+                if loc in cm.hmdb_accession_to_chemical_name:
+
+                    chem_names = []
+                    chem_names += [e for e in
+                                   cm.hmdb_accession_to_chemical_name[loc]]
+                    chem_names = '|'.join(
+                        chem_names)  # .decode('ascii', 'ignore')
+                    print(chem_names)
+                    network.node[i]['chemName'] = chem_names
+
+                    continue
+                else:
+                    print(i, compound_manual[i])
+                    if i in common_names_not_in_hmdb:
+                        network.node[i]['chemName'] = common_names_not_in_hmdb[
+                            i]
+                    else:
+                        print("Need to add common name for {}".format(i))
+                        network.node[i]['chemName'] = i.lstrip('cpd:')
+
             name_stripped = i.lstrip('cpd:')
             if name_stripped in cm.kegg_to_hmdb_accession:
                 mapping = cm.kegg_to_hmdb_accession[name_stripped]
                 if type(mapping) == list:
-                    names = '|'.join(i for i in mapping)
+                    names = '|'.join(mapping)
                     cpd_to_hmdb[i] = names
                     network.node[i]['hmdbNames'] = names
                     chem_names = []
                     for name in mapping:
                         if name in cm.hmdb_accession_to_chemical_name:
                             chem_names += [e for e in cm.hmdb_accession_to_chemical_name[name]]
-                    chem_names = '|'.join(e for e in chem_names)
-                    network.node[i]['chemName'] = chem_names.encode('ascii',
-                                                                    'ignore')
+                    chem_names = '|'.join(
+                        chem_names)  # .encode('ascii', 'ignore')
+                    print(chem_names)
+                    network.node[i]['chemName'] = chem_names
 
                 elif type(mapping) == str:
                     cpd_to_hmdb[i] = mapping
                     chem_n = cm.hmdb_accession_to_chemical_name[mapping]
                     print(chem_n)
-                    network.node[i]['chemName'] = chem_n
+                    network.node[i]['chemName'] = chem_n.encode('ascii',
+                                                                'ignore')
                 else:
                     print('Returned something else...', mapping)
             else:
