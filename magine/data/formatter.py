@@ -293,6 +293,11 @@ def _process_rna_seq(data):
     """
     data = data[data['status'] == 'OK']
     # data = data[~data.gene.str.contains(',')]
+    s = data['gene'].str.split(',').apply(pd.Series, 1).stack()
+    s.index = s.index.droplevel(-1)
+    s.name = 'gene'
+    del data['gene']
+    data = data.join(s)
     data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
     data['treated_control_fold_change'] = np.exp2(
             data['log2_fold_change'].astype(float))
