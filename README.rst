@@ -103,11 +103,4 @@ Installation
 Documentation
 -------------
 
-The manual is available online at http://docs.pysb.org/. You can also
-generate the documentation locally by installing Sphinx and running
-the following commands::
-
-    $ cd doc
-    $ make html
-
-Then open _build/html/index.html in your web browser.
+The manual is available online at http://magine.readthedocs.io.
