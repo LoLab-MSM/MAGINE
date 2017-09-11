@@ -545,6 +545,65 @@ def compress_edges(graph):
     return g
 
 
+def merge_nodes(graph):
+    """ merges nodes into single node if same neighbors
+
+    Parameters
+    ----------
+    graph: nx.DiGraph
+
+    Returns
+    -------
+    nx.DiGraph
+    """
+    neighbors2node = dict()
+
+    nodes = set(graph.nodes())
+    edges = set(graph.edges())
+
+    new_g = graph.copy()
+    for i in nodes:
+        down = '|'.join(sorted(graph.successors(i)))
+        up = '|'.join(sorted(graph.predecessors(i)))
+
+        if (down, up) in neighbors2node:
+            neighbors2node[(down, up)].add(i)
+        else:
+            neighbors2node[(down, up)] = {i}
+
+    for node, neigh in neighbors2node.items():
+        # print(node, neigh)
+        if len(neigh) > 1:
+            print(node, neigh)
+            new_name = '|'.join(sorted(neigh))
+            for x in node[0].split('|'):
+                if x != '':
+                    for n in neigh:
+                        if (x, n) in edges:
+                            new_g.remove_edge(x, n)
+                            new_g.add_edge(x, new_name, **graph.edge[x][n])
+                            edges.remove((x, n))
+
+            for x in node[1].split('|'):
+                if x != '':
+                    for n in neigh:
+                        if (n, x) in edges:
+                            new_g.remove_edge(n, x)
+                            new_g.add_edge(new_name, x, **graph.edge[n][x])
+                            edges.remove((n, x))
+    print(
+    "{} nodes and {} edges".format(len(graph.nodes()), len(graph.edges())))
+    print(
+    "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
+    for n in new_g.nodes():
+        if len(new_g.successors(n)) == 0 and len(new_g.predecessors(n)) == 0:
+            new_g.remove_node(n)
+
+    print(
+    "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
+    return new_g
+
+
 def remove_unmeasured_nodes(graph, measured):
     new_g = graph.copy()
     edge_info_dict = dict()

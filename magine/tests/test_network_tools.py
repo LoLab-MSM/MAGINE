@@ -1,4 +1,17 @@
 """
+import magine.networks.network_tools as nt
+import networkx as nx
+
+
+
+g = nx.read_gpickle('../networks/background_network.p')
+
+g = nt.merge_nodes(g)
+nx.write_gml(g, 'merged_nodes_test.gml')
+
+
+
+
 def test_compress():
     g = nx.DiGraph()
     g.add_node('A')
