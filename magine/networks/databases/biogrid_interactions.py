@@ -13,6 +13,8 @@ if sys.version_info[0] == 3:
 else:
     from urllib import urlopen
 
+_cm = ChemicalMapper()
+
 
 class BioGridDownload(object):
     def __init__(self):
@@ -21,7 +23,6 @@ class BioGridDownload(object):
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
         self._db_name = 'BioGrid'
-        self.cm = ChemicalMapper()
 
     def _create_chemical_network(self):
         chemical_int = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
@@ -89,8 +90,8 @@ class BioGridDownload(object):
                                 )
 
             if chem_source == 'DRUGBANK':
-                if chem_source_id in self.cm.drugbank_to_hmdb:
-                    source = self.cm.drugbank_to_hmdb[chem_source_id]
+                if chem_source_id in _cm.drugbank_to_hmdb:
+                    source = _cm.drugbank_to_hmdb[chem_source_id]
                     for n in source:
                         _add_source_node(n)
                         _add_edge(n)
@@ -138,7 +139,7 @@ class BioGridDownload(object):
         for r in table:
             gene1 = r[0]
             gene2 = r[1]
-            inter = r[2]
+            inter = r[2].lower()
             pubchem = r[3]
             score = r[4]
             source_db = r[5]
@@ -163,20 +164,6 @@ class BioGridDownload(object):
                        score=score,
                        databaseSource=source_db)
 
-        ge = set(g.nodes())
-        g1 = set(table[:, 0])
-        g2 = set(table[:, 1])
-        g_all = set()
-        g_all.update(g1)
-        g_all.update(g2)
-
-        for i in g_all:
-            if i not in ge:
-                print(i)
-
-        print("BIOGRID network has {} nodes and {} edges "
-              "".format(len(g.nodes()), len(g.edges())))
-
         nx.write_gpickle(g, os.path.join(network_data_dir, 'biogrid.p'))
         return g
 
@@ -189,25 +176,11 @@ def create_biogrid_network():
 
         bgn = BioGridDownload()
         g = bgn.parse_network()
+    print("BIOGRID network has {} nodes and {} edges "
+          "".format(len(g.nodes()), len(g.edges())))
     return g
 
 
 if __name__ == '__main__':
-    import time
-
     bgn = BioGridDownload()
-    g = bgn.parse_network()
-    quit()
-    st = time.time()
-    create_biogrid_network()
-    end_time = time.time()
-    print(end_time - st)
-    st = time.time()
-    g = nx.read_gpickle(os.path.join(network_data_dir, 'biogrid.p'))
-    end_time = time.time()
-    print(end_time - st)
-    st = time.time()
-    g = nx.read_gml(os.path.join(network_data_dir, 'biogrid.gml'))
-    end_time = time.time()
-    print(end_time - st)
-    # 33.48 seconds with set
+    bgn.parse_network()
