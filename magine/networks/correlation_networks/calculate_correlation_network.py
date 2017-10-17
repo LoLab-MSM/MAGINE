@@ -1,25 +1,27 @@
+# import pathos.multiprocessing as mp
+import multiprocessing as mp
 import time
 from itertools import combinations
+
 import matplotlib.pyplot as plt
-from matplotlib.ticker import FormatStrFormatter
 import numpy as np
 import pandas as pd
-import pathos.multiprocessing as mp
-
-from statsmodels.sandbox.stats.multicomp import multipletests
-import scipy.special as special
-from scipy.stats.stats import distributions
-
-# from numba import float64, jit
-# import bottleneck as bn
-
+from matplotlib.ticker import FormatStrFormatter
 from scipy.stats.stats import spearmanr
+from statsmodels.sandbox.stats.multicomp import multipletests
+
 np.set_printoptions(linewidth=300)
 
 global_data = None
 samples = None
 
 """
+import scipy.special as special
+from scipy.stats.stats import distributions
+
+from numba import float64, jit
+import bottleneck as bn
+
 @jit((float64, float64, float64), nopython=True, nogil=True)
 def calc_prob(n, dsq, df):
     denom = n * (n ** 2 - 1) / 6.
@@ -100,46 +102,33 @@ def calculate_spearman(pos):
         return np.nan, np.nan
 
 
-def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
-                         create_plots=True, in_parallel=False):
+def correlation_sampling(data, names, save_name, in_parallel=False,
+                         create_plots=True):
     global global_data
     global_data = data
     total_values = len(global_data)
 
     # Create pairwise samples
     global samples
-    if sample_all:
-        samples = np.array(list(combinations(range(n_samples), 2)))
-        total_possible_samples = total_values * (total_values - 1) / 2
-        n_samples = total_possible_samples
-        # print("Sampling all = {}".format(total_possible_samples))
-    else:
-        samples = np.array(list(combinations(range(len(data)), 2)))
-        samples = samples[np.random.choice(len(samples), size=n_samples,
-                                           replace=False), :]
-        # print("Sampling = {}".format(len(samples)))
 
+    samples = np.array(list(combinations(range(len(data)), 2)))
+    n_samples = total_values * (total_values - 1) / 2
+    print("Sampling all = {}".format(n_samples))
+    print('Starting to calculate spearman correlations')
+    samples_range = range(0, n_samples)
+    start_time = time.time()
     if not in_parallel:
-        x = [None] * n_samples
-        start_time = time.time()
-        for i in range(n_samples):
-            x[i] = calculate_spearman(i)
-        time_taken = time.time() - start_time
-        print('Done with {} samples in {}'.format(n_samples, time_taken))
+        print("Running in serial")
+        x = map(calculate_spearman, samples_range)
     else:
-
-        pool = mp.ProcessPool(processes=4)
-        # pool = mp2.Pool(4)
-        print('Starting to calculate spearman correlations')
-
-        samples_range = range(0, n_samples)
-        start_time = time.time()
-        x = pool.map(calculate_spearman, samples_range, )  # n_samples / 100)
+        # pool = mp.Pool(processes=4)
+        pool = mp.Pool(processes=16)
+        print("Running in parallel")
+        x = pool.map(calculate_spearman, samples_range)
         pool.close()
         pool.join()
-        time_taken = time.time() - start_time
-        print('Done with {} samples in {}'.format(n_samples, time_taken))
-
+    time_taken = time.time() - start_time
+    print('Done with {} samples in {}'.format(n_samples, time_taken))
     x = np.array(x)
     co_var = x[:, 0]
     pvals = x[:, 1]
@@ -199,6 +188,4 @@ def correlation_sampling(data, names, n_samples, save_name, sample_all=False,
         plt.savefig(_same_name, bbox_inches='tight')
         plt.close()
         print("Done 2")
-
-
-
+    return output
