@@ -21,7 +21,7 @@ except:
 
 def build_network(gene_list, save_name='tmp', species='hsa',
                   all_measured_list=None, use_reactome=True, use_hmdb=False,
-                  metabolite_list=None):
+                  use_biogrid=True, metabolite_list=None):
     """
     Construct a network from a list of gene names.
 
@@ -37,6 +37,8 @@ def build_network(gene_list, save_name='tmp', species='hsa',
     all_measured_list : list
         list of all species that should be considered in network
     use_reactome : bool
+        use _reactome functional interaction to expand network
+    use_biogrid : bool
         use _reactome functional interaction to expand network
     use_hmdb : bool
         use hmdb to expand network incorporating metabolites provided in
@@ -102,35 +104,35 @@ def build_network(gene_list, save_name='tmp', species='hsa',
         elif isinstance(i, float):
             end_network.remove_node(i)
     end_network = nx.relabel_nodes(end_network, drug_dict)
-
     end_network = mapper.convert_all(end_network, species=species)
 
-    if use_reactome:
-        if all_measured_list is None:
-            end_network = expand_by_reactome(end_network, gene_list)
-        else:
-            all_measured_list = set(str(x).upper() for x in all_measured_list)
-            end_network = expand_by_reactome(end_network, all_measured_list)
+    if all_measured_list is None:
+        all_measured_list = gene_list
+    else:
+        all_measured_list = set(str(x).upper() for x in all_measured_list)
 
+    if use_reactome:
+        end_network = expand_by_db(end_network, all_measured_list, 'reactome')
+
+    if use_biogrid:
+        end_network = expand_by_db(end_network, all_measured_list, 'biogrid')
     if use_hmdb:
         print("warning: automatic integration currently in progress.\n")
         if metabolite_list is None:
             print("Please provide a list of metabolites")
             metabolite_list = list(set(i for i in end_network.nodes()
                                        if i.startswith('HMDB')))
-            end_network = expand_by_hmdb(end_network, metabolite_list)
-        else:
-            end_network = expand_by_hmdb(end_network, metabolite_list)
+        end_network = expand_by_hmdb(end_network, metabolite_list)
+
     print("Trimming network")
     # removes everything not connected to the largest graph
     nt.delete_disconnected_network(end_network)
     print('Network has {} nodes and {} edges'
           ''.format(len(end_network.nodes()),
-                    len(end_network.edges())
-                    )
+                    len(end_network.edges()))
           )
 
-    # nx.write_gml(end_network, '{}.gml'.format(save_name))
+    nx.write_gml(end_network, '{}.gml'.format(save_name))
     nx.write_gpickle(end_network, '{}.p'.format(save_name))
 
     return end_network
@@ -275,10 +277,10 @@ def expand_by_hmdb(graph, metabolite_list):
     out.append('missing metabolites-protein info = {0}'.format(
             missing_protein_info))
     print('\n'.join(out))
-    return tmp_graph
+    return final_graph
 
 
-def expand_by_reactome(network, measured_list):
+def expand_by_db(network, measured_list, db='reactome'):
     """
     add _reactome functional interaction network to network
     Parameters
@@ -295,8 +297,14 @@ def expand_by_reactome(network, measured_list):
     print("Checking for Reactome edges to add to network.")
     new_graph = nx.DiGraph()
     measured_set = set(measured_list)
+    if db == 'reactome':
+        fi_network = load_reactome_fi()
 
-    fi_network = load_reactome_fi()
+    elif db == 'biogrid':
+        from magine.networks.databases.biogrid_interactions import \
+            create_biogrid_network
+        fi_network = create_biogrid_network()
+
     reactome_edges = fi_network.edges(data=True)
 
     # new list in reactome_nodes
@@ -315,13 +323,13 @@ def expand_by_reactome(network, measured_list):
 
     new_graph = nt.compose(new_graph, network, "ReactomeExpansion")
 
-    print("Nodes before Reactome expansion = {}, after = {}".format(
-            len(network.nodes()), len(new_graph.nodes()))
-    )
+    print("Nodes before {} expansion = {}, after = {}"
+          "".format(db, len(network.nodes()), len(new_graph.nodes()))
+          )
 
-    print("Edges before Reactome expansion = {}, after = {}".format(
-            len(network.edges()), len(new_graph.edges()))
-    )
+    print("Edges before {} expansion = {}, after = {}"
+          "".format(db, len(network.edges()), len(new_graph.edges()))
+          )
 
     return new_graph
 
@@ -389,11 +397,25 @@ def create_background_network(save_name='background_network'):
     reactome_network = load_reactome_fi()
     hmdb_network = create_hmdb_network()
     kegg_network = create_all_of_kegg()
-    bgn = create_biogrid_network()
+    biogrid_network = create_biogrid_network()
+
+    def find_overlap(n1, n2):
+        e1 = set(n1.edges())
+        e2 = set(n2.edges())
+        print(len(e1), len(e2), len(e2.difference(e1)))
+        e1 = set(n1.nodes())
+        e2 = set(n2.nodes())
+        print(len(e1), len(e2), len(e2.difference(e1)))
+        for i in sorted(e1.difference(e2)):
+            print(i)
+
     full_network = nt.compose_all(
-            [reactome_network, hmdb_network, kegg_network, bgn],
+            [hmdb_network, kegg_network, biogrid_network,
+             reactome_network
+             ],
             'background')
 
+    # find_overlap(reactome_network, full_network)
     print("Background network {} nodes and {} edges"
           "".format(len(full_network.nodes()), len(full_network.edges()))
           )
