@@ -337,11 +337,10 @@ class Enrichr(object):
 
         h1 = _run(transcription_factors, 'transcription_factors')
         h2 = _run(pathways, 'pathways')
-        # h3 = _run(kinase, 'kinases')
-        # h4 = _run(disease_drug, 'drug_and_disease')
-        # h5 = _run(ontologies, 'ontologies')
-
-        # return [h1, h2, h3, h4, h5]
+        h3 = _run(kinase, 'kinases')
+        h4 = _run(disease_drug, 'drug_and_disease')
+        h5 = _run(ontologies, 'ontologies')
+        return [h1, h2, h3, h4, h5]
 
     def run_set_of_dbs(self, list_g, db='drug'):
         """
@@ -688,17 +687,18 @@ def create_gene_plots(data, list_of_terms, save_name, out_dir=None,
 
 
 if __name__ == '__main__':
-    e = Enrichr()
-    g_list = ['PHF14', 'RBM3', 'MSL1', 'PHF21A', 'ARL10', 'INSR', 'JADE2',
-              'P2RX7', 'LINC00662', 'CCDC101', 'PPM1B', 'KANSL1L', 'CRYZL1',
-              'ANAPC16', 'TMCC1', 'CDH8', 'RBM11', 'CNPY2', 'HSPA1L', 'CUL2',
-              'PLBD2', 'LARP7', 'TECPR2', 'ZNF302', 'CUX1', 'MOB2', 'CYTH2',
-              'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
-              'ATF7', 'ATP5F1']
-
+    # e = Enrichr()
+    # g_list = ['PHF14', 'RBM3', 'MSL1', 'PHF21A', 'ARL10', 'INSR', 'JADE2',
+    #           'P2RX7', 'LINC00662', 'CCDC101', 'PPM1B', 'KANSL1L', 'CRYZL1',
+    #           'ANAPC16', 'TMCC1', 'CDH8', 'RBM11', 'CNPY2', 'HSPA1L', 'CUL2',
+    #           'PLBD2', 'LARP7', 'TECPR2', 'ZNF302', 'CUX1', 'MOB2', 'CYTH2',
+    #           'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
+    #           'ATF7', 'ATP5F1']
+    #
     # df = e.run(g_list, 'GO_Biological_Process_2017')
-    lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
-             ['BIM', 'CASP3']]
+    # lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
+    #          ['BIM', 'CASP3']]
     # df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
-    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')
+    # df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')
+    print(get_background_list('ENCODE_TF_ChIP-seq_2015'))
     # print(df.head(10))
