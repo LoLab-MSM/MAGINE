@@ -1,14 +1,15 @@
 import os
+import time
+
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
-import time
+import requests
 from py2cytoscape.data.cyrest_client import CyRestClient
 from py2cytoscape.data.style import StyleUtil
 from py2cytoscape.data.util_network import NetworkUtil as util
-import requests
 
 IP = 'localhost'
 PORT = 1234
@@ -73,49 +74,56 @@ class RenderModel(object):
         for n, i in enumerate(self.graph.edges()):
             self.graph[i[0]][i[1]]['name'] = str(i[0]) + ',' + str(i[1])
         self.g_cy = self.cy.network.create_from_networkx(
-            self.graph, )  # name=name,
+                self.graph, )  # name=name,
         # collection=name)
 
         time.sleep(2)
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], format='view')
 
-        params = [{u'type'       : u'double', u'name': u'spacingx',
-                   u'value'      : 150.0,
-                   u'description': u'Horizontal spacing between two partitions in a row:'},
-                  {u'type'       : u'double', u'name': u'spacingy',
-                   u'value'      : 150.0,
-                   u'description': u'Vertical spacing between the largest partitions of two rows:'},
+        params = [{
+            u'type':        u'double', u'name': u'spacingx',
+            u'value':       150.0,
+            u'description': u'Horizontal spacing between two partitions in a row:'
+        },
+            {
+                u'type':        u'double', u'name': u'spacingy',
+                u'value':       150.0,
+                u'description': u'Vertical spacing between the largest partitions of two rows:'
+            },
                   {u'name': u'maxwidth', u'value': 1000.0},
-                  {u'type'       : u'double', u'name': u'minrad',
-                   u'value'      : 20.0,
-                   u'description': u'Minimum width of a partition:'},
-                  {u'type'       : u'double', u'name': u'radmult',
-                   u'value'      : 50.0,
-                   u'description': u'Scale of the radius of the partition:'}]
-
+            {
+                u'type':        u'double', u'name': u'minrad',
+                u'value':       20.0,
+                u'description': u'Minimum width of a partition:'
+            },
+            {
+                u'type':        u'double', u'name': u'radmult',
+                u'value':       50.0,
+                u'description': u'Scale of the radius of the partition:'
+            }]
 
         # Marquee Directed Simple
         self.style = self.cy.style.create(style)
 
         # self.style = self.cy.style.create('Marquee')
 
-        options = {'NODE_LABEL_FONT_SIZE'     : 24,
-                   'EDGE_WIDTH'               : 2,
-                   'EDGE_TRANSPARENCY'        : '150',
-                   # 'NETWORK_HEIGHT'           : '2800',
-                   # 'NETWORK_WIDTH'            : '2800',
-                   'NODE_FILL_COLOR': 'red',
-                   'NETWORK_BACKGROUND_PAINT':  '#00FFFFFF',
-                   'NODE_SIZE' :                80,
-                   # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
-                   'NETWORK_CENTER_X_LOCATION': 0.0,
-                   'NETWORK_CENTER_Y_LOCATION': 0.0,
-                   }
+        options = {
+            'NODE_LABEL_FONT_SIZE':      24,
+            'EDGE_WIDTH':                2,
+            'EDGE_TRANSPARENCY':         '150',
+            # 'NETWORK_HEIGHT'           : '2800',
+            # 'NETWORK_WIDTH'            : '2800',
+            'NODE_FILL_COLOR':           'red',
+            'NETWORK_BACKGROUND_PAINT':  '#00FFFFFF',
+            'NODE_SIZE':                 80,
+            # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
+            'NETWORK_CENTER_X_LOCATION': 0.0,
+            'NETWORK_CENTER_Y_LOCATION': 0.0,
+        }
 
         self.style.update_defaults(options)
         if layout == 'attributes-layout':
-            self.cy.layout2.update(name=layout, parameters=params)
             self.cy.layout2.apply(name=layout, network=self.g_cy,
                                   params={'column': 'color'})
         else:
@@ -149,18 +157,19 @@ class RenderModel(object):
             print(i)
 
     def visualize_by_list_of_time(self, list_of_time, labels=None,
-                                  prefix='tmp',
-                                  out_dir='tmp'):
+                                  prefix='tmp', out_dir=None):
         """ create sequences of pdfs and svgs based on list of attributes
         list_of_time should point to attributes of the network. This attribute will update the network accordingly.
 
         :param list_of_time:
         :return:
         """
-        if not os.path.exists(out_dir):
-            os.mkdir(out_dir)
-        if not os.path.exists(os.path.join(out_dir, 'Figures')):
-            os.mkdir(os.path.join(out_dir, 'Figures'))
+        if out_dir is not None:
+
+            if not os.path.exists(out_dir):
+                os.mkdir(out_dir)
+            if not os.path.exists(os.path.join(out_dir, 'Figures')):
+                os.mkdir(os.path.join(out_dir, 'Figures'))
         node_label_values = {self.node_name2id[i[0]]: i[1]['label'] for i in
                              self.graph.nodes(data=True)}
         node_color_values = {self.node_name2id[i[0]]: i[1]['color'] for i in
@@ -187,11 +196,9 @@ class RenderModel(object):
         self.create_png('out.png', 2400)
         trip_photo('out.png', 'x')
         x = self.view1.get_network_view_as_dict()
-        # for i in x:
-        #     print(i, x[i])
         self.view1.update_network_view(
-            visual_property='NETWORK_SCALE_FACTOR',
-            value=0.8 * x['NETWORK_SCALE_FACTOR'])
+                visual_property='NETWORK_SCALE_FACTOR',
+                value=0.8 * x['NETWORK_SCALE_FACTOR'])
 
         # self.create_png('out.png', 2400)
         # trip_photo('out.png', 'x')
@@ -204,7 +211,7 @@ class RenderModel(object):
         simple_slope = StyleUtil.create_slope(min=size.min(), max=size.max(),
                                               values=(10, 50))
 
-        for ind, j in enumerate(list_of_time):
+        for j in list_of_time:
 
             self.style.create_continuous_mapping(column=j, col_type='Double',
                                                  vp='NODE_SIZE',
@@ -214,8 +221,8 @@ class RenderModel(object):
             self.view1.update_node_views(visual_property='NODE_LABEL',
                                          values=node_label_values)
             self.view1.update_network_view(
-                visual_property='NETWORK_BACKGROUND_PAINT',
-                value='rgba(0, 0, 0, 0)', )
+                    visual_property='NETWORK_BACKGROUND_PAINT',
+                    value='rgba(0, 0, 0, 0)', )
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
                                          values=node_label_values)
             self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
@@ -225,21 +232,23 @@ class RenderModel(object):
             self.view1.update_edge_views(visual_property='EDGE_LABEL_COLOR',
                                          values=edge_color_values)
             self.view1.update_edge_views(
-                visual_property='EDGE_STROKE_UNSELECTED_PAINT',
-                values=edge_color_values)
+                    visual_property='EDGE_STROKE_UNSELECTED_PAINT',
+                    values=edge_color_values)
             self.view1.update_edge_views(
-                visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
-                values=edge_color_values)
+                    visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
+                    values=edge_color_values)
             self.view1.update_edge_views(
-                visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
-                values=edge_color_values)
+                    visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
+                    values=edge_color_values)
             x = self.view1.get_network_view_as_dict()
 
-            fig_name = 'go_network_{0}_{1}'.format(prefix, j)
+            fig_name = 'ont_network_{0}_{1}'.format(prefix, j)
             print("Saving {}".format(fig_name))
-
-            out_file = os.path.join(out_dir, 'Figures',
-                                    '{}.png'.format(fig_name))
+            if out_dir is not None:
+                out_file = os.path.join(out_dir, 'Figures',
+                                        '{}.png'.format(fig_name))
+            else:
+                out_file = '{}.png'.format(fig_name)
             if os.path.exists(out_file):
                 os.remove(out_file)
 
@@ -247,7 +256,7 @@ class RenderModel(object):
             if labels is None:
                 trip_photo(out_file, j)
             else:
-                trip_photo(out_file, labels[ind])
+                trip_photo(out_file, j)
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
@@ -278,7 +287,7 @@ class RenderModel(object):
         return requests.get(url).content
 
 
-def trip_photo(im_location, title):
+def trip_photo(im_location, title=None):
     """
     Removes whitespace and adds title to image
 
@@ -324,7 +333,8 @@ def trip_photo(im_location, title):
     plt.imshow(img, interpolation='none')
     plt.xticks([])
     plt.yticks([])
-    # plt.title(title)
+    if title is not None:
+        plt.title(title)
     plt.axis('off')
     out = im_location.replace('.png', '_formatted.png')
     out2 = im_location.replace('.png', '_formatted.svg')

@@ -1,10 +1,11 @@
 import itertools
 import os
-from random import randint
 
 import networkx as nx
+import pandas as pd
 
-from magine.networks.network_tools import export_to_dot, networkx_to_igraph
+from magine.networks.network_tools import export_to_dot
+from magine.networks.visualization.igraph_tools import create_figure
 
 
 class OntologyNetworkGenerator(object):
@@ -207,9 +208,7 @@ class OntologyNetworkGenerator(object):
                 if b_to_a > threshold:
                     go_graph.add_edge(label_2, label_1, label=str(b_to_a),
                                       weight=b_to_a)
-        # print(sp_to_term)
         for i in sp_to_term:
-            # print(i)
             labels = sp_to_label[i]
             terms = sp_to_term[i]
             assert len(labels) == len(terms), \
@@ -221,118 +220,95 @@ class OntologyNetworkGenerator(object):
         if save_name is not None:
             if out_dir is not None:
                 save_name = os.path.join(out_path, save_name)
-
-            nx.write_gml(mol_net, '{}_subgraph.gml'.format(save_name))
-            nx.write_gml(go_graph, '{0}.gml'.format(save_name))
+            out_name = '{}_subgraph.gml'.format(save_name)
+            nx.write_gml(mol_net, out_name)
+            nx.write_gml(go_graph, '{}.gml'.format(save_name))
 
             if draw:
                 export_to_dot(go_graph, save_name)
-                # export_to_dot(mol_net, save_name + '_subgraph')
-
-                plot(mol_net, save_name + '_subgraph_igraph')
+                create_figure(mol_net, save_name + '_subgraph_igraph')
 
         return go_graph, mol_net
 
 
-def plot(mol_net, save_name):
-    try:
-        import cairo
-    except ImportError:
-        print("Please install pycairo to use igraph plotting")
-        return
+def visualize_go_network(go_network, data, save_name,
+                         format_only=False, out_dir=None, merge=False):
+    """ Renders GO network with py2cytoscape
 
-    try:
-        import igraph
-        from igraph.drawing.text import TextDrawer
-        from igraph.drawing.colors import color_name_to_rgba
-    except ImportError:
-        print("No igraph, cannot use plotting function")
-        return
+    Parameters
+    ----------
+    go_network : networkx.DiGraph
+        GO network created with GoNetworkGenerator
+    data : pd.Dataframe
+        enrichment data from GOAnalysis.calculate_enrichment
+    save_name: str
+        prefix to save images of GO network
+    format_only: boolean
+        option to return formatted network and labels for rendering
+    out_dir: str
+        If you want to files to be output into directory
+    merge: bool
+        merge images into gif
 
-    g = networkx_to_igraph(mol_net)
-    if not isinstance(g, igraph.Graph):
-        return
-    cl = igraph.VertexClustering(g).FromAttribute(g, attribute='termName')
-    membership = cl.membership
+    Returns
+    -------
 
-    if membership is not None:
-        gcopy = g.copy()
-        edges = []
-        edges_colors = []
-        for edge in g.es():
-            if membership[edge.tuple[0]] != membership[edge.tuple[1]]:
-                # edges.append(edge)
-                # edges_colors.append("gray")
-                edges_colors.append("black")
-            else:
-                edges_colors.append("black")
-        gcopy.delete_edges(edges)
-        layout = gcopy.layout("kk")
-        # layout = gcopy.layout("tree")
-        # layout = gcopy.layout("drl")
-        # layout = gcopy.layout("fr")
-        g.es["color"] = edges_colors
-    visual_style = dict()
-    visual_style["vertex_label_dist"] = 0
-    visual_style["vertex_shape"] = "circle"
-    visual_style["edge_color"] = g.es["color"]
-    # visual_style["bbox"] = (4000, 2500)
-    visual_style["vertex_size"] = 50
-    visual_style["layout"] = layout
-    visual_style["bbox"] = (2000, 2000)
-    visual_style["margin"] = 100
-    # visual_style["node_label"] = g.vs["label"]
-    for vertex in g.vs():
-        vertex["label"] = vertex['name']
+    """
 
-    colors = []
-    for i in range(0, max(membership) + 1):
-        # colors.append(k_colors[randint(0, len(k_colors))])
-        colors.append('#%06X' % randint(0, 0xFFFFFF))
-    _groups = dict()
-    for vertex in g.vs():
-        _groups[vertex.index] = colors[membership[vertex.index]]
-        vertex["color"] = colors[membership[vertex.index]]
-    _mark_groups = dict()
-    # print(_groups)
-    for i in _groups:
-        co = _groups[i]
-        if co in _mark_groups:
-            _mark_groups[co].append(i)
-        else:
-            _mark_groups[co] = [i]
-    mark_groups = dict()
-    for i in _mark_groups:
-        mark_groups[tuple(_mark_groups[i])] = i
-    # print(_mark_groups)
-    # print(mark_groups)
+    from magine.networks.visualization.cytoscape_view import RenderModel
+    from magine.plotting.heatmaps import simple_heatplot
 
-    visual_style["vertex_color"] = g.vs["color"]
+    if len(go_network.nodes()) == 0:
+        print('No nodes')
+        quit()
 
-    # igraph.plot(cl, "{}.pdf".format(save_name), mark_groups=True, **visual_style)
-    plot = igraph.Plot("{}2.png".format(save_name), bbox=(3000, 2200),
-                       background="white")
-    plot.add(cl, mark_groups=mark_groups, **visual_style)
-    # plot = igraph.plot(cl, mark_groups=True, **visual_style)
-    plot.redraw()
-    # Grab the surface, construct a drawing context and a TextDrawer
-    ctx = cairo.Context(plot.surface)
-    ctx.set_font_size(36)
-    # drawer = TextDrawer(ctx, "Test title", halign=TextDrawer.CENTER)
-    # drawer.draw_at(0, 40, width=600)
-    labels = dict()
-    for vertex in g.vs():
-        labels[colors[membership[vertex.index]]] = vertex['termName'].replace(
-            ',', '\n')
+    labels = data['sample_index'].unique()
 
-    for n, i in enumerate(colors):
-        text_drawer = TextDrawer(ctx, text=labels[i], halign=TextDrawer.LEFT)
-        text_drawer.draw_at(x=2100, y=100 + (n * 200), width=900, wrap=True)
-        ctx.set_source_rgba(*color_name_to_rgba(i))
-        ctx.arc(2000, 100 + (n * 200), 100 / 2, 0, 2 * 3.14)
-        ctx.fill()
-        ctx.set_source_rgba(0, 0, 0, 1)
+    score_array = pd.pivot_table(data, index=['term_name'],
+                                 columns='sample_index')
 
-    # Make the plot draw itself on the Cairo surface
-    # Save the plot
-    plot.save()
+    enrichment_list = [('combined_score', i) for i in labels]
+    tmp = score_array.copy()
+
+    tmp = tmp.sort_values(by=enrichment_list, ascending=False)
+    x_labels = list(tmp['combined_score'].columns)
+
+    y_labels = tmp.index
+    enrichment_value = tmp['combined_score'].fillna(0).as_matrix()
+    simple_heatplot(enrichment_value, save_name, y_labels=y_labels,
+                    x_labels=x_labels)
+
+    x = score_array['combined_score'].fillna(0)
+
+    for i in go_network.nodes():
+        values = x.loc[i]
+        go_network.node[i]['color'] = 'red'
+        go_network.node[i]['label'] = i
+        for n, time in enumerate(labels):
+            go_network.node[i][time] = float(values[time])
+
+    if format_only:
+        return go_network, data
+
+    savename = os.path.join('{}_all_colored.graphml'.format(save_name))
+
+    nx.write_graphml(go_network, savename)
+    # size_of_data = len(labels)
+    rm = RenderModel(go_network, layout='force-directed')
+    rm.visualize_by_list_of_time(labels,
+                                 prefix=save_name,
+                                 out_dir=out_dir,
+                                 )
+    if merge:
+        os.system(_s.format(save_name))
+
+
+_s = "convert -delay 100 -dispose previous -loop 0 ont_network_*_formatted.png {}.gif"
+
+
+def _create_names(n):
+    names = []
+    for i in range(n):
+        names.append('time_{0:04d}'.format(i))
+        print('time_{0:04d}'.format(i))
+    return names
