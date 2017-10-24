@@ -1,5 +1,5 @@
 pygraphviz
-networkx
+networkx==1.9.1
 py2cytoscape
 jinja2
 scipy
