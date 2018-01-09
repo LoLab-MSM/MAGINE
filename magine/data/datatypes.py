@@ -8,7 +8,8 @@ from pandas.plotting import table
 
 import magine.plotting.volcano_plots as v_plot
 from magine.data.formatter import log2_normalize_df
-from magine.plotting.species_plotting import plot_dataframe, plot_list_of_genes, \
+from magine.plotting.species_plotting import plot_dataframe, \
+    plot_list_of_genes, \
     plot_list_of_metabolites
 
 pandas.set_option('display.max_colwidth', -1)
@@ -24,6 +25,7 @@ metabolites = 'metabolites'
 species_type = 'species_type'
 sample_id = 'time'
 valid_cols = [fold_change, flag, p_val, protein, gene, species_type, sample_id]
+
 
 # sample_id = 'sample_id'
 
@@ -117,14 +119,14 @@ class ExperimentalData(object):
             raw_df = pandas.read_csv(
                 file_object,
                 parse_dates=False, low_memory=False
-                )
+            )
         elif isinstance(data_file, pandas.DataFrame):
             raw_df = data_file.copy()
         else:
             raw_df = pandas.read_csv(
                 os.path.join(data_directory, data_file),
                 parse_dates=False, low_memory=False
-                )
+            )
         for i in valid_cols:
             if i not in raw_df.dtypes:
                 print("{} not in columns.")
@@ -170,7 +172,8 @@ class ExperimentalData(object):
 
         self.list_sig_proteins = list(self.proteomics_sign[gene].unique())
         self.list_sig_rna = self.return_rna(significant=True)
-        self.list_sig_proteins_non_rna = self.return_rna(significant=True)
+        self.list_sig_proteins_non_rna = self.return_proteomics(
+            significant=True)
 
         self.list_sig_species = list(self.list_sig_proteins +
                                      self.list_sig_metabolites)
@@ -224,7 +227,8 @@ class ExperimentalData(object):
                                                            significant=True,
                                                            fold_change_value=1)
             self.proteomics_down[i] = self.return_proteomics(
-                    sample_id_name=i, significant=True, fold_change_value=-1.)
+                sample_id_name=i, significant=True, fold_change_value=-1.
+            )
             self.proteomics_sign_changed[i] = list(
                     set(self.proteomics_up[i] + self.proteomics_down[i]))
 
@@ -270,7 +274,8 @@ class ExperimentalData(object):
         self.metabolites = self.metabolites.dropna(subset=['compound'])
         if 'compound_id' not in self.metabolites.dtypes:
             self.metabolites['compound_id'] = self.metabolites['compound']
-        self.metabolites.loc[:, 'compound_id'] = self.metabolites['compound_id'].astype(str)
+        self.metabolites.loc[:, 'compound_id'] = self.metabolites[
+            'compound_id'].astype(str)
         self.metabolite_sign = self.metabolites[self.metabolites[flag]]
         self.list_metabolites = list(self.metabolites['compound_id'].unique())
         self.list_sig_metabolites = list(
@@ -427,7 +432,6 @@ class ExperimentalData(object):
                                     save_name=save_name, plot=plot,
                                     write_latex=write_latex)
 
-
     def plot_list_of_genes(self, list_of_genes, save_name, out_dir=None,
                            title=None, plot_type='plotly', image_format='png'):
         """
@@ -453,7 +457,8 @@ class ExperimentalData(object):
 
         """
         plot_list_of_genes(
-            self.proteomics, list_of_genes=list_of_genes, save_name=save_name,
+            self.proteomics, list_of_genes=list_of_genes,
+            save_name=save_name,
             out_dir=out_dir, title=title, plot_type=plot_type,
             image_format=image_format
         )
@@ -509,9 +514,9 @@ class ExperimentalData(object):
         """
 
         plot_dataframe(self.data, html_filename=html_file_name,
-                                       out_dir=out_dir, plot_type=plot_type,
-                                       type_of_species='protein',
-                                       run_parallel=run_parallel)
+                       out_dir=out_dir, plot_type=plot_type,
+                       type_of_species='protein',
+                       run_parallel=run_parallel)
 
     def plot_all_metabolites(self, html_file_name, out_dir='metabolites',
                              plot_type='plotly', run_parallel=False):
@@ -534,9 +539,9 @@ class ExperimentalData(object):
         """
 
         plot_dataframe(self.data, html_filename=html_file_name,
-                                       out_dir=out_dir, plot_type=plot_type,
-                                       type_of_species='metabolites',
-                                       run_parallel=run_parallel)
+                       out_dir=out_dir, plot_type=plot_type,
+                       type_of_species='metabolites',
+                       run_parallel=run_parallel)
 
     def volcano_analysis(self, out_dir, use_sig_flag=True,
                          p_value=0.1, fold_change_cutoff=1.5):
@@ -616,7 +621,7 @@ class ExperimentalData(object):
         fig = plt.figure(figsize=(4 * n_rows, 3 * n_cols))
         for n, i in enumerate(n_sample):
             sample = data[data[sample_id] == i].copy()
-            print(sample[[p_val, fold_change]])
+
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
@@ -726,6 +731,7 @@ class ExperimentalData(object):
             # raise Warning
             return False
         return True
+
 
 template = r'''
 \documentclass[12pt, letterpaper]{{article}}
@@ -860,7 +866,6 @@ def _write_to_latex(table, save_name):
 
 
 def _which(program):
-
     def _is_exe(filepath):
         return os.path.isfile(filepath) and os.access(filepath, os.X_OK)
 
