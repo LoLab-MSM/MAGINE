@@ -119,12 +119,12 @@ class NetworkSubgraphs(object):
         """
 
         tmp_species_list = list(self._check_node(species_list))
-        pool = mp.Pool()
 
         def product_helper(args):
             return self._find_nx_path(*args + (single_path,))
 
         if parallel:
+            pool = mp.Pool()
             paths = pool.map(product_helper,
                              itertools.combinations(tmp_species_list, 2))
             pool.join()
