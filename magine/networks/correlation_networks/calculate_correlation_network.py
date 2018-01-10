@@ -112,7 +112,7 @@ def correlation_sampling(data, names, save_name, in_parallel=False,
     global samples
 
     samples = np.array(list(combinations(range(len(data)), 2)))
-    n_samples = total_values * (total_values - 1) / 2
+    n_samples = int(total_values * (total_values - 1) / 2)
     print("Sampling all = {}".format(n_samples))
     print('Starting to calculate spearman correlations')
     samples_range = range(0, n_samples)
