@@ -121,8 +121,8 @@ def correlation_sampling(data, names, save_name, in_parallel=False,
         print("Running in serial")
         x = map(calculate_spearman, samples_range)
     else:
-        # pool = mp.Pool(processes=4)
-        pool = mp.Pool(processes=16)
+        pool = mp.Pool(processes=2)
+        # pool = mp.Pool(processes=16)
         print("Running in parallel")
         x = pool.map(calculate_spearman, samples_range)
         pool.close()

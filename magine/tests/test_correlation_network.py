@@ -28,8 +28,8 @@ def test_correlation():
     names = names[:100]
     save_name = 'test'
     correlation_sampling(tmp, names, save_name, create_plots=True)
-    correlation_sampling(tmp, names, save_name, create_plots=False,
-                         in_parallel=True)
+    # correlation_sampling(tmp, names, save_name, create_plots=False,
+    #                      in_parallel=True)
 
 if __name__ == '__main__':
     test_correlation()
