@@ -562,13 +562,11 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
 
 def _save_matplotlib_output(ax, save_name, out_dir, image_format, x_point_dict,
                             x_points, ):
-    plt.xlim(min(x_point_dict.values()) - 2,
-             max(x_point_dict.values()) + 2)
+    ax.set_xlim(min(x_point_dict.values()) - 2, max(x_point_dict.values()) + 2)
     ax.set_xticks(sorted(x_point_dict.values()))
-    ax.set_xticklabels(x_points)
+    ax.set_xticklabels(x_points, rotation=90)
     plt.ylabel('log$_2$ Fold Change')
-    locs, labels = plt.xticks()
-    plt.setp(labels, rotation=90)
+
     plt.axhline(y=np.log2(1.5), linestyle='--')
     plt.axhline(y=-np.log2(1.5), linestyle='--')
 
