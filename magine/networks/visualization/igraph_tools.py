@@ -49,10 +49,10 @@ def create_figure(mol_net, save_name):
             else:
                 edges_colors.append("black")
         # gcopy.delete_edges(edges)
-        layout = gcopy.layout("kk")
+        # layout = gcopy.layout("kk")
         # layout = gcopy.layout("tree")
         # layout = gcopy.layout("drl")
-        # layout = gcopy.layout("graphopt")
+        layout = gcopy.layout("graphopt")
         # layout = gcopy.layout("mds")
         # layout = gcopy.layout("sugiyama")
         # layout = gcopy.layout("fr")
@@ -122,5 +122,70 @@ def create_figure(mol_net, save_name):
         ctx.set_source_rgba(0, 0, 0, 1)
 
     # Make the plot draw itself on the Cairo surface
+    # Save the plot
+    plot.save()
+
+
+def create_igraph_figure(mol_net, save_name):
+    """
+
+    Parameters
+    ----------
+    mol_net : networkx.DiGraph
+        networkx graph
+    save_name : str
+        Save name
+
+    Returns
+    -------
+
+    """
+    try:
+        import cairo
+    except ImportError:
+        print("Please install pycairo to use igraph plotting")
+        return
+
+    try:
+        import igraph
+        from igraph.drawing.text import TextDrawer
+        from igraph.drawing.colors import color_name_to_rgba
+    except ImportError:
+        print("No igraph, cannot use plotting function")
+        return
+
+    g = networkx_to_igraph(mol_net)
+    if not isinstance(g, igraph.Graph):
+        return
+
+    layout = g.layout("kk")
+    # layout = g.layout("tree")
+    # layout = g.layout("drl")
+    # layout = g.layout("graphopt")
+    # layout = g.layout("mds")
+    # layout = g.layout("sugiyama")
+    # layout = g.layout("fr")
+
+    visual_style = dict()
+    visual_style["vertex_label_dist"] = 0
+    visual_style["vertex_shape"] = "circle"
+    visual_style["vertex_size"] = 50
+    visual_style["layout"] = layout
+    # visual_style["bbox"] = (4000, 2500)
+    # visual_style["bbox"] = (1000, 1000)
+    visual_style["bbox"] = (2000, 2000)
+    visual_style["margin"] = 100
+    visual_style["vertex_color"] = g.vs["color"]
+    for vertex in g.vs():
+        vertex["label"] = vertex['name']
+    # print(_mark_groups)
+    # print(mark_groups)
+
+    # igraph.plot(cl, "{}.pdf".format(save_name), mark_groups=True, **visual_style)
+    plot = igraph.Plot("{}.png".format(save_name), bbox=(3000, 2200),
+                       background="white")
+    plot.add(g, **visual_style)
+    # plot = igraph.plot(cl, mark_groups=True, **visual_style)
+    plot.redraw()
     # Save the plot
     plot.save()

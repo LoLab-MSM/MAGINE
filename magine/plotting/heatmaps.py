@@ -1,6 +1,6 @@
 import os
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
@@ -110,6 +110,57 @@ def create_heatmaps_pvalue_xs(data, save_name, x_labels=None,
     plt.savefig('{}_heatplot.pdf'.format(save_name), bbox_inches='tight',
                 transparent=True)
     plt.close()
+
+
+def simple_heatplot(data, save_name, x_labels, y_labels):
+    """
+
+    Parameters
+    ----------
+    data :  pandas.DataFrame or str
+        output from magine.ontology_analysis.calculate_enrichment
+    save_name : str
+        prefix of figure to save
+    x_labels : list
+        list of labels for samples
+    mark_pvalues : bool, optional, default=False
+        add * to heatplot of significantly enriched values
+    metric : str
+        metric to sort heatplot
+        {'enrichment_score', 'pvalues"}
+
+
+    Returns
+    -------
+
+    """
+
+    # create a figure
+    fig = plt.figure(figsize=(14, 7))
+
+    # Enrichment panel
+    ax1 = fig.add_subplot(111)
+    plt.imshow(data, aspect='auto',
+               interpolation='nearest', cmap=plt.get_cmap('YlOrRd'),
+               # extent=[0, len(labels), 0, len(tmp.index)],
+               )
+
+    y_array = np.arange(0, len(y_labels), 1)
+    x_array = np.arange(0, len(x_labels), 1)
+    ax1.tick_params(axis='both', direction='out')
+    ax1.set_xticks(x_array)
+    ax1.set_xticklabels(x_labels, fontsize=16, rotation=45)
+    ax1.set_yticks(y_array)
+    ax1.set_yticklabels(y_labels, fontsize=16)
+
+    plt.colorbar()
+    plt.savefig('{}_heatplot.png'.format(save_name), bbox_inches='tight',
+                transparent=True
+                )
+    plt.savefig('{}_heatplot.pdf'.format(save_name), bbox_inches='tight',
+                transparent=True)
+    plt.close()
+
 
 
 def plot_heatmap(enrichment_array, names_col, labels, global_go,
@@ -225,7 +276,7 @@ def create_heatmap(data, savename, xlabels=None, threshold=None,
     divider = make_axes_locatable(ax1)
     cax1 = divider.append_axes("right", size="5%", pad=0.05)
     plt.colorbar(im, cax=cax1)
-    plt.tight_layout()
+    # /    plt.tight_layout()
     plt.savefig('{}_heatmap.png'.format(savename), bbox_inches='tight')
     plt.close()
 

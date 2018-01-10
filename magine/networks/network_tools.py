@@ -440,12 +440,21 @@ def networkx_to_igraph(network):
         return False
     igraph_network = ig.Graph(directed=True)
     for i, data in network.nodes(data=True):
-        igraph_network.add_vertex(name=i, **data)
+        i = i.encode('utf-8')
+        new_data = dict()
+        for key, value in data.items():
+            new_data[key.encode('utf-8')] = value.encode('utf-8')
+        igraph_network.add_vertex(name=i, **new_data)
     for edge in network.edges(data=True):
-        e1 = edge[0]
-        e2 = edge[1]
+        e1 = edge[0].encode('utf-8')
+        e2 = edge[1].encode('utf-8')
         data = edge[2]
-        igraph_network.add_edge(e1, e2, kwds=data)
+        new_data = dict()
+        for key, value in data.items():
+            if isinstance(value, unicode):
+                value = value.encode('utf-8')
+            new_data[key.encode('utf-8')] = value
+        igraph_network.add_edge(e1, e2, kwds=new_data)
     return igraph_network
 
 
@@ -758,6 +767,8 @@ def compose(G, H, name=None):
                     if isinstance(existing_info[n], float):
                         print(n, d, i, j)
                     current = set(existing_info[n].split('|'))
+                    if d is None:
+                        print(n, d)
                     additions = set(d.split('|'))
                     additions.update(current)
                     new = '|'.join(sorted(additions))
@@ -788,7 +799,9 @@ def compose(G, H, name=None):
             for n, d in data.items():
                 if n in existing_info:
                     current = existing_info[n]
-                    new = '|'.join({str(current), str(d)})
+                    if isinstance(current, list):
+                        current = current[0]
+                    new = '|'.join({current, d})
                     new_g.node[i][n] = new
                 else:
                     new_g.node[i][n] = d
