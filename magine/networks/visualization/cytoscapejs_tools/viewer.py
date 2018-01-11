@@ -96,8 +96,6 @@ def render(network,
         layout=layout_algorithm,
         style_json=json.dumps(style)
     )
-    # print(cyjs_widget)
-    # print(cyjs_widget)
     display(HTML(cyjs_widget))
 
 
