@@ -189,6 +189,8 @@ class Enrichr(object):
             def remove_term_id(row):
                 s = row['term_id']
                 term = row['term_name'].replace('(' + s + ')', '')
+                if term[-1] == ' ':
+                    term = term[:-1]
                 return term
 
             df['term_id'] = df.apply(get_go_id, axis=1)
@@ -687,18 +689,21 @@ def create_gene_plots(data, list_of_terms, save_name, out_dir=None,
 
 
 if __name__ == '__main__':
-    # e = Enrichr()
-    # g_list = ['PHF14', 'RBM3', 'MSL1', 'PHF21A', 'ARL10', 'INSR', 'JADE2',
-    #           'P2RX7', 'LINC00662', 'CCDC101', 'PPM1B', 'KANSL1L', 'CRYZL1',
-    #           'ANAPC16', 'TMCC1', 'CDH8', 'RBM11', 'CNPY2', 'HSPA1L', 'CUL2',
-    #           'PLBD2', 'LARP7', 'TECPR2', 'ZNF302', 'CUX1', 'MOB2', 'CYTH2',
-    #           'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
-    #           'ATF7', 'ATP5F1']
-    #
-    # df = e.run(g_list, 'GO_Biological_Process_2017')
+    e = Enrichr()
+    g_list = ['PHF14', 'RBM3', 'MSL1', 'PHF21A', 'ARL10', 'INSR', 'JADE2',
+              'P2RX7', 'LINC00662', 'CCDC101', 'PPM1B', 'KANSL1L', 'CRYZL1',
+              'ANAPC16', 'TMCC1', 'CDH8', 'RBM11', 'CNPY2', 'HSPA1L', 'CUL2',
+              'PLBD2', 'LARP7', 'TECPR2', 'ZNF302', 'CUX1', 'MOB2', 'CYTH2',
+              'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
+              'ATF7', 'ATP5F1']
+
+    df = e.run(g_list, 'GO_Biological_Process_2017')
+    print(df.head(10))
+    print(list(df['term_name'])[0:2])
+
     # lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
     #          ['BIM', 'CASP3']]
     # df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
     # df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')
-    print(get_background_list('ENCODE_TF_ChIP-seq_2015'))
+    # print(get_background_list('ENCODE_TF_ChIP-seq_2015'))
     # print(df.head(10))
