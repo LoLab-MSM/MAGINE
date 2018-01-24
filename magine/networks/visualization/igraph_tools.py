@@ -3,7 +3,7 @@ from random import randint
 from magine.networks.network_tools import networkx_to_igraph
 
 
-def create_figure(mol_net, save_name):
+def create_figure(mol_net, save_name=None):
     """
 
     Parameters
@@ -96,8 +96,11 @@ def create_figure(mol_net, save_name):
     visual_style["vertex_color"] = g.vs["color"]
 
     # igraph.plot(cl, "{}.pdf".format(save_name), mark_groups=True, **visual_style)
-    plot = igraph.Plot("{}.png".format(save_name), bbox=(3000, 2200),
-                       background="white")
+    if save_name is not None:
+        plot = igraph.Plot("{}.png".format(save_name), bbox=(3000, 2200),
+                           background="white")
+    else:
+        plot = igraph.Plot(bbox=(3000, 2200), background="white")
     plot.add(cl,
              # mark_groups=mark_groups,
              **visual_style)
@@ -123,10 +126,13 @@ def create_figure(mol_net, save_name):
 
     # Make the plot draw itself on the Cairo surface
     # Save the plot
-    plot.save()
+    if save_name is not None:
+        plot.save()
+    else:
+        return plot._repr_svg_()
 
 
-def create_igraph_figure(mol_net, save_name):
+def create_igraph_figure(mol_net, save_name=None):
     """
 
     Parameters
@@ -175,17 +181,22 @@ def create_igraph_figure(mol_net, save_name):
     # visual_style["bbox"] = (1000, 1000)
     visual_style["bbox"] = (2000, 2000)
     visual_style["margin"] = 100
-    visual_style["vertex_color"] = g.vs["color"]
+    print(g.vs)
+    if 'color' in g.vs:
+        visual_style["vertex_color"] = g.vs["color"]
     for vertex in g.vs():
         vertex["label"] = vertex['name']
-    # print(_mark_groups)
-    # print(mark_groups)
-
     # igraph.plot(cl, "{}.pdf".format(save_name), mark_groups=True, **visual_style)
-    plot = igraph.Plot("{}.png".format(save_name), bbox=(3000, 2200),
-                       background="white")
+    if save_name is not None:
+        plot = igraph.Plot("{}.png".format(save_name), bbox=(3000, 2200),
+                           background="white")
+    else:
+        plot = igraph.Plot(bbox=(3000, 2200), background="white")
     plot.add(g, **visual_style)
     # plot = igraph.plot(cl, mark_groups=True, **visual_style)
     plot.redraw()
     # Save the plot
-    plot.save()
+    if save_name is not None:
+        plot.save()
+    else:
+        return plot._repr_svg_()

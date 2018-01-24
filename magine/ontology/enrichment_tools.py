@@ -1,4 +1,6 @@
 import itertools
+import pandas as pd
+
 
 
 def jaccard_index(first_set, second_set):
@@ -42,11 +44,16 @@ def filter_db(local_df, options, column):
     return copy_df
 
 
-def filter_dataframe(df, p_value=0.05, db=None, sample_id=None, category=None):
+def filter_dataframe(df, p_value=None, combined_score=None, db=None,
+                     sample_id=None, category=None):
 
     copy_df = df.copy()
-    copy_df = copy_df[copy_df['adj_p_value'] <= p_value]
-    copy_df = copy_df[copy_df['combined_score'] >= 0.0]
+    if p_value is not None:
+        assert isinstance(p_value, float)
+        copy_df = copy_df[copy_df['adj_p_value'] <= p_value]
+    if combined_score is not None:
+        assert isinstance(combined_score, float)
+        copy_df = copy_df[copy_df['combined_score'] >= combined_score]
 
     copy_df = filter_db(copy_df, db, 'db')
     copy_df = filter_db(copy_df, sample_id, 'sample_id')
@@ -60,33 +67,12 @@ def term_to_genes(df, term):
     return set(itertools.chain.from_iterable(genes.str.split(',').as_matrix()))
 
 
-def find_similar_terms(data, verbose=False):
+def find_similar_terms(data, threshold=0.75, verbose=False):
 
     data.sort_values('combined_score', inplace=True, ascending=False)
     data_copy = data.copy()
 
-    array = data.as_matrix()
-
-    to_remove = set()
-    for j in range(len(data)-2):
-        top_term_name = array[j, 0]
-        if top_term_name in to_remove:
-            continue
-        top = set(array[j, 4].split(','))
-        if verbose:
-            print("Finding matches for {}".format(array[j, 0]))
-
-        for i in range(j+1, len(data)):
-            term_name = array[i, 0]
-            if top_term_name == term_name:
-                continue
-            new_set = set(array[i, 4].split(','))
-            score = jaccard_index(top, new_set)
-            if score > .75:
-                to_remove.add(term_name)
-                if verbose:
-                    print("\t{} with jaccard index of "
-                          "{}".format(term_name, score))
+    to_remove = _terms_to_remove(data_copy, threshold, verbose)
 
     data_copy = data_copy[~data_copy['term_name'].isin(to_remove)]
     print("Number of rows went from {} to {}".format(data.shape[0], data_copy.shape[0]))
@@ -95,6 +81,54 @@ def find_similar_terms(data, verbose=False):
 
 def filter_based_on_words(df, words):
     return df[df['term_name'].str.lower().str.contains('|'.join(words))]
+
+
+def remove_redundant(data, threshold=0.75, verbose=False):
+
+    data.sort_values('combined_score', inplace=True, ascending=False)
+
+    data_copy = data.copy()
+    sample_ids = list(sorted(data['sample_id'].unique()))
+
+    to_remove = set()
+    for i in sample_ids:
+        tmp = data_copy[data_copy['sample_id'] == i]
+        redundant_terms = _terms_to_remove(tmp, threshold, verbose)
+        to_remove.update(redundant_terms)
+
+    data_copy = data_copy[~data_copy['term_name'].isin(to_remove)]
+    print("Number of rows went from {} to {}".format(data.shape[0],
+                                                     data_copy.shape[0]))
+    return data_copy
+
+
+def _terms_to_remove(data, threshold=0.75, verbose=False):
+    array = data.as_matrix()
+
+    to_remove = set()
+    for j in range(len(data) - 2):
+        top_term_name = array[j, 0]
+        # if top_term_name in to_remove:
+        #     continue
+        top = set(array[j, 4].split(','))
+        if verbose:
+            print("Finding matches for {}".format(array[j, 0]))
+
+        for i in range(j + 1, len(data)):
+            term_name = array[i, 0]
+            # if term_name in to_remove:
+            #     continue
+            if top_term_name == term_name:
+                continue
+            new_set = set(array[i, 4].split(','))
+            score = jaccard_index(top, new_set)
+            if verbose:
+                print("\tScore for {} is {:.3f}".format(array[i, 0], score))
+            if score > threshold:
+                to_remove.add(term_name)
+                if verbose:
+                    print("\t\tRemoving {}".format(term_name))
+    return to_remove
 
 
 if __name__ == '__main__':

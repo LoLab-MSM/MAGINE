@@ -1,7 +1,8 @@
 import json
 import os
 import uuid
-
+from IPython.core.display import display, HTML
+from magine.networks.visualization.cytoscapejs_tools.styles import *
 # Define default widget size
 DEF_HEIGHT = 700
 DEF_WIDTH = 100  # Same as cell width of Jupyter
@@ -22,7 +23,7 @@ DEF_EDGES = [
 ]
 
 DEF_LAYOUT = 'preset'
-DEF_STYLE = 'default2'
+DEF_STYLE = 'Directed'
 
 PRESET_LAYOUTS = {
     'Preset': 'preset',
@@ -68,7 +69,6 @@ def render(network,
         Width of the widget.
     """
     from jinja2 import Template
-    from IPython.core.display import display, HTML
 
     # Load style file if none available
     if isinstance(style, str):
@@ -84,7 +84,6 @@ def render(network,
 
     path = os.path.join(os.path.abspath(os.path.dirname(__file__)),
                         HTML_TEMPLATE_FILE)
-
     template = Template(open(path).read())
     cyjs_widget = template.render(
         nodes=json.dumps(nodes),
@@ -94,7 +93,8 @@ def render(network,
         widget_width=str(width),
         widget_height=str(height),
         layout=layout_algorithm,
-        style_json=json.dumps(style)
+        # style_json=json.dumps(style)
+        style_json=json.dumps(magine_style)
     )
     display(HTML(cyjs_widget))
 

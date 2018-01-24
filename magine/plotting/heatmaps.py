@@ -1,10 +1,10 @@
 import os
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+import seaborn as sns
 
 
 def create_heatmaps_pvalue_xs(data, save_name, x_labels=None,
@@ -220,7 +220,12 @@ def plot_heatmap(enrichment_array, names_col, labels, global_go,
     plt.close()
 
 
-def plot_heatmap_cluster(tmp_array, names, savename, out_dir=None):
+def plot_heatmap_cluster(data, names, savename, convert_to_log=False,
+                         out_dir=None):
+    tmp_array = data.copy()
+    tmp_array = np.nan_to_num(tmp_array)
+    if convert_to_log:
+        tmp_array = _convert_to_log(tmp_array)
     fig = plt.figure()
     axdendro = fig.add_axes([0.09, 0.1, 0.2, 0.8])
     linkage = sch.linkage(tmp_array, method='centroid')
@@ -248,24 +253,22 @@ def plot_heatmap_cluster(tmp_array, names, savename, out_dir=None):
 
 def create_heatmap(data, savename, xlabels=None, threshold=None,
                    convert_to_log=False):
-    data = np.nan_to_num(data)
+    tmp_array = data.copy()
+    tmp_array = np.nan_to_num(tmp_array)
     if convert_to_log:
-        above = data > 0
-        below = data < 0
-        data[above] = np.log2(data[above])
-        data[below] = -1 * np.log2(-1 * data[below])
+        tmp_array = _convert_to_log(tmp_array)
 
     if threshold is not None:
-        data[data > threshold] = threshold
-        data[data < -1 * threshold] = -1 * threshold
+        tmp_array[tmp_array > threshold] = threshold
+        tmp_array[tmp_array < -1 * threshold] = -1 * threshold
     name = 'bwr'
 
-    size_of_data = np.shape(data)[1]
+    size_of_data = np.shape(tmp_array)[1]
     length_matrix = len(data)
     x_ticks = np.linspace(.5, size_of_data - .5, size_of_data)
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    im = plt.imshow(data, interpolation='nearest', aspect='auto',
+    im = plt.imshow(tmp_array, interpolation='nearest', aspect='auto',
                     extent=(0, size_of_data, 0, length_matrix + 1),
                     cmap=plt.get_cmap(name))
 
@@ -282,14 +285,14 @@ def create_heatmap(data, savename, xlabels=None, threshold=None,
 
     # distanceMatrix = dist.pdist(data, 'euclidean')
     # linkageMatrix = sch.linkage(distanceMatrix, method='centroid')
-    linkageMatrix = sch.linkage(data, method='centroid')
+    linkageMatrix = sch.linkage(tmp_array, method='centroid')
     heatmapOrder = sch.leaves_list(linkageMatrix)
 
-    data = data[heatmapOrder, :]
+    tmp_array = tmp_array[heatmapOrder, :]
 
     fig = plt.figure()
     ax1 = fig.add_subplot(111)
-    im = plt.imshow(data, interpolation='nearest', aspect='auto',
+    im = plt.imshow(tmp_array, interpolation='nearest', aspect='auto',
                     extent=(0, size_of_data, 0, length_matrix + 1),
                     cmap=plt.get_cmap(name))
 
@@ -305,15 +308,12 @@ def create_heatmap(data, savename, xlabels=None, threshold=None,
                 bbox_inches='tight')
 
 
-def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
+def cluster_heatmap(data, savename, out_dir=None, convert_to_log=False,
                     xlabels=None, ):
+    tmp_array = data.copy()
     tmp_array = np.nan_to_num(tmp_array)
     if convert_to_log:
-        above = tmp_array > 0.
-        below = tmp_array < 0.
-
-        tmp_array[above] = np.log2(tmp_array[above])
-        tmp_array[below] = -1 * np.log2(-1 * tmp_array[below])
+        tmp_array = _convert_to_log(tmp_array)
 
     size_of_data = np.shape(tmp_array)[1]
     length_matrix = np.shape(tmp_array)[0]
@@ -366,9 +366,7 @@ def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
 
     else:
         fig.savefig(os.path.join(out_dir, '%s_clustered.pdf' % savename))
-    plt.close()
-    quit()
-    plt.show()
+
 
     # dengrogram side
     ax1 = plt.subplot(211)
@@ -428,15 +426,12 @@ def cluster_heatmap(tmp_array, savename, out_dir=None, convert_to_log=False,
     return tmp_array
 
 
-def cluster_samples_by_time(tmp_array, savename, out_dir=None,
+def cluster_samples_by_time(tmp_array, savename=None, out_dir=None,
                             convert_to_log=False, xlabels=None, format='png'):
     tmp_array = np.nan_to_num(tmp_array)
-    if convert_to_log:
-        above = tmp_array > 0.
-        below = tmp_array < 0.
 
-        tmp_array[above] = np.log2(tmp_array[above])
-        tmp_array[below] = -1 * np.log2(-1 * tmp_array[below])
+    if convert_to_log:
+        tmp_array = _convert_to_log(tmp_array)
 
     size_of_data = np.shape(tmp_array)[1]
     length_matrix = np.shape(tmp_array)[0]
@@ -468,7 +463,8 @@ def cluster_samples_by_time(tmp_array, savename, out_dir=None,
 
     im = axmatrix.matshow(tmp_array, aspect='auto', origin='lower',
                           extent=(0, size_of_data, 0, length_matrix + 1),
-                          cmap=plt.get_cmap(name))
+                          cmap=plt.get_cmap(name)
+                          )
     axmatrix.set_yticks([])
     plt.colorbar(im, cax=axcolor)
 
@@ -479,14 +475,81 @@ def cluster_samples_by_time(tmp_array, savename, out_dir=None,
         axmatrix.set_xticklabels(xlabels, fontsize=16, rotation='90',
                                  minor=False)
         axmatrix.xaxis.set_label_position('bottom')
-
-    if out_dir is None:
-        save_name = '{}_clustered.{}'.format(savename, format)
+    if savename is None:
+        return fig
     else:
-        save_name = os.path.join(
-                out_dir, '{}_clustered.{}'.format(savename, format)
-        )
+        save_name = '{}_clustered.{}'.format(savename, format)
+    if out_dir is not None:
+        save_name = os.path.join(out_dir, save_name)
 
     fig.savefig(save_name, bbox_inches='tight',
                 bbox_extra_artists=(axcolor, axmatrix, ax1))
     plt.close()
+
+
+def heatmap_from_array(data, convert_to_log=False, yticklabels='auto'):
+    d_copy = data.copy()
+    if convert_to_log:
+        d_copy = log2_normalize_df(d_copy, 'combined_score')
+
+    def cut_word(row):
+        term_name = row['term_name']
+        if len(term_name.split('_Homo sapiens')):
+            return term_name.split('_Homo sapiens')[0]
+        else:
+            return term_name
+
+    d_copy['term_name'] = d_copy.apply(cut_word, axis=1)
+
+    array = pd.pivot_table(d_copy, index='term_name',
+                           columns='sample_id',
+                           values='combined_score')
+
+    time_sorted = list(sorted(d_copy['sample_id'].unique()))
+    array = array.fillna(0)
+    array = array.sort_values(by=time_sorted, ascending=False)
+
+    fig = plt.figure(figsize=(6, 4))
+    ax = fig.add_subplot(111)
+    sns.heatmap(array, ax=ax, yticklabels=yticklabels)
+    return fig
+    fig.tight_layout()
+    plt.savefig()
+    plt.show()
+
+
+    # fig = sns.clustermap(array, col_cluster=False, figsize=(12, 5))
+    # plt.show()
+
+
+def _convert_to_log(data):
+    d_copy = data.copy()
+    above = d_copy > 0
+    below = d_copy < 0
+    d_copy[above] = np.log2(d_copy[above])
+    d_copy[below] = -1 * np.log2(-1 * d_copy[below])
+    return d_copy
+
+
+def log2_normalize_df(df, fold_change):
+    """
+
+    Parameters
+    ----------
+    df : pandas.DataFrame
+        dataframe of fold changes
+    fold_change : str
+        column that contains fold change values
+
+    Returns
+    -------
+
+    """
+    tmp_df = df.copy()
+    greater_than = tmp_df[fold_change] > 0
+    less_than = tmp_df[fold_change] < 0
+    tmp_df.loc[greater_than, fold_change] = \
+        np.log2(tmp_df[greater_than][fold_change])
+    tmp_df.loc[less_than, fold_change] = \
+        -np.log2(-tmp_df[less_than][fold_change])
+    return tmp_df

@@ -3,7 +3,10 @@ from magine.networks.visualization.cytoscapejs_tools import viewer as cyjs
 from magine.networks.visualization.util_networkx import from_networkx
 import magine.ontology.enrichment_tools as et
 from magine.networks.network_subgraphs import NetworkSubgraphs
+from magine.networks.visualization.igraph_tools import create_igraph_figure, create_figure
 import numpy as np
+from IPython.display import SVG, display
+import matplotlib.pyplot as plt
 
 
 def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
@@ -29,26 +32,35 @@ def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
         terms, term_dict, label_dict, save_name=save_name, draw=draw_png)
 
     if cytoscape_js:
+        display_graph(term_g)
         display_graph(molecular_g)
     else:
         return term_g, molecular_g
 
 
-def display_graph(graph):
-    new_nodes = set()
-    for i, data in graph.nodes(data=True):
-        if 'termName' in data:
-            graph.node[i]['parent'] = data['termName']
-            new_nodes.add(data['termName'])
-    for each in new_nodes:
-        graph.add_node(each, )
-    g_cyjs = from_networkx(graph)
-    cyjs.render(g_cyjs, style='Directed', layout_algorithm='cose-bilkent')
+def display_graph(graph, add_parent=False, display_format='cytoscape'):
+    g_copy = graph.copy()
+    if display_format == 'cytoscape':
+        if add_parent:
+            new_nodes = set()
+            for i, data in graph.nodes(data=True):
+                if 'termName' in data:
+                    g_copy.node[i]['parent'] = data['termName']
+                    new_nodes.add(data['termName'])
+            for each in new_nodes:
+                g_copy.add_node(each, )
+        g_cyjs = from_networkx(g_copy)
+        cyjs.render(g_cyjs, style='Directed', layout_algorithm='cose-bilkent')
+    elif display_format == 'igraph':
+        display(SVG(create_figure(g_copy)))
+
+
+
 
 
 def shortest_paths(graph, node_1, node_2, bidirectional):
-
+    ns = NetworkSubgraphs(network=graph)
     display_graph(
-        NetworkSubgraphs(network=graph
-                         ).shortest_paths_between_two_proteins(node_1, node_2,
-                                                               bidirectional=bidirectional))
+        ns.shortest_paths_between_two_proteins(node_1, node_2,
+                                               bidirectional=bidirectional)
+    )

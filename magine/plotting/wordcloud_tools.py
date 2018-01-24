@@ -62,6 +62,8 @@ basic_words = {'signaling', 'signalling', 'receptor', 'events', 'protein',
 
 
 def cleanup_term_name(row):
+    if not isinstance(row['term_name'], str):
+        print(row)
     x = row['term_name'].split('_')[0].lower()
     x = ' ' + x
     x = x.replace(' p53', ' tp53')
