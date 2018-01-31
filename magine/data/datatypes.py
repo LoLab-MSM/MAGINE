@@ -209,9 +209,11 @@ class ExperimentalData(object):
         self.proteomics_over_time = []
         self.proteomics_up_over_time = []
         self.proteomics_down_over_time = []
-        self.sig_species_over_time = []
-        self.sig_species_up_over_time = []
-        self.sig_species_down_over_time = []
+
+        self.sig_species_over_time = dict()
+        self.sig_species_up_over_time = dict()
+        self.sig_species_down_over_time = dict()
+
         self.genes_over_time = []
         self.genes_up_over_time = []
         self.genes_down_over_time = []
@@ -243,12 +245,11 @@ class ExperimentalData(object):
             self.genes_down_over_time.append(
                     self.filter_measurements(i, True, 'down', 'genes'))
 
-            self.sig_species_over_time.append(
-                    self.filter_measurements(i, True))
-            self.sig_species_up_over_time.append(
-                    self.filter_measurements(i, True, 'up'))
-            self.sig_species_down_over_time.append(
-                self.filter_measurements(i, True, 'down'))
+            self.sig_species_over_time[i] = self.filter_measurements(i, True)
+            self.sig_species_up_over_time[i] = \
+                self.filter_measurements(i, True, 'up')
+            self.sig_species_down_over_time[i] = \
+                self.filter_measurements(i, True, 'down')
 
         for i in self.rna_time_points:
             self.rna_up[i] = self.return_rna(sample_id_name=i,
@@ -401,6 +402,17 @@ class ExperimentalData(object):
             else:
                 return list(tmp[gene].unique()) + list(
                     tmp['compound_id'].unique())
+
+    def get_measured_by_datatype(self):
+        """
+        Returns dict of species per data type
+
+        Returns
+        -------
+        dict
+
+        """
+        return get_measured_by_datatype(self.data)
 
     def create_table_of_data(self, sig=False, unique=False, save_name=None,
                              plot=False, write_latex=False):
@@ -748,6 +760,24 @@ template = r'''
 \end{{landscape}}
 \end{{document}}
 '''
+
+
+def get_measured_by_datatype(data):
+    d = data.copy()
+    measured = dict()
+    sig_measured = dict()
+    for i, r in d.groupby('data_type'):
+        if i in ['HILIC', 'C18']:
+            key = 'compound_id'
+            if key not in r:
+                key = 'compound'
+        else:
+            key = 'gene'
+        r = r.dropna(subset=[key])
+        measured[i] = set(r[key].unique())
+        sig_measured[i] = set(r[r['significant_flag']][key].unique())
+
+    return measured, sig_measured
 
 
 def create_table_of_data(data, sig=False, unique=False, save_name=None,
