@@ -1,11 +1,14 @@
+import os
+from ast import literal_eval
+
+import pandas as pd
+
+from magine.data.storage import id_mapping_dir
+
 try:
     import cPickle as pickle
 except:  # python3 doesnt have cPickle
     import pickle
-import os
-from ast import literal_eval
-from magine.data.storage import id_mapping_dir
-import pandas as pd
 
 
 class ChemicalMapper(object):
@@ -36,39 +39,42 @@ class ChemicalMapper(object):
     def __init__(self):
 
         self.database = None
-        self.hmdb_accession_to_chemical_name = {}
-        self.chemical_name_to_hmdb_accession = {}
-        self.hmdb_accession_to_kegg = {}
-        self.hmdb_accession_to_secondary_acc = {}
-        self.kegg_to_hmdb_accession = {}
-        self.hmdb_acc_to_secondary_acc = {}
-        self.synonyms_to_hmdb = {}
-        self.drugbank_to_hmdb = {}
-        _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv')
+        self.hmdb_accession_to_chemical_name = dict()
+        self.chemical_name_to_hmdb_accession = dict()
+        self.hmdb_accession_to_kegg = dict()
+        self.kegg_to_hmdb_accession = dict()
+        self.synonyms_to_hmdb = dict()
+        self.drugbank_to_hmdb = dict()
+        self.hmdb_accession_to_protein = dict()
+        _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
 
         if not os.path.exists(_filename):
             from magine.mappings.databases.download_libraries import HMDB
             HMDB()
         hmdb_database = pd.read_csv(
-                _filename, low_memory=False, encoding='utf-8',
-                converters={
-                    "protein_associations": lambda x: x.split("|"),
-                    "cellular_locations":   lambda x: x.split("|"),
-                    "biofunction":          lambda x: x.split("|"),
-                    "synonyms":             lambda x: x.split("|"),
-                    "secondary_accessions": lambda x: x.split("|"),
-                }
+            _filename, low_memory=False, encoding='utf-8',
+            converters={
+                "protein_associations": lambda x: x.split("|"),
+                "cellular_locations": lambda x: x.split("|"),
+                "biofunction": lambda x: x.split("|"),
+                "synonyms": lambda x: x.split("|"),
+                # "secondary_accessions": lambda x: x.split("|"),
+            }
         )
 
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
+
+        self.database['main_accession'] = self.database['accession']
+        sub_db = self.database[
+            self.database['secondary_accessions'].str.contains('|', na=False)]
+        new_df = tidy_split(sub_db, 'secondary_accessions', '|')
+        new_df['accession'] = new_df['secondary_accessions']
+        self.database = pd.concat([self.database, new_df])
         self._instance_filename = os.path.join(id_mapping_dir,
                                                'hmdb_instance.p')
         try:
             self.reload()
-
-            print('Loading class data')
         except:
-            print('Initializing Chemical mapping')
             self.load()
 
     def load(self):
@@ -76,22 +82,16 @@ class ChemicalMapper(object):
         self.hmdb_accession_to_chemical_name = self._to_dict("accession",
                                                              "name")
         self.chemical_name_to_hmdb_accession = self._to_dict("name",
-                                                             "accession")
+                                                             "main_accession")
         self.hmdb_accession_to_kegg = self._to_dict("accession", "kegg_id")
-        self.drugbank_to_hmdb = self._to_dict("drugbank_id", "accession")
-        self.hmdb_acc_to_secondary_acc = self._to_dict('accession',
-                                                       'secondary_accessions')
-        self.kegg_to_hmdb_accession = self._to_dict("kegg_id", "accession")
+
+        self.kegg_to_hmdb_accession = self._to_dict("kegg_id",
+                                                    "main_accession")
         self.hmdb_accession_to_protein = self.convert_to_dict_from_list(
-                "accession", "protein_associations")
+            "accession", "protein_associations")
+        self.drugbank_to_hmdb = self._to_dict('drugbank_id', 'main_accession')
         self.synonyms_to_hmdb = None
         self.save()
-
-    def merge_accesions(self, accesion):
-        secondary_acc = self.hmdb_acc_to_secondary_acc[accesion]
-        all_accesions = secondary_acc.append(secondary_acc)
-        all_accesions = set(all_accesions)
-        return '|'.join(i for i in all_accesions)
 
     def _to_dict(self, key, value):
         """ creates a dictionary with a list of values for each key
@@ -106,7 +106,7 @@ class ChemicalMapper(object):
         dict
 
         """
-        return {k: list(v) for k, v in self.database.groupby(key)[value]}
+        return {k: sorted(set(list(v))) for k, v in self.database.groupby(key)[value]}
 
     def convert_to_dict_from_list(self, key, value):
         """ creates a dictionary from hmdb with a list of values for each key
@@ -174,11 +174,11 @@ class ChemicalMapper(object):
 
         """
         print('Number of HMDB accessions = {0}'.format(
-                len(self.database['accession'].unique())))
+            len(self.database['accession'].unique())))
         print('Number of unique KEGG ids = {0}'.format(
-                len(self.hmdb_accession_to_kegg.keys())))
+            len(self.hmdb_accession_to_kegg.keys())))
         print('Number of HMDB to KEGG mappings = {0}'.format(
-                len(self.kegg_to_hmdb_accession.values())))
+            len(self.kegg_to_hmdb_accession.values())))
 
     def save(self):
         """ save class instance
@@ -206,6 +206,43 @@ class ChemicalMapper(object):
             self.__dict__ = pickle.loads(data, encoding='utf-8')
         except:
             self.__dict__ = pickle.loads(data)
+
+
+def tidy_split(df, column, sep='|', keep=False):
+    """
+    Split the values of a column and expand so the new DataFrame has one split
+    value per row. Filters rows where the column is missing.
+
+    Params
+    ------
+    df : pandas.DataFrame
+        dataframe with the column to split and expand
+    column : str
+        the column to split and expand
+    sep : str
+        the string used to split the column's values
+    keep : bool
+        whether to retain the presplit value as it's own row
+
+    Returns
+    -------
+    pandas.DataFrame
+        Returns a dataframe with the same columns as `df`.
+    """
+    indexes = list()
+    new_values = list()
+    df = df.dropna(subset=[column])
+    for i, presplit in enumerate(df[column].astype(str)):
+        values = presplit.split(sep)
+        if keep and len(values) > 1:
+            indexes.append(i)
+            new_values.append(presplit)
+        for value in values:
+            indexes.append(i)
+            new_values.append(value)
+    new_df = df.iloc[indexes, :].copy()
+    new_df[column] = new_values
+    return new_df
 
 
 if __name__ == "__main__":
