@@ -231,6 +231,8 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
                                )
     if organism != species:
         raise NotImplementedError("Error with species not matching from KEGG")
+
+    # get all nodes of pathway
     for entry in tree.getiterator('entry'):
         node_type = entry.get('type')
         name = entry.get('name')
@@ -253,10 +255,13 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
                     genes.add(i)
                 elif node_type == 'compound':
                     compounds_local.add(i)
+                else:
+                    print("Not a gene or compound!!!")
+                    print(i)
         else:
             connecting_maps.append(node_id)
 
-    # Add relations
+    # Add all relations of pathway
     for rel in tree.getiterator('relation'):
         int_type = rel.get('type')
         e1 = rel.get('entry1')
@@ -266,9 +271,9 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
         if e2 in connecting_maps:
             continue
         try:
-            int_type = [int_type]
+            int_type = set(int_type)
             for interaction in rel.getiterator('subtype'):
-                int_type.append(interaction.get('name'))
+                int_type.add(interaction.get('name'))
 
             int_type = '|'.join(int_type)
         except TypeError:
@@ -278,7 +283,7 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
             for j in two:
                 _add_edge(i, j, int_type)
 
-    # Add reactions
+    # Add all reactions of pathway
     for reaction in tree.getiterator('reaction'):
 
         id_local = reaction.get('id')
