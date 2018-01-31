@@ -3,7 +3,6 @@
 File that generates networks
 """
 import os
-
 import networkx as nx
 import numpy as np
 
@@ -12,6 +11,7 @@ import magine.networks.network_tools as nt
 from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
+from magine.networks.databases.biogrid_interactions import create_biogrid_network
 
 try:
     import cPickle as pickle
@@ -117,8 +117,8 @@ def build_network(gene_list, save_name='tmp', species='hsa',
     if use_biogrid:
         end_network = expand_by_db(end_network, all_measured_list, 'biogrid')
     if use_hmdb:
-        print("warning: automatic integration currently in progress.\n")
         if metabolite_list is None:
+            print("warning: automatic integration currently in progress.\n")
             print("Please provide a list of metabolites")
             metabolite_list = list(set(i for i in end_network.nodes()
                                        if i.startswith('HMDB')))
@@ -182,9 +182,10 @@ def expand_by_hmdb(graph, metabolite_list):
     tmp_graph = nx.DiGraph()
     start_nodes = set(graph.nodes())
     start_edges = set(graph.edges())
-
     metabolite_set = set(i for i in metabolite_list if i.startswith('HMDB'))
+
     metabolite_set = metabolite_set.intersection(cm.hmdb_accession_to_protein)
+
     missing_metabolites = metabolite_set.difference(start_nodes)
 
     count_in_network, count_not_in_network = 0, 0
@@ -255,6 +256,7 @@ def expand_by_hmdb(graph, metabolite_list):
     metabolites_added = missing_metabolites.intersection(end_nodes)
     still_missing = missing_metabolites.difference(end_nodes)
     out = list()
+    out.append('Metabolites data= {}'.format(len(metabolite_set)))
     out.append('Metabolites not in starting network = {}'
                ''.format(len(missing_metabolites)))
     out.append('Metabolites added to network = {}'
@@ -299,29 +301,36 @@ def expand_by_db(network, measured_list, db='reactome'):
     measured_set = set(measured_list)
     if db == 'reactome':
         fi_network = load_reactome_fi()
+        db_name = 'ReactomeFI'
 
     elif db == 'biogrid':
-        from magine.networks.databases.biogrid_interactions import \
-            create_biogrid_network
         fi_network = create_biogrid_network()
+        db_name = 'BioGrid'
 
-    reactome_edges = fi_network.edges(data=True)
+    edges = fi_network.edges(data=True)
 
     # new list in reactome_nodes
     nodes_to_check = set(fi_network.nodes()).intersection(measured_set)
     nodes_to_check.update(set(network.nodes()))
 
-    def _add_node(node):
-        new_graph.add_node(node,
-                           databaseSource='ReactomeFI',
-                           speciesType='gene')
+    added_nodes = set()
 
-    for i, j, k in reactome_edges:
+    for i, j, k in edges:
+        k['databaseSource'] = db_name
         if i in nodes_to_check and j in measured_list:
-            _add_node(i)
+            added_nodes.add(i)
+            added_nodes.add(j)
+            new_graph.add_edge(i, j, **k)
+        elif j in nodes_to_check and i in measured_list:
+            added_nodes.add(i)
+            added_nodes.add(j)
             new_graph.add_edge(i, j, **k)
 
-    new_graph = nt.compose(new_graph, network, "ReactomeExpansion")
+    for node in added_nodes:
+        attr = fi_network.node[node]
+        new_graph.add_node(node, **attr)
+
+    new_graph = nt.compose(network, new_graph, "{}Expansion".format(db_name))
 
     print("Nodes before {} expansion = {}, after = {}"
           "".format(db, len(network.nodes()), len(new_graph.nodes()))
