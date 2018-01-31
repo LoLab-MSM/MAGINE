@@ -213,17 +213,11 @@ def create_compound_dictionary(network):
                 loc = compound_manual[i]
                 if loc in cm.hmdb_accession_to_chemical_name:
 
-                    chem_names = []
-                    chem_names += [e for e in
-                                   cm.hmdb_accession_to_chemical_name[loc]]
-                    chem_names = '|'.join(
-                        chem_names)  # .decode('ascii', 'ignore')
-                    print(chem_names)
+                    chem_names = set(cm.hmdb_accession_to_chemical_name[loc])
+                    chem_names = '|'.join(chem_names)
                     network.node[i]['chemName'] = chem_names
-
                     continue
                 else:
-                    print(i, compound_manual[i])
                     if i in common_names_not_in_hmdb:
                         network.node[i]['chemName'] = common_names_not_in_hmdb[
                             i]
@@ -234,23 +228,20 @@ def create_compound_dictionary(network):
             name_stripped = i.lstrip('cpd:')
             if name_stripped in cm.kegg_to_hmdb_accession:
                 mapping = cm.kegg_to_hmdb_accession[name_stripped]
-                if type(mapping) == list:
-                    names = '|'.join(mapping)
+                if isinstance(mapping, list):
+                    names = '|'.join(set(mapping))
                     cpd_to_hmdb[i] = names
                     network.node[i]['hmdbNames'] = names
-                    chem_names = []
+                    chem_names = set()
                     for name in mapping:
                         if name in cm.hmdb_accession_to_chemical_name:
-                            chem_names += [e for e in cm.hmdb_accession_to_chemical_name[name]]
-                    chem_names = '|'.join(
-                        chem_names)  # .encode('ascii', 'ignore')
-                    print(chem_names)
+                            chem_names.update(set(cm.hmdb_accession_to_chemical_name[name]))
+                    chem_names = '|'.join(chem_names)
                     network.node[i]['chemName'] = chem_names
 
-                elif type(mapping) == str:
+                elif isinstance(mapping, (str, unicode)):
                     cpd_to_hmdb[i] = mapping
                     chem_n = cm.hmdb_accession_to_chemical_name[mapping]
-                    print(chem_n)
                     network.node[i]['chemName'] = chem_n.encode('ascii',
                                                                 'ignore')
                 else:
@@ -316,40 +307,3 @@ def _check_dict_for_int(dic):
         else:
             new_dic[key] = value
     return new_dic
-
-"""
-def read_fasta(fp):
-    name, seq = None, []
-    for line in fp:
-        line = line.rstrip()
-        if line.startswith(">"):
-            if name:
-                yield (name, ''.join(seq))
-            name, seq = line, []
-        else:
-            seq.append(line)
-    if name:
-        yield (name, ''.join(seq))
-
-
-def gather_list_of_mouse_approved():
-    approved_dict = set()
-    unknown = ''
-    with open('/home/pinojc/Downloads/uniprot_sprot.fasta') as fp:
-        for name, seq in read_fasta(fp):
-            _, acc, acc_id = name.split('|')
-            gene_id, rest = acc_id.split(' ', 1)
-            if gene_id.endswith('_MOUSE'):
-                if acc in mouse_uniprot_to_gene_name:
-                    approved_dict[acc] = mouse_uniprot_to_gene_name[acc]
-                else:
-                    unknown += acc + '\n'
-                    # print('No gene name? : {}'.format(acc))
-    with open('unknown.txt', 'w')as f:
-        f.write(unknown)
-    return approved_dict
-    # approved_dict = gather_list_of_mouse_approved()
-    # acc_to_gene = pandas.read_table('acc_to_geneid.tab')
-    #
-    # acc_to_gene = acc_to_gene.set_index('From')['To'].to_dict()
-"""
