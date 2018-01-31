@@ -1,3 +1,4 @@
+
 import os
 import zipfile
 from xml.etree import cElementTree as ElementTree
@@ -124,7 +125,7 @@ class HMDB(object):
     def __init__(self):
         self.tmp_dir = id_mapping_dir
         self.target_file = 'hmdb_metabolites.zip'
-        self.out_name = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv')
+        self.out_name = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
         self._setup()
 
     def load_db(self):
@@ -144,9 +145,7 @@ class HMDB(object):
 
         print("Parsing metabolites information from files")
         tmp_all = [None] * 1000000
-        # tmp_all = []
         for i in os.listdir(out_dir):
-            print(i)
             filename = os.path.join(out_dir, i)
 
             # get an iterable
@@ -169,14 +168,13 @@ class HMDB(object):
                     # """
                     template = self._create_dict(elem)
                     tmp_all[count] = template
-
                     count += 1
                     elem.clear()
                     root.clear()
 
         df = pd.DataFrame(tmp_all[:count], columns=template.keys())
         df.to_csv(self.out_name, index=False, encoding='utf-8',
-                  tupleize_cols=True)
+                  compression='gzip', tupleize_cols=True)
         print("Done processing HMDB")
 
     def _unzip_hmdb(self, out_directory):
@@ -273,15 +271,13 @@ class HMDB(object):
                             cl_all.append(cl.text)
                 template['cellular_locations'] = '|'.join(i for i in cl_all)
             elif i == 'secondary_accessions':
-                accesion = n.findall('accession')
-                if len(accesion) == 0:
-                    accesion = ''
+                accession = n.findall('accession')
+                if len(accession) == 0:
+                    accession = ''
                 else:
-                    accesions = []
-                    for acc in accesion:
-                        accesions.append(acc.text)
-                    accesion = '|'.join(acc for acc in sorted(accesions))
-                template[i] = accesion
+                    accessions = [acc.text for acc in accession]
+                    accession = '|'.join(acc for acc in sorted(accessions))
+                template[i] = accession
             else:
                 output = n.text
                 if output is not None:
