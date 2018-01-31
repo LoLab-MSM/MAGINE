@@ -5,10 +5,11 @@ import os
 import networkx as nx
 import pathos.multiprocessing as mp
 
+NO_IGRAPH = False
 try:
     import igraph as ig
 
-    NO_IGRAPH = False
+
 except ImportError:
     NO_IGRAPH = True
 
@@ -435,10 +436,14 @@ def _trim(network, list_of_nodes):
 
 
 def networkx_to_igraph(network):
+    nx.write_gml(network, 'test.gml')
+    igraph_network = ig.read('test.gml')
+    return igraph_network
     if NO_IGRAPH:
         print("igraph not installed")
         return False
     igraph_network = ig.Graph(directed=True)
+    igraph_network.add_vertices(network.nodes())
     for i, data in network.nodes(data=True):
         i = i.encode('utf-8')
         new_data = dict()
@@ -729,6 +734,26 @@ def add_pvalue_and_fold_change():
     return
 
 
+def add_nodes(old_network, new_network):
+    new_nodes = set(new_network.nodes())
+    for i, data in old_network.nodes_iter(data=True):
+        if i in new_nodes:
+            existing_info = new_network.node[i]
+            for n, d in data.items():
+                if n in existing_info:
+                    current = existing_info[n]
+                    if isinstance(current, list):
+                        print("Node dict is returning list!! - NetworkTools")
+                        print(current)
+                        current = current[0]
+                    new = '|'.join({current, d})
+                    new_network.node[i][n] = new
+                else:
+                    new_network.node[i][n] = d
+        else:
+            new_network.add_node(i, **data)
+
+
 def compose(G, H, name=None):
     """Return a new graph of G composed with H.
 
@@ -753,8 +778,10 @@ def compose(G, H, name=None):
         name = "compose( %s, %s )" % (G.name, H.name)
     new_g = nx.DiGraph()
     new_g.name = name
-    new_g.add_nodes_from(H.nodes())
-    new_g.add_nodes_from(G.nodes())
+
+    add_nodes(G, new_g)
+    add_nodes(H, new_g)
+
     for i, j, data in G.edges_iter(data=True):
         new_g.add_edge(i, j, **data)
         # print(i, j, data)
@@ -765,9 +792,11 @@ def compose(G, H, name=None):
             for n, d in data.items():
                 if n in existing_info:
                     if isinstance(existing_info[n], float):
+                        print("Edge information exists! - NetworkTools")
                         print(n, d, i, j)
                     current = set(existing_info[n].split('|'))
                     if d is None:
+                        print("No edge information exists! - NetworkTools")
                         print(n, d)
                     additions = set(d.split('|'))
                     additions.update(current)
@@ -777,36 +806,6 @@ def compose(G, H, name=None):
                     new_g[i][j][n] = d
         else:
             new_g.add_edge(i, j, **data)
-    nodes = set(new_g.nodes())
-    for i, data in G.nodes_iter(data=True):
-        if i in nodes:
-            existing_info = new_g.node[i]
-            for n, d in data.items():
-                if n in existing_info:
-                    current = set(existing_info[n].split('|'))
-                    additions = set(d.split('|'))
-                    additions.update(current)
-                    new = '|'.join(sorted(additions))
-                    new_g.node[i][n] = new
-                else:
-                    new_g.node[i][n] = d
-        else:
-            new_g.add_node(i, **data)
-    nodes2 = set(new_g.nodes())
-    for i, data in H.nodes_iter(data=True):
-        if i in nodes2:
-            existing_info = new_g.node[i]
-            for n, d in data.items():
-                if n in existing_info:
-                    current = existing_info[n]
-                    if isinstance(current, list):
-                        current = current[0]
-                    new = '|'.join({current, d})
-                    new_g.node[i][n] = new
-                else:
-                    new_g.node[i][n] = d
-        else:
-            new_g.add_node(i, **data)
     return new_g
 
 
