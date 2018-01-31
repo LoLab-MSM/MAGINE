@@ -299,16 +299,30 @@ def _process_rna_seq(data):
     del data['gene']
     data = data.join(s)
     data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
-    data['treated_control_fold_change'] = np.exp2(
-            data['log2_fold_change'].astype(float))
+    data['treated_control_fold_change'] = data['fold_change']
 
-    crit_1 = data['treated_control_fold_change'] < 1
-    data.loc[crit_1, 'treated_control_fold_change'] = \
-        -1. / data[crit_1]['treated_control_fold_change']
+    # data['treated_control_fold_change'] = \
+    #     np.exp2(data['log2_fold_change'].astype(float))
+    #
+    # crit_1 = data['treated_control_fold_change'] < 1
+    #
+    # data.loc[crit_1, 'treated_control_fold_change'] = \
+    #     -1. / data[crit_1]['treated_control_fold_change']
+
+    print(data[data['significant_flag']].shape)
+
+    crit = (data['fold_change'] > 0) & (data['fold_change'] < 1.5) & \
+           data['significant_flag']
+
+    data.loc[crit, 'significant_flag'] = False
+    crit = (data['fold_change'] < 0) & (data['fold_change'] > -1.5) & \
+           data['significant_flag']
+    data.loc[crit, 'significant_flag'] = False
 
     data.loc[:, 'protein'] = data['gene'] + '_rnaseq'
     data.loc[:, 'data_type'] = 'rna_seq'
     data.loc[:, 'species_type'] = 'protein'
+    print(data[data['significant_flag']].shape)
 
     return data[out_gene_cols]
 
@@ -589,7 +603,7 @@ def pivot_raw_gene_data(data, save_name=None):
     tmp = pd.pivot_table(prot, index=['gene', 'protein', 'data_type'],
                          columns='time', aggfunc='first')
 
-    tmp.to_csv('protein_data_pivot.csv', index=True)
+    # tmp.to_csv('protein_data_pivot.csv', index=True)
     if save_name:
         tmp.to_excel('{}.xlsx'.format(save_name),
                      merge_cells=True)
@@ -618,10 +632,10 @@ def pivot_tables_for_export(data, save_name=None):
     genes = pd.pivot_table(prot, index=['gene', 'protein', 'data_type'],
                            columns='time', aggfunc='first', fill_value=np.nan)
 
-    if save_name:
-        genes.to_excel('{}_genes.xlsx'.format(save_name),
-                       merge_cells=True)
-        meta.to_csv('{}_genes.csv', index=True)
+    # if save_name:
+    #     genes.to_excel('{}_genes.xlsx'.format(save_name),
+    #                    merge_cells=True)
+    #     meta.to_csv('{}_genes.csv', index=True)
     if 'compound_id' not in data.dtypes:
         meta = pd.pivot_table(meta, index=['compound'],
                               columns='time', aggfunc='first')
@@ -629,9 +643,9 @@ def pivot_tables_for_export(data, save_name=None):
         meta = pd.pivot_table(meta, index=['compound', 'compound_id'],
                               columns='time', aggfunc='first')
     if save_name:
-        meta.to_excel('{}_metabolite.xlsx'.format(save_name),
-                      merge_cells=True)
-        meta.to_csv('{}_metabolites.csv', index=True)
+        # meta.to_excel('{}_metabolite.xlsx'.format(save_name),
+        #               merge_cells=True)
+        meta.to_csv('{}_metabolites.csv'.format(save_name), index=True)
     return genes, meta
 
 
