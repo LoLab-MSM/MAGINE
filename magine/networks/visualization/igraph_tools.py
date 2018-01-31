@@ -159,19 +159,22 @@ def create_igraph_figure(mol_net, save_name=None):
     except ImportError:
         print("No igraph, cannot use plotting function")
         return
-
     g = networkx_to_igraph(mol_net)
     if not isinstance(g, igraph.Graph):
         return
-
-    layout = g.layout("kk")
+    print("Starting layout")
+    # layout = g.layout("kk", {'use_seed':1})
+    # layout = g.layout_kamada_kawai()
+    # layout = g.layout_drl()
+    # layout = g.layout_mds()
+    # layout = g.layout("lgl")
     # layout = g.layout("tree")
     # layout = g.layout("drl")
     # layout = g.layout("graphopt")
     # layout = g.layout("mds")
     # layout = g.layout("sugiyama")
-    # layout = g.layout("fr")
-
+    layout = g.layout("drl")
+    print("Done with layout")
     visual_style = dict()
     visual_style["vertex_label_dist"] = 0
     visual_style["vertex_shape"] = "circle"
@@ -181,11 +184,15 @@ def create_igraph_figure(mol_net, save_name=None):
     # visual_style["bbox"] = (1000, 1000)
     visual_style["bbox"] = (2000, 2000)
     visual_style["margin"] = 100
-    print(g.vs)
+    g.vs.label=None
     if 'color' in g.vs:
         visual_style["vertex_color"] = g.vs["color"]
-    for vertex in g.vs():
-        vertex["label"] = vertex['name']
+    # for vertex in g.vs():
+    #     if 'label' in vertex:
+    #         continue
+    #     elif 'name' in vertex:
+    #         vertex["label"] = vertex['name']
+
     # igraph.plot(cl, "{}.pdf".format(save_name), mark_groups=True, **visual_style)
     if save_name is not None:
         plot = igraph.Plot("{}.png".format(save_name), bbox=(3000, 2200),
