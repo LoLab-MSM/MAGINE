@@ -7,13 +7,14 @@ import pandas as pd
 
 from magine.data.storage import network_data_dir
 from magine.mappings import ChemicalMapper
+import magine.networks.network_tools as nt
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
 else:
     from urllib import urlopen
 
-_cm = ChemicalMapper()
+
 
 
 class BioGridDownload(object):
@@ -23,17 +24,17 @@ class BioGridDownload(object):
         self._reverse = {"<-", "?-"}
         self._forward = {"->", "->"}
         self._db_name = 'BioGrid'
+        self._cm = ChemicalMapper()
 
     def _create_chemical_network(self):
-        chemical_int = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
+        df = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
                                    compression='zip',
                                    delimiter='\t',
                                    error_bad_lines=False,
                                    low_memory=False,
                                    encoding='utf-8',
                                    )
-
-        chemical_int = chemical_int[chemical_int['Organism'] == 'Homo sapiens']
+        df = df[df['Organism'] == 'Homo sapiens']
         chem_cols = ['Official Symbol',
                      'Action',
                      'Chemical Name',
@@ -42,64 +43,101 @@ class BioGridDownload(object):
                      'Pubmed ID',
                      'Chemical Type',
                      'Chemical Source',
-                     'Chemical Source ID']
+                     'Chemical Source ID',
+                     'Interaction Type'
+                     ]
 
-        chemical_int = chemical_int[chem_cols]
-        chem_table = chemical_int.as_matrix()
-        chem_g = nx.DiGraph()
+        df = df[chem_cols]
+        df = df[~df['Action'].isin(['unknown'])]
+
+        df.drop_duplicates(
+            subset=['Official Symbol', 'Action', 'Chemical Name'],
+            inplace=True
+        )
+
+        def convert_to_name(row):
+            db = row['Chemical Source']
+            id_chem_source = row['Chemical Source ID']
+            c_name = row['Chemical Name']
+            if db == 'DRUGBANK':
+                if id_chem_source in _cm.drugbank_to_hmdb:
+                    new_name = _cm.drugbank_to_hmdb[id_chem_source][0]
+                    return new_name
+                elif c_name in _cm.chemical_name_to_hmdb_accession:
+                    new_name = _cm.chemical_name_to_hmdb_accession[c_name][0]
+                    return new_name
+            return c_name
+
+        def convert_to_hmdb_only(row):
+            db = row['Chemical Source']
+            id_chem_source = row['Chemical Source ID']
+            c_name = row['chemName']
+            if db == 'DRUGBANK':
+                if id_chem_source in self._cm.drugbank_to_hmdb:
+                    name = self._cm.drugbank_to_hmdb[id_chem_source][0]
+                    return name
+                elif c_name in self._cm.chemical_name_to_hmdb_accession:
+                    name = self._cm.chemical_name_to_hmdb_accession[c_name][0]
+                    return name
+            return None
+
+        # cleanup names
+        df['chemType'] = df['Chemical Type']
+        df['gene'] = df['Official Symbol']
+        df['interactionType'] = df['Action']
+        df['pubmedId'] = df['Pubmed ID']
+        df['databaseSource'] = 'BioGrid'
+        # keep the same info as other databases (store as compound)
+        df.loc[df['chemType'] == 'small molecule', 'chemType'] = 'compound'
+
+        # converting to ascii so we can export play with networkx
+        df['chemName'] = df['Chemical Name'].str.encode('ascii', 'replace')
+
+        # convert names to HMBD, or keep it the same if HMDB doesnt exist
+        df['target'] = df.apply(convert_to_name, axis=1)
+        # add HMDB attribute if it exists
+        df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1)
+
+        # create network
+        chem_g = nx.from_pandas_dataframe(
+            df,
+            'gene',
+            'target',
+            edge_attr=['interactionType', 'databaseSource', 'pubmedId'],
+            create_using=nx.DiGraph()
+        )
+        # df.to_csv('biogrid.csv')
+
+        chem_table = df.as_matrix(
+            ['gene', 'target', 'chemName', 'chemType', 'hmdbID']
+        )
+
         nodes_added = set()
+
+        def add_node(node, node_type, chem_name=None, hmdb=None):
+            attr = dict()
+            attr['speciesType'] = node_type
+            attr['databaseSource'] = 'BioGrid'
+            if chem_name is not None:
+                attr['chemName'] = chem_name
+            if hmdb is not None:
+                attr['hmdbNames'] = hmdb
+
+            chem_g.add_node(node, **attr)
+            nodes_added.add(node)
+        # add node names/attributes
         for row in chem_table:
-            target = row[0]
-            source = row[2]
-            name = source.encode('ascii', 'replace')
-            action = row[1]
-            atc_code = row[3]
-            cas_num = row[4]
-            pubmed = row[5]
-            chem_typed = row[6]
-            chem_source = row[7]
-            chem_source_id = row[8]
-            if chem_typed == 'small molecule':
-                node_type = 'compound'
-            else:
-                node_type = 'biologic'
+            gene = row[0]
+            chemical = row[1]
+            chemical_name = row[2]
+            chem_typed = row[3]
+            hmdb_id = row[4]
+            if gene not in nodes_added:
+                add_node(gene, 'gene')
 
-            if target not in nodes_added:
-                chem_g.add_node(target, speciesType='gene',
-                                databaseSource='BioGrid')
-                nodes_added.add(target)
-
-            def _add_source_node(node):
-                if node not in nodes_added:
-                    chem_g.add_node(node,
-                                    speciesType=node_type,
-                                    chemName=name,
-                                    databaseSource='BioGrid',
-                                    atcCode=atc_code,
-                                    chemSource=chem_source,
-                                    chemSourceId=chem_source_id,
-                                    casNum=cas_num
-                                    )
-                    nodes_added.add(node)
-
-            def _add_edge(node):
-                chem_g.add_edge(node, target,
-                                interactionType=action,
-                                pubmed=pubmed,
-                                databaseSource='BioGrid'
-                                )
-
-            if chem_source == 'DRUGBANK':
-                if chem_source_id in _cm.drugbank_to_hmdb:
-                    source = _cm.drugbank_to_hmdb[chem_source_id]
-                    for n in source:
-                        _add_source_node(n)
-                        _add_edge(n)
-                else:
-                    _add_source_node(source)
-            else:
-                _add_source_node(source)
-
+            if chemical not in nodes_added:
+                add_node(chemical, chem_typed, chemical_name, hmdb_id)
+        # nx.write_gml(chem_g, 'biogrid_chem_only.gml')
         return chem_g
 
     def parse_network(self):
@@ -118,54 +156,62 @@ class BioGridDownload(object):
                             error_bad_lines=False,
                             low_memory=False)
 
+        # only keep human
+        # TODO enable other organisms
         table = table[table['Organism Interactor A'].isin(['9606'])]
         table = table[table['Organism Interactor B'].isin(['9606'])]
+
+        #table.to_csv('biogrid.csv')
 
         protein_cols = ['Official Symbol Interactor A',
                         'Official Symbol Interactor B',
                         'Modification',
                         'Pubmed ID',
-                        'Score',
-                        'Source Database',
-                        'Experimental System Type']
-        table = table[protein_cols]
+                        'Source Database'
+                        ]
 
+        table = table[protein_cols]
         table = table[~table['Modification'].isin(['-', 'No Modification'])]
 
-        table = table.as_matrix()
-        g = self._create_chemical_network()
+        # clean up names
+        table['source'] = table['Official Symbol Interactor A']
+        table['target'] = table['Official Symbol Interactor B']
+        table['interactionType'] = table['Modification']
+        table['pubmedId'] = table['Pubmed ID']
+        table['databaseSource'] = table['Source Database']
+
+        # create graph
+        protein_graph = nx.from_pandas_dataframe(
+            table,
+            'source',
+            'target',
+            edge_attr=['interactionType', 'databaseSource', 'pubmedId'],
+            create_using=nx.DiGraph()
+        )
+
+        table = table.as_matrix(['source', 'target'])
+
         added_genes = set()
 
+        def _add_node(node):
+            if node not in added_genes:
+                protein_graph.add_node(node,
+                                       databaseSource='BioGrid',
+                                       speciesType='gene')
+                added_genes.add(node)
+        # add names to graph
         for r in table:
-            gene1 = r[0]
-            gene2 = r[1]
-            inter = r[2].lower()
-            pubchem = r[3]
-            score = r[4]
-            source_db = r[5]
-            exp_system = r[6]
+            _add_node(r[0])
+            _add_node(r[1])
 
-            def _add_node(node):
-                if node not in added_genes:
-                    g.add_node(node,
-                               databaseSource=source_db,
-                               speciesType='gene'
-                               )
-                    added_genes.add(node)
+        nx.write_gml(protein_graph, 'biogrid_protein_only.gml')
+        chemical_graph = self._create_chemical_network()
 
-            _add_node(gene1)
-            _add_node(gene2)
-
-            g.add_edge(gene1, gene2,
-                       interactionType=inter,
-                       pubchem=pubchem,
-                       expSystem=exp_system,
-                       ptm=inter,
-                       score=score,
-                       databaseSource=source_db)
-
-        nx.write_gpickle(g, os.path.join(network_data_dir, 'biogrid.p'))
-        return g
+        final_graph = nt.compose(protein_graph, chemical_graph)
+        nx.write_gml(final_graph, 'biogrid.gml')
+        nx.write_gpickle(final_graph,
+                         os.path.join(network_data_dir, 'biogrid.p'))
+        return final_graph
 
 
 def create_biogrid_network():
