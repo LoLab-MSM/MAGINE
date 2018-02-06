@@ -1,0 +1,292 @@
+<!doctype html>
+<html>
+<head>
+    <title>Network | Basic usage</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js"></script>
+    <script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>
+    <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>
+    <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js"></script>
+
+    <style type="text/css">
+
+        #mynetwork0 {
+            width: 900px;
+            height: 800px;
+            border: 5px solid white;
+            box-sizing: border-box;
+        }
+
+        .myClass {
+            background: red;
+        }
+
+        body {
+            font: 14px helvetica neue, helvetica, arial, sans-serif;
+        }
+
+        #cy {
+            width: 100%;
+            height: 500px;
+            display: block;
+        }
+
+        input[type='button'] {
+            width: 100%;
+        }
+    </style>
+
+</head>
+<body onload="init();">
+
+
+<div class="row">
+    <div class="container-fluid">
+
+        <div class="container-fluid">
+
+            <div class="dropdown nav navbar-nav">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Layout options<span
+                        class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><input type='button' id='HieButton' value='Hierarchical layout'></li>
+                    <li><input type='button' id='DagreButton' value='Default layout'></li>
+                    <li><input type='button' id='FlatButton' value='Compact layout (random)'></li>
+                </ul>
+            </div>
+            <div class="dropdown nav navbar-nav">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Color options<span
+                        class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><input type='button' id='metabolites' value='Highlight metabolites'></li>
+                    <li><input type='button' id='genes' value='Highlight genes/proteins'></li>
+                </ul>
+            </div>
+        </div>
+        <div id="tools" class="panel panel-primary">
+            <div class="panel-heading">Filter edges</div>
+            <div class="panel-body">
+                <button id="filter_exp" class="btn btn-success">Expression</button>
+                <button id="filter_act" class="btn btn-success">Activate</button>
+                <button id="filter_chem" class="btn btn-success">Chemical</button>
+                <button id="filter_missing" class="btn btn-success">Missing interaction or indirect</button>
+            </div>
+        </div>
+        <row>
+            <div class="col-md-12 col-sm-12 col-lg-12">
+
+                <!-- graph : start -->
+                <div class="panel panel-primary">
+                    <div class="panel-heading">Graph</div>
+                    <div class="panel-body">
+                        <div id="cy-container">
+                            <div id="mynetwork0"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </row>
+    </div>
+
+
+    <script type="text/javascript">
+        function init() {
+            window.parent.setUpFrame();
+            return true;
+        }
+
+        function runVis() {
+            var cy = cytoscape({
+                container: document.getElementById('mynetwork0'),
+
+                elements: {
+                    nodes:{{nodes}},
+                    edges:{{edges}}
+                },
+                style: [
+                    {
+                        selector: 'node',
+                        css: {
+                            'content': 'data(id)',
+                            'text-valign': 'center',
+                            'text-halign': 'center'
+                        }
+                    },
+                    {
+                        selector: 'node[speciesType = \'compound\']',
+                        css: {
+                            'content': 'data(chemName)',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'shape': 'rectangle'
+                        }
+                    },
+                    {
+                        selector: 'node[speciesType = \'gene\']',
+                        css: {
+                            'content': 'data(id)',
+                            'text-valign': 'center',
+                            'text-halign': 'center',
+                            'shape': 'rectangle'
+                        }
+                    },
+                    {
+                        selector: '$node > node',
+                        css: {
+                            'padding-top': '10px',
+                            'padding-left': '10px',
+                            'padding-bottom': '10px',
+                            'padding-right': '10px',
+                            'text-valign': 'top',
+                            'text-halign': 'center',
+                            'background-color': 'green'
+                        }
+                    },
+                    {
+                        selector: 'edge',
+                        css: {
+                            'curve-style': 'bezier',
+                            'target-arrow-shape': 'triangle',
+
+                        }
+                    },
+                    {
+                        selector: 'edge:selected',
+                        css: {
+                            'background-color': 'yellow',
+                            'line-color': 'red',
+                            'label': 'data(interactionType)',
+                            'target-arrow-color': 'black',
+                            'source-arrow-color': 'black'
+                        }
+                    }
+                ]
+            });
+            cy.layout({
+                    name: 'breadthfirst',
+                }
+            ).run();
+            cy.resize();
+            cy.fit();
+
+            var HieButton = document.getElementById('HieButton');
+            HieButton.addEventListener('click', function () {
+                cy.layout({name: 'breadthfirst', avoidOverlap: true}).run();
+
+            });
+            var DagreButton = document.getElementById('DagreButton');
+            DagreButton.addEventListener('click', function () {
+                cy.layout({name: 'dagre', avoidOverlap: true}).run();
+
+            });
+            var FlatButton = document.getElementById('FlatButton');
+            FlatButton.addEventListener('click', function () {
+                cy.layout(
+                    {
+                        name: 'cose-bilkent',
+                        avoidOverlapPadding: 100,
+                        animate: false,
+                        avoidOverlap: true
+                    }
+                ).run();
+            });
+            var filter_exp = document.getElementById('filter_exp');
+            var removed_nodes = false;
+            var eles = 'none';
+            filter_exp.addEventListener('click', function () {
+                $(this).toggleClass('myClass');
+                if (eles === 'none') {
+                    eles = cy.$('edge[interactionType *= \'expression\']').remove();
+                    removed_nodes = cy.$('node[[degree<1]]').remove();
+                }
+                else {
+                    removed_nodes.restore();
+                    eles.restore();
+                    eles = 'none';
+                }
+            });
+
+
+            var filter_act = document.getElementById('filter_act');
+            var removed_nodes_1 = false;
+            var eles_1 = 'none';
+            filter_act.addEventListener('click', function () {
+                $(this).toggleClass('myClass');
+                if (eles_1 === 'none') {
+                    eles_1 = cy.$('edge[interactionType != \'deactivat\'][interactionType *= \'activat\']').remove();
+                    removed_nodes_1 = cy.$('node[[degree<1]]').remove();
+                }
+                else {
+                    removed_nodes_1.restore();
+                    eles_1.restore();
+                    eles_1 = 'none';
+                }
+            });
+
+            var filter_chem = document.getElementById('filter_chem');
+            var removed_nodes_2 = false;
+            var eles_2 = 'none';
+            filter_chem.addEventListener('click', function () {
+                $(this).toggleClass('myClass');
+                if (eles_2 === 'none') {
+                    eles_2 = cy.$('edge[interactionType *= \'chemical\']').remove();
+                    removed_nodes_2 = cy.$('node[[degree<1]]').remove();
+                }
+                else {
+                    removed_nodes_2.restore();
+                    eles_2.restore();
+                    eles_2 = 'none';
+                }
+            });
+
+            var filter_missing = document.getElementById('filter_missing');
+            var removed_nodes_3 = false;
+            var eles_3 = 'none';
+            filter_missing.addEventListener('click', function () {
+                $(this).toggleClass('myClass');
+                if (eles_3 === 'none') {
+                    eles_3 = cy.$('edge[interactionType *= \'missing\'], edge[interactionType *= \'indirect\']').remove();
+                    removed_nodes_3 = cy.$('node[[degree<1]]').remove();
+                }
+                else {
+                    removed_nodes_3.restore();
+                    eles_3.restore();
+                    eles_3 = 'none';
+                }
+            });
+
+
+            var MetaboliteColor = document.getElementById('metabolites');
+            MetaboliteColor.addEventListener('click', function () {
+                cy.style()
+                    .selector('node[speciesType = \'compound\']')
+                    .style('background-color', 'red')
+                    .update()
+                ;
+            });
+
+
+            var GenesColor = document.getElementById('genes');
+            GenesColor.addEventListener('click', function () {
+                cy.style()
+                    .selector('node[speciesType = \'gene\']')
+                    .style('background-color', 'red')
+                    .update()
+                ;
+            });
+
+        }
+
+    </script>
+
+</body>
+</html>
