@@ -14,9 +14,6 @@ class OntologyNetworkGenerator(object):
     Nodes are the ontology terms
     Edges between nodes are determined based on molecular network graphs.
 
-
-
-
     """
 
     def __init__(self, molecular_network=None):
@@ -162,25 +159,26 @@ class OntologyNetworkGenerator(object):
             a_to_b, b_to_a, genes_in_edges = self._count_neighbors(term_1,
                                                                    term_2)
 
+            def _add_to(all_terms, term, gene_name, label):
+                if gene_name in all_terms:
+                    sp_to_term[gene_name].add(term)
+                    sp_to_label[gene_name].add(label)
+
+            def _add_new(all_terms, term, gene_name, label):
+                if gene_name in all_terms:
+                    sp_to_term[gene_name] = {term}
+                    sp_to_label[gene_name] = {label}
             # add to graph if at least one edge found between terms
             if a_to_b or b_to_a:
                 x = self.mol_network.subgraph(genes_in_edges)
                 mol_net.add_edges_from(x.edges(data=True))
                 for gene in genes_in_edges:
                     if gene in sp_to_term:
-                        if gene in term_1:
-                            sp_to_term[gene].add(term1)
-                            sp_to_label[gene].add(label_1)
-                        if gene in term_2:
-                            sp_to_term[gene].add(term2)
-                            sp_to_label[gene].add(label_2)
+                        _add_to(term_1, term1, gene, label_1)
+                        _add_to(term_2, term2, gene, label_2)
                     else:
-                        if gene in term_1:
-                            sp_to_term[gene] = {term1}
-                            sp_to_label[gene] = {label_1}
-                        if gene in term_2:
-                            sp_to_term[gene] = {term2}
-                            sp_to_label[gene] = {label_2}
+                        _add_new(term_1, term1, gene, label_1)
+                        _add_new(term_2, term2, gene, label_2)
 
                 all_genes.update(genes_in_edges)
             else:
@@ -256,7 +254,7 @@ def visualize_go_network(go_network, data, save_name,
     """
 
     from magine.networks.visualization.cytoscape_view import RenderModel
-    from magine.plotting.heatmaps import simple_heatplot
+    from magine.plotting.heatmaps import heatmap_from_array
 
     if len(go_network.nodes()) == 0:
         print('No nodes')
@@ -265,18 +263,11 @@ def visualize_go_network(go_network, data, save_name,
     labels = data['sample_index'].unique()
 
     score_array = pd.pivot_table(data, index=['term_name'],
-                                 columns='sample_index')
+                                 columns='sample_id')
 
-    enrichment_list = [('combined_score', i) for i in labels]
-    tmp = score_array.copy()
-
-    tmp = tmp.sort_values(by=enrichment_list, ascending=False)
-    x_labels = list(tmp['combined_score'].columns)
-
-    y_labels = tmp.index
-    enrichment_value = tmp['combined_score'].fillna(0).as_matrix()
-    simple_heatplot(enrichment_value, save_name, y_labels=y_labels,
-                    x_labels=x_labels)
+    heatmap_from_array(data, cluster_row=False, convert_to_log=True,
+                       index='term_name', values='combined_score',
+                       columns='sample_id', div_colors=True)
 
     x = score_array['combined_score'].fillna(0)
 

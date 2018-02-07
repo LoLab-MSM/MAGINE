@@ -1,18 +1,17 @@
 import itertools
-import pandas as pd
-
 
 
 def jaccard_index(first_set, second_set):
     """
+    Computes the similarity between two sets.
+        https://en.wikipedia.org/wiki/Jaccard_index
 
     Parameters
     ----------
     first_set : :obj: `set`
     second_set : :obj: `set`
 
-    Computes the similarity between two sets.
-        https://en.wikipedia.org/wiki/Jaccard_index
+
 
     Returns
     -------
@@ -27,7 +26,8 @@ def jaccard_index(first_set, second_set):
     first_set = set(first_set)
     second_set = set(second_set)
 
-    return float(len(first_set.intersection(second_set))) / len(first_set.union(second_set))
+    return float(len(first_set.intersection(second_set))) / len(
+        first_set.union(second_set))
 
 
 def filter_db(local_df, options, column):
@@ -46,7 +46,6 @@ def filter_db(local_df, options, column):
 
 def filter_dataframe(df, p_value=None, combined_score=None, db=None,
                      sample_id=None, category=None):
-
     copy_df = df.copy()
     if p_value is not None:
         assert isinstance(p_value, float)
@@ -67,24 +66,23 @@ def term_to_genes(df, term):
     return set(itertools.chain.from_iterable(genes.str.split(',').as_matrix()))
 
 
-def find_similar_terms(data, threshold=0.75, verbose=False):
+def filter_based_on_words(df, words):
+    return df[df['term_name'].str.lower().str.contains('|'.join(words))]
 
+
+def find_similar_terms(data, threshold=0.75, verbose=False):
     data.sort_values('combined_score', inplace=True, ascending=False)
     data_copy = data.copy()
 
     to_remove = _terms_to_remove(data_copy, threshold, verbose)
 
     data_copy = data_copy[~data_copy['term_name'].isin(to_remove)]
-    print("Number of rows went from {} to {}".format(data.shape[0], data_copy.shape[0]))
+    print("Number of rows went from {} to {}".format(data.shape[0],
+                                                     data_copy.shape[0]))
     return data_copy
 
 
-def filter_based_on_words(df, words):
-    return df[df['term_name'].str.lower().str.contains('|'.join(words))]
-
-
 def remove_redundant(data, threshold=0.75, verbose=False):
-
     data.sort_values('combined_score', inplace=True, ascending=False)
 
     data_copy = data.copy()
@@ -108,16 +106,12 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
     to_remove = set()
     for j in range(len(data) - 2):
         top_term_name = array[j, 0]
-        # if top_term_name in to_remove:
-        #     continue
         top = set(array[j, 4].split(','))
         if verbose:
             print("Finding matches for {}".format(array[j, 0]))
 
         for i in range(j + 1, len(data)):
             term_name = array[i, 0]
-            # if term_name in to_remove:
-            #     continue
             if top_term_name == term_name:
                 continue
             new_set = set(array[i, 4].split(','))
@@ -132,6 +126,6 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
 
 
 if __name__ == '__main__':
-    a = {0 ,1, 2}
+    a = {0, 1, 2}
     b = {0, 1, 3}
     jaccard_index(a, b)
