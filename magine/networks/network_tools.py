@@ -743,10 +743,14 @@ def add_nodes(old_network, new_network):
                 if n in existing_info:
                     current = existing_info[n]
                     if isinstance(current, list):
-                        print("Node dict is returning list!! - NetworkTools")
-                        print(current)
+                        if len(current) != 1:
+                            print("Node dict is returning list- NetworkTools")
+                            print(current)
                         current = current[0]
-                    new = '|'.join({current, d})
+                    additions = set(d.split('|'))
+                    additions.update(current)
+
+                    new = '|'.join(sorted(list(additions)))
                     new_network.node[i][n] = new
                 else:
                     new_network.node[i][n] = d
@@ -776,31 +780,36 @@ def compose(G, H, name=None):
 
     if name is None:
         name = "compose( %s, %s )" % (G.name, H.name)
-    new_g = nx.DiGraph()
-    new_g.name = name
+    # new_g = nx.DiGraph()
 
-    add_nodes(G, new_g)
+    new_g = G.copy()
+    new_g.name = name
+    # add_nodes(G, new_g)
     add_nodes(H, new_g)
 
-    for i, j, data in G.edges_iter(data=True):
-        new_g.add_edge(i, j, **data)
+    # for i, j, data in G.edges_iter(data=True):
+    #     new_g.add_edge(i, j, **data)
         # print(i, j, data)
     edges = set(new_g.edges())
+
     for i, j, data in H.edges_iter(data=True):
         if (i, j) in edges:
             existing_info = new_g.edge[i][j]
             for n, d in data.items():
-                if n in existing_info:
+                if d is None:
+                    print("No edge information exists! - NetworkTools")
+                    print(n, d)
+                elif n in existing_info:
                     if isinstance(existing_info[n], float):
                         print("Edge information exists! - NetworkTools")
                         print(n, d, i, j)
+
                     current = set(existing_info[n].split('|'))
-                    if d is None:
-                        print("No edge information exists! - NetworkTools")
-                        print(n, d)
                     additions = set(d.split('|'))
                     additions.update(current)
+
                     new = '|'.join(sorted(additions))
+
                     new_g[i][j][n] = new
                 else:
                     new_g[i][j][n] = d
@@ -833,6 +842,72 @@ def compose_all(graphs, name=None):
     for H in graphs:
         C = compose(C, H, name=name)
     return C
+
+
+_maps = {
+    'activation': 'activate',
+    'potentiator': 'activate',
+
+
+    'inducer': 'expression',
+    'stimulator': 'expression',
+    'suppressor': 'repression',
+
+    'blocker': 'inhibit',
+    'inhibitor': 'inhibit',
+    'inhibition': 'inhibit',
+    'inhibitor, competitive': 'inhibit',
+
+    'proteolytic processing': 'cleavage',
+
+    # binding
+    'binding/association': 'binding',
+    'binder': 'binding',
+    'complex': 'binding',
+    # indirect/missing
+    'indirect effect': 'indirect',
+    'missing interaction': 'indirect',
+
+
+    'negative modulator': 'inhibit',
+    'inhibitory allosteric modulator': 'allosteric}inhibit',
+    'partial agonist': 'agonist|chemical',
+    'inverse agonist': 'agonist|chemical',
+    'partial antagonist': 'antagonist|chemical',
+
+    # chemical related
+    'product of': 'chemical',
+    'ligand': 'chemical',
+    'cofactor': 'chemical',
+    'multitarget': 'chemical',
+
+
+
+}
+
+
+def standardize_edge_types(network):
+    for source, target, data in network.edges_iter(data=True):
+        if 'interactionType' in data:
+            edge_type = data['interactionType']
+            edge_type = set(i for i in edge_type.split('|'))
+
+            for k, v in _maps.items():
+                if k in edge_type:
+                    edge_type.remove(k)
+                    edge_type.add(v)
+            for i in ['', ' ']:
+                if i in edge_type:
+                    edge_type.remove(i)
+
+            if 'reaction' in edge_type:
+                if len(edge_type) != 1:
+                    edge_type.remove('reaction')
+            if 'catalyze' in edge_type:
+                if len(edge_type) != 1:
+                    edge_type.remove('catalyze')
+            edge_type = '|'.join(sorted(edge_type))
+            network[source][target]['interactionType'] = edge_type
 
 
 '''

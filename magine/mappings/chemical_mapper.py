@@ -1,9 +1,9 @@
 import os
-from ast import literal_eval
-
+import itertools
 import pandas as pd
-
+from ast import literal_eval
 from magine.data.storage import id_mapping_dir
+
 
 try:
     import cPickle as pickle
@@ -87,8 +87,8 @@ class ChemicalMapper(object):
 
         self.kegg_to_hmdb_accession = self._to_dict("kegg_id",
                                                     "main_accession")
-        self.hmdb_accession_to_protein = self.convert_to_dict_from_list(
-            "accession", "protein_associations")
+        self.hmdb_accession_to_protein = self._from_list_dict("main_accession",
+                                                       "protein_associations")
         self.drugbank_to_hmdb = self._to_dict('drugbank_id', 'main_accession')
         self.synonyms_to_hmdb = None
         self.save()
@@ -107,6 +107,14 @@ class ChemicalMapper(object):
 
         """
         return {k: sorted(set(list(v))) for k, v in self.database.groupby(key)[value]}
+
+    def _from_list_dict(self, key, value):
+        # return {k: sorted(
+        #     set([item for sublist in v.tolist() for item in sublist]))
+        #     for k, v in self.database.groupby(key)[value]}
+        # return list(itertools.chain.from_iterable(l)
+        return {k: sorted(set(list(itertools.chain.from_iterable(v.tolist()))))
+                for k, v in self.database.groupby(key)[value]}
 
     def convert_to_dict_from_list(self, key, value):
         """ creates a dictionary from hmdb with a list of values for each key
@@ -129,6 +137,7 @@ class ChemicalMapper(object):
                 if len(v) > 0:
                     if v[0] is not None:
                         tmp_dict[k] = v
+
         return tmp_dict
 
     def check_synonym_dict(self, term, format_name):

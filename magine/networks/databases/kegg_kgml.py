@@ -263,7 +263,8 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
 
     # Add all relations of pathway
     for rel in tree.getiterator('relation'):
-        int_type = rel.get('type')
+        # int_type = rel.get('type')
+        int_type = ''
         e1 = rel.get('entry1')
         e2 = rel.get('entry2')
         if e1 in connecting_maps:
@@ -271,13 +272,13 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
         if e2 in connecting_maps:
             continue
         try:
-            int_type = set(int_type)
+            int_type = set()
             for interaction in rel.getiterator('subtype'):
                 int_type.add(interaction.get('name'))
-
             int_type = '|'.join(int_type)
         except TypeError:
             continue
+
         one, two = name_label_dict[e1], name_label_dict[e2]
         for i in one:
             for j in two:

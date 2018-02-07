@@ -4,7 +4,8 @@ import warnings
 
 import numpy as np
 import pandas as pd
-
+import zipfile
+import re
 # reload(sys)
 # sys.setdefaultencoding('utf-8')
 
@@ -102,6 +103,47 @@ def load_csv(directory=None, filename=None):
         return data
 
 
+def load_from_zip(filename=None):
+    """ Creates a pandas.Dataframe from omics data files
+
+    Parameters
+    ----------
+
+    filename : zipfile.ZipFile
+        name of file
+
+    Returns
+    -------
+    pandas.Dataframe
+
+    """
+
+    data = pd.read_csv(filename, parse_dates=False, low_memory=False)
+    if 'time_points' in data:
+        # time = convert_time_to_hours(data['time_points'])
+        time = data.apply(convert_time_to_hours, axis=1)
+
+        data.loc[:, 'time'] = time
+
+    if 'gene' in data.dtypes:
+        data['primary_genes'] = data['gene'].astype(str)
+        data = check_data(data, 'primary_genes')
+        tmp_sort = np.sort(data['primary_genes'].unique())
+        print(list(tmp_sort[0:5]), list(tmp_sort[-5:]))
+        return data
+
+    if 'primary_genes' in data.dtypes:
+        data['gene'] = data['primary_genes']
+        data = check_data(data, 'primary_genes')
+        tmp_sort = np.sort(data['primary_genes'].unique())
+        print(list(tmp_sort[0:5]), list(tmp_sort[-5:]))
+        return data
+
+    else:
+        return data
+
+
+
 def merge_metabolite_row(row):
     """ compresses metabolite information columns
 
@@ -192,6 +234,36 @@ def convert_time_to_hours(d):
     return time
 
 
+def convert_to_rankable_time(data):
+
+    def h_to_hr(row):
+        if row['time_points'].endswith('h'):
+            return row['time_points'].replace('h', 'hr')
+        else:
+            return row['time_points']
+
+    def pad_string(row):
+        t = row['time_points']
+        t = t.replace(' ', '')
+        number = re.findall('\d+', t)[0]
+
+        nondigits = t.replace(number, '')
+        if 'min' in nondigits:
+            out = '{0:05d} {1}'
+        elif 'hr' in nondigits:
+            out = '{0:02d} {1}'
+        elif 's' in nondigits:
+            out = '{0:06d} {1}'
+
+        out = out.format(int(number), nondigits)
+        return out
+
+    data['time_points'] = data.apply(h_to_hr, axis=1)
+    data['time_points'] = data.apply(pad_string, axis=1)
+
+    return data
+
+
 _names = {}
 for i in range(16):
     _names['{0}-Sep'.format(i)] = 'SEPT{0}'.format(i)
@@ -204,6 +276,51 @@ def check_data(data, keyword):
     for n in _names:
         if n in genes:
             data.loc[data[keyword] == n, keyword] = _names[n]
+    return data
+
+
+def process_raptr_zip(filename):
+    all_data = []
+
+    with zipfile.ZipFile(filename) as zip_file:
+        # get the list of files
+        names = zip_file.namelist()
+        print(names)
+        for i in names:
+            filename = zip_file.open(i)
+            if 'subcell' in i:
+                df = load_from_zip(filename)
+                df = _process_subcell_label_free(df)
+                all_data.append(df)
+
+            elif '_silac' in i:
+                # continue
+                df = load_from_zip(filename)
+                df = _process_silac(df)
+                all_data.append(df)
+            elif 'ph-silac' in i:
+                # continue
+                df = load_from_zip(filename)
+                df = _process_phsilac(df)
+                all_data.append(df)
+            elif 'protalizer_protein' in i:
+                # continue
+                df = load_from_zip(filename)
+                df = _process_label_free(df, subcell=False)
+                all_data.append(df)
+            elif 'progenesis' in i:
+                df = load_from_zip(filename)
+                df = _process_metabolites(df)
+                all_data.append(df)
+            elif 'cuffdiff' in i:
+                df = load_from_zip(filename)
+                df = _process_rna_seq(df)
+                all_data.append(df)
+            else:
+                print("Dont know {}".format(i))
+    data = pd.concat(all_data, ignore_index=True)
+    data = convert_to_rankable_time(data)
+    print(sorted(data['time_points'].unique()))
     return data
 
 

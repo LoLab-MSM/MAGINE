@@ -176,7 +176,7 @@ class BioGridDownload(object):
         # clean up names
         table['source'] = table['Official Symbol Interactor A']
         table['target'] = table['Official Symbol Interactor B']
-        table['interactionType'] = table['Modification']
+        table['interactionType'] = table['Modification'].str.lower()
         table['pubmedId'] = table['Pubmed ID']
         table['databaseSource'] = table['Source Database']
 
