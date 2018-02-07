@@ -1,7 +1,8 @@
 import itertools
+import multiprocessing as mp
+from functools import partial
 
 import networkx as nx
-import pathos.multiprocessing as mp
 
 import magine.networks.network_tools as nt
 
@@ -71,11 +72,11 @@ class NetworkSubgraphs(object):
                 return
 
         _paths = list()
-        _paths.append(self._nx_find_path(node_1, node_2,
-                                         single_path=single_path))
+        _paths.append(_nx_find_path(self.network, node_1, node_2,
+                                    single_path=single_path))
         if bidirectional:
-            _paths.append(self._nx_find_path(node_2, node_1,
-                                             single_path=single_path))
+            _paths.append(_nx_find_path(self.network, node_2, node_1,
+                                        single_path=single_path))
         graph = self._list_paths_to_graph(_paths)
         if draw:
             save_name = "%s_and_%s" % (node_1, node_2)
@@ -85,11 +86,12 @@ class NetworkSubgraphs(object):
 
     def shortest_paths_between_lists(self, species_list, save_name=None,
                                      single_path=False, draw=False,
-                                     image_format='png', parallel=False):
+                                     image_format='png', pool=None):
         """
 
         Parameters
         ----------
+
         species_list : list_like
             list of species
         save_name : str
@@ -100,6 +102,8 @@ class NetworkSubgraphs(object):
             create a dot generated figure
         image_format : str
             dot acceptable output formats, (pdf, png, etc)
+        pool : multiprocessing.Pool
+            If it it provided, it uses its map function to run this function.
         Returns
         -------
         graph : networkx.DiGraph
@@ -120,55 +124,69 @@ class NetworkSubgraphs(object):
 
         tmp_species_list = list(self._check_node(species_list))
 
-        def product_helper(args):
-            return self._find_nx_path(*args + (single_path,))
-
-        if parallel:
-            pool = mp.Pool()
-            paths = pool.map(product_helper,
-                             itertools.combinations(tmp_species_list, 2))
-            pool.join()
+        if pool is not None:
+            paths = pool.map(
+                partial(_find_nx_path,
+                        network=self.network,
+                        single_path=single_path),
+                itertools.combinations(tmp_species_list, 2)
+            )
             pool.close()
         else:
-            paths = list()
-            for i, j in itertools.combinations(tmp_species_list, 2):
-                paths.append(self._find_nx_path(i, j, single_path))
+            paths = map(partial(_find_nx_path,
+                                network=self.network,
+                                single_path=single_path),
+                        itertools.combinations(tmp_species_list, 2))
+
         graph = self._list_paths_to_graph(paths)
 
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
-    def _list_paths_to_graph(self, paths):
-        graph = nx.DiGraph()
-        current_nodes = set(graph.nodes())
-        _edges = set()
-        for p in paths:
-            if len(p) == 0:
-                continue
-            for path in p:
-                previous = None
-                if len(path) == 0:
-                    continue
-                for protein in path:
-                    if previous is None:
-                        previous = protein
-                        graph.add_node(previous, **self.network.node[previous])
-                        current_nodes.add(previous)
-                    else:
-                        if protein not in current_nodes:
-                            graph.add_node(protein,
-                                           **self.network.node[protein])
-                            current_nodes.add(previous)
-                        if (previous, protein) not in _edges:
-                            graph.add_edge(previous, protein,
-                                           **self.network.edge[previous][
-                                               protein])
-                            _edges.add((previous, protein))
-                        previous = protein
-        if len(graph.nodes()) == 0:
-            return None
-        return graph
+    def neighbors(self, node, up=True, down=True, max_dist=1):
+        if max_dist > 3:
+            print("Max distance is 3. Big networks")
+            max_dist = 3
+        sg = nx.DiGraph()
+
+        if node not in self.nodes:
+            return sg
+
+        def _add_node(n):
+            sg.add_node(n, **self.network.node[n])
+
+        def _add_edge(i, j):
+            sg.add_edge(i, j, **self.network[i][j])
+
+        _add_node(node)
+
+        def _get_upstream(new_node):
+            upstream = self.network.predecessors(new_node)
+            for i in upstream:
+                if i != new_node:
+                    _add_node(i)
+                    _add_edge(i, new_node)
+            return upstream
+
+        def _get_downstream(n):
+            downstream = self.network.successors(n)
+            for i in downstream:
+                if i != n:
+                    _add_node(i)
+                    _add_edge(n, i)
+            return downstream
+
+        up_layer = [node]
+        down_layer = [node]
+        for _ in range(1, max_dist + 1):
+            if up:
+                up_layer = {i for n in up_layer for i in _get_upstream(n)}
+            if down:
+                down_layer = {i for n in down_layer for i in
+                              _get_downstream(n)}
+
+        return sg
 
     def upstream_network_of_specie(self, species_1, include_list=None,
                                    save_name=None, compress=False,
@@ -215,61 +233,16 @@ class NetworkSubgraphs(object):
         else:
             include_list = self._check_node(include_list)
 
-        _paths = list()
-        for i in self.nodes:
-            if i in include_list:
-                _paths.append(
-                    self._nx_find_path(i, species_1, single_path=True))
-        graph = self._list_paths_to_graph(_paths)
+        graph = self._list_paths_to_graph(
+            [_nx_find_path(self.network, i, species_1, single_path=True)
+             for i in self.nodes if i in include_list])
+
         if compress:
             graph = nt.compress_edges(graph)
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw, image_format)
 
         return graph
-
-    def neighbors(self, node, up, down, max_dist=1):
-        if max_dist > 3:
-            print("Max distance is 3. Big networks")
-            max_dist = 3
-        sg = nx.DiGraph()
-
-        if node not in self.nodes:
-            return sg
-
-        sg.add_node(node, **self.network.node[node])
-
-        def _get_upstream(new_node):
-            upstream = self.network.predecessors(new_node)
-            for i in upstream:
-                if i != new_node:
-                    sg.add_node(i, **self.network.node[i])
-                    sg.add_edge(i, new_node, **self.network[i][new_node])
-            return set(upstream)
-
-        def _get_downstream(n):
-            downstream = self.network.successors(n)
-            for i in downstream:
-                if i != n:
-                    sg.add_node(i, **self.network.node[i])
-                    sg.add_edge(n, i, **self.network[n][i])
-            return set(downstream)
-
-        up_layer = [node]
-        down_layer = [node]
-        for i in range(1, max_dist + 1):
-            if up:
-                new_up_layer = set()
-                for n in up_layer:
-                    new_up_layer.update(_get_upstream(n))
-                up_layer = new_up_layer
-            if down:
-                new_down_layer = set()
-                for n in down_layer:
-                    new_down_layer.update(_get_downstream(n))
-                down_layer = new_down_layer
-
-        return sg
 
     def downstream_network_of_specie(self, species_1, include_list=None,
                                      save_name=None, compress=False,
@@ -316,12 +289,10 @@ class NetworkSubgraphs(object):
         else:
             include_list = self._check_node(include_list)
 
-        _paths = []
-        for i in self.nodes:
-            if i in include_list:
-                _paths.append(
-                    self._nx_find_path(species_1, i, single_path=True))
-        graph = self._list_paths_to_graph(_paths)
+        graph = self._list_paths_to_graph(
+            [_nx_find_path(self.network, species_1, i, single_path=True)
+             for i in self.nodes if i in include_list])
+
         if compress:
             graph = nt.compress_edges(graph)
 
@@ -400,61 +371,36 @@ class NetworkSubgraphs(object):
             print("Warning : {} do not exist in graph\n"
                   "Removing from list".format(missing_nodes))
             node_list.difference_update(missing_nodes)
-            return sorted(node_list)
-        else:
-            return sorted(node_list)
-    
-    def _add_edges_from_path(self, graph, path):
-        """
-        Adds a path to a graph
+        return sorted(node_list)
 
-        Parameters
-        ----------
-        graph : networkx.DiGraph
-            graph to add paths
-        path : list_like
-            list of species that create a path
-
-        """
-        previous = None
+    def _list_paths_to_graph(self, paths):
+        graph = nx.DiGraph()
         current_nodes = set(graph.nodes())
-        for protein in list(path):
-            if previous is None:
-                previous = protein
-                graph.add_node(previous, **self.network.node[previous])
-                current_nodes.add(previous)
-            else:
-                if protein not in current_nodes:
-                    graph.add_node(protein, **self.network.node[protein])
-                    current_nodes.add(previous)
-                if (previous, protein) not in self._edges:
-                    graph.add_edge(previous, protein,
-                                   **self.network.edge[previous][protein])
-                    self._edges.add((previous, protein))
-                previous = protein
+        _edges = set()
 
-    def _find_nx_path(self, node1, node2, single_path=False):
-        l1 = self._nx_find_path(node1, node2, single_path)
-        l2 = self._nx_find_path(node2, node1, single_path)
-        return l1 + l2
+        def _add_node(node):
+            if node not in current_nodes:
+                graph.add_node(node, **self.network.node[node])
+                current_nodes.add(node)
 
-    def _nx_find_path(self, node1, node2, single_path=False):
-        paths = list()
-        try:
-            if not single_path:
-                for path in nx.all_shortest_paths(self.network, node1, node2):
-                    # self._add_edges_from_path(graph, path)
-                    paths.append(path)
-                return paths
-            else:
-                # self._add_edges_from_path(graph,
-                #                           nx.shortest_path(self.network, node1,
-                #                                            node2))
-                paths.append(nx.shortest_path(self.network, node1, node2))
-                return paths
-        except nx.NetworkXNoPath:
-            # print("Path does NOT exist between {} and {}".format(node1, node2))
-            return paths
+        def _add_edge(i, j):
+            if (i, j) not in _edges:
+                graph.add_edge(i, j, **self.network.edge[i][j])
+                _edges.add((i, j))
+
+        # flatten paths into list of lists
+        paths = [n for x in paths for n in x if n]
+
+        for path in paths:
+            previous = path[0]
+            _add_node(previous)
+            for protein in path[1:]:
+                _add_node(protein)
+                _add_edge(previous, protein)
+                previous = protein
+        if len(graph.nodes()) == 0:
+            return None
+        return graph
 
     @staticmethod
     def _save_or_draw(graph, save_name, draw, img_format='png'):
@@ -464,115 +410,53 @@ class NetworkSubgraphs(object):
             nt.export_to_dot(graph, save_name=save_name,
                              image_format=img_format)
 
-    def _ig_find_path2(self, node_1, node_2, graph, ):
 
-        """
-        Generates a graph based on all shortest paths between two species
+def _find_nx_path(node, network, single_path):
+    node1, node2 = node
 
-
-        Parameters
-        ----------
-        node_1 : str
-            name of first species
-        node_2 :
-            list of str containing species or single str containing specie
-        Returns
-        -------
-        graph : networkx.DiGraph
-
-        """
-
-        edges = set()
-        s = set(self.ig_graph.subcomponent(node_1, mode="out"))
-        t = set(self.ig_graph.subcomponent(node_2, mode="in"))
-        ng = self.ig_graph.induced_subgraph(s.intersection(t))
-
-        for edge in ng.es:
-            source_vertex_id = edge.source
-            target_vertex_id = edge.target
-            source_vertex = ng.vs[source_vertex_id]['name']
-            target_vertex = ng.vs[target_vertex_id]['name']
-            edges.add((source_vertex, target_vertex))
-        s = set(self.ig_graph.subcomponent(node_2, mode="out"))
-        t = set(self.ig_graph.subcomponent(node_1, mode="in"))
-        ng = self.ig_graph.induced_subgraph(s.intersection(t))
-        for edge in ng.es:
-            source_vertex_id = edge.source
-            target_vertex_id = edge.target
-            source_vertex = ng.vs[source_vertex_id]['name']
-            target_vertex = ng.vs[target_vertex_id]['name']
-            edges.add((source_vertex, target_vertex))
-
-        for edge in edges:
-            self._add_edges_from_path(graph, edge)
-
-    def _ig_find_path(self, node_1, node_2, graph, single_path=False):
-
-        """
-        Generates a graph based on all shortest paths between two species
+    l1 = _nx_find_path(network, node1, node2, single_path)
+    l2 = _nx_find_path(network, node2, node1, single_path)
+    return l1 + l2
 
 
-        Parameters
-        ----------
-        node_1 : str
-            name of first species
-        node_2 :
-            list of str containing species or single str containing specie
-        single_path : bool
-            include all shortest paths
-        Returns
-        -------
-        graph : networkx.DiGraph
-
-        """
-        # for i in (node_1, node_2):
-        #     if i not in self.nodes:
-        #         print("{} is not in network!")
-        #         return
-        # n1 = self._ig_node_dict[node_1]
-        # n2 = self._ig_node_dict[node_2]
-
-        # if self.ig_graph.vertex_connectivity(n1, n2, neighbors='ignore') != 0:
-        if single_path:
-            path = self.ig_graph.get_shortest_paths(node_1, node_2, mode='OUT')
+def _nx_find_path(network, node1, node2, single_path=False):
+    try:
+        if not single_path:
+            return [p for p in
+                    nx.all_shortest_paths(network, node1, node2)]
         else:
-            path = self.ig_graph.get_all_shortest_paths(node_1, node_2,
-                                                        mode='OUT')
-
-        for p in path:
-            _path = []
-            for e in p:
-                _path.append(self.ig_graph.vs[e]['name'])
-            self._add_edges_from_path(graph, _path)
-        # if self.ig_graph.vertex_connectivity(n2, n1, neighbors='ignore') != 0:
-        if single_path:
-            path = self.ig_graph.get_shortest_paths(node_2, node_1, mode='OUT')
-        else:
-            path = self.ig_graph.get_all_shortest_paths(node_2, node_1,
-                                                        mode='OUT')
-
-        for p in path:
-            _path = []
-            for e in p:
-                _path.append(self.ig_graph.vs[e]['name'])
-            self._add_edges_from_path(graph, _path)
+            return [nx.shortest_path(network, node1, node2)]
+    except nx.NetworkXNoPath:
+        return []
 
 
 if __name__ == '__main__':
-    network = nx.DiGraph()
-    network.add_node('X', label='XX', db='test1')
-    network.add_node('Y', label='YY', db='test2')
-    network.add_edge('X', 'B', intType='here')
-    network.add_edge('X', 'C', intType='here')
-    network.add_edge('B', 'Y', intType='here')
-    network.add_edge('C', 'Y', intType='here')
-    network.add_edge('D', 'Y', intType='here')
-    network.add_edge('R', 'D', intType='here')
-    network.add_edge('X', 'R', intType='here')
-    x = NetworkSubgraphs(network)
+    net = nx.DiGraph()
+    net.add_node('X', label='XX', db='test1')
+    net.add_node('Y', label='YY', db='test2')
+    net.add_edge('X', 'B', intType='here')
+    net.add_edge('X', 'C', intType='here')
+    net.add_edge('B', 'Y', intType='here')
+    net.add_edge('C', 'Y', intType='here')
+    net.add_edge('D', 'Y', intType='here')
+    net.add_edge('R', 'D', intType='here')
+    net.add_edge('X', 'R', intType='here')
+    x = NetworkSubgraphs(net)
+
+    # print(x.neighbors('X').nodes())
+    print(x.downstream_network_of_specie('D').nodes())
+    quit()
     # print(x.path_between_2('X', ['Y', 'B', 'C']))
     # quit()
     # print(x.path_between_2('X', 'Y', all_shortest_paths=True))
-    g = x.shortest_paths_between_lists(network.nodes(), single_path=True,  draw=False, save_name='test')
+    print(net.nodes())
+
+    pool = mp.Pool(4)
+    g = x.shortest_paths_between_lists(['X', 'D'], single_path=True,
+                                       draw=False, save_name='test',
+                                       pool=pool
+                                       )
+
+    print(g.nodes())
     # g = x.shortest_paths_between_lists(['X', 'Y'], single_path=False,  draw=True, save_name='test')
     # print(g.nodes(data=True))
