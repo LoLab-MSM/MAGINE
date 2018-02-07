@@ -21,7 +21,6 @@ class NetworkSubgraphs(object):
         self.network = network
         self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
-        self._edges = set()
 
     def shortest_paths_between_two_proteins(self, node_1, node_2,
                                             bidirectional=False,
