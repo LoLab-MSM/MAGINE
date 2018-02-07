@@ -2,7 +2,7 @@ import pandas as pd
 
 from magine.data.datatypes import ExperimentalData
 from magine.data.formatter import pivot_tables_for_export
-from magine.plotting.heatmaps import cluster_heatmap
+from magine.plotting.heatmaps import heatmap_from_array
 from magine.plotting.species_plotting import plot_list_of_genes
 
 data = pd.read_csv('Data/norris_et_al_2017_cisplatin_data.csv.gz',
@@ -37,6 +37,6 @@ exp_data.time_series_volcano(exp_data_type='LF',
 sig_data = exp_data.data[exp_data.data['significant_flag']]
 prot, met = pivot_tables_for_export(sig_data)
 
-cluster_heatmap(prot['treated_control_fold_change'],
-                savename='clustered',
-                out_dir='plots')
+heatmap_from_array(sig_data, cluster_row=False, convert_to_log=True,
+                   index='protein', values='treated_control_fold_change',
+                   columns='time_points', div_colors=True)
