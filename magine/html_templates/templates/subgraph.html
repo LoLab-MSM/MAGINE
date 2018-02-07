@@ -79,214 +79,184 @@
                 <button id="filter_missing" class="btn btn-success">Missing interaction or indirect</button>
             </div>
         </div>
-        <row>
-            <div class="col-md-12 col-sm-12 col-lg-12">
 
-                <!-- graph : start -->
-                <div class="panel panel-primary">
-                    <div class="panel-heading">Graph</div>
-                    <div class="panel-body">
-                        <div id="cy-container">
-                            <div id="mynetwork0"></div>
-                        </div>
+        <div class="col-md-12 col-sm-12 col-lg-12">
 
+            <!-- graph : start -->
+            <div class="panel panel-primary">
+                <div class="panel-heading">Graph</div>
+                <div class="panel-body">
+                    <div id="cy-container">
+                        <div id="mynetwork0"></div>
                     </div>
+
                 </div>
             </div>
-
-        </row>
+        </div>
     </div>
+</div>
 
 
-    <script type="text/javascript">
-        function init() {
-            window.parent.setUpFrame();
-            return true;
-        }
+<script type="text/javascript">
+    function init() {
+        window.parent.setUpFrame();
+        return true;
+    }
 
-        function runVis() {
-            var cy = cytoscape({
-                container: document.getElementById('mynetwork0'),
+    function runVis() {
+        var cy = cytoscape({
+            container: document.getElementById('mynetwork0'),
 
-                elements: {
-                    nodes:{{nodes}},
-                    edges:{{edges}}
-                },
-                style: [
-                    {
-                        selector: 'node',
-                        css: {
-                            'content': 'data(id)',
-                            'text-valign': 'center',
-                            'text-halign': 'center'
-                        }
-                    },
-                    {
-                        selector: 'node[speciesType = \'compound\']',
-                        css: {
-                            'content': 'data(chemName)',
-                            'text-valign': 'center',
-                            'text-halign': 'center',
-                            'shape': 'rectangle'
-                        }
-                    },
-                    {
-                        selector: 'node[speciesType = \'gene\']',
-                        css: {
-                            'content': 'data(id)',
-                            'text-valign': 'center',
-                            'text-halign': 'center',
-                            'shape': 'rectangle'
-                        }
-                    },
-                    {
-                        selector: '$node > node',
-                        css: {
-                            'padding-top': '10px',
-                            'padding-left': '10px',
-                            'padding-bottom': '10px',
-                            'padding-right': '10px',
-                            'text-valign': 'top',
-                            'text-halign': 'center',
-                            'background-color': 'green'
-                        }
-                    },
-                    {
-                        selector: 'edge',
-                        css: {
-                            'curve-style': 'bezier',
-                            'target-arrow-shape': 'triangle',
-
-                        }
-                    },
-                    {
-                        selector: 'edge:selected',
-                        css: {
-                            'background-color': 'yellow',
-                            'line-color': 'red',
-                            'label': 'data(interactionType)',
-                            'target-arrow-color': 'black',
-                            'source-arrow-color': 'black'
-                        }
+            elements: {
+                nodes:{{nodes}},
+                edges:{{edges}}
+            },
+            style: [
+                {
+                    selector: 'node',
+                    css: {
+                        'content': 'data(id)',
+                        'text-valign': 'center',
+                        'text-halign': 'center'
                     }
-                ]
-            });
-            cy.layout({
-                    name: 'breadthfirst',
+                },
+                {
+                    selector: 'node[speciesType = \'compound\']',
+                    css: {
+                        'content': 'data(chemName)',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'shape': 'rectangle'
+                    }
+                },
+                {
+                    selector: 'node[speciesType = \'gene\']',
+                    css: {
+                        'content': 'data(id)',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'shape': 'rectangle'
+                    }
+                },
+                {
+                    selector: '$node > node',
+                    css: {
+                        'padding-top': '10px',
+                        'padding-left': '10px',
+                        'padding-bottom': '10px',
+                        'padding-right': '10px',
+                        'text-valign': 'top',
+                        'text-halign': 'center',
+                        'background-color': 'green'
+                    }
+                },
+                {
+                    selector: 'edge',
+                    css: {
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'triangle',
+                        'target-arrow-color': 'black'
+
+                    }
+                },
+                {
+                    selector: "edge[interactionType *= 'inhibit'],edge[interactionType *= 'deactivat']",
+                    css: {
+                        'curve-style': 'bezier',
+                        'target-arrow-shape': 'tee',
+                        'target-arrow-color': 'black'
+                    }
+                },
+                {
+                    selector: 'edge:selected',
+                    css: {
+                        'background-color': 'yellow',
+                        'line-color': 'red',
+                        'label': 'data(interactionType)',
+                        'target-arrow-color': 'black',
+                        'source-arrow-color': 'black'
+                    }
+                }
+            ]
+        });
+        cy.layout({name: 'dagre'}).run();
+        cy.resize();
+        cy.fit();
+
+        var HieButton = document.getElementById('HieButton');
+        HieButton.addEventListener('click', function () {
+            cy.layout({name: 'breadthfirst', avoidOverlap: true}).run();
+
+        });
+        var DagreButton = document.getElementById('DagreButton');
+        DagreButton.addEventListener('click', function () {
+            cy.layout({name: 'dagre', avoidOverlap: true}).run();
+
+        });
+        var FlatButton = document.getElementById('FlatButton');
+        FlatButton.addEventListener('click', function () {
+            cy.layout(
+                {
+                    name: 'cose-bilkent',
+                    avoidOverlapPadding: 100,
+                    animate: false,
+                    avoidOverlap: true
                 }
             ).run();
-            cy.resize();
-            cy.fit();
+        });
 
-            var HieButton = document.getElementById('HieButton');
-            HieButton.addEventListener('click', function () {
-                cy.layout({name: 'breadthfirst', avoidOverlap: true}).run();
 
-            });
-            var DagreButton = document.getElementById('DagreButton');
-            DagreButton.addEventListener('click', function () {
+        function createNewFilter(name, criteria) {
+            var obj = {};
+            obj.removed_nodes = false;
+            obj.eles = 'none';
+            obj.criteria = criteria;
+            obj.button = document.getElementById(name);
+            obj.button.addEventListener('click', function () {
+                $(this).toggleClass('myClass');
+                if (obj.eles === 'none') {
+                    obj.eles = cy.$(obj.criteria).remove();
+                    obj.removed_nodes = cy.$('node[[degree<1]]').remove();
+                }
+                else {
+                    obj.removed_nodes.restore();
+                    obj.eles.restore();
+                    obj.eles = 'none';
+                }
                 cy.layout({name: 'dagre', avoidOverlap: true}).run();
-
+                cy.resize();
+                cy.fit();
             });
-            var FlatButton = document.getElementById('FlatButton');
-            FlatButton.addEventListener('click', function () {
-                cy.layout(
-                    {
-                        name: 'cose-bilkent',
-                        avoidOverlapPadding: 100,
-                        animate: false,
-                        avoidOverlap: true
-                    }
-                ).run();
-            });
-            var filter_exp = document.getElementById('filter_exp');
-            var removed_nodes = false;
-            var eles = 'none';
-            filter_exp.addEventListener('click', function () {
-                $(this).toggleClass('myClass');
-                if (eles === 'none') {
-                    eles = cy.$('edge[interactionType *= \'expression\']').remove();
-                    removed_nodes = cy.$('node[[degree<1]]').remove();
-                }
-                else {
-                    removed_nodes.restore();
-                    eles.restore();
-                    eles = 'none';
-                }
-            });
-
-
-            var filter_act = document.getElementById('filter_act');
-            var removed_nodes_1 = false;
-            var eles_1 = 'none';
-            filter_act.addEventListener('click', function () {
-                $(this).toggleClass('myClass');
-                if (eles_1 === 'none') {
-                    eles_1 = cy.$('edge[interactionType != \'deactivat\'][interactionType *= \'activat\']').remove();
-                    removed_nodes_1 = cy.$('node[[degree<1]]').remove();
-                }
-                else {
-                    removed_nodes_1.restore();
-                    eles_1.restore();
-                    eles_1 = 'none';
-                }
-            });
-
-            var filter_chem = document.getElementById('filter_chem');
-            var removed_nodes_2 = false;
-            var eles_2 = 'none';
-            filter_chem.addEventListener('click', function () {
-                $(this).toggleClass('myClass');
-                if (eles_2 === 'none') {
-                    eles_2 = cy.$('edge[interactionType *= \'chemical\']').remove();
-                    removed_nodes_2 = cy.$('node[[degree<1]]').remove();
-                }
-                else {
-                    removed_nodes_2.restore();
-                    eles_2.restore();
-                    eles_2 = 'none';
-                }
-            });
-
-            var filter_missing = document.getElementById('filter_missing');
-            var removed_nodes_3 = false;
-            var eles_3 = 'none';
-            filter_missing.addEventListener('click', function () {
-                $(this).toggleClass('myClass');
-                if (eles_3 === 'none') {
-                    eles_3 = cy.$('edge[interactionType *= \'missing\'], edge[interactionType *= \'indirect\']').remove();
-                    removed_nodes_3 = cy.$('node[[degree<1]]').remove();
-                }
-                else {
-                    removed_nodes_3.restore();
-                    eles_3.restore();
-                    eles_3 = 'none';
-                }
-            });
-
-
-            var MetaboliteColor = document.getElementById('metabolites');
-            MetaboliteColor.addEventListener('click', function () {
-                cy.style()
-                    .selector('node[speciesType = \'compound\']')
-                    .style('background-color', 'red')
-                    .update()
-                ;
-            });
-
-
-            var GenesColor = document.getElementById('genes');
-            GenesColor.addEventListener('click', function () {
-                cy.style()
-                    .selector('node[speciesType = \'gene\']')
-                    .style('background-color', 'red')
-                    .update()
-                ;
-            });
-
         }
 
-    </script>
+        createNewFilter('filter_exp', 'edge[interactionType *= \'expression\']');
+        createNewFilter('filter_act', 'edge[interactionType != \'deactivat\'][interactionType *= \'activate\']');
+        createNewFilter('filter_chem', 'edge[interactionType *= \'chemical\']');
+        createNewFilter('filter_missing', 'edge[interactionType *= \'missing\'], edge[interactionType *= \'indirect\']');
+
+
+        var MetaboliteColor = document.getElementById('metabolites');
+        MetaboliteColor.addEventListener('click', function () {
+            cy.style()
+                .selector('node[speciesType = \'compound\']')
+                .style('background-color', 'red')
+                .update()
+            ;
+        });
+
+
+        var GenesColor = document.getElementById('genes');
+        GenesColor.addEventListener('click', function () {
+            cy.style()
+                .selector('node[speciesType = \'gene\']')
+                .style('background-color', 'red')
+                .update()
+            ;
+        });
+
+    }
+
+</script>
 
 </body>
 </html>
