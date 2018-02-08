@@ -5,13 +5,15 @@ import os
 import networkx as nx
 import pathos.multiprocessing as mp
 
-NO_IGRAPH = False
 try:
     import igraph as ig
+
+    NO_IGRAPH = False
 
 
 except ImportError:
     NO_IGRAPH = True
+    ig = None
 
 
 def delete_disconnected_network(full_graph, verbose=False):
@@ -382,7 +384,7 @@ def append_attribute_to_network(graph, list_to_add_attribute, attribute,
     return tmp_g
 
 
-def trim_sink_source_nodes(network, list_of_nodes):
+def trim_sink_source_nodes(network, list_of_nodes, remove_self_edge=False):
     """
     Trim graph by removing nodes that are not in provided list if source/sink
 
@@ -390,20 +392,20 @@ def trim_sink_source_nodes(network, list_of_nodes):
     Parameters
     ----------
     network : networkx.DiGraph
-
     list_of_nodes : list_like
         list of species that are important if sink/source
-
+    remove_self_edge : bool
+        Remove self edges
     Returns
     -------
 
     """
     tmp_network = network.copy()
     edges = set(tmp_network.edges())
-    for i, j in edges:
-        if i == j:
-            tmp_network.remove_edge(i, j)
-            print("removed {} {}".format(i, j))
+    if remove_self_edge:
+        for i, j in edges:
+            if i == j:
+                tmp_network.remove_edge(i, j)
     tmp1 = _trim(tmp_network, list_of_nodes)
     tmp2 = _trim(tmp_network, list_of_nodes)
     while tmp1 != tmp2:
@@ -750,7 +752,7 @@ def add_nodes(old_network, new_network):
                     additions = set(d.split('|'))
                     additions.update(current)
 
-                    new = '|'.join(sorted(list(additions)))
+                    new = '|'.join(sorted(additions))
                     new_network.node[i][n] = new
                 else:
                     new_network.node[i][n] = d
