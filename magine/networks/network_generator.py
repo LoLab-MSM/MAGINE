@@ -3,6 +3,7 @@
 File that generates networks
 """
 import os
+
 import networkx as nx
 import numpy as np
 
@@ -11,22 +12,25 @@ import magine.networks.network_tools as nt
 from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import download_all_of_kegg, load_reactome_fi
-from magine.networks.databases.biogrid_interactions import create_biogrid_network
+from magine.networks.databases.biogrid_interactions import \
+    create_biogrid_network
 
 try:
     import cPickle as pickle
-except:
+except ImportWarning:
     import pickle
 
 
-def build_network(gene_list, save_name='tmp', species='hsa',
-                  all_measured_list=None, use_reactome=True, use_hmdb=False,
-                  use_biogrid=True, metabolite_list=None):
+def build_network(gene_list, species='hsa', save_name=None,
+                  all_measured_list=None, metabolite_list=None,
+                  use_reactome=True, use_hmdb=False, use_biogrid=True,
+                  trim_source_sink=False):
     """
     Construct a network from a list of gene names.
 
     Parameters
     ----------
+
     gene_list : list
         list of genes to construct network
     save_name : str
@@ -45,6 +49,8 @@ def build_network(gene_list, save_name='tmp', species='hsa',
         all_measured_list
     metabolite_list : list
         List of metabolites with HMDB ids
+    trim_source_sink : bool, optional
+        Remove source and sink nodes if they are not measured in network
     Returns
     -------
     networkx.DiGraph
@@ -127,6 +133,8 @@ def build_network(gene_list, save_name='tmp', species='hsa',
     print("Trimming network")
     # removes everything not connected to the largest graph
     nt.delete_disconnected_network(end_network)
+    if trim_source_sink:
+        end_network = nt.trim_sink_source_nodes(end_network, all_measured_list)
     print('Network has {} nodes and {} edges'
           ''.format(len(end_network.nodes()),
                     len(end_network.edges()))
