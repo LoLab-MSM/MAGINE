@@ -1,8 +1,11 @@
 import json
 import os
 import uuid
+
 from IPython.core.display import display, HTML
+
 from magine.networks.visualization.cytoscapejs_tools.styles import *
+
 # Define default widget size
 DEF_HEIGHT = 700
 DEF_WIDTH = 100  # Same as cell width of Jupyter
@@ -117,7 +120,7 @@ def get_style(name):
 
 if __name__ == '__main__':
     import networkx as nx
-    from magine.networks.visualization.util_networkx import from_networkx
+    from magine.networks.utils import from_networkx
 
     g = nx.DiGraph()
     g.add_edge('a', 'b')
