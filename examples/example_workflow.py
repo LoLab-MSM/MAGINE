@@ -1,21 +1,21 @@
 from magine.data.datatypes import ExperimentalData
-from magine.plotting.species_plotting import plot_dataframe
+from magine.html_templates.html_tools import workflow_template
 from magine.networks.network_generator import build_network
 from magine.ontology.enrichr import Enrichr
-from magine.html_templates.html_tools import workflow_template
+from magine.plotting.species_plotting import plot_dataframe
 
 if __name__ == '__main__':
     data = ExperimentalData('Data/norris_et_al_2017_cisplatin_data.csv.gz')
 
     # want data organized
     # data
-    # proteomics
+    # proteins
     # metabolomics
 
     plot_dataframe(data.metabolites, 'metabolites', 'metabolites',
                    type_of_species='metabolites')
 
-    plot_dataframe(data.proteomics, 'genes', 'protein',
+    plot_dataframe(data.proteins, 'genes', 'protein',
                    type_of_species='protein')
 
     e = Enrichr(exp_data=data)

@@ -39,7 +39,7 @@ class ExperimentalData(object):
     data : pd.DataFrame
         Original dataframe provided to class
 
-    proteomics : pd.DataFrame
+    proteins : pd.DataFrame
         pandas dataframe containing only species=='proteins'
 
     exp_methods : list
@@ -49,10 +49,10 @@ class ExperimentalData(object):
     list_sig_metabolites
     timepoints
     rna_seq
-    proteomics_non_rna
-    proteomics_sign
-    rna_seq_sign
-    proteomics_non_rna_sig
+    proteins_non_rna
+    proteins_sig
+    rna_seq_sig
+    proteins_non_rna_sig
     list_proteins
     list_rna
     list_proteins_non_rna
@@ -62,15 +62,12 @@ class ExperimentalData(object):
     list_sig_proteins_non_rna
     list_sig_species
     n_sig_proteins
-    n_sig_rnaseq
+    n_sig_rna_seq
     n_sig_proteins_non_rna
     n_sig_metabolites
     n_sig_species
-    total_unique_genes_proteomics
-    total_sign_rna
-    proteins_measured
-    prot_up
-    prot_down
+    proteins_up
+    proteins_down
     sign_changed_proteomics
     proteomics_up
     proteomics_down
@@ -88,7 +85,7 @@ class ExperimentalData(object):
     genes_down_over_time
     rna_up
     rna_down
-    rna_sign_changed
+    rna_sig_changed
     rna_over_time
     rna_down_over_time
     rna_up_over_time
@@ -116,24 +113,24 @@ class ExperimentalData(object):
 
         """
         if file_object:
-            raw_df = pandas.read_csv(
+            df = pandas.read_csv(
                 file_object,
                 parse_dates=False, low_memory=False
             )
         elif isinstance(data_file, pandas.DataFrame):
-            raw_df = data_file.copy()
+            df = data_file.copy()
         else:
-            raw_df = pandas.read_csv(
+            df = pandas.read_csv(
                 os.path.join(data_directory, data_file),
                 parse_dates=False, low_memory=False
             )
         for i in valid_cols:
-            if i not in raw_df.dtypes:
+            if i not in df.dtypes:
                 print("{} not in columns.")
-        raw_df = raw_df[raw_df[fold_change].notnull()]
-        raw_df.loc[raw_df[fold_change] == np.inf, fold_change] = 1000
-        raw_df.loc[raw_df[fold_change] == -np.inf, fold_change] = -1000
-        self.data = raw_df
+        df = df[df[fold_change].notnull()]
+        df.loc[df[fold_change] == np.inf, fold_change] = 1000
+        df.loc[df[fold_change] == -np.inf, fold_change] = -1000
+        self.data = df
         self.exp_methods = list(self.data[exp_method].unique())
 
         self.metabolites = []
@@ -147,30 +144,25 @@ class ExperimentalData(object):
         else:
             self.data['compound_id'] = None
         # return
-        self.proteomics = raw_df[raw_df[species_type] == protein]
-        self.proteomics = self.proteomics.dropna(subset=[gene])
-
         self.exp_methods = self.data[exp_method].unique()
         self.timepoints = sorted(list(self.data[sample_id].unique()))
 
-        self.rna_seq = self.proteomics[self.proteomics[exp_method] == rna]
-        self.proteomics_non_rna = self.proteomics[
-            self.proteomics[exp_method] != rna]
+        self.proteins = df[df[species_type] == protein].dropna(subset=[gene])
 
-        self.proteomics_sign = self.proteomics[self.proteomics[flag]]
+        self.proteins_sig = self.proteins[self.proteins[flag]]
+        self.rna_seq = self.proteins[self.proteins[exp_method] == rna]
+        self.rna_seq_sig = self.rna_seq[self.rna_seq[flag]]
 
-        self.rna_seq_sign = self.rna_seq[self.rna_seq[flag]]
-        self.proteomics_non_rna_sig = self.proteomics_non_rna[
-            self.proteomics_non_rna[flag]]
+        self.proteins_non_rna = self.proteins[self.proteins[exp_method] != rna]
+        self.proteins_non_rna_sig = self.proteins_non_rna[
+            self.proteins_non_rna[flag]]
 
-        self.list_proteins = list(self.proteomics[gene].astype(str).unique())
+        self.list_proteins = list(self.proteins[gene].astype(str).unique())
         self.list_rna = list(self.rna_seq[gene].unique())
-        self.list_proteins_non_rna = list(
-                self.proteomics_non_rna[gene].unique())
-
+        self.list_proteins_non_rna = list(self.proteins_non_rna[gene].unique())
         self.list_species = list(self.list_proteins + self.list_metabolites)
 
-        self.list_sig_proteins = list(self.proteomics_sign[gene].unique())
+        self.list_sig_proteins = list(self.proteins_sig[gene].unique())
         self.list_sig_rna = self.return_rna(significant=True)
         self.list_sig_proteins_non_rna = self.return_proteomics(
             significant=True)
@@ -179,31 +171,25 @@ class ExperimentalData(object):
                                      self.list_sig_metabolites)
 
         self.n_sig_proteins = len(self.list_sig_proteins)
-        self.n_sig_rnaseq = len(self.list_sig_rna)
+        self.n_sig_rna_seq = len(self.list_sig_rna)
         self.n_sig_proteins_non_rna = len(self.list_sig_proteins_non_rna)
         self.n_sig_metabolites = len(self.list_sig_metabolites)
         self.n_sig_species = len(self.list_sig_species)
 
-        self.total_unique_genes_proteomics = len(
-                self.proteomics_non_rna[gene].unique())
+        self.proteins_up = self.return_proteomics(significant=True,
+                                                  fold_change_value=1)
+        self.proteins_down = self.return_proteomics(significant=True,
+                                                    fold_change_value=-1)
 
-        self.total_sign_rna = len(
-                self.rna_seq[self.rna_seq[flag]][gene].unique())
+        self.sign_changed_proteomics = [
+            set(self.proteins_down + self.proteins_up)]
 
-        self.proteins_measured = self.return_proteomics()
+        self.proteomics_up = dict()
+        self.proteomics_down = dict()
+        self.proteomics_sign_changed = dict()
 
-        self.prot_up = self.return_proteomics(significant=True,
-                                              fold_change_value=1)
-        self.prot_down = self.return_proteomics(significant=True,
-                                                fold_change_value=-1)
-
-        self.sign_changed_proteomics = list(set(self.prot_down + self.prot_up))
-
-        self.proteomics_up = {}
-        self.proteomics_down = {}
-        self.proteomics_sign_changed = {}
-        self.proteomics_time_points = \
-            np.sort(self.proteomics[sample_id].unique())
+        self.proteomics_time_points = np.sort(
+            self.proteins[sample_id].unique())
         self.rna_time_points = np.sort(self.rna_seq[sample_id].unique())
 
         self.proteomics_over_time = []
@@ -217,9 +203,10 @@ class ExperimentalData(object):
         self.genes_over_time = []
         self.genes_up_over_time = []
         self.genes_down_over_time = []
+
         self.rna_up = {}
         self.rna_down = {}
-        self.rna_sign_changed = {}
+        self.rna_sig_changed = {}
         self.rna_over_time = []
         self.rna_down_over_time = []
         self.rna_up_over_time = []
@@ -238,18 +225,14 @@ class ExperimentalData(object):
             self.proteomics_up_over_time.append(self.proteomics_up[i])
             self.proteomics_down_over_time.append(self.proteomics_down[i])
 
-            self.genes_over_time.append(
-                    self.filter_measurements(i, True, mol_type='genes'))
-            self.genes_up_over_time.append(
-                    self.filter_measurements(i, True, 'up', 'genes'))
+            self.genes_over_time.append(self.filter(i, True, mol_type='genes'))
+            self.genes_up_over_time.append(self.filter(i, True, 'up', 'genes'))
             self.genes_down_over_time.append(
-                    self.filter_measurements(i, True, 'down', 'genes'))
+                self.filter(i, True, 'down', 'genes'))
 
-            self.sig_species_over_time[i] = self.filter_measurements(i, True)
-            self.sig_species_up_over_time[i] = \
-                self.filter_measurements(i, True, 'up')
-            self.sig_species_down_over_time[i] = \
-                self.filter_measurements(i, True, 'down')
+            self.sig_species_over_time[i] = self.filter(i, True)
+            self.sig_species_up_over_time[i] = self.filter(i, True, 'up')
+            self.sig_species_down_over_time[i] = self.filter(i, True, 'down')
 
         for i in self.rna_time_points:
             self.rna_up[i] = self.return_rna(sample_id_name=i,
@@ -258,9 +241,8 @@ class ExperimentalData(object):
             self.rna_down[i] = self.return_rna(sample_id_name=i,
                                                significant=True,
                                                fold_change_value=-1.)
-            self.rna_sign_changed[i] = list(
-                set(self.rna_up[i] + self.rna_down[i]))
-            self.rna_over_time.append(self.rna_sign_changed[i])
+            self.rna_sig_changed[i] = [set(self.rna_up[i] + self.rna_down[i])]
+            self.rna_over_time.append(self.rna_sig_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
 
@@ -273,23 +255,25 @@ class ExperimentalData(object):
         """
         self.metabolites = self.data[self.data[species_type] == metabolites]
         self.metabolites = self.metabolites.dropna(subset=['compound'])
-        if 'compound_id' not in self.metabolites.dtypes:
-            self.metabolites['compound_id'] = self.metabolites['compound']
-        self.metabolites.loc[:, 'compound_id'] = self.metabolites[
-            'compound_id'].astype(str)
-        self.metabolite_sign = self.metabolites[self.metabolites[flag]]
-        self.list_metabolites = list(self.metabolites['compound_id'].unique())
-        self.list_sig_metabolites = list(
-                self.metabolite_sign['compound_id'].astype(str).unique())
         self.exp_methods_metabolite = self.metabolites[exp_method].unique()
 
-        self.metabolomics_time_points = \
+        if 'compound_id' not in self.metabolites.dtypes:
+            self.metabolites['compound_id'] = self.metabolites['compound']
+        self.metabolites.loc[:, 'compound_id'] = \
+            self.metabolites['compound_id'].astype(str)
+
+        self.metabolite_sign = self.metabolites[self.metabolites[flag]]
+        self.list_metabolites = [self.metabolites['compound_id'].unique()]
+        self.list_sig_metabolites = \
+            [self.metabolite_sign['compound_id'].astype(str).unique()]
+
+        self.metabolites_time_points = \
             np.sort(self.metabolites[sample_id].unique())
 
     def return_proteomics(self, sample_id_name=0.0, significant=False,
                           fold_change_value=None):
         """
-        Returns list of proteomics species according to criteria
+        Returns list of proteins species according to criteria
 
         Parameters
         ----------
@@ -302,13 +286,13 @@ class ExperimentalData(object):
 
         Returns
         -------
-        proteomics species: list
-            List of all proteomics species that are of provided criteria
+        proteins species: list
+            List of all proteins species that are of provided criteria
 
         """
         if sample_id_name == 0.0:
             sample_id_name = False
-        tmp = self.proteomics.dropna(subset=[gene]).copy()
+        tmp = self.proteins.dropna(subset=[gene]).copy()
         tmp = tmp[tmp[exp_method] != rna]
         if significant:
             tmp = tmp[tmp[flag]]
@@ -357,10 +341,10 @@ class ExperimentalData(object):
         else:
             return list(tmp[gene].unique())
 
-    def filter_measurements(self, sample_id_name=0.0, significant=False,
-                            fold_change_value=None, mol_type=None):
+    def filter(self, sample_id_name=0.0, significant=False,
+               fold_change_value=None, mol_type=None):
         """
-        Returns list of proteomics species according to criteria
+        Returns list of proteins species according to criteria
 
         Parameters
         ----------
@@ -469,7 +453,7 @@ class ExperimentalData(object):
 
         """
         plot_list_of_genes(
-            self.proteomics, list_of_genes=list_of_genes,
+            self.proteins, list_of_genes=list_of_genes,
             save_name=save_name,
             out_dir=out_dir, title=title, plot_type=plot_type,
             image_format=image_format
@@ -724,6 +708,7 @@ class ExperimentalData(object):
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])
+
         tmp = np.array(log2_normalize_df(data, fold_change)[fold_change])
 
         fig = plt.figure()
@@ -732,9 +717,9 @@ class ExperimentalData(object):
         if y_range is not None:
             plt.xlim(y_range[0], y_range[1])
 
-        ax.set_yscale('log', base=10)
-        ax.set_ylabel('Count', fontsize=16)
+        ax.set_yscale('log', basey=10)
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
+        ax.set_ylabel('Count', fontsize=16)
         v_plot.save_plot(fig, save_name, out_dir)
 
     def _check_experiment_type_existence(self, exp_type):
