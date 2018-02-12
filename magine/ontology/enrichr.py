@@ -563,7 +563,7 @@ def write_table_to_html(data, save_name='index', out_dir=None,
 
     print("Saving to : {}".format(html_out))
 
-    html_tools.write_single_table(tmp, html_out, 'MAGINE GO analysis')
+    html_tools.write_single_table(tmp, 'MAGINE GO analysis', html_out)
     html_out = save_name + '_filter'
 
     html_tools.write_filter_table(tmp, html_out, 'MAGINE GO analysis')

@@ -222,9 +222,9 @@ class Analyzer(object):
 
         df = pd.DataFrame(list_of_go_dict)
         df.drop('save_name', axis=1, inplace=True)
-        write_single_table(df, html_name, 'MAGINE Output', )
+        write_single_table(df, 'MAGINE Output', html_name)
         df['fileName'] = df['fileName'].str.replace('\.html', '_filter.html')
-        write_single_table(df, html_name + '_filter', 'MAGINE Output', )
+        write_single_table(df, 'MAGINE Output', html_name + '_filter')
 
     def create_selected_go_network(self, file_name, save_name, go_ids=None,
                                    visualize=False, slim=True):

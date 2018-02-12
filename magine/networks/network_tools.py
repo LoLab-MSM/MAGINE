@@ -6,36 +6,25 @@ import networkx as nx
 import pathos.multiprocessing as mp
 
 try:
-    import igraph as ig
-
-    NO_IGRAPH = False
-
-
+    import pygraphviz as pyg
 except ImportError:
-    NO_IGRAPH = True
-    ig = None
+    pyg = None
 
 
-def delete_disconnected_network(full_graph, verbose=False):
+def delete_disconnected_network(full_graph):
     """
     Delete disconnected parts of a provided network
 
     Parameters
     ----------
     full_graph : networkx.DiGraph
-    verbose : bool
-        Prints all nodes that are removed
-
     """
 
     tmp_g = full_graph.to_undirected()
     sorted_graphs = sorted(nx.connected_component_subgraphs(tmp_g), key=len,
                            reverse=True)
     for i in range(1, len(sorted_graphs)):
-        for node in sorted_graphs[i].nodes():
-            if verbose:
-                print("Removing disconnected node %s", node)
-            full_graph.remove_node(node)
+        full_graph.remove_nodes_from(sorted_graphs[i].nodes())
 
 
 def paint_network_overtime(graph, list_of_lists, color_list, save_name,
@@ -54,7 +43,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         list of colors for each time point
     save_name : str
         prefix for images to be saved
-    labels: list
+    labels: list_like
         list of labels to add to graph per sample
     
     Returns
@@ -113,7 +102,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         color of second list of species
     save_name : str
         prefix for images to be saved
-    labels: list
+    labels: list_like
         list of labels to add to graph per sample
 
     Returns
@@ -132,11 +121,11 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
     tmp_graph = _format_to_directions(tmp_graph)
 
     if isinstance(tmp_graph, nx.DiGraph):
-        try:
-            tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
-        except ImportError:
-            print("Please install pygraphviz")
+        if pyg is None:
+            print("Please install pygraphviz in order to use "
+                  "paint_network_overtime_up_down ")
             return
+        tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
     for n, (up, down) in enumerate(zip(list_up, list_down)):
         graph2 = paint_network(tmp_graph, up, color_up)
         graph2 = paint_network(graph2, down, color_down)
@@ -162,8 +151,8 @@ def paint_network(graph, list_to_paint, color):
     
     Parameters
     ----------
-    graph: pygraphvix.AGraph
-    list_to_paint : list
+    graph: pygraphviz.AGraph
+    list_to_paint : list_like
         
     color : str
 
@@ -172,7 +161,7 @@ def paint_network(graph, list_to_paint, color):
 
     """
     tmp_g = graph.copy()
-    nodes1 = tmp_g.nodes()
+    nodes1 = set(tmp_g.nodes())
     for i in list_to_paint:
         if i in nodes1:
             n = tmp_g.get_node(i)
@@ -258,6 +247,7 @@ def create_legend(graph):
         graph.add_node(n + len_dic, label="")
         graph.add_edge(n, n + len_dic, dir='both', arrowhead=dict_of_types[i],
                        arrowtail="none", label=i)
+
     graph.add_subgraph(subgraph, name='cluster_legend', rank="LR")
 
 
@@ -278,6 +268,8 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
             dot, twopi,
     dpi: int
         resolution of figure
+    concentrate : bool
+        Concentrate bi-edges into one edge
 
     Returns
     -------
@@ -352,6 +344,8 @@ def append_attribute_to_network(graph, list_to_add_attribute, attribute,
         attribute to add to graph
     true_term : str
         value to add for the attribute provided True
+    delimiter : str
+
 
     Returns
     -------
@@ -437,44 +431,14 @@ def _trim(network, list_of_nodes):
     return len_nodes
 
 
-def networkx_to_igraph(network):
-    nx.write_gml(network, 'test.gml')
-    igraph_network = ig.read('test.gml')
-    return igraph_network
-    if NO_IGRAPH:
-        print("igraph not installed")
-        return False
-    igraph_network = ig.Graph(directed=True)
-    igraph_network.add_vertices(network.nodes())
-    for i, data in network.nodes(data=True):
-        i = i.encode('utf-8')
-        new_data = dict()
-        for key, value in data.items():
-            new_data[key.encode('utf-8')] = value.encode('utf-8')
-        igraph_network.add_vertex(name=i, **new_data)
-    for edge in network.edges(data=True):
-        e1 = edge[0].encode('utf-8')
-        e2 = edge[1].encode('utf-8')
-        data = edge[2]
-        new_data = dict()
-        for key, value in data.items():
-            if isinstance(value, unicode):
-                value = value.encode('utf-8')
-            new_data[key.encode('utf-8')] = value
-        igraph_network.add_edge(e1, e2, kwds=new_data)
-    return igraph_network
-
-
 def subtract_network_from_network(net1, net2):
     """
     subtract one network from another
-
 
     Parameters
     ----------
     net1 : networkx.DiGraph
     net2 : networkx.DiGraph
-
 
     Returns
     -------
@@ -482,12 +446,10 @@ def subtract_network_from_network(net1, net2):
 
     """
     copy_graph1 = net1.copy()
-    nodes1 = net1.nodes()
-    nodes2 = net2.nodes()
-    for i in nodes2:
-        if i in nodes1:
-            copy_graph1.remove_node(i)
-    return copy_graph1
+    nodes1 = set(net1.nodes())
+    nodes2 = set(net2.nodes())
+    overlap = nodes2.intersection(nodes1)
+    return copy_graph1.remove_edges_from(overlap)
 
 
 def compress_edges(graph):
@@ -608,15 +570,15 @@ def merge_nodes(graph):
                             new_g.add_edge(new_name, x, **graph.edge[n][x])
                             edges.remove((n, x))
     print(
-    "{} nodes and {} edges".format(len(graph.nodes()), len(graph.edges())))
+        "{} nodes and {} edges".format(len(graph.nodes()), len(graph.edges())))
     print(
-    "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
+        "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
     for n in new_g.nodes():
         if len(new_g.successors(n)) == 0 and len(new_g.predecessors(n)) == 0:
             new_g.remove_node(n)
 
     print(
-    "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
+        "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
     return new_g
 
 
@@ -660,15 +622,6 @@ def remove_unmeasured_nodes(graph, measured):
     for n in to_remove:
         new_g.remove_node(n)
     return new_g
-
-
-def _nx_to_dot(network):
-    if isinstance(network, nx.DiGraph):
-        try:
-            network = nx.nx_agraph.to_agraph(network)
-        except ImportError:
-            print("Need to install pygraphviz")
-            return network
 
 
 def print_network_stats(network, exp_data):
@@ -736,13 +689,17 @@ def add_pvalue_and_fold_change():
     return
 
 
-def add_nodes(old_network, new_network):
+def _add_nodes(old_network, new_network):
     new_nodes = set(new_network.nodes())
     for i, data in old_network.nodes_iter(data=True):
-        if i in new_nodes:
+        if i not in new_nodes:
+            new_network.add_node(i, **data)
+        else:
             existing_info = new_network.node[i]
             for n, d in data.items():
-                if n in existing_info:
+                if n not in existing_info:
+                    new_network.node[i][n] = d
+                else:
                     current = existing_info[n]
                     if isinstance(current, list):
                         if len(current) != 1:
@@ -751,13 +708,7 @@ def add_nodes(old_network, new_network):
                         current = current[0]
                     additions = set(d.split('|'))
                     additions.update(current)
-
-                    new = '|'.join(sorted(additions))
-                    new_network.node[i][n] = new
-                else:
-                    new_network.node[i][n] = d
-        else:
-            new_network.add_node(i, **data)
+                    new_network.node[i][n] = '|'.join(sorted(additions))
 
 
 def compose(G, H, name=None):
@@ -782,16 +733,11 @@ def compose(G, H, name=None):
 
     if name is None:
         name = "compose( %s, %s )" % (G.name, H.name)
-    # new_g = nx.DiGraph()
 
     new_g = G.copy()
     new_g.name = name
-    # add_nodes(G, new_g)
-    add_nodes(H, new_g)
+    _add_nodes(H, new_g)
 
-    # for i, j, data in G.edges_iter(data=True):
-    #     new_g.add_edge(i, j, **data)
-        # print(i, j, data)
     edges = set(new_g.edges())
 
     for i, j, data in H.edges_iter(data=True):
@@ -840,16 +786,15 @@ def compose_all(graphs, name=None):
 
     """
     graphs = iter(graphs)
-    C = next(graphs)
-    for H in graphs:
-        C = compose(C, H, name=name)
-    return C
+    g = next(graphs)
+    for h in graphs:
+        g = compose(g, h, name=name)
+    return h
 
 
 _maps = {
     'activation': 'activate',
     'potentiator': 'activate',
-
 
     'inducer': 'expression',
     'stimulator': 'expression',
@@ -870,7 +815,6 @@ _maps = {
     'indirect effect': 'indirect',
     'missing interaction': 'indirect',
 
-
     'negative modulator': 'inhibit',
     'inhibitory allosteric modulator': 'allosteric}inhibit',
     'partial agonist': 'agonist|chemical',
@@ -882,9 +826,6 @@ _maps = {
     'ligand': 'chemical',
     'cofactor': 'chemical',
     'multitarget': 'chemical',
-
-
-
 }
 
 
@@ -911,108 +852,6 @@ def standardize_edge_types(network):
             edge_type = '|'.join(sorted(edge_type))
             network[source][target]['interactionType'] = edge_type
 
-
-'''
-# deprecated
-def get_uniprot_info(name):
-    """
-
-    columns are search terms from UniProt, can be choosen from
-    http://www.uniprot.org/help/uniprotkb_column_names
-
-    """
-
-    d = uniprot.search('%s+AND+organism:9606+reviewed:yes' % name, frmt='tab',
-                       columns="entry name,\
-                                genes(PREFERRED),\
-                                comment(FUNCTION),\
-                                go(biological process),\
-                                go(molecular function),\
-                                go(cellular component),\
-                                comment(PTM)",
-                       limit=1)
-
-    output_line = ''
-    try:
-        d.split('\n')
-    except:
-        return ''
-    for i in d.split('\n'):
-        if i.startswith('Entry'):
-            continue
-        elif i.startswith('\n'):
-            continue
-        else:
-            output_line += i
-    output_line = output_line.replace("; ", ";")
-    return output_line + '\n'
-
-
-# deprecated
-def generate_curated_subgraphs(network, i):
-    header = 'NetworkName\tEntry name\tGene_names_primary\tFunction\tGO_biological_process\tGO_molecular_function\tGO_cellular_component\tPost-translational_modification'
-    print("generating curated list for %s" % i)
-    size = len(network.nodes())
-    file_to_write = open(
-        'List_of_species_subgroup_%s_size_%s.txt' % (i + 1, size), 'w')
-    output = header + '\n'
-    for j in network.nodes():
-        tmp = get_uniprot_info(j)
-        output += str(j) + '\t' + tmp
-    file_to_write.write(output)
-    file_to_write.close()
-    print("Created curated list for %s", i)
-
-
-# deprecated
-def create_lists_of_subgraphs(network, save_name, exp_data):
-    G = network.to_undirected()
-    sorted_graphs = sorted(nx.connected_component_subgraphs(G), key=len,
-                           reverse=True)
-    counter = 0
-    data = []
-    cnt = 0
-    subgraph_species = []
-    for i in sorted_graphs:
-
-        size = len(i.nodes())
-        with open('%s_%s_size_%s.txt' % (save_name, str(cnt), str(size)),
-                  'w') as f:
-            for j in i.nodes():
-                f.write('%s,' % j)
-
-        cnt += 1
-        if size == 1:
-            counter += 1
-        else:
-            data.append(size)
-        if size == 1:
-            continue
-        measured = ''
-        measured_species = []
-        for j in i.nodes():
-            if j in exp_data:
-                measured_species.append(j)
-                measured += '%s,' % str(j)
-        if measured == '':
-            continue
-        else:
-            subgraph_species.append(measured_species)
-            print(measured)
-    data.remove(max(data))
-    data = np.asarray(data)
-    print(data, 10)
-    plt.hist(data)
-    plt.title("Distribution of subgraphs with canonical removed")
-    # plt.xlim(1,100)
-    # plt.ylim(0,20)
-    plt.xlabel("Number of nodes")
-    plt.ylabel("Count")
-    plt.savefig("histogram_mega_minus_canonical_subgraphs.png", dpi=200)
-    plt.show()
-    print("Number of subgraphs with 1 node = %s" % counter)
-    return subgraph_species
-'''
 
 if __name__ == '__main__':
     g = nx.DiGraph()

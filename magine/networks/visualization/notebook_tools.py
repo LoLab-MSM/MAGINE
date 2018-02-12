@@ -8,9 +8,9 @@ import magine.ontology.enrichment_tools as et
 from magine.html_templates.html_tools import env
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.networks.ontology_network import OntologyNetworkGenerator
+from magine.networks.utils import from_networkx
 from magine.networks.visualization.cytoscapejs_tools import viewer as cyjs
 from magine.networks.visualization.igraph_tools import create_figure
-from magine.networks.visualization.util_networkx import from_networkx
 
 Javascript("https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
 Javascript(

@@ -8,15 +8,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pathos.multiprocessing as mp
-import plotly
 import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
 
 import magine.html_templates.html_tools as ht
 from magine.data.formatter import pivot_table_for_export, log2_normalize_df
 
-plotly.plotly.sign_in(username='james.ch.pino',
-                      api_key='BnUcJSpmPcMKZg0yEFaL')
+# plotly.plotly.sign_in(username='james.ch.pino',
+#                       api_key='BnUcJSpmPcMKZg0yEFaL')
 
 gene = 'gene'
 protein = 'protein'
@@ -71,7 +70,7 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
     figure_locations = {}
     plots_to_create = []
     to_remove = set()
-    assert plot_type == ('plotly' or 'matplotlib')
+    assert plot_type in ('plotly', 'matplotlib')
     # get list of all terms
     list_of_go_terms = data['GO_id'].unique()
 
@@ -368,11 +367,9 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
     x_points = sorted(dataframe[sample_id].unique())
 
     if isinstance(x_points[0], np.float):
-        x_point_dict = {i: x_points[n] for n, i
-                        in enumerate(x_points)}
+        x_point_dict = {i: x_points[n] for n, i in enumerate(x_points)}
     else:
-        x_point_dict = {i: n for n, i
-                        in enumerate(x_points)}
+        x_point_dict = {i: n for n, i in enumerate(x_points)}
 
     local_df = dataframe[dataframe[meta_index].isin(list_of_metab)].copy()
     local_df = log2_normalize_df(local_df, fold_change=fold_change)
@@ -658,7 +655,7 @@ def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
         mode = 'lines+markers'
         show = True
         size = 8
-    legendgroup = 'group_{}'.format(enum)
+    legend = 'group_{}'.format(enum)
 
     g = plotly_graph.Scatter(
             x=x,
@@ -667,7 +664,7 @@ def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
             name=label,
             visible=True,
             mode=mode,
-            legendgroup=legendgroup,
+        legendgroup=legend,
             showlegend=show,
             line=dict(color=l_color),
             marker=dict(symbol=marker,

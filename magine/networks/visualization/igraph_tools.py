@@ -1,6 +1,6 @@
 from random import randint
 
-from magine.networks.network_tools import networkx_to_igraph
+from magine.networks.utils import networkx_to_igraph
 
 
 def create_figure(mol_net, save_name=None):
@@ -184,7 +184,7 @@ def create_igraph_figure(mol_net, save_name=None):
     # visual_style["bbox"] = (1000, 1000)
     visual_style["bbox"] = (2000, 2000)
     visual_style["margin"] = 100
-    g.vs.label=None
+    g.vs.label = None
     if 'color' in g.vs:
         visual_style["vertex_color"] = g.vs["color"]
     # for vertex in g.vs():

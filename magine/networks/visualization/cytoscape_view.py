@@ -29,31 +29,30 @@ class LayoutClient(object):
         return requests.get(self.__url).json()
 
     def get_option(self, name):
-        url = self.__url + '/' + name + '/columntypes'
-        return requests.get(url).json()
+        _url = '{}/{}/columntypes'.format(self.__url, name)
+        return requests.get(_url).json()
 
     def get_parameters(self, name):
-        url = self.__url + '/' + name + '/parameters'
-        return requests.get(url).json()
+        _url = '{}/{}/parameters'.format(self.__url, name)
+        return requests.get(_url).json()
 
     def update(self, name, parameters='color'):
-        url = self.__url + '/' + name + '/' + str(parameters)
-        requests.put(url)
+        _url = '{}/{}/{}'.format(self.__url, name, str(parameters))
+        requests.put(_url)
 
     def apply(self, name='force-directed', network=None, params=None):
-        if network is None:
-            raise ValueError('Target network is required')
-
-        url = self.__url + '/' + name + '/' + str(network.get_id())
-
-        requests.get(url, params)
+        self._check_net(network)
+        _url = '{}/{}/{}'.format(self.__url, name, str(network.get_id()))
+        requests.get(_url, params)
 
     def bundle_edge(self, network=None):
+        self._check_net(network)
+        _url = '{}/edgebundling/{}'.format(self.__url, str(network.get_id()))
+        requests.get(_url)
+
+    def _check_net(self, network):
         if network is None:
             raise ValueError('Target network is required')
-
-        url = self.__url + '/edgebundling/' + str(network.get_id())
-        requests.get(url)
 
 
 class RenderModel(object):
@@ -71,52 +70,27 @@ class RenderModel(object):
         self.node_name2id = None
         self.g_cy = None
         self.view1 = None
-        for n, i in enumerate(self.graph.edges()):
-            self.graph[i[0]][i[1]]['name'] = str(i[0]) + ',' + str(i[1])
-        self.g_cy = self.cy.network.create_from_networkx(
-                self.graph, )  # name=name,
-        # collection=name)
+        for n, (i, j) in enumerate(self.graph.edges()):
+            self.graph[i][j]['name'] = '{},{}'.format(i, j)
+        self.g_cy = self.cy.network.create_from_networkx(self.graph)
 
         time.sleep(2)
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], format='view')
 
-        params = [{
-            u'type':        u'double', u'name': u'spacingx',
-            u'value':       150.0,
-            u'description': u'Horizontal spacing between two partitions in a row:'
-        },
-            {
-                u'type':        u'double', u'name': u'spacingy',
-                u'value':       150.0,
-                u'description': u'Vertical spacing between the largest partitions of two rows:'
-            },
-                  {u'name': u'maxwidth', u'value': 1000.0},
-            {
-                u'type':        u'double', u'name': u'minrad',
-                u'value':       20.0,
-                u'description': u'Minimum width of a partition:'
-            },
-            {
-                u'type':        u'double', u'name': u'radmult',
-                u'value':       50.0,
-                u'description': u'Scale of the radius of the partition:'
-            }]
-
         # Marquee Directed Simple
         self.style = self.cy.style.create(style)
-
         # self.style = self.cy.style.create('Marquee')
 
         options = {
-            'NODE_LABEL_FONT_SIZE':      24,
-            'EDGE_WIDTH':                2,
-            'EDGE_TRANSPARENCY':         '150',
+            'NODE_LABEL_FONT_SIZE': 24,
+            'EDGE_WIDTH': 2,
+            'EDGE_TRANSPARENCY': '150',
             # 'NETWORK_HEIGHT'           : '2800',
             # 'NETWORK_WIDTH'            : '2800',
-            'NODE_FILL_COLOR':           'red',
-            'NETWORK_BACKGROUND_PAINT':  '#00FFFFFF',
-            'NODE_SIZE':                 80,
+            'NODE_FILL_COLOR': 'red',
+            'NETWORK_BACKGROUND_PAINT': '#00FFFFFF',
+            'NODE_SIZE': 80,
             # 'NODE_LABEL_POSITION': 'C,C,c,0.00,-60.00',
             'NETWORK_CENTER_X_LOCATION': 0.0,
             'NETWORK_CENTER_Y_LOCATION': 0.0,
@@ -130,8 +104,6 @@ class RenderModel(object):
             self.cy.layout2.apply(name=layout, network=self.g_cy)
         self.node_name2id = util.name2suid(self.g_cy, 'node')
         self.edge_name2id = util.name2suid(self.g_cy, 'edge')
-        # self.print_options()
-        # quit()
 
     def print_options(self):
         """ print cytoscape options for network, style, nodes, edges
@@ -158,54 +130,63 @@ class RenderModel(object):
 
     def visualize_by_list_of_time(self, list_of_time, labels=None,
                                   prefix='tmp', out_dir=None):
-        """ create sequences of pdfs and svgs based on list of attributes
-        list_of_time should point to attributes of the network. This attribute will update the network accordingly.
+        """
+        create sequences of pdfs and svgs based on list of attributes
 
-        :param list_of_time:
-        :return:
+        list_of_time should point to attributes of the network.
+        This attribute will update the network accordingly.
+
+        Parameters
+        ----------
+        list_of_time : list_like
+        labels : list_like
+        prefix : str
+        out_dir : str
+
+
+        Returns
+        -------
+
         """
         if out_dir is not None:
-
             if not os.path.exists(out_dir):
                 os.mkdir(out_dir)
             if not os.path.exists(os.path.join(out_dir, 'Figures')):
                 os.mkdir(os.path.join(out_dir, 'Figures'))
-        node_label_values = {self.node_name2id[i[0]]: i[1]['label'] for i in
+
+        node_label_values = {self.node_name2id[i]: d['label'] for i, d in
                              self.graph.nodes(data=True)}
-        node_color_values = {self.node_name2id[i[0]]: i[1]['color'] for i in
+
+        node_color_values = {self.node_name2id[i]: d['color'] for i, d in
                              self.graph.nodes(data=True)}
+
         edge_color_values = {}
         for i in self.edge_name2id:
             edge_color_values[self.edge_name2id[i]] = 'gray'
-        edge_width_values = {}
-        for i in self.graph.edges(data=True):
-            edge_width_values[self.edge_name2id[str(i[0]) + ',' + str(i[1])]] \
-                = i[2]['weight']
-        simple_slope = StyleUtil.create_slope(
-                min=min(edge_width_values.values()),
-                max=max(edge_width_values.values()),
-                values=(3, 10))
+        edge_width = {}
+        for i, j, d in self.graph.edges(data=True):
+            edge_width[self.edge_name2id['{},{}'.format(i, j)]] = d['weight']
+
+        _min, _max = min(edge_width.values()), max(edge_width.values())
+        slope = StyleUtil.create_slope(min=_min, max=_max, values=(3, 10))
 
         self.style.create_continuous_mapping(column='weight',
                                              col_type='Double',
                                              vp='EDGE_WIDTH',
-                                             points=simple_slope)
-        # self.style.create_passthrough_mapping(column='weight', col_type='Double', vp='EDGE_WIDTH')
+                                             points=slope)
         self.cy.style.apply(style=self.style, network=self.g_cy)
         self.cy.layout.fit(network=self.g_cy)
         self.create_png('out.png', 2400)
         trip_photo('out.png', 'x')
         x = self.view1.get_network_view_as_dict()
         self.view1.update_network_view(
-                visual_property='NETWORK_SCALE_FACTOR',
-                value=0.8 * x['NETWORK_SCALE_FACTOR'])
+            visual_property='NETWORK_SCALE_FACTOR',
+            value=0.8 * x['NETWORK_SCALE_FACTOR'])
 
-        # self.create_png('out.png', 2400)
-        # trip_photo('out.png', 'x')
         all_node_size = []
         for ind, j in enumerate(list_of_time):
             size = np.array(
-                    [self.graph.node[n][j] for n in self.graph.nodes()])
+                [self.graph.node[n][j] for n in self.graph.nodes()])
             all_node_size.append(size)
         size = np.array(all_node_size).flatten()
         simple_slope = StyleUtil.create_slope(min=size.min(), max=size.max(),
@@ -221,8 +202,8 @@ class RenderModel(object):
             self.view1.update_node_views(visual_property='NODE_LABEL',
                                          values=node_label_values)
             self.view1.update_network_view(
-                    visual_property='NETWORK_BACKGROUND_PAINT',
-                    value='rgba(0, 0, 0, 0)', )
+                visual_property='NETWORK_BACKGROUND_PAINT',
+                value='rgba(0, 0, 0, 0)', )
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
                                          values=node_label_values)
             self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
@@ -232,23 +213,25 @@ class RenderModel(object):
             self.view1.update_edge_views(visual_property='EDGE_LABEL_COLOR',
                                          values=edge_color_values)
             self.view1.update_edge_views(
-                    visual_property='EDGE_STROKE_UNSELECTED_PAINT',
-                    values=edge_color_values)
+                visual_property='EDGE_STROKE_UNSELECTED_PAINT',
+                values=edge_color_values)
             self.view1.update_edge_views(
-                    visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
-                    values=edge_color_values)
+                visual_property='EDGE_SOURCE_ARROW_UNSELECTED_PAINT',
+                values=edge_color_values)
             self.view1.update_edge_views(
-                    visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
-                    values=edge_color_values)
+                visual_property='EDGE_TARGET_ARROW_UNSELECTED_PAINT',
+                values=edge_color_values)
             x = self.view1.get_network_view_as_dict()
 
             fig_name = 'ont_network_{0}_{1}'.format(prefix, j)
             print("Saving {}".format(fig_name))
+
             if out_dir is not None:
                 out_file = os.path.join(out_dir, 'Figures',
                                         '{}.png'.format(fig_name))
             else:
                 out_file = '{}.png'.format(fig_name)
+
             if os.path.exists(out_file):
                 os.remove(out_file)
 
@@ -264,16 +247,19 @@ class RenderModel(object):
                              self.graph.nodes(data=True)}
         self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
                                      values=node_color_values)
-        network_pdf = self.g_cy.get_svg()
+
         with open('{0}.svg'.format(save_name), 'wb') as f:
+            network_pdf = self.g_cy.get_svg()
             f.write(network_pdf)
             f.close()
-        network_pdf = self.g_cy.get_pdf()
+
         with open('{0}.pdf'.format(save_name), 'wb') as f:
+            network_pdf = self.g_cy.get_pdf()
             f.write(network_pdf)
             f.close()
-        network_pdf = self.g_cy.get_png()
+
         with open('{0}.png'.format(save_name), 'wb') as f:
+            network_pdf = self.g_cy.get_png()
             f.write(network_pdf)
             f.close()
 
@@ -323,12 +309,14 @@ def trip_photo(im_location, title=None):
         if img[:, i, 0].sum() != x_dim:
             to_remove_y.add(i)
     if len(to_remove_x) > 2:
-        img = img[min(to_remove_x) - int((.05 * x_dim)):max(to_remove_x) + int(
-                (.05 * x_dim)), :, :]
+        _min, _max = min(to_remove_x), max(to_remove_x)
+        _scale = int((.05 * x_dim))
+        img = img[_min - _scale:_max + _scale, :, :]
+
     if len(to_remove_y) > 2:
-        img = img[:,
-              min(to_remove_y) - int((.05 * y_dim)):max(to_remove_y) + int(
-                      (.05 * y_dim)), :]
+        _min, _max = min(to_remove_y), max(to_remove_y)
+        _scale = int((.05 * y_dim))
+        img = img[:, _min - _scale:_max + _scale, :]
 
     plt.imshow(img, interpolation='none')
     plt.xticks([])
@@ -349,4 +337,4 @@ if __name__ == '__main__':
     ddn = nx.DiGraph()
     rm = RenderModel(ddn, style='Marquee')
     rm.visualize_by_list_of_time(
-            ['time_0', 'time_1', 'time_2', 'time_3', 'time_4', ])
+        ['time_0', 'time_1', 'time_2', 'time_3', 'time_4', ])
