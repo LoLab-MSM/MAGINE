@@ -3,7 +3,6 @@ import os
 import pandas as pd
 
 import magine.html_templates.html_tools as html_tools
-from magine.tests.sample_experimental_data import exp_data
 
 
 def test_filter():
@@ -17,9 +16,9 @@ def test_filter():
                                'aspect'],
                         columns='sample_index')
 
-    html_tools.write_filter_table(df, 'html_writer', 'test')
+    html_tools.write_filter_table(df, 'html_writer')
 
-    html_tools.write_single_table(df, 'html_writer2', 'test2')
+    html_tools.write_single_table(df, 'test2', 'html_writer2')
 
 """
 def test_create_plots_per_go():

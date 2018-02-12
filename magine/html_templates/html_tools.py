@@ -3,222 +3,120 @@ import os
 import jinja2
 
 env = jinja2.Environment(
-   loader=jinja2.FileSystemLoader(
-           searchpath=os.path.join(os.path.dirname(__file__), 'templates')
-   )
+    loader=jinja2.FileSystemLoader(
+        searchpath=os.path.join(os.path.dirname(__file__), 'templates')
+    )
 )
 
 workflow_template = env.get_template('workflow_template.html')
 plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
-# filter_template = env.get_template('filter_table_base.html')
 filter_template = env.get_template('filter_table.html')
-enrich_template = env.get_template('enrichment_template.html')
 
-range_number = 'column_number:{},' \
-               'filter_type: "range_number"'
+range_ = {'GO_id', 'ref', 'depth', 'enrichment_score', 'rank',
+          'p_value', 'adj_p_value', 'combined_score', 'n_genes',
+          'z_score', 'pvalue', 'treated_control_fold_change',
+          'p_value_group_1_and_group_2'}
 
-auto_complete = 'column_number:{},' \
-                'filter_type: "auto_complete",' \
-                'text_data_delimiter: ","'
+chosen_ = {'GO_name', 'slim', 'aspect', 'term_name', 'term_id', 'genes',
+           'significant_flag', 'db', 'sample_id', 'sample_index'}
 
-chosen = 'column_number:{}, ' \
-         'filter_type: "multi_select",' \
-         'select_type: "select2",' \
-         'select_type_options: {{width: \'150px\'}}, ' \
-         'text_data_delimiter: ","'
-
-html_selector = 'column_number:{},' \
-                'column_data_type: "html",' \
-                'filter_type: "multi_select",' \
-                'select_type: "chosen"'
-
-dict_of_templates = dict(GO_id=range_number,
-                         GO_name=chosen,
-                         slim=chosen,
-                         aspect=chosen,
-                         ref=range_number,
-                         depth=range_number,
-                         enrichment_score=range_number,
-                         term_name=chosen,
-                         term_id=chosen,
-                         rank=range_number,
-                         p_value=range_number,
-                         adj_p_value=range_number,
-                         combined_score=range_number,
-                         genes=chosen,
-                         n_genes=range_number,
-                         z_score=range_number,
-                         significant_flag=chosen,
-                         data_type=chosen,
-                         pvalue=range_number,
-                         treated_control_fold_change=range_number,
-                         p_value_group_1_and_group_2=range_number,
-                         protein=auto_complete,
-                         gene=chosen,
-                         time=chosen,
-                         compound=auto_complete,
-                         compound_id=auto_complete,
-                         db=chosen,
-                         )
+auto_complete_ = {'protein', 'gene'}
 
 
-def write_single_table(table, save_name, title):
+def _add_filter(column_num, f_type):
+    _default = {
+        # 'column_number': '"{}"'.format(column_num)
+        'column_number': column_num
+    }
+    if f_type == 'range':
+        _default.update({'filter_type': 'range_number'})
+    if f_type == 'select':
+        _default.update({'column_data_type': 'html',
+                         'filter_type': "multi_select",
+                         'select_type': "chosen"})
+    if f_type == 'chosen':
+        _default.update({'column_data_type': 'html',
+                         'filter_type': "','",
+                         'select_type': "multi_select",
+                         'select_type_options': '{width:"150px"}',
+                         'text_data_delimiter': "select2"},
+                        )
+    if f_type == 'auto_complete':
+        _default.update({'filter_type': "auto_complete",
+                         'text_data_delimiter': "','"})
+
+    return _default
+
+
+def write_single_table(table, title, save_name=None):
+    """
+
+    Parameters
+    ----------
+    table : pandas.DataFrame
+    title : str
+    save_name : str
+
+    Returns
+    -------
+
+    """
 
     # formats output to less precision and ints rather than floats
-    tmp_table, format_dict = _format_data_table(table)
-    html_table = tmp_table.to_html(escape=False,
-                                   # na_rep='-',
-                                   formatters=format_dict,
-                                   )
-    template_vars = {"title":      title,
-                     "table_name": html_table
-                     }
-
-    html_out = single_template.render(template_vars)
+    tmp_table = _format_simple_table(table)
+    html_out = single_template.render({"title": title,
+                                       "table_name": tmp_table})
+    if save_name is None:
+        return html_out
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
 
 
-def process_filter_table(table, title):
+def write_filter_table(table, save_name):
     """
 
     Parameters
     ----------
     table : pandas.DataFrame
     save_name : str
-    title : str
 
     Returns
     -------
 
     """
-    """{column_number: 0},
-    {column_number: 1, filter_type: "range_number_slider"},
-    {column_number: 2, filter_type: "date"},
-    {
-        column_number:       3,
-        filter_type:         "auto_complete",
-        text_data_delimiter: ","
-        },
-    {
-        column_number:        4,
-        column_data_type:     "html",
-        html_data_type:       "text",
-        filter_default_label: "Select tag"
-        }"""
-
-    out_string = ''
-    leave = ['GO_id', 'genes']
-    n = 0
-    for n, i in enumerate(table.index.names):
-        if i in leave:
-            continue
-        if i not in dict_of_templates:
-            print(i)
-            continue
-        new_string = dict_of_templates[i].format(n)
-        out_string += '{' + new_string + '},\n'
-
-    for m, i in enumerate(table.columns):
-        if isinstance(i, str):
-            new_string = dict_of_templates[i].format(n + m + 1)
-            out_string += '{' + new_string + '},\n'
-            continue
-        elif i[0] in leave:
-            continue
-        elif i[0] not in dict_of_templates:
-            print(i[0])
-            continue
-        new_string = dict_of_templates[i[0]].format(n + m + 1)
-        out_string += '{' + new_string + '},\n'
 
     # formats output to less precision and ints rather than floats
-    tmp_table, format_dict = _format_data_table(table)
+    tmp_table = _format_simple_table(table)
 
-    html_table = tmp_table.to_html(escape=False,
-                                   # na_rep='-',
-                                   formatters=format_dict
-                                   )
-    template_vars = {"title": title,
-                     "table_name": html_table,
-                     "filter_table": out_string}
-    return template_vars
+    data = tmp_table.to_dict('split')
+    data['filters'] = create_yadf_filters(table)
 
-
-def write_filter_table(table, save_name, title):
-    """
-
-    Parameters
-    ----------
-    table : pandas.DataFrame
-    save_name : str
-    title : str
-
-    Returns
-    -------
-
-    """
-    """{column_number: 0},
-    {column_number: 1, filter_type: "range_number_slider"},
-    {column_number: 2, filter_type: "date"},
-    {
-        column_number:       3,
-        filter_type:         "auto_complete",
-        text_data_delimiter: ","
-        },
-    {
-        column_number:        4,
-        column_data_type:     "html",
-        html_data_type:       "text",
-        filter_default_label: "Select tag"
-        }"""
-
-    out_string = ''
-    leave = ['GO_id', 'genes']
-    n=0
-    for n, i in enumerate(table.index.names):
-        if i in leave:
-            continue
-        if i not in dict_of_templates:
-            print(i)
-            continue
-        new_string = dict_of_templates[i].format(n)
-        out_string += '{' + new_string + '},\n'
-
-    for m, i in enumerate(table.columns):
-        if isinstance(i, str):
-            new_string = dict_of_templates[i].format(n + m + 1)
-            out_string += '{' + new_string + '},\n'
-            continue
-        elif i[0] in leave:
-            continue
-        elif i[0] not in dict_of_templates:
-            print(i[0])
-            continue
-        new_string = dict_of_templates[i[0]].format(n + m + 1)
-        out_string += '{' + new_string + '},\n'
-
-    # formats output to less precision and ints rather than floats
-    tmp_table, format_dict = _format_data_table(table)
-    
-    html_table = tmp_table.to_html(escape=False,
-                                   # na_rep='-',
-                                   formatters=format_dict
-                                   )
-    template_vars = {"title":        title,
-                     "table_name":   html_table,
-                     "filter_table": out_string}
+    template_vars = {"data": data}
 
     html_out = filter_template.render(template_vars)
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
 
 
-def _format_data_table(data):
+def create_yadf_filters(table):
+    _format_dict = []
+    for n, i in enumerate(table.columns):
+        if len(i) == 2:
+            i, j = i
+        if i in range_:
+            _format_dict.append(_add_filter(n, 'range'))
+        if i in chosen_:
+            _format_dict.append(_add_filter(n, 'select'))
+        if i in auto_complete_:
+            _format_dict.append(_add_filter(n, 'complete'))
+    return _format_dict
+
+
+def _format_simple_table(data):
     """
     formats precession of data for outputs
-    
+
     Parameters
     ----------
     data : pandas.DataFrame
@@ -228,8 +126,7 @@ def _format_data_table(data):
     pandas.DataFrame, dict
     """
     tmp_table = data.copy()
-    format_dict = {}
-    pvalue_float_type = ['pvalue', 'p_value_group_1_and_group_2',
+    pvalue_float_type = ['pvalue', 'p_value', 'p_value_group_1_and_group_2',
                          'adj_p_value']
 
     float_type = ['z_score', 'combined_score', 'enrichment_score',
@@ -237,23 +134,20 @@ def _format_data_table(data):
 
     int_type = ['n_genes', 'rank']
 
-    for i in tmp_table.columns:
-        if i[0] in float_type:
-            # format_dict[i] = '{:.2f}'.format
-            format_dict[i] = '{:.4g}'.format
+    for i in data.columns:
+        if i in float_type:
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(float)
             tmp_table[i] = tmp_table[i].round(2)
-        elif i[0] in pvalue_float_type:
-            format_dict[i] = '{:.2g}'.format
+            tmp_table[i] = tmp_table[i].apply('{:.4g}'.format)
+        elif i in pvalue_float_type:
             tmp_table[i] = tmp_table[i].fillna(1)
-            # tmp_table[i] = tmp_table[i].round(4)
-        elif i[0] in int_type:
-            format_dict[i] = '{:,d}'.format
+            tmp_table[i] = tmp_table[i].apply('{:.2g}'.format)
+        elif i in int_type:
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(int)
-
-    return tmp_table, format_dict
+            tmp_table[i] = tmp_table[i].apply('{:,d}'.format)
+    return tmp_table
 
 
 def format_ploty(text, save_name):
@@ -271,7 +165,6 @@ def format_ploty(text, save_name):
 
     """
 
-    template_vars = {"plotly_code": text}
-    html_out = plotly_template.render(template_vars)
+    html_out = plotly_template.render({"plotly_code": text})
     with open('{}'.format(save_name), 'w') as f:
         f.write(html_out)
