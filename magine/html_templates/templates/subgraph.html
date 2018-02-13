@@ -15,7 +15,9 @@
 
     <style type="text/css">
 
-        #mynetwork0 {
+        #
+        {{ uuid }}
+        {
             width: 900px;
             height: 800px;
             border: 5px solid white;
@@ -87,7 +89,7 @@
                 <div class="panel-heading">Graph</div>
                 <div class="panel-body">
                     <div id="cy-container">
-                        <div id="mynetwork0"></div>
+                        <div id="{{ uuid }}"></div>
                     </div>
 
                 </div>
@@ -105,7 +107,7 @@
 
     function runVis() {
         var cy = cytoscape({
-            container: document.getElementById('mynetwork0'),
+            container: document.getElementById("{{ uuid }}"),
 
             elements: {
                 nodes:{{nodes}},

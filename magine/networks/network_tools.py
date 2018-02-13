@@ -700,9 +700,8 @@ def _add_nodes(old_network, new_network):
                 if n not in existing_info:
                     new_network.node[i][n] = d
                 else:
-                    current = set(existing_info[n].split('|'))
                     additions = set(d.split('|'))
-                    additions.update(current)
+                    additions.update(set(existing_info[n].split('|')))
                     new_network.node[i][n] = '|'.join(sorted(additions))
 
 
@@ -718,8 +717,7 @@ def _add_edges(current_network, new_network):
                     new_network[i][j][n] = d
                 else:
                     additions = set(d.split('|'))
-                    current = set(existing_info[n].split('|'))
-                    additions.update(current)
+                    additions.update(set(existing_info[n].split('|')))
                     new_network[i][j][n] = '|'.join(sorted(additions))
 
 

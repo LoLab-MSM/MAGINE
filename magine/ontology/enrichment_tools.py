@@ -115,6 +115,9 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
             if top_term_name == term_name:
                 continue
             new_set = set(array[i, 4].split(','))
+            if len(new_set.difference(top)) == 0:
+                to_remove.add(term_name)
+                continue
             score = jaccard_index(top, new_set)
             if verbose:
                 print("\tScore for {} is {:.3f}".format(array[i, 0], score))
@@ -128,4 +131,6 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
 if __name__ == '__main__':
     a = {0, 1, 2}
     b = {0, 1, 3}
+    b = {0, 1}
+    print(b.difference(a))
     jaccard_index(a, b)

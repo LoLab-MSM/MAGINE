@@ -9,11 +9,8 @@ magine_style = [
              "border-color": "rgb(51,51,51)",
              "font-size": 9,
 
-             # "height": 45.0,
-             # "width": 45.0,
-
-            "height": "mapData(weight, 0, 100, 20, 50)",
-            "width": "mapData(weight, 0, 100, 20, 50)",
+             "height": "mapData(weight, 0, 100, 20, 50)",
+             "width": "mapData(weight, 0, 100, 20, 50)",
 
              "content": "data(name)",
 
@@ -45,7 +42,7 @@ magine_style = [
              "font-size": 12, "font-weight": "normal",
              "target-arrow-shape": "triangle",
              "source-arrow-shape": "none",
-             "width": "mapData(weight, 1, 10, 1, 10)",
+             "width": "mapData(weight, 1, 10, 1, 5)",
              "color": "rgb(0,0,0)",
              "source-arrow-color": "rgb(0,0,0)",
              "line-color": "rgb(51,51,51)",

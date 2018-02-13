@@ -1,4 +1,5 @@
 import json
+import uuid
 
 import numpy as np
 from IPython.display import HTML, Javascript
@@ -70,32 +71,45 @@ def display_graph(graph, add_parent=False, display_format='cytoscape'):
         display(SVG(create_figure(g_copy)))
 
 
-def find_neighbors(g, start, up_stream=True, down_stream=True, max_dist=1):
+def find_neighbors(g, start, up_stream=True, down_stream=True, max_dist=1,
+                   render=False):
 
     subgraph_gen = NetworkSubgraphs(g)
     sg = subgraph_gen.neighbors(start, up_stream, down_stream, max_dist)
-    return render_graph(sg)
+    if render:
+        return render_graph(sg)
+    else:
+        return sg
+
+
+def subgraph_from_list(g, list_of_nodes, render=False):
+    subgraph_gen = NetworkSubgraphs(g)
+    sg = subgraph_gen.shortest_paths_between_lists(list_of_nodes)
+    if render:
+        return render_graph(sg)
+    else:
+        return sg
 
 
 def render_graph(graph):
     graph = from_networkx(graph)
     d = _json_graph(graph)
-    # """
+    u_name = "cy" + str(uuid.uuid4())
+    d['uuid'] = u_name
 
-    prefix = 'style_main'
-    fname_temp = '{}.html'.format(prefix)
+    fname_temp = '{}.html'.format(u_name)
 
-    with open('{}.html'.format(prefix), 'w') as f:
+    with open('{}.html'.format(u_name), 'w') as f:
         subgraph_html = env.get_template('subgraph.html')
         f.write(subgraph_html.render(d))
 
     template = env.get_template('main_view.html')
-    outfile = template.render(name=prefix, filename=fname_temp)
+    outfile = template.render(name=u_name, filename=fname_temp)
 
     # with open('test.html', 'w') as f:
     #     f.write(outfile)
 
-    return HTML(outfile)
+    return display(HTML(outfile))
 
 
 def _json_graph(graph):
