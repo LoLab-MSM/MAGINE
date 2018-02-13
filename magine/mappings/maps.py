@@ -259,6 +259,23 @@ def create_compound_dictionary(network):
     return cpd_to_hmdb
 
 
+def drug_nodes(network):
+    drug_dict = {}
+    for i in network.nodes():
+        if i.startswith('dr'):
+            split_name = i.split(' ')
+            if len(split_name) > 1:
+                if split_name[1].startswith('cpd:'):
+                    drug_dict[i] = split_name[1]
+                    network.node[i]['drug'] = split_name[0]
+        elif i == 'nan':
+            network.remove_node(i)
+        elif isinstance(i, float):
+            network.remove_node(i)
+    end_network = nx.relabel_nodes(network, drug_dict)
+    return end_network
+
+
 def convert_all(network, species='hsa'):
     """ 
     Maps gene names to HGNC and kegg compound to HMDB
@@ -295,7 +312,7 @@ def convert_all(network, species='hsa'):
     change_dict = _check_dict_for_int(change_dict)
 
     renamed_network = nx.relabel_nodes(renamed_network, change_dict)
-
+    renamed_network = drug_nodes(renamed_network)
     return renamed_network
 
 

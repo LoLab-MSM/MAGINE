@@ -700,18 +700,30 @@ def _add_nodes(old_network, new_network):
                 if n not in existing_info:
                     new_network.node[i][n] = d
                 else:
-                    current = existing_info[n]
-                    if isinstance(current, list):
-                        if len(current) != 1:
-                            print("Node dict is returning list- NetworkTools")
-                            print(current)
-                        current = current[0]
+                    current = set(existing_info[n].split('|'))
                     additions = set(d.split('|'))
                     additions.update(current)
                     new_network.node[i][n] = '|'.join(sorted(additions))
 
 
-def compose(G, H, name=None):
+def _add_edges(current_network, new_network):
+    edges = set(new_network.edges())
+    for i, j, data in current_network.edges_iter(data=True):
+        if (i, j) not in edges:
+            new_network.add_edge(i, j, **data)
+        else:
+            existing_info = new_network.edge[i][j]
+            for n, d in data.items():
+                if n not in existing_info:
+                    new_network[i][j][n] = d
+                else:
+                    additions = set(d.split('|'))
+                    current = set(existing_info[n].split('|'))
+                    additions.update(current)
+                    new_network[i][j][n] = '|'.join(sorted(additions))
+
+
+def compose(g, g_1):
     """Return a new graph of G composed with H.
 
     Composition is the simple union of the node sets and edge sets.
@@ -719,11 +731,9 @@ def compose(G, H, name=None):
 
     Parameters
     ----------
-    G,H : nx.DiGraph
+    g, : nx.DiGraph
+    g_1 : nx.DiGraph
        A NetworkX graph
-
-    name : str
-       Specify name for new graph
 
     Returns
     -------
@@ -731,42 +741,19 @@ def compose(G, H, name=None):
 
     """
 
-    if name is None:
-        name = "compose( %s, %s )" % (G.name, H.name)
+    # new_g = G.copy()
+    new_g = nx.DiGraph()
 
-    new_g = G.copy()
-    new_g.name = name
-    _add_nodes(H, new_g)
+    _add_nodes(g, new_g)
+    _add_nodes(g_1, new_g)
 
-    edges = set(new_g.edges())
+    _add_edges(g, new_g)
+    _add_edges(g_1, new_g)
 
-    for i, j, data in H.edges_iter(data=True):
-        if (i, j) in edges:
-            existing_info = new_g.edge[i][j]
-            for n, d in data.items():
-                if d is None:
-                    print("No edge information exists! - NetworkTools")
-                    print(n, d)
-                elif n in existing_info:
-                    if isinstance(existing_info[n], float):
-                        print("Edge information exists! - NetworkTools")
-                        print(n, d, i, j)
-
-                    current = set(existing_info[n].split('|'))
-                    additions = set(d.split('|'))
-                    additions.update(current)
-
-                    new = '|'.join(sorted(additions))
-
-                    new_g[i][j][n] = new
-                else:
-                    new_g[i][j][n] = d
-        else:
-            new_g.add_edge(i, j, **data)
     return new_g
 
 
-def compose_all(graphs, name=None):
+def compose_all(graphs):
     """Return the composition of all graphs.
 
     Composition is the simple union of the node sets and edge sets.
@@ -777,9 +764,6 @@ def compose_all(graphs, name=None):
     graphs : list
        List of NetworkX graphs
 
-    name : str
-       Specify name for new graph
-
     Returns
     -------
     C : A graph with the same type as the first graph in list
@@ -788,8 +772,8 @@ def compose_all(graphs, name=None):
     graphs = iter(graphs)
     g = next(graphs)
     for h in graphs:
-        g = compose(g, h, name=name)
-    return h
+        g = compose(g, h)
+    return g
 
 
 _maps = {
@@ -859,7 +843,18 @@ if __name__ == '__main__':
     g.add_edge('B', 'C')
     g.add_edge('B', 'E')
     g.add_edge('C', 'D')
-    test_g = remove_unmeasured_nodes(g, ['A', 'D', 'E'])
-    export_to_dot(test_g, 'merged_node')
+    # test_g = remove_unmeasured_nodes(g, ['A', 'D', 'E'])
+    # export_to_dot(test_g, 'merged_node')
     # new_g = remove_unmeasured_nodes(g, ['A', 'C', 'D'])
     # export_to_dot(new_g, 'merged_node2')
+    g = nx.DiGraph()
+    g.add_node('A', color='red', intType='ugly')
+    g.add_edge('A', 'B', iType='no')
+    gg = nx.DiGraph()
+    gg.add_node('A', color='green', intType='ugly')
+    gg.add_edge('A', 'B', iType='yes')
+    fg = compose(g, gg)
+    for i in fg.nodes(data=True):
+        print(i)
+    for i in fg.edges(data=True):
+        print(i)

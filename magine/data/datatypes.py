@@ -263,9 +263,9 @@ class ExperimentalData(object):
             self.metabolites['compound_id'].astype(str)
 
         self.metabolite_sign = self.metabolites[self.metabolites[flag]]
-        self.list_metabolites = [self.metabolites['compound_id'].unique()]
+        self.list_metabolites = list(self.metabolites['compound_id'].unique())
         self.list_sig_metabolites = \
-            [self.metabolite_sign['compound_id'].astype(str).unique()]
+            list(self.metabolite_sign['compound_id'].astype(str).unique())
 
         self.metabolites_time_points = \
             np.sort(self.metabolites[sample_id].unique())

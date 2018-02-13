@@ -50,8 +50,8 @@ def download_all_of_kegg(species='hsa'):
         print('{} has {} nodes and {} edges'.format(pathway_name,
                                                     len(graph.nodes()),
                                                     len(graph.edges())))
-        out_name = os.path.join(_kegg_raw_out_path, '{}.p'.format(pathway))
-        nx.write_gpickle(graph, out_name)
+        nx.write_gpickle(graph, os.path.join(_kegg_raw_out_path,
+                                             '{}.p.gz'.format(pathway)))
 
     # create a dictionary mapping species to pathways
     node_to_path = dict()
@@ -171,7 +171,7 @@ def create_all_of_kegg(species='hsa'):
 
         for each in pathway_list:
             tmp = nx.read_gpickle(
-                    os.path.join(_kegg_raw_out_path, "{}.p".format(each))
+                os.path.join(_kegg_raw_out_path, "{}.p.gz".format(each))
             )
             all_of_kegg = nx.compose(all_of_kegg, tmp)
 
