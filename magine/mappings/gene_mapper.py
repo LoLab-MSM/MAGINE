@@ -1,6 +1,6 @@
 try:
     import cPickle as pickle
-except:  # python3 doesnt have cPickle
+except ImportError:  # python3 doesnt have cPickle
     import pickle
 import os
 
@@ -73,8 +73,32 @@ class GeneMapper(object):
     def __init__(self, species='hsa'):
         self.species = species
         self._reload_fname = os.path.join(id_mapping_dir,
-                                          'gene_mapping_instance.p')
+                                          'gene_mapping_instance.p.gz')
 
+        # All are empty until set in load or reload
+        self.hgnc = None
+        self.ncbi = None
+        self.uniprot = None
+        self.gene_name_to_uniprot = {}
+        self.gene_name_to_alias_name = {}
+        self.gene_name_to_ensembl = {}
+        self.gene_name_to_kegg = {}
+        self.uniprot_to_gene_name = {}
+        self.uniprot_to_kegg = {}
+        self.protein_name_to_gene_name = {}
+        self.protein_name_to_uniprot = {}
+        self.kegg_to_gene_name = {}
+        self.kegg_to_uniprot = {}
+        self.ncbi_to_symbol = {}
+
+        try:
+            self.reload()
+            print('Loading class data')
+        except:
+            print('Initializing Gene mapping')
+            self.load()
+
+    def load(self):
         hgnc_name = os.path.join(id_mapping_dir, 'hgnc.gz')
         if not os.path.exists(hgnc_name):
             self.hgnc = download_hgnc()
@@ -98,29 +122,6 @@ class GeneMapper(object):
             assert os.path.exists(uniprot_path)
         else:
             self.uniprot = pd.read_csv(uniprot_path, low_memory=False)
-
-        # All are empty until set in load or reload
-        self.gene_name_to_uniprot = {}
-        self.gene_name_to_alias_name = {}
-        self.gene_name_to_ensembl = {}
-        self.gene_name_to_kegg = {}
-        self.uniprot_to_gene_name = {}
-        self.uniprot_to_kegg = {}
-        self.protein_name_to_gene_name = {}
-        self.protein_name_to_uniprot = {}
-        self.kegg_to_gene_name = {}
-        self.kegg_to_uniprot = {}
-        self.ncbi_to_symbol = {}
-
-        try:
-            self.reload()
-            print('Loading class data')
-        except:
-            print('Initializing Gene mapping')
-            self.load()
-
-    def load(self):
-
         # HGNC
         self.gene_name_to_uniprot = self.to_dict(self.hgnc, 'symbol',
                                                  'uniprot_ids')
