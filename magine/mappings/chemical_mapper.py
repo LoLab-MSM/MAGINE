@@ -1,9 +1,10 @@
-import os
 import itertools
-import pandas as pd
+import os
 from ast import literal_eval
-from magine.data.storage import id_mapping_dir
 
+import pandas as pd
+
+from magine.data.storage import id_mapping_dir
 
 try:
     import cPickle as pickle
@@ -46,6 +47,7 @@ class ChemicalMapper(object):
         self.synonyms_to_hmdb = dict()
         self.drugbank_to_hmdb = dict()
         self.hmdb_accession_to_protein = dict()
+        self.hmdb_main_accession_to_protein = dict()
         _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
 
         if not os.path.exists(_filename):
@@ -87,8 +89,12 @@ class ChemicalMapper(object):
 
         self.kegg_to_hmdb_accession = self._to_dict("kegg_id",
                                                     "main_accession")
-        self.hmdb_accession_to_protein = self._from_list_dict("main_accession",
+        self.hmdb_accession_to_protein = self._from_list_dict("accession",
                                                        "protein_associations")
+
+        self.hmdb_main_accession_to_protein = \
+            self._from_list_dict("main_accession", "protein_associations")
+
         self.drugbank_to_hmdb = self._to_dict('drugbank_id', 'main_accession')
         self.synonyms_to_hmdb = None
         self.save()
