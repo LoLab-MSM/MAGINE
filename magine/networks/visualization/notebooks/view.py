@@ -1,0 +1,79 @@
+import json
+import uuid
+
+import networkx as nx
+from IPython.core.display import display, HTML, Javascript
+
+from magine.html_templates.html_tools import env
+from magine.networks.utils import nx_to_json
+from magine.networks.visualization.notebooks.styles import magine_style
+
+Javascript("https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
+Javascript(
+    "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js")
+Javascript(
+    "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js")
+Javascript(
+    "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js")
+
+Javascript("https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js")
+Javascript(
+    "https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js")
+
+
+def display_graph(graph, add_parent=False, layout_algorithm='cose-bilkent',
+                  background='#FFFFFF', height=700, width=100):
+    g_copy = graph.copy()
+    if add_parent:
+        g_copy = _add_parent_term(g_copy)
+
+    d = nx_to_json(g_copy)
+    d['background'] = background
+    d['uuid'] = "cy" + str(uuid.uuid4())
+    d['widget_width'] = str(width)
+    d['widget_height'] = str(height)
+    d['layout'] = layout_algorithm
+    d['style_json'] = json.dumps(magine_style)
+
+    template = env.get_template('subgraph_2.html')
+    widget = template.render(d)
+    display(HTML(widget))
+
+
+def render_graph(graph, add_parent=False):
+    g_copy = graph.copy()
+    if add_parent:
+        g_copy = _add_parent_term(g_copy)
+
+    d = nx_to_json(g_copy)
+    u_name = "cy{}".format(uuid.uuid4())
+    d['uuid'] = u_name
+    fname_temp = '{}.html'.format(u_name)
+
+    subgraph_html = env.get_template('subgraph.html')
+    template = env.get_template('main_view.html')
+
+    with open(fname_temp, 'w') as f:
+        f.write(subgraph_html.render(d))
+
+    display(HTML(template.render(name=u_name, filename=fname_temp)))
+
+
+def _add_parent_term(graph):
+    g_copy = graph.copy()
+    new_nodes = set()
+    for i, data in graph.nodes(data=True):
+        if 'termName' in data:
+            term = data['termName']
+            g_copy.node[i]['parent'] = term
+            new_nodes.add(term)
+    for each in new_nodes:
+        g_copy.add_node(each)
+    return g_copy
+
+
+if __name__ == '__main__':
+    g = nx.DiGraph()
+    g.add_edge('a', 'b')
+
+    render_graph(g)

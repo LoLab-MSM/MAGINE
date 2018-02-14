@@ -3,11 +3,9 @@
 <head>
     <meta charset=utf-8/>
     <style type="text/css">
-        body {
-            font: 14px helvetica neue, helvetica, arial, sans-serif;
-        }
+        body {font: 14px helvetica neue, helvetica, arial, sans-serif;}
 
-        #{{uuid}} {
+        #{{uuid}}{
             height: {{widget_height}}px;
             width: {{widget_width}}%;
             position: absolute;
@@ -49,11 +47,7 @@
                     render();
                 }
             };
-
             before_render();
-
-
-
         })();
     </script>
 </head>
@@ -63,7 +57,7 @@
 <!-- When only #uuid div is placed on this page,
 the height of output-box on ipynb will be 0px.
 One line below will prevent that. -->
-<div id="dummy" style="width:{{ widget_width }}px;height:{{ widget_height }}px">
+<div id="dummy" style="width:{{ widget_width }}px;height:{{ widget_height }}px"></div>
 </body>
 
 </html>

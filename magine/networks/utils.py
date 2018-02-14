@@ -1,78 +1,13 @@
+import json
+
 import igraph as ig
 import networkx as nx
-
-ID = 'id'
-NAME = 'name'
-DATA = 'data'
-ELEMENTS = 'elements'
-NODES = 'nodes'
-EDGES = 'edges'
-SOURCE = 'source'
-TARGET = 'target'
-DEF_SCALE = 100
 
 
 def networkx_to_igraph(network):
     nx.write_gml(network, 'test.gml')
     igraph_network = ig.read('test.gml')
     return igraph_network
-
-
-def __map_table_data(columns, graph_obj):
-    # data = {}
-    # data[col] = graph_obj[col]
-    # data =
-    # for col in columns:
-    #     if col == 0:
-    #         break
-    return {col: graph_obj[col] for col in columns if col != 0}
-
-
-def __create_node(node, node_id):
-    new_node = {}
-    node_columns = node.keys()
-    data = __map_table_data(node_columns, node)
-    # Override special keys
-    data[ID] = str(node_id)
-    data[NAME] = str(node_id)
-
-    if 'position' in node.keys():
-        new_node['position'] = node['position']
-
-    new_node[DATA] = data
-    return new_node
-
-
-def __build_multi_edge(edge_tuple, g):
-    source = edge_tuple[0]
-    target = edge_tuple[1]
-    key = edge_tuple[2]
-    data = edge_tuple[3]
-
-    data['source'] = str(source)
-    data['target'] = str(target)
-    data['interaction'] = str(key)
-    return {DATA: data}
-
-
-def __build_edge(edge_tuple, g):
-    source = edge_tuple[0]
-    target = edge_tuple[1]
-    data = edge_tuple[2]
-
-    data['source'] = str(source)
-    data['target'] = str(target)
-    return {DATA: data}
-
-
-def __build_empty_graph():
-    return {
-        DATA: {},
-        ELEMENTS: {
-            NODES: [],
-            EDGES: []
-        }
-    }
 
 
 def from_networkx(g):
@@ -86,16 +21,36 @@ def from_networkx(g):
     -------
     dict
     """
-    cygraph = __build_empty_graph()
+    graph = dict(data={}, elements=dict(nodes=[], edges=[]))
 
-    # Map network table data
-    cygraph[DATA] = __map_table_data(g.graph.keys(), g.graph)
-
+    graph['data'] = {col: g.graph[col] for col in g.graph.keys() if col != 0}
     for node_id in g.nodes_iter():
-        new_node = __create_node(g.node[node_id], node_id)
-        cygraph['elements']['nodes'].append(new_node)
+        node = g.node[node_id]
+        new_node = {}
+        node_columns = node.keys()
+        data = {col: node[col] for col in node_columns if col != 0}
 
-    for edge in g.edges_iter(data=True):
-        cygraph['elements']['edges'].append(__build_edge(edge, g))
+        if 'position' in node.keys():
+            new_node['position'] = node['position']
+        data['id'] = str(node_id)
+        data['name'] = str(node_id)
+        new_node['data'] = data
+        graph['elements']['nodes'].append(new_node)
 
-    return cygraph
+    for source, target, data in g.edges_iter(data=True):
+        data['source'] = str(source)
+        data['target'] = str(target)
+        graph['elements']['edges'].append(data)
+
+    return graph
+
+
+def nx_to_json(network):
+    graph = from_networkx(network)
+    nodes = graph['elements']['nodes']
+    edges = graph['elements']['edges']
+    data = {
+        'nodes': json.dumps(nodes),
+        'edges': json.dumps(edges),
+    }
+    return data

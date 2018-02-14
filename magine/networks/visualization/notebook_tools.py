@@ -1,28 +1,10 @@
-import json
-import uuid
-
 import numpy as np
-from IPython.display import HTML, Javascript
-from IPython.display import SVG, display
 
 import magine.ontology.enrichment_tools as et
-from magine.html_templates.html_tools import env
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.networks.ontology_network import OntologyNetworkGenerator
-from magine.networks.utils import from_networkx
-from magine.networks.visualization.cytoscapejs_tools import viewer as cyjs
-from magine.networks.visualization.igraph_tools import create_figure
-
-Javascript("https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
-Javascript(
-    "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js")
-Javascript(
-    "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js")
-Javascript(
-    "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js")
-
-Javascript("https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js")
-Javascript("https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js")
+from magine.networks.visualization.notebooks.view import display_graph, \
+    render_graph
 
 
 def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
@@ -53,73 +35,36 @@ def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
     return term_g, molecular_g
 
 
-def display_graph(graph, add_parent=False, display_format='cytoscape'):
-    g_copy = graph.copy()
-    if display_format == 'cytoscape':
-        if add_parent:
-            new_nodes = set()
-            for i, data in graph.nodes(data=True):
-                if 'termName' in data:
-                    term = data['termName']
-                    g_copy.node[i]['parent'] = term
-                    new_nodes.add(term)
-            for each in new_nodes:
-                g_copy.add_node(each, )
-        g_cyjs = from_networkx(g_copy)
-        cyjs.render(g_cyjs, style='Directed', layout_algorithm='cose-bilkent')
-    elif display_format == 'igraph':
-        display(SVG(create_figure(g_copy)))
-
-
 def find_neighbors(g, start, up_stream=True, down_stream=True, max_dist=1,
                    render=False):
-
     subgraph_gen = NetworkSubgraphs(g)
     sg = subgraph_gen.neighbors(start, up_stream, down_stream, max_dist)
     if render:
-        return render_graph(sg)
+        render_graph(sg)
     else:
         return sg
+
+
+def find_neighbors_of_list(g, list_start, up_stream=True, down_stream=True,
+                           max_dist=1, render=False):
+    subgraph_gen = NetworkSubgraphs(g)
+
+    new_g = subgraph_gen.neighbors_of_list(list_start, up_stream, down_stream,
+                                           max_dist)
+
+    if render:
+        render_graph(new_g)
+    else:
+        return new_g
 
 
 def subgraph_from_list(g, list_of_nodes, render=False):
     subgraph_gen = NetworkSubgraphs(g)
-    sg = subgraph_gen.shortest_paths_between_lists(list_of_nodes)
+    new_g = subgraph_gen.shortest_paths_between_lists(list_of_nodes)
     if render:
-        return render_graph(sg)
+        render_graph(new_g)
     else:
-        return sg
-
-
-def render_graph(graph):
-    graph = from_networkx(graph)
-    d = _json_graph(graph)
-    u_name = "cy" + str(uuid.uuid4())
-    d['uuid'] = u_name
-
-    fname_temp = '{}.html'.format(u_name)
-
-    with open('{}.html'.format(u_name), 'w') as f:
-        subgraph_html = env.get_template('subgraph.html')
-        f.write(subgraph_html.render(d))
-
-    template = env.get_template('main_view.html')
-    outfile = template.render(name=u_name, filename=fname_temp)
-
-    # with open('test.html', 'w') as f:
-    #     f.write(outfile)
-
-    return display(HTML(outfile))
-
-
-def _json_graph(graph):
-    nodes = graph['elements']['nodes']
-    edges = graph['elements']['edges']
-    data = {
-        'nodes': json.dumps(nodes),
-        'edges': json.dumps(edges),
-    }
-    return data
+        return new_g
 
 
 if __name__ == '__main__':

@@ -106,6 +106,7 @@
     function runVis() {
         var cy = cytoscape({
             container: document.getElementById("{{ uuid }}"),
+            wheelSensitivity:.5,
 
             elements: {
                 nodes:{{nodes}},
