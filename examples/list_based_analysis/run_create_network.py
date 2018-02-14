@@ -10,9 +10,7 @@ list_of_proteins = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR',
 
 network = build_network(list_of_proteins,
                         save_name='example_earm_network',
-                        use_reactome=True,
-                        overwrite=False  # re-download KEGG database
-                        )
+                        use_reactome=True)
 
 print("Network has {} nodes".format(network.number_of_nodes()))
 print("Network has {} edgess".format(network.number_of_edges()))

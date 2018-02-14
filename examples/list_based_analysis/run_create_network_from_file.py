@@ -12,7 +12,6 @@ with open(list_name, 'r') as f:
 network = build_network(list_of_proteins,
                         save_name=save_name,
                         use_reactome=True,
-                        overwrite=False  # re-download KEGG database
                         )
 
 print("Network has {} nodes".format(network.number_of_nodes()))
