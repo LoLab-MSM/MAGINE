@@ -3,7 +3,7 @@ import os
 
 import networkx as nx
 
-from magine.networks.network_tools import export_to_dot
+from magine.networks.utils import export_to_dot
 from magine.ontology.ontology_analysis import MagineGO
 
 

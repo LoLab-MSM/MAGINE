@@ -33,14 +33,13 @@ def jaccard_index(first_set, second_set):
 def filter_db(local_df, options, column):
     copy_df = local_df.copy()
     valid_opts = local_df[column].unique()
-    if options is not None:
-        if isinstance(options, str):
-            assert options in valid_opts
-            copy_df = local_df[local_df[column] == options]
-        elif isinstance(options, list):
-            for i in options:
-                assert i in valid_opts
-            copy_df = local_df[local_df[column].isin(options)]
+    if isinstance(options, str):
+        assert options in valid_opts
+        copy_df = local_df[local_df[column] == options]
+    elif isinstance(options, list):
+        for i in options:
+            assert i in valid_opts
+        copy_df = local_df[local_df[column].isin(options)]
     return copy_df
 
 
@@ -70,7 +69,7 @@ def filter_based_on_words(df, words):
     return df[df['term_name'].str.lower().str.contains('|'.join(words))]
 
 
-def find_similar_terms(data, threshold=0.75, verbose=False):
+def filter_similar_terms(data, threshold=0.75, verbose=False):
     data.sort_values('combined_score', inplace=True, ascending=False)
     data_copy = data.copy()
 

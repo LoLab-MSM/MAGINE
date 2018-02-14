@@ -5,6 +5,7 @@ from functools import partial
 import networkx as nx
 
 import magine.networks.network_tools as nt
+import magine.networks.utils
 
 
 class NetworkSubgraphs(object):
@@ -136,7 +137,6 @@ class NetworkSubgraphs(object):
                                 network=self.network,
                                 single_path=single_path),
                         itertools.combinations(tmp_species_list, 2))
-
         graph = self._list_paths_to_graph(paths)
 
         if save_name is not None:
@@ -186,6 +186,15 @@ class NetworkSubgraphs(object):
                               _get_downstream(n)}
 
         return sg
+
+    def neighbors_of_list(self, list_start, up_stream=True, down_stream=True,
+                          max_dist=1):
+        new_g = nx.DiGraph()
+        for start in list_start:
+            sg = self.neighbors(start, up_stream, down_stream, max_dist)
+            new_g = nx.compose(new_g, sg)
+
+        return new_g
 
     def upstream_network_of_specie(self, species_1, include_list=None,
                                    save_name=None, compress=False,
@@ -406,8 +415,8 @@ class NetworkSubgraphs(object):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
             graph = nt._format_to_directions(graph)
-            nt.export_to_dot(graph, save_name=save_name,
-                             image_format=img_format)
+            magine.networks.utils.export_to_dot(graph, save_name=save_name,
+                                                image_format=img_format)
 
 
 def _find_nx_path(node, network, single_path):

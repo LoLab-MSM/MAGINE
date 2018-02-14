@@ -251,42 +251,6 @@ def create_legend(graph):
     graph.add_subgraph(subgraph, name='cluster_legend', rank="LR")
 
 
-def export_to_dot(graph, save_name, image_format='png', engine='dot',
-                  dpi=200, concentrate=False):
-    """
-    Converts networkx graph to graphviz dot
-
-    Parameters
-    ----------
-    graph : networkx.DiGraph
-    save_name : str
-        name of file to save
-    image_format : str
-        format of output( pdf, png, svg)
-    engine : str
-        graphviz engine
-            dot, twopi,
-    dpi: int
-        resolution of figure
-    concentrate : bool
-        Concentrate bi-edges into one edge
-
-    Returns
-    -------
-
-    """
-    try:
-        py_dot = nx.nx_agraph.to_agraph(graph)
-        py_dot.write('{}.dot'.format(save_name))
-        arg = '-Gdpi={} -Gconcentrate={}'.format(
-            dpi, 'true' if concentrate else 'false'
-        )
-        py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
-                    args=arg)
-    except ImportError:
-        print("No pygraphivz installed")
-
-
 def add_attribute_to_network(graph, list_to_add_attribute, attribute,
                              true_term, false_term='false'):
     """
