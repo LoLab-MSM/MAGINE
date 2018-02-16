@@ -32,13 +32,16 @@ def jaccard_index(first_set, second_set):
 
 def filter_db(local_df, options, column):
     copy_df = local_df.copy()
-    valid_opts = local_df[column].unique()
+    valid_opts = list(local_df[column].unique())
     if isinstance(options, str):
-        assert options in valid_opts
+        if options not in valid_opts:
+            print('{} not in {}'.format(options, valid_opts))
+
         copy_df = local_df[local_df[column] == options]
     elif isinstance(options, list):
         for i in options:
-            assert i in valid_opts
+            if i not in valid_opts:
+                print('{} not in {}'.format(i, valid_opts))
         copy_df = local_df[local_df[column].isin(options)]
     return copy_df
 
@@ -100,12 +103,13 @@ def remove_redundant(data, threshold=0.75, verbose=False):
 
 
 def _terms_to_remove(data, threshold=0.75, verbose=False):
-    array = data.as_matrix()
+
+    array = data[['term_name', 'genes']].as_matrix()
 
     to_remove = set()
     for j in range(len(data) - 2):
         top_term_name = array[j, 0]
-        top = set(array[j, 4].split(','))
+        top = set(array[j, 1].split(','))
         if verbose:
             print("Finding matches for {}".format(array[j, 0]))
 
@@ -113,7 +117,7 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
             term_name = array[i, 0]
             if top_term_name == term_name:
                 continue
-            new_set = set(array[i, 4].split(','))
+            new_set = set(array[i, 1].split(','))
             if len(new_set.difference(top)) == 0:
                 to_remove.add(term_name)
                 continue
