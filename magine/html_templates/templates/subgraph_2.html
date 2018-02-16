@@ -7,9 +7,10 @@
 
         #{{uuid}}{
             height: {{widget_height}}px;
-            width: {{widget_width}}%;
+            width: 90%;
+            border: 5px solid black;
+            box-sizing: border-box;
             position: absolute;
-            left: 4px;
             top: 5px;
             background: {{background}};
         }
@@ -29,7 +30,7 @@
                     },
 
                     boxSelectionEnabled: true,
-
+                    wheelSensitivity:.25,
                     ready: function () {
                         window.cy = this;
                         cy.fit();

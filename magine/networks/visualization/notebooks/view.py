@@ -1,12 +1,12 @@
 import json
+import time
 import uuid
 
 import networkx as nx
 from IPython.core.display import display, HTML, Javascript
 
-from magine.html_templates.html_tools import env
+from magine.html_templates.html_tools import env, styles
 from magine.networks.utils import nx_to_json
-from magine.networks.visualization.notebooks.styles import magine_style
 
 Javascript("https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
 Javascript(
@@ -20,6 +20,7 @@ Javascript("https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js")
 Javascript(
     "https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js")
 
+time.sleep(2)
 
 def display_graph(graph, add_parent=False, layout_algorithm='cose-bilkent',
                   background='#FFFFFF', height=700, width=100):
@@ -33,7 +34,7 @@ def display_graph(graph, add_parent=False, layout_algorithm='cose-bilkent',
     d['widget_width'] = str(width)
     d['widget_height'] = str(height)
     d['layout'] = layout_algorithm
-    d['style_json'] = json.dumps(magine_style)
+    d['style_json'] = json.dumps(styles['default'])
 
     template = env.get_template('subgraph_2.html')
     widget = template.render(d)
@@ -48,6 +49,7 @@ def render_graph(graph, add_parent=False):
     d = nx_to_json(g_copy)
     u_name = "cy{}".format(uuid.uuid4())
     d['uuid'] = u_name
+    d['style_json'] = json.dumps(styles['default'])
     fname_temp = '{}.html'.format(u_name)
 
     subgraph_html = env.get_template('subgraph.html')
