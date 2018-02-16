@@ -4,6 +4,7 @@ import os
 
 import networkx as nx
 import pathos.multiprocessing as mp
+from IPython.display import Image, display
 
 try:
     import pygraphviz as pyg
@@ -57,6 +58,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         if len(labels) != len(list_of_lists):
             print('Length of labels must be equal to len of data')
             return
+
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
     tmp_graph = _format_to_directions(tmp_graph)
@@ -72,8 +74,10 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.2',
                                      fontsize=13)
-        graph2.draw('%s_%04i.png' % (save_name, n), prog='dot')
-        string += '%s_%04i.png ' % (save_name, n)
+        s_name = '%s_%04i.png' % (save_name, n)
+        graph2.draw(s_name, prog='dot')
+        display(Image(s_name))
+        string += s_name
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
 
@@ -126,6 +130,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
                   "paint_network_overtime_up_down ")
             return
         tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+
     for n, (up, down) in enumerate(zip(list_up, list_down)):
         graph2 = paint_network(tmp_graph, up, color_up)
         graph2 = paint_network(graph2, down, color_down)
@@ -137,8 +142,11 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.2',
                                      fontsize=13)
-        graph2.draw('%s_%04i.png' % (save_name, n), prog='dot')
-        string += '%s_%04i.png ' % (save_name, n)
+        s_name = '%s_%04i.png' % (save_name, n)
+        graph2.draw(s_name, prog='dot')
+        string += s_name
+        display(Image(s_name))
+
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
 
