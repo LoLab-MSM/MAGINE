@@ -241,7 +241,7 @@ class ExperimentalData(object):
             self.rna_down[i] = self.return_rna(sample_id_name=i,
                                                significant=True,
                                                fold_change_value=-1.)
-            self.rna_sig_changed[i] = [set(self.rna_up[i] + self.rna_down[i])]
+            self.rna_sig_changed[i] = list(set(self.rna_up[i] + self.rna_down[i]))
             self.rna_over_time.append(self.rna_sig_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
@@ -257,8 +257,11 @@ class ExperimentalData(object):
         self.metabolites = self.metabolites.dropna(subset=['compound'])
         self.exp_methods_metabolite = self.metabolites[exp_method].unique()
 
-        if 'compound_id' not in self.metabolites.dtypes:
+        if 'compound_id' not in self.metabolites.columns.values:
             self.metabolites['compound_id'] = self.metabolites['compound']
+            self.data['compound_id'] = self.data['compound']
+            self.data['compound_id'] = self.data['compound_id'].astype(str)
+
         self.metabolites.loc[:, 'compound_id'] = \
             self.metabolites['compound_id'].astype(str)
 
