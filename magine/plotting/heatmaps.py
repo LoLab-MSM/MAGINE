@@ -7,7 +7,7 @@ import seaborn as sns
 def heatmap_from_array(data, convert_to_log=False, yticklabels='auto',
                        cluster_row=False, cluster_col=False,
                        columns='sample_id', index='term_name',
-                       values='combined_score', div_colors=False,
+                       values='combined_score', div_colors=False, num_colors=7,
                        fig_size=(6, 4)):
     """
 
@@ -39,14 +39,13 @@ def heatmap_from_array(data, convert_to_log=False, yticklabels='auto',
     array = _pivot_table(data, convert_to_log, columns=columns, index=index,
                          values=values)
     if div_colors:
-        pal = sns.color_palette("coolwarm", 7)
+        pal = sns.color_palette("coolwarm", num_colors)
         center = 0
     else:
         pal = sns.light_palette("purple", as_cmap=True)
         center = None
 
     if cluster_col or cluster_row:
-
         fig = sns.clustermap(array, yticklabels=yticklabels, figsize=fig_size,
                              col_cluster=cluster_col, row_cluster=cluster_row,
                              center=center, cmap=pal)
@@ -86,23 +85,14 @@ def _cut_word(row):
         return term_name
 
 
-def _convert_to_log(data):
-    d_copy = data.copy()
-    above = d_copy > 0.
-    below = d_copy < 0.
-    d_copy[above] = np.log2(d_copy[above])
-    d_copy[below] = -1 * np.log2(-1 * d_copy[below])
-    return d_copy
-
-
-def _log2_normalize_df(df, fold_change):
+def _log2_normalize_df(df, column):
     """
 
     Parameters
     ----------
     df : pandas.DataFrame
         dataframe of fold changes
-    fold_change : str
+    column : str
         column that contains fold change values
 
     Returns
@@ -110,10 +100,8 @@ def _log2_normalize_df(df, fold_change):
 
     """
     tmp_df = df.copy()
-    greater_than = tmp_df[fold_change] > 0
-    less_than = tmp_df[fold_change] < 0
-    tmp_df.loc[greater_than, fold_change] = \
-        np.log2(tmp_df[greater_than][fold_change])
-    tmp_df.loc[less_than, fold_change] = \
-        -np.log2(-tmp_df[less_than][fold_change])
+    greater_than = tmp_df[column] > 0
+    less_than = tmp_df[column] < 0
+    tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
+    tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
     return tmp_df

@@ -1,7 +1,8 @@
-from magine.plotting.wordcloud_mod import WordCloud
 import matplotlib.pyplot as plt
 import pandas as pd
+
 import magine.ontology.enrichment_tools as et
+from magine.plotting.wordcloud_mod import WordCloud
 
 process_dbs = [
     'GO_Biological_Process_2017',
@@ -13,8 +14,17 @@ process_dbs = [
     'WikiPathways_2016',
 ]
 
-pd.set_option('display.width', 10000)
-pd.set_option('max_colwidth', 100)
+basic_words = {'signaling', 'signalling', 'receptor', 'events', 'protein',
+               'proteins', 'regulation', 'interactions', 'via', 'signal',
+               'mediated', 'pathway', 'activity', 'complex', 'positive',
+               'mrna', 'cellular', 'viral', 'host', 'processing', 'activation',
+               'rrna', 'network', 'rna', 'cancer', 'disease', 'cascade',
+               'transcript', 'influenza', 'beta', 'pathways', 'gene', 'hiv',
+               'downstream', 'activated', 'target',
+               }
+
+
+# basic_words = set()
 
 
 def word_cloud_from_array(enrichment_array, category, sample_ids,
@@ -48,20 +58,30 @@ def word_cloud_from_array(enrichment_array, category, sample_ids,
     return all_samples, df
 
 
-basic_words = {'signaling', 'signalling', 'receptor', 'events', 'protein',
-               'proteins', 'regulation', 'interactions', 'via', 'signal',
-               'mediated', 'pathway', 'activity', 'complex', 'positive',
-               'mrna', 'cellular', 'viral', 'host', 'processing', 'activation',
-               'rrna', 'network', 'rna', 'cancer', 'disease', 'cascade',
-               'transcript', 'influenza', 'beta', 'pathways', 'gene', 'hiv',
-               'downstream', 'activated', 'target',
-               }
+def create_wordcloud(df, save_name=None):
+    data = df.apply(_cleanup_term_name, axis=1)
+    text = ' '.join(data)
+    # Generate a word cloud image
+    wc = WordCloud(margin=0, background_color=None, mode='RGBA', min_count=1,
+                   width=800, height=600, collocations=True,
+                   stopwords=basic_words)
+    wordcloud = wc.generate(text)
+    word_dict = wc.process_text(text)
+
+    if save_name is not None:
+        plt.figure()
+        plt.imshow(wordcloud, interpolation='bilinear')
+        plt.xticks([])
+        plt.yticks([])
+        plt.axis("off")
+        plt.savefig('{}.png'.format(save_name), bbox_inches='tight', dpi=150)
+        plt.title(save_name)
+        plt.show()
+        plt.close()
+    return wordcloud, word_dict
 
 
-# basic_words = set()
-
-
-def cleanup_term_name(row):
+def _cleanup_term_name(row):
     if not isinstance(row['term_name'], str):
         print(row)
     x = row['term_name'].split('_')[0].lower()
@@ -73,29 +93,3 @@ def cleanup_term_name(row):
     if x[-1] == ' ':
         x = x[:-1]
     return x
-
-
-def create_wordcloud(df, save_name=None):
-    data = df.apply(cleanup_term_name, axis=1)
-    text = ' '.join(data)
-    # Generate a word cloud image
-    wc = WordCloud(margin=0, background_color=None, mode='RGBA', min_count=1,
-                   width=800, height=600, collocations=True,
-                   stopwords=basic_words)
-    wordcloud = wc.generate(text)
-    word_dict = wc.process_text(text)
-    # for i,j in sorted(word_dict.items(), key=lambda p:p[1], reverse=True):
-    #     print("{} : {}".format(i, j))
-    # Display the generated image:
-    # the matplotlib way:
-    if save_name is not None:
-        plt.figure()
-        plt.imshow(wordcloud, interpolation='bilinear')
-        plt.xticks([])
-        plt.yticks([])
-        plt.axis("off")
-        plt.savefig('{}.png'.format(save_name), bbox_inches='tight', dpi=150)
-        plt.title(save_name)
-    plt.show()
-    plt.close()
-    return word_dict
