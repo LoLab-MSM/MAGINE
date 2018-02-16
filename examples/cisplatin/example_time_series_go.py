@@ -1,19 +1,13 @@
-import pandas as pd
 import networkx as nx
-from magine.data.datatypes import ExperimentalData
-from magine.networks.visualization.cytoscape_js_view import create_subnetwork, display_graph
+import pandas as pd
 
+from magine.networks.visualization.notebook_tools import create_subnetwork
 
 if __name__ == '__main__':
-    data = pd.read_csv('Data/norris_et_al_2017_cisplatin_data.csv.gz',
-                       low_memory=False)
-    exp_data = ExperimentalData(data)
 
-    df = pd.read_csv('Data/all_cisplatin_out.csv.gz')
-    df.sort_values(by='pvalue', ascending=True, inplace=True)
+    df = pd.read_csv('Data/cisplatin_enrichment.csv.gz')
+    network = nx.read_gpickle('Data/cisplatin_based_network.p')
 
-    # TODO update with network painted by timepoint, modality
-    network = nx.read_gpickle('Data/cisplatin_network.p')
     shorten_names = {
         'Cell Cycle_Homo sapiens_R-HSA-1640170': 'Cell Cycle',
         'DNA Repair_Homo sapiens_R-HSA-73894': 'DNA Repair',
@@ -24,7 +18,7 @@ if __name__ == '__main__':
     renamed = df.copy()
     renamed['term_name'] = renamed['term_name'].replace(shorten_names)
     term_net, mol_net = create_subnetwork(shorten_names.values(), renamed,
-                                          network, '1hr', cytoscape_js=False)
+                                          network, 'subgraphs_from_one_hour')
 
 
 
