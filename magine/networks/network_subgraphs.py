@@ -85,8 +85,9 @@ class NetworkSubgraphs(object):
         return graph
 
     def shortest_paths_between_lists(self, species_list, save_name=None,
-                                     single_path=False, draw=False,
-                                     image_format='png', pool=None):
+                                     single_path=False, draw=False, pool=None,
+                                     image_format='png', max_length=None,
+                                     include_only=None):
         """
 
         Parameters
@@ -104,6 +105,10 @@ class NetworkSubgraphs(object):
             dot acceptable output formats, (pdf, png, etc)
         pool : multiprocessing.Pool
             If it it provided, it uses its map function to run this function.
+        max_length : int
+            Max length for path between any 2 species
+        include_only : list_like
+            List of species that must be present
         Returns
         -------
         graph : networkx.DiGraph
@@ -137,13 +142,26 @@ class NetworkSubgraphs(object):
                                 network=self.network,
                                 single_path=single_path),
                         itertools.combinations(tmp_species_list, 2))
-        graph = self._list_paths_to_graph(paths)
 
+        if max_length is not None:
+            new_paths = []
+            for p in paths:
+                local_p = []
+                for i in p:
+                    if len(i) <= max_length:
+                        local_p.append(i)
+                new_paths.append(local_p)
+            paths = new_paths[:]
+
+        graph = self._list_paths_to_graph(paths)
+        if include_only is not None:
+            graph = self._include_only(graph, include_only)
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
-    def neighbors(self, node, up=True, down=True, max_dist=1):
+    def neighbors(self, node, up=True, down=True, max_dist=1,
+                  include_only=None):
         if max_dist > 3:
             print("Max distance is 3. Big networks")
             max_dist = 3
@@ -168,37 +186,42 @@ class NetworkSubgraphs(object):
                     _add_edge(i, new_node)
             return upstream
 
-        def _get_downstream(n):
-            downstream = self.network.successors(n)
+        def _get_downstream(new_node):
+            downstream = self.network.successors(new_node)
             for i in downstream:
-                if i != n:
+                if i != new_node:
                     _add_node(i)
-                    _add_edge(n, i)
+                    _add_edge(new_node, i)
             return downstream
 
         up_layer = [node]
         down_layer = [node]
-        for _ in range(1, max_dist + 1):
+        for _ in range(0, max_dist):
             if up:
                 up_layer = {i for n in up_layer for i in _get_upstream(n)}
             if down:
                 down_layer = {i for n in down_layer for i in
                               _get_downstream(n)}
+        if include_only is not None:
+            sg = self._include_only(sg, include_only)
 
         return sg
 
     def neighbors_of_list(self, list_start, up_stream=True, down_stream=True,
-                          max_dist=1):
+                          max_dist=1, include_only=None):
         new_g = nx.DiGraph()
         for start in list_start:
             sg = self.neighbors(start, up_stream, down_stream, max_dist)
             new_g = nx.compose(new_g, sg)
 
+        if include_only is not None:
+            new_g = self._include_only(new_g, include_only)
+
         return new_g
 
     def upstream_network_of_specie(self, species_1, include_list=None,
                                    save_name=None, compress=False,
-                                   draw=False, image_format='png'):
+                                   draw=False):
         """
         Generate network of all upstream species of provides species
 
@@ -248,7 +271,7 @@ class NetworkSubgraphs(object):
         if compress:
             graph = nt.compress_edges(graph)
         if save_name is not None:
-            self._save_or_draw(graph, save_name, draw, image_format)
+            self._save_or_draw(graph, save_name, draw)
 
         return graph
 
@@ -325,8 +348,10 @@ class NetworkSubgraphs(object):
         -------
 
         """
-        nt.paint_network_overtime(graph, self.exp_data.sig_species_over_time,
-                                  colors, prefix,
+        measured_list = []
+        for i, j in sorted(self.exp_data.sig_species_over_time.items()):
+            measured_list.append(j)
+        nt.paint_network_overtime(graph, measured_list, colors, prefix,
                                   self.exp_data.proteomics_time_points)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
@@ -349,11 +374,16 @@ class NetworkSubgraphs(object):
         -------
 
         """
-        up_species = self.exp_data.sig_species_up_over_time
-        down_species = self.exp_data.sig_species_down_over_time
         labels = self.exp_data.proteomics_time_points
-        nt.paint_network_overtime_up_down(graph, list_up=up_species,
-                                          list_down=down_species,
+        up_measured_list = []
+        down_measured_list = []
+        for i, j in sorted(self.exp_data.sig_species_over_time.items()):
+            up_measured_list.append(j)
+
+        for i, j in sorted(self.exp_data.sig_species_down_over_time.items()):
+            down_measured_list.append(j)
+        nt.paint_network_overtime_up_down(graph, list_up=up_measured_list,
+                                          list_down=down_measured_list,
                                           save_name=prefix,
                                           color_down=color_down,
                                           color_up=color_up,
@@ -411,6 +441,18 @@ class NetworkSubgraphs(object):
         return graph
 
     @staticmethod
+    def _include_only(network, include_list):
+        assert isinstance(include_list, list)
+        sg = network.copy()
+        all_nodes = set(sg.nodes())
+        not_found = all_nodes.difference(set(include_list))
+        sg.remove_nodes_from(not_found)
+        if len(sg.nodes()) == 0:
+            print("Warning: no nodes were found in include_only list! "
+                  "Network doesn't contain any nodes!")
+        return sg
+
+    @staticmethod
     def _save_or_draw(graph, save_name, draw, img_format='png'):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
@@ -452,15 +494,14 @@ if __name__ == '__main__':
     x = NetworkSubgraphs(net)
 
     # print(x.neighbors('X').nodes())
-    print(x.downstream_network_of_specie('D').nodes())
-    quit()
+    # print(x.downstream_network_of_specie('D').nodes())
+    # quit()
     # print(x.path_between_2('X', ['Y', 'B', 'C']))
     # quit()
     # print(x.path_between_2('X', 'Y', all_shortest_paths=True))
-    print(net.nodes())
 
     pool = mp.Pool(4)
-    g = x.shortest_paths_between_lists(['X', 'D'], single_path=True,
+    g = x.shortest_paths_between_lists(['X', 'Y', 'B', 'D'], single_path=True,
                                        draw=False, save_name='test',
                                        pool=pool
                                        )
