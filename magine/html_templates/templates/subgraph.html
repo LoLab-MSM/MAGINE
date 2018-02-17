@@ -67,10 +67,15 @@
         <div id="tools" class="panel panel-primary">
             <div class="panel-heading">Filter edges</div>
             <div class="panel-body">
+                <button id="filter_activate" class="btn btn-success">Activate</button>
+                <button id="filter_inhibit" class="btn btn-success">Inhibit</button>
                 <button id="filter_exp" class="btn btn-success">Expression</button>
-                <button id="filter_act" class="btn btn-success">Activate</button>
+                <button id="filter_rep" class="btn btn-success">Repression</button>
+
                 <button id="filter_chem" class="btn btn-success">Chemical</button>
-                <button id="filter_missing" class="btn btn-success">Missing interaction or indirect</button>
+                <button id="filter_missing" class="btn btn-success">Indirect</button>
+                <button id="filter_binding" class="btn btn-success">Binding</button>
+
             </div>
         </div>
 
@@ -178,9 +183,12 @@
         }
 
         createNewFilter('filter_exp', 'edge[interactionType *= \'expression\']');
-        createNewFilter('filter_act', 'edge[interactionType != \'deactivat\'][interactionType *= \'activate\']');
+        createNewFilter('filter_rep', 'edge[interactionType *= \'repression\']');
         createNewFilter('filter_chem', 'edge[interactionType *= \'chemical\']');
-        createNewFilter('filter_missing', 'edge[interactionType *= \'missing\'], edge[interactionType *= \'indirect\']');
+        createNewFilter('filter_missing', 'edge[interactionType *= \'indirect\']');
+        createNewFilter('filter_binding', 'edge[interactionType *= \'binding\']');
+        createNewFilter('filter_inhibit', 'edge[interactionType *= \'inhibit\']');
+        createNewFilter('filter_activate', 'edge[interactionType *= \'activate\']');
 
 
         var MetaboliteColor = document.getElementById('metabolites');

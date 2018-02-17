@@ -34,7 +34,64 @@ def load_reactome_fi():
     return tmp_graph
 
 
-def download_reactome_functional_interaction(verbose=False):
+_maps = {
+
+    'inhibited': 'inhibit',
+    'inhibite': 'inhibit',
+    'inhibition': 'inhibit',
+
+    'expression': 'expression',
+    'expressed': 'expression',
+
+    'repressed': 'repression',
+
+    'catalyzed': 'catalyze',
+
+    'complex': 'binding',
+    'dissociation': 'binding',
+
+    'activated': 'activate',
+    'activation': 'activate',
+
+    'phosphorylated': 'phosphorylate',
+    'phosphorylation': 'phosphorylate',
+
+    'dephosphorylation': 'dephosphorylate',
+    'dephosphorylated': 'dephosphorylate',
+
+    'ubiquitinated': 'ubiquitinate',
+    'ubiquitination': 'ubiquitinate',
+    'glycosylation': 'glycosylate',
+    'methylation': 'methylate',
+
+    'binding/association': 'binding',
+
+}
+
+
+def standardize_edge_types(row):
+    name = row['Annotation']
+    name = name.replace(':', ' ')
+    name = name.replace(';', ' ')
+    name = name.replace(',', ' ')
+    name = name.replace('state change', 'stateChange')
+    name = set(name.split(' '))
+    to_remove = ['by', 'regulates', 'regulated', 'input',
+                 'PPrel', 'PCrel', 'GErel', 'ECrel', 'interaction',
+                 '',
+                 ]
+    for i in to_remove:
+        if i in name:
+            name.remove(i)
+    for k, v in _maps.items():
+        if k in name:
+            name.remove(k)
+            name.add(v)
+    name = '|'.join(sorted(name))
+    return name
+
+
+def old_download_reactome_functional_interaction():
     """
     Downloads reactome functional interaction network
 
@@ -54,18 +111,15 @@ def download_reactome_functional_interaction(verbose=False):
     table = table[~table['Annotation'].str.contains('indirect effect')]
     table = table[~table['Annotation'].str.contains('predicted')]
     table = table[~table['Annotation'].str.contains('compound')]
-
     x = set(table['Gene1'])
     y = set(table['Gene2'])
     genes = x.union(y)
     from magine.mappings.gene_mapper import GeneMapper
     gm = GeneMapper()
-    missing_uniprot = set()
-    for i in genes:
-        if i not in gm.gene_name_to_uniprot:
-            missing_uniprot.add(i)
+    missing_uniprot = set(i for i in genes if i not in gm.gene_name_to_uniprot)
     table = table[~table['Gene1'].isin(missing_uniprot)]
     table = table[~table['Gene2'].isin(missing_uniprot)]
+
     table = table.as_matrix()
 
     g = nx.DiGraph()
@@ -90,6 +144,9 @@ def download_reactome_functional_interaction(verbose=False):
 
                 g.add_edge(gene1, gene2, interactionType=inter,
                            score=score, databaseSource='ReactomeFI')
+                if r[3] in _both:
+                    g.add_edge(gene2, gene1, interactionType=inter,
+                               score=score, databaseSource='ReactomeFI')
 
     print("Reactome network has {} nodes "
           "and {} edges".format(len(g.nodes()), len(g.edges())))
@@ -97,6 +154,60 @@ def download_reactome_functional_interaction(verbose=False):
     # nx.write_gml(g, path)
     nx.write_gpickle(g, _p_name)
 
+
+def download_reactome_functional_interaction():
+    url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2016/FIsInGene_022717_with_annotations.txt.zip'
+
+    table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
+                        delimiter='\t', error_bad_lines=False, encoding='utf-8'
+                        )
+    table = table[table['Direction'] != '-']
+    table = table[~table['Annotation'].str.contains('indirect effect')]
+    table = table[~table['Annotation'].str.contains('predicted')]
+    table = table[~table['Annotation'].str.contains('compound')]
+    x = set(table['Gene1'])
+    y = set(table['Gene2'])
+    genes = x.union(y)
+    from magine.mappings.gene_mapper import GeneMapper
+    gm = GeneMapper()
+    missing_uniprot = set(i for i in genes if i not in gm.gene_name_to_uniprot)
+    table = table[~table['Gene1'].isin(missing_uniprot)]
+    table = table[~table['Gene2'].isin(missing_uniprot)]
+
+    table['source'] = table['Gene1']
+    table['target'] = table['Gene2']
+    table['databaseSource'] = 'ReactomeFI'
+    table['interactionType'] = table.apply(standardize_edge_types, axis=1)
+
+    rev_cols = table['Direction'].isin(_reverse)
+    table.loc[rev_cols, ['source', 'target']] = \
+        table.loc[rev_cols, ['target', 'source']].values
+
+    protein_graph = nx.from_pandas_dataframe(
+        table,
+        'source',
+        'target',
+        edge_attr=['interactionType', 'databaseSource'],
+        create_using=nx.DiGraph()
+    )
+
+    table = table.as_matrix(['source', 'target'])
+    added_genes = set()
+
+    def _add_node(node):
+        if node not in added_genes:
+            protein_graph.add_node(node, databaseSource='ReactomeFI',
+                                   speciesType='gene')
+            added_genes.add(node)
+
+    # add names to graph
+    for r in table:
+        _add_node(r[0])
+        _add_node(r[1])
+    print("Reactome network has {} nodes and {} edges"
+          "".format(len(protein_graph.nodes()), len(protein_graph.edges())))
+
+    nx.write_gpickle(protein_graph, _p_name)
 
 def _new_download_reactome_functional_interaction(verbose=False):
     """
@@ -197,6 +308,7 @@ def _new_download_reactome_functional_interaction(verbose=False):
 
 _reverse = {"<-", "|-"}
 _forward = {"->", "->"}
+_both = {'<->', '<-|', '|->', '|-|'}
 
 
 def _return_direction(text, gene1, gene2):
@@ -260,143 +372,5 @@ def _check_rows2(row):
     return g1, g2, interaction_type, modification, score
 
 
-def _check_rows(row):
-    interaction_type = None
-    annotation = row[2]
-    g1 = row[0]
-    g2 = row[1]
-    direction = row[3]
-    score = str(row[4])
-    modification = ''
-    _forward_activate = {'activate; catalyze',
-                         'activate',
-                         'activate; catalyze; complex',
-                         }
-    if annotation in _forward_activate:
-        return [[g1, g2, 'activate', modification, score]]
-
-    _forward_reverse_activate = {'activate; activated by; catalyze',
-                                 'activate; activated by',
-                                 'activate; activated by; catalyze; complex; input',
-                                 'activate; activated by; catalyze; complex',
-                                 'activate; activated by; catalyzed by',
-                                 'activate; activated by; catalyzed by; complex; input',
-                                 'activate; activated by; complex',
-                                 'activate; activated by; complex; input',
-                                 'activate; activated by; complex; input; reaction',
-                                 'activate; activated by; reaction',
-                                 }
-    if annotation in _forward_reverse_activate:
-        return [[g1, g2, 'activate', modification, score],
-                [g2, g1, 'activate', modification, score]]
-    if annotation == 'expression regulated by':
-        return [[g2, g1, 'expression', modification, score]]
-    if annotation == 'expression regulates':
-        return [[g1, g2, 'expression', modification, score]]
-
-    first = []
-    second = []
-
-    def find_hits():
-        inh_b = True
-        exp_b = True
-        cat_b = True
-        act_b = True
-        if 'inhibited by' in annotation:
-            inh_b = True
-        if 'expression regulated by' in annotation:
-            exp_b = True
-        if 'expression by' in annotation:
-            exp_b = True
-        if 'catalyzed by' in annotation:
-            cat_b = True
-        if 'activated by' in annotation:
-            act_b = True
-        opts = [inh_b, exp_b, cat_b, act_b]
-        if sum(opts) > 1:
-            print(row)
-
-    find_hits()
-    if 'inhibited by' in annotation:
-        second = [g2, g1, 'inhibit', modification, score]
-    if 'expression regulated by' in annotation:
-        second = [g2, g1, 'expression', modification, score]
-    if 'expression by' in annotation:
-        second = [g2, g1, 'expression', modification, score]
-    if 'catalyzed by' in annotation:
-        second = [g2, g1, 'catalyze', modification, score]
-    if 'activated by' in annotation:
-        second = [g2, g1, 'activate', modification, score]
-    if 'dissociation' in annotation:
-        second = [g2, g1, 'dissociation', modification, score]
-
-    if 'expression regulates' in annotation:
-        first = [g1, g2, 'expression', modification, score]
-    if 'inhibit' in annotation:
-        first = [g1, g2, 'inhibit', modification, score]
-    if 'activate' in annotation:
-        first = [g1, g2, 'activate', modification, score]
-    if 'catalyze' in annotation:
-        first = [g1, g2, 'catalyze', modification, score]
-    if 'GErel: expression' in annotation:
-        first = [g1, g2, 'expression', modification, score]
-
-    if direction in ['<-', '|-']:
-        return [second]
-    elif direction in ['->', '-|']:
-        return [first]
-    else:
-        return [first, second]
-    g1, g2 = _return_direction(row[3], row[0], row[1])
-
-    if 'repress' in annotation:
-        interaction_type = 'repression'
-    elif 'express' in annotation:
-        interaction_type = 'expression'
-    elif 'reaction' in annotation:
-        interaction_type = 'reaction'
-    elif 'complex' in annotation:
-        interaction_type = 'complex'
-    elif 'catalyze' in annotation:
-        interaction_type = 'catalyze'
-    elif 'deactiv' in annotation:
-        interaction_type = 'deactivate'
-    elif 'activ' in annotation:
-        interaction_type = 'activate'
-    elif 'inhib' in annotation:
-        interaction_type = 'inhibit'
-    elif 'binding' in annotation:
-        interaction_type = 'binding'
-    elif 'input' in annotation:
-        interaction_type = '?'
-    elif 'indirect effect' in annotation:
-        interaction_type = 'indirect'
-    elif 'compound' in annotation:
-        interaction_type = 'compound'
-    elif 'state change' in annotation:
-        interaction_type = 'state change'
-    elif 'interaction' in annotation:
-        interaction_type = 'binding'
-    elif 'PPrel' in annotation:
-        interaction_type = 'binding'
-
-    if 'dephosphoryl' in annotation:
-        modification = 'dephosphorylation'
-        if interaction_type is None:
-            interaction_type = 'dephosphorylation'
-    elif 'phosphoryl' in annotation:
-        modification = 'phosphorylation'
-        if interaction_type is None:
-            interaction_type = 'phosphorylation'
-    elif 'ubiquiti' in annotation:
-        modification = 'ubiquitination'
-        if interaction_type is None:
-            interaction_type = 'ubiquitination'
-    if interaction_type is None:
-        interaction_type = '?'
-
-    return [[g1, g2, interaction_type, modification, score]]
-
-
 if __name__ == '__main__':
-    download_reactome_functional_interaction(verbose=True)
+    download_reactome_functional_interaction()

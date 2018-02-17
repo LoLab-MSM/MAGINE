@@ -324,8 +324,8 @@ def expand_by_hmdb(graph, metabolite_list):
                ''.format(len(metabolites_added)))
     out.append('Metabolites not able to add = {0}'.format(len(still_missing)))
 
-    out.append('Before # of nodes = {},'
-               ' edge = {}'.format(len(start_nodes), len(graph.edges())))
+    out.append('Before # nodes = {} edges = {}'.format(len(start_nodes),
+                                                       len(graph.edges())))
 
     out.append('After # of nodes = {},'
                ' edge = {}'.format(len(end_nodes), len(final_graph.edges())))
@@ -424,6 +424,7 @@ def create_background_network(save_name='background_network'):
         [hmdb_network, kegg_network, biogrid_network, reactome_network]
     )
     nt.standardize_edge_types(full_network)
+
     # find_overlap(reactome_network, full_network)
     print("Background network {} nodes and {} edges"
           "".format(len(full_network.nodes()), len(full_network.edges()))

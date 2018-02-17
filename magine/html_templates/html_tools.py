@@ -25,10 +25,7 @@ auto_complete_ = {'protein', 'gene'}
 
 
 def _add_filter(column_num, f_type):
-    _default = {
-        # 'column_number': '"{}"'.format(column_num)
-        'column_number': column_num
-    }
+    _default = {'column_number': column_num}
     if f_type == 'range':
         _default.update({'filter_type': 'range_number'})
     if f_type == 'select':
@@ -92,9 +89,7 @@ def write_filter_table(table, save_name):
     data = tmp_table.to_dict('split')
     data['filters'] = create_yadf_filters(table)
 
-    template_vars = {"data": data}
-
-    html_out = filter_template.render(template_vars)
+    html_out = filter_template.render({"data": data})
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
 

@@ -673,7 +673,11 @@ def _add_nodes(old_network, new_network):
                     new_network.node[i][n] = d
                 else:
                     additions = set(d.split('|'))
-                    additions.update(set(existing_info[n].split('|')))
+                    if isinstance(existing_info[n], list):
+                        old = set(existing_info[n][0].split('|'))
+                    else:
+                        old = set(existing_info[n].split('|'))
+                    additions.update(old)
                     new_network.node[i][n] = '|'.join(sorted(additions))
 
 
@@ -748,6 +752,7 @@ def compose_all(graphs):
 
 _maps = {
     'activation': 'activate',
+    'activator': 'activate',
     'potentiator': 'activate',
 
     'inducer': 'expression',
@@ -765,17 +770,45 @@ _maps = {
     'binding/association': 'binding',
     'binder': 'binding',
     'complex': 'binding',
+    'dissociation': 'binding',
+
     # indirect/missing
     'indirect effect': 'indirect',
     'missing interaction': 'indirect',
 
+    'state change': 'stateChange',
+
+    'ubiquitination': 'ubiquitinate',
+    'methylation': 'methylate',
+    'glycosylation': 'glycosylate',
+    'sumoylation': 'sumoylate',
+    'ribosylation': 'ribosylate',
+    'neddylation': 'neddylate',
+    'desumoylation': 'desumoylate',
+    'deneddylation': 'deneddylate',
+    'demethylation': 'demethylate',
+    'deacetylation': 'deacetylate',
+    'desensitize the target': 'inhibit',
+    'deubiquitination': 'deubiquitinate',
+    'nedd(rub1)ylation': 'neddy(rub1)late',
+
+    'dephosphorylation': 'dephosphorylate',
+    'phosphorylation': 'phosphorylate',
+
     'negative modulator': 'inhibit',
-    'inhibitory allosteric modulator': 'allosteric}inhibit',
-    'partial agonist': 'agonist|chemical',
-    'inverse agonist': 'agonist|chemical',
-    'partial antagonist': 'antagonist|chemical',
+    'inhibitory allosteric modulator': 'allosteric|inhibit',
+    'allosteric modulator': 'allosteric|modulate',
+    'positive allosteric modulator': 'activate|allosteric',
+    'positive modulator': 'activate',
+    'partial agonist': 'activate|chemical',
+    'inverse agonist': 'activate|chemical',
+    'agonist': 'activate|chemical',
+
+    'antagonist': 'inhibit|chemical',
+    'partial antagonist': 'inhibit|chemical',
 
     # chemical related
+    'compound': 'chemical',
     'product of': 'chemical',
     'ligand': 'chemical',
     'cofactor': 'chemical',
@@ -804,7 +837,10 @@ def standardize_edge_types(network):
                 if len(edge_type) != 1:
                     edge_type.remove('catalyze')
             edge_type = '|'.join(sorted(edge_type))
-            network[source][target]['interactionType'] = edge_type
+            if edge_type == '':
+                network.remove_edge(source, target)
+            else:
+                network[source][target]['interactionType'] = edge_type
 
 
 if __name__ == '__main__':
