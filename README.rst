@@ -49,7 +49,7 @@ Installation
        $ conda create -n magine_env python=2
        $ source activate magine_env
        $ conda config --add channels conda-forge
-       $ conda install numba bottleneck orange jinja2 statsmodels networkx graphviz python-igraph
+       $ conda install jinja2 statsmodels networkx graphviz python-igraph
 
 3. (Linux and MacOS only) **Install pygraphviz**
     ::
