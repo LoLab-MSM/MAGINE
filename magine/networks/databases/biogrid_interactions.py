@@ -5,16 +5,14 @@ import sys
 import networkx as nx
 import pandas as pd
 
+import magine.networks.network_tools as nt
 from magine.data.storage import network_data_dir
 from magine.mappings import ChemicalMapper
-import magine.networks.network_tools as nt
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
 else:
     from urllib import urlopen
-
-
 
 
 class BioGridDownload(object):
@@ -28,12 +26,12 @@ class BioGridDownload(object):
 
     def _create_chemical_network(self):
         df = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
-                                   compression='zip',
-                                   delimiter='\t',
-                                   error_bad_lines=False,
-                                   low_memory=False,
-                                   encoding='utf-8',
-                                   )
+                         compression='zip',
+                         delimiter='\t',
+                         error_bad_lines=False,
+                         low_memory=False,
+                         encoding='utf-8',
+                         )
         df = df[df['Organism'] == 'Homo sapiens']
         chem_cols = ['Official Symbol',
                      'Action',
@@ -64,7 +62,8 @@ class BioGridDownload(object):
                     new_name = self._cm.drugbank_to_hmdb[id_chem_source][0]
                     return new_name
                 elif c_name in self._cm.chemical_name_to_hmdb_accession:
-                    new_name = self._cm.chemical_name_to_hmdb_accession[c_name][0]
+                    new_name = \
+                        self._cm.chemical_name_to_hmdb_accession[c_name][0]
                     return new_name
             return c_name
 
@@ -85,7 +84,7 @@ class BioGridDownload(object):
         df['chemType'] = df['Chemical Type']
         df['gene'] = df['Official Symbol']
         df['interactionType'] = df['Action']
-        df['pubmedId'] = df['Pubmed ID']
+        df['pubmedId'] = df['Pubmed ID'].astype(str)
         df['databaseSource'] = 'BioGrid'
         # keep the same info as other databases (store as compound)
         df.loc[df['chemType'] == 'small molecule', 'chemType'] = 'compound'
@@ -125,6 +124,7 @@ class BioGridDownload(object):
 
             chem_g.add_node(node, **attr)
             nodes_added.add(node)
+
         # add node names/attributes
         for row in chem_table:
             gene = row[0]
@@ -161,7 +161,7 @@ class BioGridDownload(object):
         table = table[table['Organism Interactor A'].isin(['9606'])]
         table = table[table['Organism Interactor B'].isin(['9606'])]
 
-        #table.to_csv('biogrid.csv')
+        # table.to_csv('biogrid.csv')
 
         protein_cols = ['Official Symbol Interactor A',
                         'Official Symbol Interactor B',
@@ -177,7 +177,7 @@ class BioGridDownload(object):
         table['source'] = table['Official Symbol Interactor A']
         table['target'] = table['Official Symbol Interactor B']
         table['interactionType'] = table['Modification'].str.lower()
-        table['pubmedId'] = table['Pubmed ID']
+        table['pubmedId'] = table['Pubmed ID'].astype(str)
         table['databaseSource'] = table['Source Database']
 
         # create graph
@@ -199,6 +199,7 @@ class BioGridDownload(object):
                                        databaseSource='BioGrid',
                                        speciesType='gene')
                 added_genes.add(node)
+
         # add names to graph
         for r in table:
             _add_node(r[0])
@@ -219,9 +220,7 @@ def create_biogrid_network():
     if os.path.exists(p_name):
         g = nx.read_gpickle(p_name)
     else:
-
-        bgn = BioGridDownload()
-        g = bgn.parse_network()
+        g = BioGridDownload().parse_network()
     print("BIOGRID network has {} nodes and {} edges "
           "".format(len(g.nodes()), len(g.edges())))
     return g
