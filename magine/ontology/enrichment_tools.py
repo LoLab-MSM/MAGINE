@@ -47,7 +47,7 @@ def filter_db(local_df, options, column):
 
 
 def filter_dataframe(df, p_value=None, combined_score=None, db=None,
-                     sample_id=None, category=None):
+                     sample_id=None, category=None, rank=None):
     copy_df = df.copy()
     if p_value is not None:
         assert isinstance(p_value, float)
@@ -55,7 +55,8 @@ def filter_dataframe(df, p_value=None, combined_score=None, db=None,
     if combined_score is not None:
         assert isinstance(combined_score, float)
         copy_df = copy_df[copy_df['combined_score'] >= combined_score]
-
+    if isinstance(rank, (int, float)):
+        copy_df = copy_df[copy_df['rank'] <= rank]
     copy_df = filter_db(copy_df, db, 'db')
     copy_df = filter_db(copy_df, sample_id, 'sample_id')
     copy_df = filter_db(copy_df, category, 'category')
@@ -72,8 +73,12 @@ def filter_based_on_words(df, words):
     return df[df['term_name'].str.lower().str.contains('|'.join(words))]
 
 
-def filter_similar_terms(data, threshold=0.75, verbose=False):
-    data.sort_values('combined_score', inplace=True, ascending=False)
+def filter_similar_terms(data, threshold=0.75, verbose=False, sort_by='combined_score'):
+    if sort_by == 'rank':
+        ascending = True
+    else:
+        ascending = False
+    data.sort_values(sort_by, inplace=True, ascending=ascending)
     data_copy = data.copy()
 
     to_remove = _terms_to_remove(data_copy, threshold, verbose)
@@ -84,8 +89,13 @@ def filter_similar_terms(data, threshold=0.75, verbose=False):
     return data_copy
 
 
-def remove_redundant(data, threshold=0.75, verbose=False):
-    data.sort_values('combined_score', inplace=True, ascending=False)
+def remove_redundant(data, threshold=0.75, verbose=False,
+                     sort_by='combined_score'):
+    if sort_by == 'rank':
+        ascending = True
+    else:
+        ascending = False
+    data.sort_values(sort_by, inplace=True, ascending=ascending)
 
     data_copy = data.copy()
     sample_ids = list(sorted(data['sample_id'].unique()))

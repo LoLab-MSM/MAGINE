@@ -121,7 +121,7 @@ class Enrichr(object):
         -------
 
         """
-        assert isinstance(list_of_genes, list)
+        assert isinstance(list_of_genes, (list, set))
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
             return pd.DataFrame()
