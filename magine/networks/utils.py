@@ -1,10 +1,18 @@
 import json
-
-import igraph as ig
+try:
+    import igraph as ig
+except ImportError:
+    ig = None
 import networkx as nx
 
 
 def networkx_to_igraph(network):
+    try:
+        import igraph as ig
+    except ImportError:
+        raise ImportError('requires igraph ',
+                          'http://pygraphviz.github.io/')
+
     nx.write_gml(network, 'test.gml')
     igraph_network = ig.read('test.gml')
     return igraph_network
@@ -77,3 +85,32 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
                     args=arg)
     except ImportError:
         print("No pygraphivz installed")
+
+
+def nx_to_dot(graph):
+
+    try:
+        import pygraphviz
+    except ImportError:
+        raise ImportError('requires pygraphviz ',
+                          'http://pygraphviz.github.io/')
+    directed = graph.is_directed()
+    strict = graph.number_of_selfloops() == 0 and not graph.is_multigraph()
+    new_g = pygraphviz.AGraph(name=graph.name,
+                              strict=strict,
+                              directed=directed,
+                              encoding='utf8')
+
+    # default graph attributes
+    new_g.graph_attr.update(graph.graph.get('graph', {}))
+    new_g.node_attr.update(graph.graph.get('node', {}))
+    new_g.edge_attr.update(graph.graph.get('edge', {}))
+
+    # add nodes
+    for n, data in graph.nodes(data=True):
+        new_g.add_node(n, **data)
+
+    # loop over edges
+    for u, v, data in graph.edges_iter(data=True):
+        new_g.add_edge(u, v, **dict((k, str(v)) for k, v in data.items()))
+    return new_g

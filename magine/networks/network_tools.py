@@ -4,7 +4,8 @@ import os
 
 import networkx as nx
 import pathos.multiprocessing as mp
-from IPython.display import Image, display
+
+from magine.networks.utils import nx_to_dot
 
 try:
     import pygraphviz as pyg
@@ -51,6 +52,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
     -------
 
     """
+    from IPython.display import Image, display
     if len(list_of_lists) != len(color_list):
         print('Length of list of data must equal len of color list')
         return
@@ -64,7 +66,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
     tmp_graph = _format_to_directions(tmp_graph)
     if isinstance(tmp_graph, nx.DiGraph):
         try:
-            tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+            tmp_graph = nx_to_dot(tmp_graph)
         except ImportError:
             print("Please install pygraphviz")
             return
@@ -113,6 +115,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
     -------
 
     """
+    from IPython.display import Image, display
     if len(list_up) != len(list_down):
         print('Length of list of data must equal len of color list')
         return
@@ -129,7 +132,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
             print("Please install pygraphviz in order to use "
                   "paint_network_overtime_up_down ")
             return
-        tmp_graph = nx.nx_agraph.to_agraph(tmp_graph)
+        tmp_graph = nx_to_dot(tmp_graph)
 
     for n, (up, down) in enumerate(zip(list_up, list_down)):
         graph2 = paint_network(tmp_graph, up, color_up)
@@ -140,7 +143,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         graph2 = paint_network(graph2, both, 'yellow')
 
         if labels is not None:
-            graph2.graph_attr.update(label=labels[n], ranksep='0.2',
+            graph2.graph_attr.update(label=labels[n], ranksep='0.3',
                                      fontsize=13)
         s_name = '%s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
@@ -181,46 +184,34 @@ def paint_network(graph, list_to_paint, color):
 
 
 def _format_to_directions(network):
-    if isinstance(network, nx.DiGraph):
-        try:
-            network = nx.nx_agraph.to_agraph(network)
-        except ImportError:
-            print("Need to install pygraphviz")
-            return network
-    activators = ['activation', 'expression', 'phosphorylation']
-    inhibitors = ['inhibition', 'repression', 'dephosphorylation',
-                  'ubiquitination']
-    physical_contact = ['binding/association', 'dissociation', 'state change',
+    activators = ['activate', 'expression', 'phosphorylate']
+    inhibitors = [
+        'inhibit', 'repression', 'dephosphorylate', 'deubiquitinate',
+        'ubiquitinate'
+    ]
+    physical_contact = ['binding', 'dissociation', 'stateChange',
                         'compound', 'glycosylation']
-    indirect_types = ['missing interaction', 'indirect effect']
-    for i in network.edges():
-        n = network.get_edge(i[0], i[1])
-        edge_type = str(i.attr['interactionType'])
-
-        def _find_edge_type():
+    indirect_types = ['indirect']
+    for source, target, data in network.edges(data=True):
+        if 'interactionType' in data:
+            edge_type = data['interactionType']
             for j in activators:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'normal'
-                    return
+                if j in edge_type:
+                    network[source][target]['arrowhead'] = 'normal'
             for j in inhibitors:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'tee'
-                    return
-            for j in physical_contact:
-                if edge_type.startswith(j):
-                    n.attr['dir'] = 'both'
-                    n.attr['arrowtail'] = 'diamond'
-                    n.attr['arrowhead'] = 'diamond'
-                    return
-            for j in indirect_types:
-                if edge_type.startswith(j):
-                    n.attr['arrowhead'] = 'diamond'
-                    n.attr['style'] = 'dashed'
-                    return
-                    # print(n, n.attr)
+                if j in edge_type:
+                    network[source][target]['arrowhead'] = 'tee'
 
-        _find_edge_type()
-    network = nx.nx_agraph.from_agraph(network)
+            for j in physical_contact:
+                if j in edge_type:
+                    network[source][target]['dir'] = 'both'
+                    network[source][target]['arrowtail'] = 'diamond'
+                    network[source][target]['arrowhead'] = 'diamond'
+
+            for j in indirect_types:
+                if j in edge_type:
+                    network[source][target]['arrowhead'] = 'diamond'
+                    network[source][target]['style'] = 'dashed'
     return network
 
 
@@ -231,14 +222,13 @@ def create_legend(graph):
     :return:
     """
     dict_of_types = {
-        'activation': 'onormal',
+        'activate': 'onormal',
         'indirect effect': 'odiamondodiamond',
         'expression': 'normal',
-        'inhibition': 'tee',
-        'binding/association': 'curve',
-        'phosphorylation': 'dot',
-        'missing interaction': 'odiamond',
-        'compound': 'dotodot',
+        'inhibit': 'tee',
+        'binding': 'curve',
+        'phosphorylate': 'dot',
+        'chemical': 'dotodot',
         'dissociation': 'diamond',
         'ubiquitination': 'oldiamond',
         'state change': 'teetee',
@@ -367,16 +357,19 @@ def trim_sink_source_nodes(network, list_of_nodes, remove_self_edge=False):
 
     """
     tmp_network = network.copy()
-    edges = set(tmp_network.edges())
     if remove_self_edge:
-        for i, j in edges:
-            if i == j:
-                tmp_network.remove_edge(i, j)
+        tmp_network = remove_self_edges(tmp_network)
     tmp1 = _trim(tmp_network, list_of_nodes)
     tmp2 = _trim(tmp_network, list_of_nodes)
     while tmp1 != tmp2:
         tmp2 = tmp1
         tmp1 = _trim(tmp_network, list_of_nodes)
+    return tmp_network
+
+
+def remove_self_edges(network):
+    tmp_network = network.copy()
+    tmp_network.remove_edges_from(tmp_network.selfloop_edges())
     return tmp_network
 
 

@@ -337,7 +337,7 @@ class NetworkSubgraphs(object):
         
         Parameters
         ----------
-        graph : pygraphviz.AGraph
+        graph : nx.DiGraph
         colors : list
             List of colors for time points
         prefix : str
@@ -450,6 +450,7 @@ class NetworkSubgraphs(object):
         if len(sg.nodes()) == 0:
             print("Warning: no nodes were found in include_only list! "
                   "Network doesn't contain any nodes!")
+        nt.delete_disconnected_network(sg)
         return sg
 
     @staticmethod

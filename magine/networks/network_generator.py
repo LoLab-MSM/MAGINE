@@ -1,7 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-File that generates networks
-"""
 import os
 
 import networkx as nx
@@ -123,7 +120,8 @@ def build_network(gene_list, species='hsa', save_name=None,
     nt.standardize_edge_types(end_network)
 
     if trim_source_sink:
-        end_network = nt.trim_sink_source_nodes(end_network, all_measured_list)
+        end_network = nt.trim_sink_source_nodes(end_network, all_measured_list,
+                                                remove_self_edge=True)
     print('Network has {} nodes and {} edges'
           ''.format(len(end_network.nodes()),
                     len(end_network.edges()))
@@ -213,12 +211,12 @@ def expand_by_hmdb(graph, metabolite_list):
     -------
     nx.DiGraph
 
-    # Examples
-    # --------
-    # >>> g = nx.DiGraph()
-    # >>> g.add_edge('PNLIP', 'LIPC')
-    # >>> new_g = expand_by_hmdb(graph=g, \
-    #                        metabolite_list=['HMDB42489', 'HMDB59874'], \
+    Examples
+    --------
+    >>> g = nx.DiGraph()
+    >>> g.add_edge('PNLIP', 'LIPC')
+    >>> new_g = expand_by_hmdb(graph=g, \
+                           metabolite_list=['HMDB42489', 'HMDB59874'], \
                            )
     Metabolites data= 2
     Metabolites not in starting network = 2
@@ -231,9 +229,9 @@ def expand_by_hmdb(graph, metabolite_list):
     Number of add proteins = 0
     <BLANKLINE>
     missing metabolites-protein info = 0
-    # >>> len(new_g.nodes())
+    >>> len(new_g.nodes())
     3
-    # >>> len(new_g.edges())
+    >>> len(new_g.edges())
     3
     """
     from magine.mappings.chemical_mapper import ChemicalMapper
@@ -244,11 +242,8 @@ def expand_by_hmdb(graph, metabolite_list):
     start_nodes = set(graph.nodes())
     start_edges = set(graph.edges())
     metabolite_set = set(i for i in metabolite_list if i.startswith('HMDB'))
-    print("metabolite_set = {}".format(metabolite_list))
     metabolite_set = metabolite_set.intersection(cm.hmdb_accession_to_protein)
-    print("metabolite_set = {}".format(metabolite_list))
     missing_metabolites = metabolite_set.difference(start_nodes)
-    print("missing_metabolites = {}".format(missing_metabolites))
     count_in_network, count_not_in_network = 0, 0
     missing_edge = 0
     protein_hits = 0
