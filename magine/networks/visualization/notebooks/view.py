@@ -1,26 +1,31 @@
 import json
-import time
 import uuid
-
 import networkx as nx
-from IPython.core.display import display, HTML, Javascript
-
-from magine.html_templates.html_tools import env, styles
+from IPython.display import display, HTML, Javascript
+from magine.html_templates.cy_stypes import styles
+from magine.html_templates.html_tools import env
 from magine.networks.utils import nx_to_json
 
-Javascript("https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js")
-Javascript(
-    "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js")
-Javascript(
-    "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js")
-Javascript(
-    "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js")
 
-Javascript("https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js")
-Javascript(
-    "https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js")
+def init():
+    _urls = [
+        "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js",
+        "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js",
+        "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js",
+        "https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js",
+        "https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js",
+        "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min"
+    ]
 
-time.sleep(2)
+    # JS_LOADER_FILE = "loader.js"
+    # path = os.path.abspath(os.path.dirname(__file__)) + "/" + JS_LOADER_FILE
+    # js_loader = open(path).read()
+    Javascript(lib=_urls)
+
+
+# init()
+
 
 def display_graph(graph, add_parent=False, layout_algorithm='cose-bilkent',
                   background='#FFFFFF', height=700, width=100):
@@ -50,8 +55,16 @@ def render_graph(graph, add_parent=False):
     u_name = "cy{}".format(uuid.uuid4())
     d['uuid'] = u_name
     d['style_json'] = json.dumps(styles['default'])
-    fname_temp = '{}.html'.format(u_name)
 
+    edge_types = set()
+    for i, j, data in graph.edges(data=True):
+        if 'interactionType' in data:
+            for e in data['interactionType'].split('|'):
+                edge_types.add(e)
+
+    d['edge_list'] = list(edge_types)
+
+    fname_temp = '{}.html'.format(u_name)
     subgraph_html = env.get_template('subgraph.html')
     template = env.get_template('main_view.html')
 

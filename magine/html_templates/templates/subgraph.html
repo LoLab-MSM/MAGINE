@@ -18,7 +18,7 @@
         #{{ uuid }}{
             width: 900px;
             height: 500px;
-            border: 5px solid white;
+            border: 0px solid white;
             box-sizing: border-box;
         }
 
@@ -41,9 +41,8 @@
 
 <div class="row">
     <div class="container-fluid">
-
         <div class="container-fluid">
-
+{#            <div class="panel panel-primary">#}
             <div class="dropdown nav navbar-nav">
                 <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Layout options<span
                         class="caret"></span>
@@ -54,45 +53,27 @@
                     <li><input type='button' id='FlatButton' value='Compact layout (random)'></li>
                 </ul>
             </div>
-            <div class="dropdown nav navbar-nav">
-                <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Color options<span
-                        class="caret"></span>
-                </button>
-                <ul class="dropdown-menu">
-                    <li><input type='button' id='metabolites' value='Highlight metabolites'></li>
-                    <li><input type='button' id='genes' value='Highlight genes/proteins'></li>
-                </ul>
-            </div>
         </div>
+    </div>
         <div id="tools" class="panel panel-primary">
             <div class="panel-heading">Filter edges</div>
             <div class="panel-body">
-                <button id="filter_activate" class="btn btn-success">Activate</button>
-                <button id="filter_inhibit" class="btn btn-success">Inhibit</button>
-                <button id="filter_exp" class="btn btn-success">Expression</button>
-                <button id="filter_rep" class="btn btn-success">Repression</button>
-
-                <button id="filter_chem" class="btn btn-success">Chemical</button>
-                <button id="filter_missing" class="btn btn-success">Indirect</button>
-                <button id="filter_binding" class="btn btn-success">Binding</button>
-
+                {% for t in edge_list|sort %}
+                    <button id="filter_{{ t }}" class="btn btn-success">{{ t|title }}</button>
+                {% endfor %}
             </div>
         </div>
-
-        <div class="col-md-12 col-sm-12 col-lg-12">
-
-            <!-- graph : start -->
-            <div class="panel panel-primary">
-                <div class="panel-heading">Graph</div>
-                <div class="panel-body">
-                    <div id="cy-container">
-                        <div id="{{ uuid }}"></div>
-                    </div>
-
+        <div class="panel panel-primary">
+            <div class="panel-heading">Graph</div>
+            <div class="panel-body">
+                <div id="cy-container">
+                    <div id="{{ uuid }}"></div>
                 </div>
+
             </div>
         </div>
-    </div>
+
+
 </div>
 
 
@@ -181,34 +162,9 @@
                 cy.fit();
             });
         }
-
-        createNewFilter('filter_exp', 'edge[interactionType *= \'expression\']');
-        createNewFilter('filter_rep', 'edge[interactionType *= \'repression\']');
-        createNewFilter('filter_chem', 'edge[interactionType *= \'chemical\']');
-        createNewFilter('filter_missing', 'edge[interactionType *= \'indirect\']');
-        createNewFilter('filter_binding', 'edge[interactionType *= \'binding\']');
-        createNewFilter('filter_inhibit', 'edge[interactionType *= \'inhibit\']');
-        createNewFilter('filter_activate', 'edge[interactionType *= \'activate\']');
-
-
-        var MetaboliteColor = document.getElementById('metabolites');
-        MetaboliteColor.addEventListener('click', function () {
-            cy.style()
-                .selector('node[speciesType = \'compound\']')
-                .style('background-color', 'red')
-                .update()
-            ;
-        });
-
-
-        var GenesColor = document.getElementById('genes');
-        GenesColor.addEventListener('click', function () {
-            cy.style()
-                .selector('node[speciesType = \'gene\']')
-                .style('background-color', 'red')
-                .update()
-            ;
-        });
+        {% for t in edge_list %}
+            createNewFilter("filter_{{ t }}" , 'edge[interactionType *= \'{{ t }}\']');
+        {% endfor %}
 
     }
 

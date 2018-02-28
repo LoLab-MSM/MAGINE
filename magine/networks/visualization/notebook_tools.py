@@ -1,10 +1,12 @@
 import numpy as np
-
+import pandas as pd
 import magine.ontology.enrichment_tools as et
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.networks.ontology_network import OntologyNetworkGenerator
 from magine.networks.visualization.notebooks.view import display_graph, \
     render_graph
+pd.set_option('display.precision', 5)
+pd.set_option('display.max_colwidth', 100)
 
 
 def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
