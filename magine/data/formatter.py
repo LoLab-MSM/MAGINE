@@ -1,11 +1,11 @@
 import os
 import re
 import warnings
+import zipfile
 
 import numpy as np
 import pandas as pd
-import zipfile
-import re
+
 # reload(sys)
 # sys.setdefaultencoding('utf-8')
 
@@ -34,9 +34,9 @@ cols = ['compound', 'compound_id', 'name', 'formula',
 
 rename_met_dict = {
     'max_fold_change_treated_vs_control': "treated_control_fold_change",
-    "anova_p":                            "p_value_group_1_and_group_2",
-    'phase':                              'data_type',
-    "experiment_type":                    "species_type"
+    "anova_p": "p_value_group_1_and_group_2",
+    'phase': 'data_type',
+    "experiment_type": "species_type"
 }
 
 valid_exp_data_types = ['label_free', 'ph_silac', 'silac', 'rna_seq',
@@ -66,7 +66,6 @@ def load_csv(directory=None, filename=None):
         file_location = filename
     else:
         file_location = os.path.join(directory, filename)
-    print(file_location)
     assert os.path.exists(file_location), "Does not exist"
 
     if file_location.endswith('csv'):
@@ -103,7 +102,7 @@ def load_csv(directory=None, filename=None):
         return data
 
 
-def load_from_zip(filename=None):
+def load_from_zip(filename):
     """ Creates a pandas.Dataframe from omics data files
 
     Parameters
@@ -120,9 +119,7 @@ def load_from_zip(filename=None):
 
     data = pd.read_csv(filename, parse_dates=False, low_memory=False)
     if 'time_points' in data:
-        # time = convert_time_to_hours(data['time_points'])
         time = data.apply(convert_time_to_hours, axis=1)
-
         data.loc[:, 'time'] = time
 
     if 'gene' in data.dtypes:
@@ -141,7 +138,6 @@ def load_from_zip(filename=None):
 
     else:
         return data
-
 
 
 def merge_metabolite_row(row):
@@ -225,7 +221,10 @@ def convert_time_to_hours(d):
     elif 'min' in t:
         time = float(t.replace('min', '')) / 60.
     elif 'hr' in t:
-        time = float(t.replace('hr', ''))
+        t = t.replace('hr', '')
+        if 'h' in t:
+            t = t.replace('h', '')
+        time = float(t)
     elif 'h' in t:
         time = float(t.replace('h', ''))
     else:
@@ -235,7 +234,6 @@ def convert_time_to_hours(d):
 
 
 def convert_to_rankable_time(data):
-
     def h_to_hr(row):
         if row['time_points'].endswith('h'):
             return row['time_points'].replace('h', 'hr')
@@ -285,10 +283,13 @@ def process_raptr_zip(filename):
     with zipfile.ZipFile(filename) as zip_file:
         # get the list of files
         names = zip_file.namelist()
-        print(names)
         for i in names:
             filename = zip_file.open(i)
-            if 'subcell' in i:
+            if 'progenesis' in i:
+                df = load_from_zip(filename)
+                df = _process_metabolites(df)
+                all_data.append(df)
+            elif 'subcell' in i:
                 df = load_from_zip(filename)
                 df = _process_subcell_label_free(df)
                 all_data.append(df)
@@ -308,10 +309,7 @@ def process_raptr_zip(filename):
                 df = load_from_zip(filename)
                 df = _process_label_free(df, subcell=False)
                 all_data.append(df)
-            elif 'progenesis' in i:
-                df = load_from_zip(filename)
-                df = _process_metabolites(df)
-                all_data.append(df)
+
             elif 'cuffdiff' in i:
                 df = load_from_zip(filename)
                 df = _process_rna_seq(df)
@@ -392,7 +390,6 @@ def process_list_of_dir_and_add_attribute(list_dim2):
             d = _process_metabolites(d)
 
         d['sample_id'] = sample_id
-        # d['time'] = d['sample_id'].astype(str) + '_' + d['time'].astype(str)
         all_df.append(d)
     return pd.concat(all_df)
 
@@ -409,7 +406,6 @@ def _process_rna_seq(data):
     pandas.Dataframe
     """
     data = data[data['status'] == 'OK']
-    # data = data[~data.gene.str.contains(',')]
     s = data['gene'].str.split(',').apply(pd.Series, 1).stack()
     s.index = s.index.droplevel(-1)
     s.name = 'gene'
@@ -417,16 +413,6 @@ def _process_rna_seq(data):
     data = data.join(s)
     data.loc[:, 'p_value_group_1_and_group_2'] = data['q_value']
     data['treated_control_fold_change'] = data['fold_change']
-
-    # data['treated_control_fold_change'] = \
-    #     np.exp2(data['log2_fold_change'].astype(float))
-    #
-    # crit_1 = data['treated_control_fold_change'] < 1
-    #
-    # data.loc[crit_1, 'treated_control_fold_change'] = \
-    #     -1. / data[crit_1]['treated_control_fold_change']
-
-    print(data[data['significant_flag']].shape)
 
     crit = (data['fold_change'] > 0) & (data['fold_change'] < 1.5) & \
            data['significant_flag']
@@ -439,7 +425,6 @@ def _process_rna_seq(data):
     data.loc[:, 'protein'] = data['gene'] + '_rnaseq'
     data.loc[:, 'data_type'] = 'rna_seq'
     data.loc[:, 'species_type'] = 'protein'
-    print(data[data['significant_flag']].shape)
 
     return data[out_gene_cols]
 
@@ -477,8 +462,7 @@ def _process_metabolites(data):
     data['compound'] = data['compound'].str.encode('utf-8')
 
     data['compound_id'] = data['compound_id'].astype(str)
-    # data['compound_id'] = data['compound_id'].str.decode('utf-8', 'replace')
-    # data.loc[] = np.nan
+
     # checks to see if all data types exist
     for i in progensis_list_of_attributes:
         if i not in data.dtypes:
@@ -520,10 +504,6 @@ def _process_label_free(data, subcell=False):
 
     label_free['protein'] = label_free.apply(find_mod, axis=1)
 
-    # label_free['significant_flag'] = False
-    # label_free.loc[
-    #     label_free['Final Significance'] == 1, 'significant_flag'] = True
-
     label_free['species_type'] = 'protein'
     if 'experiment_type' in label_free:
         label_free['data_type'] = \
@@ -545,7 +525,6 @@ def _process_label_free(data, subcell=False):
                'time_points', 'significant_flag', 'species_type']
 
     label_free = label_free[headers]
-    # label_free.to_csv('label_free.csv', index=False)
     return label_free
 
 
@@ -784,7 +763,7 @@ def log2_normalize_df(df, fold_change):
     greater_than = tmp_df[fold_change] > 0
     less_than = tmp_df[fold_change] < 0
     tmp_df.loc[greater_than, 'log2fc'] = np.log2(
-            tmp_df[greater_than][fold_change].astype(np.float64))
+        tmp_df[greater_than][fold_change].astype(np.float64))
     tmp_df.loc[less_than, 'log2fc'] = -np.log2(
-            -tmp_df[less_than][fold_change].astype(np.float64))
+        -tmp_df[less_than][fold_change].astype(np.float64))
     return tmp_df
