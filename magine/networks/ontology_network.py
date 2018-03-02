@@ -85,13 +85,13 @@ class OntologyNetworkGenerator(object):
         term_1_good = {i for i in term_1 if i in self.nodes}
         term_2_good = {i for i in term_2 if i in self.nodes}
 
-        for i in term_1_good:
-            for j in term_2_good:
-                if i != j:
-                    if (i, j) in self.edges:
-                        genes_in_go.add(i)
-                        genes_in_go.add(j)
-                        counter += 1
+        for i, j in itertools.product(term_1_good, term_2_good):
+            if i != j:
+                if (i, j) in self.edges:
+                    genes_in_go.add(i)
+                    genes_in_go.add(j)
+                    counter += 1
+
         return counter, genes_in_go
 
     def create_network_from_list(self, list_of_ontology_terms,
@@ -148,6 +148,15 @@ class OntologyNetworkGenerator(object):
         sp_to_term = dict()
         sp_to_label = dict()
 
+        def _add(gene_name, term_name, all_term, label):
+            if gene_name in all_term:
+                if gene_name in sp_to_term:
+                    sp_to_term[gene_name].add(term_name)
+                    sp_to_label[gene_name].add(label)
+                else:
+                    sp_to_term[gene_name] = {term_name}
+                    sp_to_label[gene_name] = {label}
+
         for i in itertools.combinations(list_of_go_terms, 2):
             term1 = i[0]
             term2 = i[1]
@@ -159,27 +168,13 @@ class OntologyNetworkGenerator(object):
             a_to_b, b_to_a, genes_in_edges = self._count_neighbors(term_1,
                                                                    term_2)
 
-            def _add_to(all_terms, term, gene_name, label):
-                if gene_name in all_terms:
-                    sp_to_term[gene_name].add(term)
-                    sp_to_label[gene_name].add(label)
-
-            def _add_new(all_terms, term, gene_name, label):
-                if gene_name in all_terms:
-                    sp_to_term[gene_name] = {term}
-                    sp_to_label[gene_name] = {label}
             # add to graph if at least one edge found between terms
             if a_to_b or b_to_a:
                 x = self.mol_network.subgraph(genes_in_edges)
                 mol_net.add_edges_from(x.edges(data=True))
                 for gene in genes_in_edges:
-                    if gene in sp_to_term:
-                        _add_to(term_1, term1, gene, label_1)
-                        _add_to(term_2, term2, gene, label_2)
-                    else:
-                        _add_new(term_1, term1, gene, label_1)
-                        _add_new(term_2, term2, gene, label_2)
-
+                    _add(gene, term1, term_1, label_1)
+                    _add(gene, term2, term_2, label_2)
                 all_genes.update(genes_in_edges)
             else:
                 print('No edges between {} and {}'.format(label_1, label_2))
@@ -211,8 +206,8 @@ class OntologyNetworkGenerator(object):
             terms = sp_to_term[i]
             assert len(labels) == len(terms), \
                 'len(labels) should equal len(terms)'
-            mol_net.node[i]['termName'] = ','.join(i for i in sorted(labels))
-            mol_net.node[i]['terms'] = ','.join(i for i in sorted(terms))
+            mol_net.node[i]['termName'] = ','.join(sorted(labels))
+            mol_net.node[i]['terms'] = ','.join(sorted(terms))
 
         self.molecular_network = mol_net
         if save_name is not None:
