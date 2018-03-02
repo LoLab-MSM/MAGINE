@@ -191,7 +191,7 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     if out_dir is not None:
         html_out = os.path.join(out_dir, html_out)
 
-    ht.write_filter_table(tmp, html_out, 'MAGINE GO analysis')
+    ht.write_filter_table(tmp, html_out)
     """
     items = []
     for i, row in data.iterrows():
@@ -324,7 +324,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     # if out_dir is not None:
     #     html_filename = os.path.join(out_dir, html_filename)
     # write_single_table(local_data, html_filename, idx_key)
-    ht.write_filter_table(local_data, html_filename, idx_key)
+    ht.write_filter_table(local_data, html_filename)
 
 
 def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
@@ -568,7 +568,7 @@ def _save_matplotlib_output(ax, save_name, out_dir, image_format, x_point_dict,
     plt.axhline(y=-np.log2(1.5), linestyle='--')
 
     handles, labels = ax.get_legend_handles_labels()
-    lgd = ax.legend(handles, labels, loc='best',
+    lgd = ax.legend(handles, labels, loc='best', ncol=3,
                     bbox_to_anchor=(1.01, 1.0))
 
     tmp_savename = "{}.{}".format(save_name, image_format)

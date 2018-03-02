@@ -12,7 +12,7 @@ from magine.plotting.species_plotting import plot_dataframe, \
     plot_list_of_genes, \
     plot_list_of_metabolites
 
-pandas.set_option('display.max_colwidth', -1)
+# pandas.set_option('display.max_colwidth', -1)
 # column definitions
 fold_change = 'treated_control_fold_change'
 flag = 'significant_flag'

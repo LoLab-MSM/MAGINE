@@ -332,6 +332,37 @@ class NetworkSubgraphs(object):
 
         return graph
 
+    def expand_neighbors(self, network, nodes=None, up_stream=False,
+                         down_stream=False, include_list=None,
+                         expand_all=False):
+        if include_list is None:
+            include_list = set(self.nodes.copy())
+        else:
+            include_list = self._check_node(include_list)
+        if expand_all:
+            nodes = set(network.nodes())
+        elif isinstance(nodes, str):
+            nodes = [nodes]
+        elif not isinstance(nodes, (list, set)):
+            print("Must provide node, list of nodes, or expand_all=True")
+            return network
+
+        new_net = network.copy()
+
+        for i in nodes:
+            if up_stream:
+                upstream = self.network.predecessors(i)
+                up_nodes = [g for g in upstream if g in include_list]
+                for n in up_nodes:
+                    new_net.add_edge(n, i, **self.network[n][i])
+
+            if down_stream:
+                downstream = self.network.successors(i)
+                up_nodes = [g for g in downstream if g in include_list]
+                for n in up_nodes:
+                    new_net.add_edge(i, n, **self.network[i][n])
+        return new_net
+
     def measured_networks_over_time(self, graph, colors, prefix):
         """ Adds color to a network over time
         

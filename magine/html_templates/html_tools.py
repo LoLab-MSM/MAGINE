@@ -18,9 +18,13 @@ range_ = {'GO_id', 'ref', 'depth', 'enrichment_score', 'rank',
           'z_score', 'pvalue', 'treated_control_fold_change',
           'p_value_group_1_and_group_2'}
 
-chosen_ = {'GO_name', 'slim', 'aspect', 'term_name', 'term_id', 'genes',
-           'significant_flag', 'db', 'sample_id', 'sample_index'}
-
+chosen_ = {
+    'GO_name', 'slim', 'aspect',
+    'term_name', 'term_id', 'category', 'db',  # enrichr
+    'significant_flag',
+    'sample_id', 'sample_index'
+}
+multi_choose = {'genes'}
 auto_complete_ = {'protein', 'gene'}
 
 
@@ -29,21 +33,45 @@ def _add_filter(column_num, f_type):
     if f_type == 'range':
         _default.update({'filter_type': 'range_number'})
     if f_type == 'select':
-        _default.update({'column_data_type': 'html',
-                         'filter_type': "multi_select",
-                         'select_type': "chosen"})
+        _default.update({
+            'select_type_options': {'width': "150px"},
+            'filter_type': 'multi_select',
+            'select_type': 'select2'
+        })
     if f_type == 'chosen':
-        _default.update({'column_data_type': 'html',
-                         'filter_type': "','",
+        _default.update({  # 'column_data_type': 'html',
+            # 'filter_type': "','",
                          'select_type': "multi_select",
-                         'select_type_options': '{width:"150px"}',
-                         'text_data_delimiter': "select2"},
+            'select_type_options': {'width': "150px"},
+            'text_data_delimiter': "chosen"},
                         )
     if f_type == 'auto_complete':
         _default.update({'filter_type': "auto_complete",
-                         'text_data_delimiter': "','"})
-
+                         'text_data_delimiter': ","})
+    if f_type == 'multichoose':
+        _default.update({
+            'filter_type': "multi_select",
+            'select_type': "select2",
+            'select_type_options': {'width': "150px"},
+            'text_data_delimiter': ","},
+        )
     return _default
+
+
+def create_yadf_filters(table):
+    _format_dict = []
+    for n, i in enumerate(table.columns):
+        if i in range_:
+            _format_dict.append(_add_filter(n, 'range'))
+        elif i in chosen_:
+            _format_dict.append(_add_filter(n, 'select'))
+        elif i in auto_complete_:
+            _format_dict.append(_add_filter(n, 'complete'))
+        elif i in multi_choose:
+            _format_dict.append(_add_filter(n, 'multichoose'))
+        else:
+            print(i)
+    return _format_dict
 
 
 def write_single_table(table, title, save_name=None):
@@ -94,18 +122,7 @@ def write_filter_table(table, save_name):
         f.write(html_out)
 
 
-def create_yadf_filters(table):
-    _format_dict = []
-    for n, i in enumerate(table.columns):
-        if len(i) == 2:
-            i, j = i
-        if i in range_:
-            _format_dict.append(_add_filter(n, 'range'))
-        if i in chosen_:
-            _format_dict.append(_add_filter(n, 'select'))
-        if i in auto_complete_:
-            _format_dict.append(_add_filter(n, 'complete'))
-    return _format_dict
+
 
 
 def _format_simple_table(data):
@@ -128,7 +145,8 @@ def _format_simple_table(data):
                   'treated_control_fold_change']
 
     int_type = ['n_genes', 'rank']
-
+    tmp_table['term_name'] = tmp_table['term_name'].str.replace('/', '\\')
+    tmp_table['term_name'] = tmp_table['term_name'].str.replace("'", '\'')
     for i in data.columns:
         if i in float_type:
             tmp_table[i] = tmp_table[i].fillna(0)

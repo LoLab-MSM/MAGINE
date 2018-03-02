@@ -149,6 +149,29 @@ class TestSubgraphs(object):
 
         assert set(g.nodes()) == layer_2_down
 
+    def test_expand(self):
+        g = nx.DiGraph()
+        g.add_edge('BCL2L1', 'BAX')
+        g.add_edge('MAPK14', 'BAX')
+
+        ng = self.net_sub.expand_neighbors(g, 'BAX', down_stream=True)
+
+        trues = {
+            'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14', 'CYCS',
+            'CAPN1', 'BCL2'
+        }
+        assert trues == set(ng.nodes())
+
+        includes = ['CASP3', 'CAPN2']
+
+        ng = self.net_sub.expand_neighbors(g, 'BAX', down_stream=True,
+                                           include_list=includes)
+
+        trues = {
+            'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14',
+        }
+        assert trues == set(ng.nodes())
+
 
 if __name__ == '__main__':
     t = TestSubgraphs()
