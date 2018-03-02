@@ -507,13 +507,13 @@ def run_enrichment_for_project(exp_data, project_name):
         'ENCODE_TF_ChIP-seq_2015',
 
         # cell types
-        # 'Jensen_TISSUES',
-        # 'Human_Gene_Atlas',
-        # 'Tissue_Protein_Expression_from_ProteomicsDB',
-        # 'ARCHS4_Cell-lines',
-        # 'ARCHS4_Tissues',
-        # 'Cancer_Cell_Line_Encyclopedia',
-        # 'NCI-60_Cancer_Cell_Lines',
+        'Jensen_TISSUES',
+        'Human_Gene_Atlas',
+        'Tissue_Protein_Expression_from_ProteomicsDB',
+        'ARCHS4_Cell-lines',
+        'ARCHS4_Tissues',
+        'Cancer_Cell_Line_Encyclopedia',
+        'NCI-60_Cancer_Cell_Lines',
 
         # pertubations
         'Kinase_Perturbations_from_GEO_down',
@@ -522,14 +522,14 @@ def run_enrichment_for_project(exp_data, project_name):
         'LINCS_L1000_Kinase_Perturbations_up',
         'Ligand_Perturbations_from_GEO_down',
         'Ligand_Perturbations_from_GEO_up',
-        # 'Old_CMAP_down',
-        # 'Old_CMAP_up',
+        'Old_CMAP_down',
+        'Old_CMAP_up',
 
         # phenotypes
-        # 'Human_Phenotype_Ontology',
-        # 'MGI_Mammalian_Phenotype_2017',
-        # 'Jensen_DISEASES',
-        # 'dbGaP',
+        'Human_Phenotype_Ontology',
+        'MGI_Mammalian_Phenotype_2017',
+        'Jensen_DISEASES',
+        'dbGaP',
         'DrugMatrix',
         'Drug_Perturbations_from_GEO_2014',
 
@@ -540,10 +540,14 @@ def run_enrichment_for_project(exp_data, project_name):
     _dir = 'enrichment_output'
     if not os.path.exists(_dir):
         os.mkdir(_dir)
+    print("Running {} databases, might tight awhile".format(len(local_dbs)))
 
     def _run(samples, timepoints, category):
+        print("Running {}".format(category))
         for genes, sample_id in zip(samples, timepoints):
+            print('\t time point = {}'.format(sample_id))
             for i in local_dbs:
+                print("\t\t database = {}".format(i))
                 current = "{}-{}-{}-{}".format(str(i), str(category),
                                                str(sample_id), project_name)
 
