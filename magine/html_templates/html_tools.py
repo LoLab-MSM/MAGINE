@@ -21,7 +21,7 @@ range_ = {'GO_id', 'ref', 'depth', 'enrichment_score', 'rank',
 chosen_ = {
     'GO_name', 'slim', 'aspect',
     'term_name', 'term_id', 'category', 'db',  # enrichr
-    'significant_flag',
+    'significant_flag', 'project_name',
     'sample_id', 'sample_index'
 }
 multi_choose = {'genes'}
@@ -122,9 +122,6 @@ def write_filter_table(table, save_name):
         f.write(html_out)
 
 
-
-
-
 def _format_simple_table(data):
     """
     formats precession of data for outputs
@@ -145,8 +142,8 @@ def _format_simple_table(data):
                   'treated_control_fold_change']
 
     int_type = ['n_genes', 'rank']
-    tmp_table['term_name'] = tmp_table['term_name'].str.replace('/', '\\')
-    tmp_table['term_name'] = tmp_table['term_name'].str.replace("'", '\'')
+    # tmp_table['term_name'] = tmp_table['term_name'].str.replace('/', '\\')
+    # tmp_table['term_name'] = tmp_table['term_name'].str.replace("'", '\'')
     for i in data.columns:
         if i in float_type:
             tmp_table[i] = tmp_table[i].fillna(0)

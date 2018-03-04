@@ -810,6 +810,7 @@ _maps = {
 
 
 def standardize_edge_types(network):
+    to_remove = set()
     for source, target, data in network.edges_iter(data=True):
         if 'interactionType' in data:
             edge_type = data['interactionType']
@@ -831,10 +832,12 @@ def standardize_edge_types(network):
                     edge_type.remove('catalyze')
             edge_type = '|'.join(sorted(edge_type))
             if edge_type == '':
-                network.remove_edge(source, target)
+                # network.remove_edge(source, target)
+                to_remove.add((source, target))
             else:
                 network[source][target]['interactionType'] = edge_type
-
+    for source, target in to_remove:
+        network.remove_edge(source, target)
 
 if __name__ == '__main__':
     g = nx.DiGraph()

@@ -19,8 +19,6 @@ class BioGridDownload(object):
     def __init__(self):
         self.url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-ALL-LATEST.tab2.zip'
         self.url2 = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-CHEMICALS-LATEST.chemtab.zip'
-        self._reverse = {"<-", "?-"}
-        self._forward = {"->", "->"}
         self._db_name = 'BioGrid'
         self._cm = ChemicalMapper()
 
@@ -30,7 +28,7 @@ class BioGridDownload(object):
                          delimiter='\t',
                          error_bad_lines=False,
                          low_memory=False,
-                         encoding='utf-8',
+                         encoding='utf8',
                          )
         df = df[df['Organism'] == 'Homo sapiens']
         chem_cols = ['Official Symbol',
@@ -84,18 +82,22 @@ class BioGridDownload(object):
         df['chemType'] = df['Chemical Type']
         df['gene'] = df['Official Symbol']
         df['interactionType'] = df['Action']
+
         df['pubmedId'] = df['Pubmed ID'].astype(str)
-        df['databaseSource'] = 'BioGrid'
+
+        df['databaseSource'] = self._db_name
         # keep the same info as other databases (store as compound)
         df.loc[df['chemType'] == 'small molecule', 'chemType'] = 'compound'
 
         # converting to ascii so we can export play with networkx
-        df['chemName'] = df['Chemical Name'].str.encode('ascii', 'replace')
+        df['chemName'] = df['Chemical Name'].astype(str)
 
         # convert names to HMBD, or keep it the same if HMDB doesnt exist
         df['target'] = df.apply(convert_to_name, axis=1)
+
         # add HMDB attribute if it exists
-        df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1)
+        df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1).astype(str)
+
 
         # create network
         chem_g = nx.from_pandas_dataframe(
@@ -108,7 +110,8 @@ class BioGridDownload(object):
         # df.to_csv('biogrid.csv')
 
         chem_table = df.as_matrix(
-            ['gene', 'target', 'chemName', 'chemType', 'hmdbID']
+            ['gene', 'target', 'chemName', 'chemType', 'hmdbID'
+             ]
         )
 
         nodes_added = set()
@@ -116,7 +119,7 @@ class BioGridDownload(object):
         def add_node(node, node_type, chem_name=None, hmdb=None):
             attr = dict()
             attr['speciesType'] = node_type
-            attr['databaseSource'] = 'BioGrid'
+            attr['databaseSource'] = self._db_name
             if chem_name is not None:
                 attr['chemName'] = chem_name
             if hmdb is not None:
@@ -136,7 +139,8 @@ class BioGridDownload(object):
                 add_node(gene, 'gene')
 
             if chemical not in nodes_added:
-                add_node(chemical, chem_typed, chemical_name, hmdb_id)
+                add_node(chemical, chem_typed, chemical_name, hmdb_id
+                         )
         # nx.write_gml(chem_g, 'biogrid_chem_only.gml')
         return chem_g
 
@@ -153,6 +157,7 @@ class BioGridDownload(object):
         table = pd.read_csv(io.BytesIO(urlopen(self.url).read()),
                             compression='zip',
                             delimiter='\t',
+                            encoding='utf8',
                             error_bad_lines=False,
                             low_memory=False)
 
@@ -196,7 +201,7 @@ class BioGridDownload(object):
         def _add_node(node):
             if node not in added_genes:
                 protein_graph.add_node(node,
-                                       databaseSource='BioGrid',
+                                       databaseSource=self._db_name,
                                        speciesType='gene')
                 added_genes.add(node)
 

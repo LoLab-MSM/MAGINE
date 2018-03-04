@@ -48,6 +48,16 @@ class ChemicalMapper(object):
         self.drugbank_to_hmdb = dict()
         self.hmdb_accession_to_protein = dict()
         self.hmdb_main_accession_to_protein = dict()
+
+        self._instance_filename = os.path.join(id_mapping_dir,
+                                               'hmdb_instance.p')
+        try:
+            self.reload()
+        except:
+            self.load()
+
+    def load(self):
+
         _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
 
         if not os.path.exists(_filename):
@@ -63,7 +73,6 @@ class ChemicalMapper(object):
                 # "secondary_accessions": lambda x: x.split("|"),
             }
         )
-
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
 
         self.database['main_accession'] = self.database['accession']
@@ -72,14 +81,6 @@ class ChemicalMapper(object):
         new_df = tidy_split(sub_db, 'secondary_accessions', '|')
         new_df['accession'] = new_df['secondary_accessions']
         self.database = pd.concat([self.database, new_df])
-        self._instance_filename = os.path.join(id_mapping_dir,
-                                               'hmdb_instance.p')
-        try:
-            self.reload()
-        except:
-            self.load()
-
-    def load(self):
 
         self.hmdb_accession_to_chemical_name = self._to_dict("accession",
                                                              "name")
@@ -97,6 +98,7 @@ class ChemicalMapper(object):
 
         self.drugbank_to_hmdb = self._to_dict('drugbank_id', 'main_accession')
         self.synonyms_to_hmdb = None
+
         self.save()
 
     def _to_dict(self, key, value):
