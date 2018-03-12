@@ -1,3 +1,5 @@
+import types
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -78,6 +80,19 @@ def create_wordcloud(df, save_name=None):
         plt.title(save_name)
         plt.show()
         plt.close()
+
+    def plot(self, save_name):
+        plt.figure()
+        plt.imshow(self, interpolation='bilinear')
+        plt.xticks([])
+        plt.yticks([])
+        plt.axis("off")
+        plt.savefig('{}.png'.format(save_name), bbox_inches='tight', dpi=150)
+        plt.title(save_name)
+        plt.show()
+        plt.close()
+
+    wordcloud.plot = types.MethodType(plot, wordcloud)
     return wordcloud, word_dict
 
 
