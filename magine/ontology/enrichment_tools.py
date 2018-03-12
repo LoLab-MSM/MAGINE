@@ -57,9 +57,12 @@ def filter_dataframe(df, p_value=None, combined_score=None, db=None,
         copy_df = copy_df[copy_df['combined_score'] >= combined_score]
     if isinstance(rank, (int, float)):
         copy_df = copy_df[copy_df['rank'] <= rank]
-    copy_df = filter_db(copy_df, db, 'db')
-    copy_df = filter_db(copy_df, sample_id, 'sample_id')
-    copy_df = filter_db(copy_df, category, 'category')
+    if db is not None:
+        copy_df = filter_db(copy_df, db, 'db')
+    if sample_id is not None:
+        copy_df = filter_db(copy_df, sample_id, 'sample_id')
+    if category is not None:
+        copy_df = filter_db(copy_df, category, 'category')
     copy_df.sort_values('combined_score', inplace=True, ascending=False)
     return copy_df
 
