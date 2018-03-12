@@ -1,5 +1,4 @@
 import itertools
-import multiprocessing as mp
 from functools import partial
 
 import networkx as nx
@@ -9,7 +8,7 @@ import magine.networks.utils
 
 
 class NetworkSubgraphs(object):
-    def __init__(self, network, exp_data=None):
+    def __init__(self, network, exp_data=None, pool=None):
         """
         Generates network subgraphs
 
@@ -22,6 +21,20 @@ class NetworkSubgraphs(object):
         self.network = network
         self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
+        self._paths = None
+
+        if pool is None:
+            self.map = map
+        else:
+            self.map = pool.map
+
+        # self._paths = dict(self.map(partial(f, network=self.network), self.nodes))
+
+    def find_paths(self, source, target):
+        try:
+            return self._paths[source][target]
+        except:
+            return None
 
     def shortest_paths_between_two_proteins(self, node_1, node_2,
                                             bidirectional=False,
@@ -481,7 +494,7 @@ class NetworkSubgraphs(object):
         if len(sg.nodes()) == 0:
             print("Warning: no nodes were found in include_only list! "
                   "Network doesn't contain any nodes!")
-        nt.delete_disconnected_network(sg)
+        # nt.delete_disconnected_network(sg)
         return sg
 
     @staticmethod
@@ -512,6 +525,39 @@ def _nx_find_path(network, node1, node2, single_path=False):
         return []
 
 
+def f(node, network):
+    paths = tuple(
+        all_shortest_paths(network, node, p) for p in network.nodes() if
+        p != node)
+    paths = [x for x in paths if x]
+    _dicts = {}
+    for i in paths:
+        _dicts[i[-1]] = i[:-1]
+    return node, paths
+
+    return node, nx.single_source_shortest_path(network, node)
+
+
+def all_shortest_paths(G, source, target):
+    pred = nx.predecessor(G, source)
+    if target not in pred:
+        return []
+    stack = [[target, 0]]
+    top = 0
+    while top >= 0:
+        node, i = stack[top]
+        if node == source:
+            return [p for p, n in reversed(stack[:top + 1])]
+        if len(pred[node]) > i:
+            top += 1
+            if top == len(stack):
+                stack.append([pred[node][i], 0])
+            else:
+                stack[top] = [pred[node][i], 0]
+        else:
+            stack[top - 1][1] += 1
+            top -= 1
+
 if __name__ == '__main__':
     net = nx.DiGraph()
     net.add_node('X', label='XX', db='test1')
@@ -523,21 +569,24 @@ if __name__ == '__main__':
     net.add_edge('D', 'Y', intType='here')
     net.add_edge('R', 'D', intType='here')
     net.add_edge('X', 'R', intType='here')
-    x = NetworkSubgraphs(net)
+
 
     # print(x.neighbors('X').nodes())
     # print(x.downstream_network_of_specie('D').nodes())
     # quit()
     # print(x.path_between_2('X', ['Y', 'B', 'C']))
     # quit()
-    # print(x.path_between_2('X', 'Y', all_shortest_paths=True))
 
-    pool = mp.Pool(4)
+    # print(x.shortest_paths_between_two_proteins('X', 'Y', bidirectional=True, single_path=False).edges())
+    x = NetworkSubgraphs(net)
+
+    print(x.find_paths('X', 'Y'))
+    print(x.find_paths('Y', 'X'))
+
     g = x.shortest_paths_between_lists(['X', 'Y', 'B', 'D'], single_path=True,
-                                       draw=False, save_name='test',
-                                       pool=pool
-                                       )
+                                       draw=False, save_name='test')
 
     print(g.nodes())
     # g = x.shortest_paths_between_lists(['X', 'Y'], single_path=False,  draw=True, save_name='test')
     # print(g.nodes(data=True))
+
