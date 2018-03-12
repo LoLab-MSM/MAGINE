@@ -13,9 +13,9 @@ exp_data.time_series_volcano(exp_data_type='LF',
 exp_data.create_table_of_data(save_name='cisplatin_data_counts',
                               sig=True)
 
-create_venn3(exp_data.proteomics_over_time[0],
-             exp_data.proteomics_over_time[1],
-             exp_data.proteomics_over_time[2],
+create_venn3(exp_data.proteomics_by_sample_id[0],
+             exp_data.proteomics_by_sample_id[1],
+             exp_data.proteomics_by_sample_id[2],
              '1hr', '24hr', '48hr',
              save_name='protein_over_time'
              )

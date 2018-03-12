@@ -19,11 +19,11 @@ if __name__ == '__main__':
                    type_of_species='protein')
 
     e = Enrichr(exp_data=data)
-    html_1 = e.run_key_dbs(data.proteomics_over_time,
-                           data.proteomics_time_points,
+    html_1 = e.run_key_dbs(data.proteomics_by_sample_id,
+                           data.proteomics_sample_ids,
                            save_name='proteomics_changed', create_html=True)
 
-    html_2 = e.run_key_dbs(data.rna_over_time, data.rna_time_points,
+    html_2 = e.run_key_dbs(data.rna_over_time, data.rna_sample_ids,
                            save_name='rnaseq_changed', create_html=True)
 
     gene_html = 'genes.html'
