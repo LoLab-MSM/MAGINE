@@ -88,11 +88,14 @@ all_dbs = [
     'Drug_Perturbations_from_GEO_2014',
 
 ]
+
+
 class Enrichr(object):
-    def __init__(self, exp_data=None):
-        self._url = 'http://amp.pharm.mssm.edu/Enrichr/addList'
+    def __init__(self, exp_data=None, verbose=False):
+        self._url = 'http://amp.pharm.mssm.edu/Enrichr'
         self._valid_libs = _valid_libs
         self.exp_data = exp_data
+        self.verbose = verbose
 
     def print_valid_libs(self):
         """
@@ -104,8 +107,7 @@ class Enrichr(object):
         for lib_name in sorted(self._valid_libs):
             print(lib_name)
 
-    def run(self, list_of_genes, gene_set_lib='GO_Biological_Process_2017',
-            verbose=False):
+    def run(self, list_of_genes, gene_set_lib='GO_Biological_Process_2017'):
         """
 
         Parameters
@@ -115,8 +117,6 @@ class Enrichr(object):
         gene_set_lib : str
             Name of gene set library
             To print options use Enrichr.print_valid_libs
-        verbose : bool
-            print information
         Returns
         -------
 
@@ -125,35 +125,34 @@ class Enrichr(object):
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
             return pd.DataFrame()
-        if verbose:
+        if self.verbose:
             print("Running Enrichr with gene set {}".format(gene_set_lib))
 
         description = 'Example gene list'
         genes_str = '\n'.join(list_of_genes)
         payload = {
-            'list':        (None, genes_str),
+            'list': (None, genes_str),
             'description': (None, description)
         }
 
-        response = requests.post(self._url, files=payload)
+        response = requests.post(self._url + '/addList', files=payload)
         if not response.ok:
             raise Exception('Error analyzing gene list')
 
         data = json.loads(response.text)
         user_list_id = data['userListId']
 
-        enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/enrich'
-        query_string = '?userListId=%s&backgroundType=%s'
-        response = requests.get(
-                enrichment_url + query_string % (user_list_id, gene_set_lib)
-        )
+        query = '{url}/{function}?userListId={list_id}&backgroundType={lib}'
+
+        q = query.format(url=self._url, function='enrich',
+                         list_id=user_list_id, lib=gene_set_lib)
+
+        response = requests.get(q)
+
         if not response.ok:
+            # quick way to wait for response
             while not response.ok:
-                response = requests.get(
-                        enrichment_url + query_string % (
-                        user_list_id, gene_set_lib)
-                )
-                # raise Exception('Error fetching enrichment results')
+                response = requests.get(q)
 
         data = json.loads(response.text)
         #####
@@ -177,28 +176,69 @@ class Enrichr(object):
                 'adj_p_value', 'genes', 'n_genes']
 
         df = pd.DataFrame(list_of_dict, columns=cols)
+        df = df[~df['term_name'].isnull()]
         if df.shape[0] == 0:
             return df[cols]
 
+        def _cut_word(row):
+            term_name = row['term_name']
+
+            replace_pairs = [
+                ('mus musculus', 'mus'),
+                ('homo sapiens', 'hsa'),
+                ('rattus norvegicus', 'rat'),
+                ('oncorhynchus mykiss', 'onc_mykiss'),
+                ('macaca fascicularis', 'mfa'),
+                ('oryzias latipes', 'ola'),
+                ('sus scrofa', 'ssc'),
+                ('danio rerio', 'dre'),
+                ('bos taurus', 'bta'),
+                ('dictyostelium discoideum', 'dicty'),
+                ('myzus persicae', 'm.persicae'),
+                ('staphylococcus aureus', 's.aureus'),
+                ('escherichia coli', 'e.coli'),
+                ('pseudomonas aeruginosa', 'p.aeruginosa'),
+                ('drosophila melanogaste', 'fly'),
+                ('mycobacterium tuberculosis', 'm.tuberculosis'),
+                ('hordeum vulgare', 'h.vulgare'),
+                (' (mouse)', '_mus'),
+                (' (human)', '_hsa'),
+            ]
+            if len(term_name.split('_Homo sapiens')) > 1:
+                return term_name.split('_Homo sapiens')[0] + '_hsa'
+            elif len(term_name.split('Mus musculus')) > 1:
+                return term_name.split('Mus musculus')[0] + '_mus'
+            elif term_name.endswith('hg19'):
+                return term_name.replace('hg19', '_hsa')
+            elif term_name.endswith('mm9'):
+                return term_name.replace('mm9', '_mus')
+            for i, j in replace_pairs:
+                if i in term_name:
+                    return term_name.replace(i, j)
+            return term_name
+
+        def get_go_id(row):
+            s = row['term_name']
+            go_id = re.search(r'\((GO.*?)\)', s).group(1)
+            return go_id
+
+        def remove_term_id(row):
+            s = row['term_id']
+            term = row['term_name'].replace('(' + s + ')', '')
+            if term[-1] == ' ':
+                term = term[:-1]
+            return term
+
         if gene_set_lib.startswith('GO') and not gene_set_lib.endswith('b'):
-            def get_go_id(row):
-                s = row['term_name']
-                go_id = re.search(r'\((GO.*?)\)', s).group(1)
-                return go_id
-
-            def remove_term_id(row):
-                s = row['term_id']
-                term = row['term_name'].replace('(' + s + ')', '')
-                if term[-1] == ' ':
-                    term = term[:-1]
-                return term
-
             df['term_id'] = df.apply(get_go_id, axis=1)
             df['term_name'] = df.apply(remove_term_id, axis=1)
-
             cols.insert(0, 'term_id')
-        if verbose:
+
+        df['term_name'] = df.apply(_cut_word, axis=1)
+
+        if self.verbose:
             print("Done calling Enrichr.")
+
         return df[cols]
 
     def run_samples(self, sample_lists, sample_ids,
@@ -307,7 +347,8 @@ class Enrichr(object):
             # Create a Pandas Excel writer using XlsxWriter as the engine.
             writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
                                     engine='xlsxwriter')
-            print("\tWorking on {}".format(db_name))
+            if self.verbose:
+                print("\tWorking on {}".format(db_name))
             html_list = []
             for i in list_dbs:
                 print("\t\tRunning {}".format(i))
@@ -328,7 +369,7 @@ class Enrichr(object):
 
                 html_list.append(dict(database=i,
                                       filename='{}_filter.html'.format(
-                                              outdir)))
+                                          outdir)))
                 if len(i) > 30:
                     i = i[:30]
                 df.to_excel(writer, sheet_name=i, freeze_panes=(1, 2))
@@ -354,17 +395,16 @@ class Enrichr(object):
         db : str
         Returns
         -------
+        pandas.DataFrame
 
         """
 
         def _run(list_dbs):
-            # Create a Pandas Excel writer using XlsxWriter as the engine.
             all_df = []
             for i in list_dbs:
-                print("Running {}".format(i))
-
+                if self.verbose:
+                    print("\tRunning {}".format(i))
                 df = self.run(list_of_genes=list_g, gene_set_lib=i)
-
                 if df is None:
                     continue
                 df['db'] = i
@@ -385,48 +425,70 @@ class Enrichr(object):
             return _run(all_dbs)
 
     def run_sample_set_of_dbs(self, sample_lists, sample_ids, save_name=None,
-                              db='pathways', ):
+                              db='pathways', pivot=True):
+        """
+
+        Parameters
+        ----------
+        sample_lists : list_like
+            List of lists, where each list contains genes
+        sample_ids : list_like
+            Names for each sample_id
+        save_name : str, optional
+            If you want to save the output as csv/xlsx
+        db : str
+            Database set. Default "pathway"
+
+        pivot: bool
+            Pivot the table to have additional columns per sample_id
+
+        Returns
+        -------
+
+        """
         assert isinstance(sample_lists, list), "Please provide list of lists"
         assert isinstance(sample_lists[0],
                           list), "Please provide list of lists"
         df_all = []
         for i, j in zip(sample_lists, sample_ids):
-            # print("{} / {}".format(j, sample_ids))
-            df = self.run_set_of_dbs(i, db)
-            df['sample_id'] = j
-            df_all.append(df)
-        df_all = pd.concat(df_all)
-        non_sig = []
-        for i, g in df_all.groupby(['term_name', 'db']):
-            if len(g[g['adj_p_value'] < 0.05]) == 0:
-                non_sig.append(i[0])
 
-        df_all = df_all[~df_all['term_name'].isin(non_sig)]
+            if self.verbose:
+                print("{} / {}".format(j, sample_ids))
+            tmp_df = self.run_set_of_dbs(i, db)
+            tmp_df['sample_id'] = j
+            df_all.append(tmp_df)
 
+        # stack results
+        df_all = pd.concat(df_all, ignore_index=True)
+        # filter terms that are not significant in any sample
+        df_all = self._filter_sig_across_term(df_all)
+
+        # verify results exist
         if df_all.shape[0] == 0:
             print("No significant terms for {}".format(db))
             return None
-        index = ['term_name', 'db']
 
-        if 'term_id' in list(df.columns):
-            index.insert(0, 'term_id')
+        if pivot:
+            # pivot output
+            index = ['term_name', 'db']
 
-        p_df = pd.pivot_table(df_all, index=index,
-                              columns='sample_id',
-                              values=['term_name', 'rank', 'p_value',
-                                      'z_score',
-                                      'combined_score', 'adj_p_value',
-                                      'genes'],
-                              aggfunc='first', fill_value=np.nan
-                              )
+            if 'term_id' in list(df_all.columns):
+                index.insert(0, 'term_id')
+
+            df_all = pd.pivot_table(
+                df_all, index=index, columns='sample_id', aggfunc='first',
+                fill_value=np.nan,
+                values=['term_name', 'rank', 'p_value', 'z_score',
+                        'combined_score', 'adj_p_value', 'genes'],
+            )
 
         if save_name:
-            p_df.to_excel('{}_enricher.xlsx'.format(save_name),
-                          merge_cells=True)
+            df_all.to_excel('{}_enricher.xlsx'.format(save_name),
+                            merge_cells=True)
             df_all.to_csv('{}_enrichr.csv'.format(save_name), index=False,
                           encoding='utf8')
 
-        return p_df
+        return df_all
 
     def run_dbs_testing(self, list_g, labels, save_name):
         """
@@ -482,6 +544,27 @@ class Enrichr(object):
             df.to_excel(writer, sheet_name=i.split('_')[0], merge_cells=True,
                         freeze_panes=(2, 1), encoding='utf8')
         writer.save()
+
+    @staticmethod
+    def _filter_sig_across_term(data, p_value_thresh=0.05):
+        """
+        removes terms if there are no significant terms
+        Parameters
+        ----------
+        data : pd.DataFrame
+
+
+        Returns
+        -------
+
+        """
+        non_sig = []
+        for i, g in data.groupby(['term_name', 'db']):
+            if len(g[g['adj_p_value'] <= p_value_thresh]) == 0:
+                non_sig.append(i[0])
+
+        return data[~data['term_name'].isin(non_sig)]
+
 
 
 def run_enrichment_for_project(exp_data, project_name):
@@ -602,12 +685,24 @@ def get_background_list(lib_name):
     enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary'
     query_string = '?userListId&libraryName=%s'
     response = requests.get(
-            enrichment_url + query_string % lib_name
+        enrichment_url + query_string % lib_name
     )
     if not response.ok:
         raise Exception('Error fetching enrichment results')
 
-    return json.loads(response.text)
+    results = json.loads(response.text)
+
+    term_to_gene = []
+    assert lib_name in results
+
+    for term, genes_dict in results[lib_name]['terms'].items():
+        genes = sorted(set(i for i in genes_dict))
+        # term_to_gene[term] = '|'.join(sorted(set(i for i in genes_dict)))
+        term_to_gene.append(
+            dict(term=term.lower(), gene_list=genes, n_genes=len(genes))
+        )
+
+    return term_to_gene
 
 
 def write_table_to_html(data, save_name='index', out_dir=None,
@@ -670,8 +765,7 @@ def write_table_to_html(data, save_name='index', out_dir=None,
 
 
 def create_gene_plots(data, list_of_terms, save_name, out_dir=None,
-                      exp_data=None,
-                      run_parallel=False, plot_type='plotly'):
+                      exp_data=None, run_parallel=False, plot_type='plotly'):
     """ Creates a figure for each GO term in data
 
     Data should be a result of running calculate_enrichment.
@@ -801,9 +895,7 @@ if __name__ == '__main__':
     print(df.head(10))
     print(list(df['term_name'])[0:2])
 
-    # lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
-    #          ['BIM', 'CASP3']]
-    # df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
-    # df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')
-    # print(get_background_list('ENCODE_TF_ChIP-seq_2015'))
-    # print(df.head(10))
+    lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
+             ['BIM', 'CASP3']]
+    df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
+    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')
