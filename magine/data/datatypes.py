@@ -47,7 +47,7 @@ class ExperimentalData(object):
     list_metabolites
     metabolites
     list_sig_metabolites
-    timepoints
+    sample_ids
     rna_seq
     proteins_non_rna
     proteins_sig
@@ -72,11 +72,11 @@ class ExperimentalData(object):
     proteomics_up
     proteomics_down
     proteomics_sign_changed
-    proteomics_time_points
-    rna_time_points
-    proteomics_over_time
-    proteomics_up_over_time
-    proteomics_down_over_time
+    proteomics_sample_ids
+    rna_sample_ids
+    proteomics_by_sample_id
+    proteomics_up_by_sample_id
+    proteomics_down_by_sample_id
     sig_species_over_time
     sig_species_up_over_time
     sig_species_down_over_time
@@ -145,7 +145,7 @@ class ExperimentalData(object):
             self.data['compound_id'] = None
         # return
         self.exp_methods = self.data[exp_method].unique()
-        self.timepoints = sorted(list(self.data[sample_id].unique()))
+        self.sample_ids = sorted(list(self.data[sample_id].unique()))
 
         self.proteins = df[df[species_type] == protein].dropna(subset=[gene])
 
@@ -188,13 +188,13 @@ class ExperimentalData(object):
         self.proteomics_down = dict()
         self.proteomics_sign_changed = dict()
 
-        self.proteomics_time_points = np.sort(
+        self.proteomics_sample_ids = np.sort(
             self.proteins[sample_id].unique())
-        self.rna_time_points = np.sort(self.rna_seq[sample_id].unique())
+        self.rna_sample_ids = np.sort(self.rna_seq[sample_id].unique())
 
-        self.proteomics_over_time = []
-        self.proteomics_up_over_time = []
-        self.proteomics_down_over_time = []
+        self.proteomics_by_sample_id = []
+        self.proteomics_up_by_sample_id = []
+        self.proteomics_down_by_sample_id = []
 
         self.sig_species_over_time = dict()
         self.sig_species_up_over_time = dict()
@@ -211,7 +211,7 @@ class ExperimentalData(object):
         self.rna_down_over_time = []
         self.rna_up_over_time = []
         self.rna_down_over_time = []
-        for i in self.proteomics_time_points:
+        for i in self.proteomics_sample_ids:
             self.proteomics_up[i] = self.return_proteomics(sample_id_name=i,
                                                            significant=True,
                                                            fold_change_value=1)
@@ -219,11 +219,12 @@ class ExperimentalData(object):
                 sample_id_name=i, significant=True, fold_change_value=-1.
             )
             self.proteomics_sign_changed[i] = list(
-                    set(self.proteomics_up[i] + self.proteomics_down[i]))
+                set(self.proteomics_up[i] + self.proteomics_down[i]))
 
-            self.proteomics_over_time.append(self.proteomics_sign_changed[i])
-            self.proteomics_up_over_time.append(self.proteomics_up[i])
-            self.proteomics_down_over_time.append(self.proteomics_down[i])
+            self.proteomics_by_sample_id.append(
+                self.proteomics_sign_changed[i])
+            self.proteomics_up_by_sample_id.append(self.proteomics_up[i])
+            self.proteomics_down_by_sample_id.append(self.proteomics_down[i])
 
             self.genes_over_time.append(self.filter(i, True, mol_type='genes'))
             self.genes_up_over_time.append(self.filter(i, True, 'up', 'genes'))
@@ -234,14 +235,15 @@ class ExperimentalData(object):
             self.sig_species_up_over_time[i] = self.filter(i, True, 'up')
             self.sig_species_down_over_time[i] = self.filter(i, True, 'down')
 
-        for i in self.rna_time_points:
+        for i in self.rna_sample_ids:
             self.rna_up[i] = self.return_rna(sample_id_name=i,
                                              significant=True,
                                              fold_change_value=1)
             self.rna_down[i] = self.return_rna(sample_id_name=i,
                                                significant=True,
                                                fold_change_value=-1.)
-            self.rna_sig_changed[i] = list(set(self.rna_up[i] + self.rna_down[i]))
+            self.rna_sig_changed[i] = list(
+                set(self.rna_up[i] + self.rna_down[i]))
             self.rna_over_time.append(self.rna_sig_changed[i])
             self.rna_up_over_time.append(self.rna_up[i])
             self.rna_down_over_time.append(self.rna_down[i])
@@ -486,11 +488,12 @@ class ExperimentalData(object):
         -------
 
         """
-        plot_list_of_metabolites(
+        if not isinstance(self.metabolites, list):
+            plot_list_of_metabolites(
                 self.metabolites, list_of_metab=list_of_metabolites,
-            save_name=save_name, out_dir=out_dir, title=title,
-            plot_type=plot_type, image_format=image_format
-        )
+                save_name=save_name, out_dir=out_dir, title=title,
+                plot_type=plot_type, image_format=image_format
+            )
 
     def plot_all_proteins(self, html_file_name, out_dir='proteins',
                           plot_type='plotly', run_parallel=False):
@@ -678,12 +681,13 @@ class ExperimentalData(object):
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
         data = self.data[self.data[exp_method] == exp_data_type].copy()
-        v_plot.volcano_plot(data, save_name=save_name, out_dir=out_dir,
-                            bh_criteria=bh_critera, p_value=p_value,
-                            fold_change_cutoff=fold_change_cutoff,
-                            x_range=x_range, y_range=y_range)
+        fig = v_plot.volcano_plot(data, save_name=save_name, out_dir=out_dir,
+                                  bh_criteria=bh_critera, p_value=p_value,
+                                  fold_change_cutoff=fold_change_cutoff,
+                                  x_range=x_range, y_range=y_range)
+        return fig
 
-    def create_histogram_measurements(self, exp_data_type, save_name,
+    def create_histogram_measurements(self, exp_data_type, save_name=None,
                                       y_range=None, out_dir=None):
         """
         Plots a histogram of data
@@ -723,7 +727,9 @@ class ExperimentalData(object):
         ax.set_yscale('log', basey=10)
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
         ax.set_ylabel('Count', fontsize=16)
-        v_plot.save_plot(fig, save_name, out_dir)
+        if save_name is not None:
+            v_plot.save_plot(fig, save_name, out_dir)
+        return fig
 
     def _check_experiment_type_existence(self, exp_type):
         if exp_type not in self.exp_methods:
@@ -776,6 +782,7 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
 
     Parameters
     ----------
+    data : pandas.DataFrame
     sig: bool
         Flag to summarize significant species only
     save_name: None, str
@@ -844,23 +851,23 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
         plt.tight_layout()
-        plt.savefig('{}.png'.format(save_name), dpi=300,
-                    bbox_inches='tight')
-        plt.close()
+        if save_name is not None:
+            plt.savefig('{}.png'.format(save_name), dpi=300,
+                        bbox_inches='tight')
+
     if save_name is not None:
         t.to_csv('{0}.csv'.format(save_name))
     if write_latex and save_name is not None:
-        _write_to_latex(table=t, save_name=save_name)
+        _write_to_latex(pd_table=t, save_name=save_name)
     return t
 
 
-def _write_to_latex(table, save_name):
+def _write_to_latex(pd_table, save_name):
     filename = '{0}.tex'.format(save_name)
 
     with open(filename, 'wt') as f:
-        st = table.to_latex(
-            column_format='*{{{}}}{{c}}'.format(
-                str(table.shape[0] + 2)))
+        st = pd_table.to_latex(
+            column_format='*{{{}}}{{c}}'.format(str(pd_table.shape[0] + 2)))
         f.write(template.format(st))
 
     if _which('pdflatex'):
