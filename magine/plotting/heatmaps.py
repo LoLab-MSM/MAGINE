@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
 import seaborn as sns
+
+from magine.data.tools import pivot_table
 
 
 def heatmap_from_array(data, convert_to_log=False, yticklabels='auto',
@@ -36,8 +36,8 @@ def heatmap_from_array(data, convert_to_log=False, yticklabels='auto',
     -------
 
     """
-    array = _pivot_table(data, convert_to_log, columns=columns, index=index,
-                         values=values)
+    array = pivot_table(data, convert_to_log, columns=columns, index=index,
+                        values=values)
     if div_colors:
         pal = sns.color_palette("coolwarm", num_colors)
         center = 0
@@ -56,52 +56,3 @@ def heatmap_from_array(data, convert_to_log=False, yticklabels='auto',
                     center=center)
 
     return fig
-
-
-def _pivot_table(data, convert_to_log, index, columns, values):
-    d_copy = data.copy()
-    if convert_to_log:
-        d_copy = _log2_normalize_df(d_copy, values)
-
-    # remove human suffix from term names
-    if index == 'term_name':
-        d_copy[index] = d_copy.apply(_cut_word, axis=1)
-
-    array = pd.pivot_table(d_copy, index=index,
-                           columns=columns,
-                           values=values)
-    array.fillna(0, inplace=True)
-
-    array.sort_values(by=list(sorted(d_copy[columns].unique())),
-                      ascending=False, inplace=True)
-    return array
-
-
-def _cut_word(row):
-    term_name = row['term_name']
-    if len(term_name.split('_Homo sapiens')):
-        return term_name.split('_Homo sapiens')[0]
-    else:
-        return term_name
-
-
-def _log2_normalize_df(df, column):
-    """
-
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        dataframe of fold changes
-    column : str
-        column that contains fold change values
-
-    Returns
-    -------
-
-    """
-    tmp_df = df.copy()
-    greater_than = tmp_df[column] > 0
-    less_than = tmp_df[column] < 0
-    tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
-    tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
-    return tmp_df
