@@ -1,8 +1,9 @@
 import os
+
 import matplotlib.pyplot as plt
 import numpy as np
-from magine.data.formatter import log2_normalize_df
 
+from magine.data.formatter import log2_normalize_df
 
 fold_change = 'treated_control_fold_change'
 flag = 'significant_flag'
@@ -60,7 +61,7 @@ def add_volcano_plot(fig_axis, section_0, section_1, section_2):
     fig_axis.set_xlabel('log$_2$ Fold Change', fontsize=16)
 
 
-def volcano_plot(data, save_name, out_dir=None,
+def volcano_plot(data, save_name=None, out_dir=None,
                  bh_criteria=False, p_value=0.1, fold_change_cutoff=1.5,
                  x_range=None, y_range=None):
     """ Create a volcano plot of data
@@ -111,7 +112,9 @@ def volcano_plot(data, save_name, out_dir=None,
     if x_range is not None:
         ax.set_xlim(x_range[0], x_range[1])
         fig.tight_layout()
-    save_plot(fig, save_name=save_name, out_dir=out_dir)
+    if save_name is not None:
+        save_plot(fig, save_name=save_name, out_dir=out_dir)
+    return fig
 
 
 def save_plot(fig, save_name, out_dir=None, image_type='png'):
@@ -137,4 +140,3 @@ def save_plot(fig, save_name, out_dir=None, image_type='png'):
     if out_dir is not None:
         save_name = os.path.join(out_dir, save_name)
     fig.savefig(save_name, bbox_inches='tight')
-    plt.close()
