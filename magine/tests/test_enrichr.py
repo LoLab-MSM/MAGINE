@@ -25,7 +25,7 @@ def test_multi_sample():
 
 def test_multi_sample_plotting():
     e = Enrichr()
-    up = exp_data.proteomics_up_over_time
+    up = exp_data.proteomics_up_by_sample_id
     df2 = e.run_samples(up,
                         ['1', '2', '3'],
                         save_name='enrichr_test',
