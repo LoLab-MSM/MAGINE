@@ -8,6 +8,13 @@ import pathos.multiprocessing as mp
 from magine.networks.utils import nx_to_dot
 
 try:
+    from IPython.display import Image, display
+
+    IPYTHON = True
+except:
+    IPYTHON = False
+
+try:
     import pygraphviz as pyg
 except ImportError:
     pyg = None
@@ -52,7 +59,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
     -------
 
     """
-    from IPython.display import Image, display
+
     if len(list_of_lists) != len(color_list):
         print('Length of list of data must equal len of color list')
         return
@@ -78,7 +85,8 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
                                      fontsize=13)
         s_name = ' %s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
-        display(Image(s_name))
+        if IPYTHON:
+            display(Image(s_name))
         string += s_name
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
@@ -115,7 +123,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
     -------
 
     """
-    from IPython.display import Image, display
+
     if len(list_up) != len(list_down):
         print('Length of list of data must equal len of color list')
         return
@@ -148,7 +156,8 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         s_name = '%s_%04i.png ' % (save_name, n)
         graph2.draw(s_name, prog='dot')
         string += s_name
-        display(Image(s_name))
+        if IPYTHON:
+            display(Image(s_name))
 
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name

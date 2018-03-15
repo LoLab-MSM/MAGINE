@@ -81,7 +81,7 @@ class TestSubgraphs(object):
         assert set(g.edges()) == edges
 
         list_2 = {'CASP3', 'BAX', 'TP53'}
-        g = self.net_sub.shortest_paths_between_lists(list_2, draw=True,
+        g = self.net_sub.shortest_paths_between_lists(list_2, draw=False,
                                                       single_path=False,
                                                       save_name='smaller_list')
         nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8',
