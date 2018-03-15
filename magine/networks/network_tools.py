@@ -76,7 +76,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.2',
                                      fontsize=13)
-        s_name = '%s_%04i.png' % (save_name, n)
+        s_name = ' %s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
         display(Image(s_name))
         string += s_name
