@@ -1,55 +1,0 @@
-Äcnetworkx.classes.digraph
-DiGraph
-q)Åq}q(Unodeq}q(Uhsa:5424q}q(UspeciesTypeqUgeneq	UdatabaseSourceq
-UKEGGquU
-hsa:728340q}q(hUgeneqh
-huUhsa:3978q}q(hUgeneh
-huU	hsa:56655q}q(hUgeneqh
-huUhsa:1161q}q(hUgeneh
-huU	hsa:10714q}q(hh	h
-huUhsa:2968q}q(hUgeneh
-huU	hsa:29935q}q(hUgeneqh
-huUhsa:902q}q(hUgeneh
-huUhsa:2967q}q (hUgeneh
-huUhsa:2966q!}q"(hhh
-huUhsa:2965q#}q$(hUgeneh
-huUhsa:6117q%}q&(hhh
-huUhsa:5887q'}q((hUgeneq)h
-huU	hsa:57804q*}q+(hh	h
-huUhsa:5981q,}q-(hUgeneq.h
-huUhsa:5982q/}q0(hh.h
-huUhsa:5983q1}q2(hh.h
-huUhsa:5984q3}q4(hh.h
-huUhsa:5985q5}q6(hh.h
-huUhsa:2068q7}q8(hUgeneh
-huUhsa:6118q9}q:(hhh
-huU	hsa:54107q;}q<(hhh
-huUhsa:5111q=}q>(hUgeneh
-huUhsa:5886q?}q@(hh)h
-huUhsa:2067qA}qB(hUgeneh
-huU
-hsa:404672qC}qD(hUgeneh
-huUhsa:100533467qE}qF(hUgeneqGh
-huUhsa:9978qH}qI(hUgeneh
-huUhsa:1642qJ}qK(hUgeneh
-huUhsa:7507qL}qM(hUgeneh
-huUhsa:1069qN}qO(hUgeneh
-huUhsa:1643qP}qQ(hUgeneh
-huUhsa:1022qR}qS(hUgeneh
-huU
-hsa:730394qT}qU(hhh
-huUhsa:2071qV}qW(hUgeneh
-huUhsa:8451qX}qY(hUgeneqZh
-huUhsa:2073q[}q\(hhGh
-huUhsa:2072q]}q^(hUgeneh
-huUhsa:2074q_}q`(hUgeneh
-huUhsa:7508qa}qb(hUgeneh
-huUhsa:8450qc}qd(hhZh
-huUhsa:5427qe}qf(hhh
-huUhsa:4331qg}qh(hUgeneh
-huUhsa:5426qi}qj(hhh
-huUhsa:6119qk}ql(hhh
-huUhsa:5425qm}qn(hh	h
-huuUnode_dict_factoryqoc__builtin__
-dict
-qpUedge_attr_dict_factoryqqhpUsuccqr}qs(h}h}h}h}h}h}h}h}h}h}h!}h#}h%}h'}h*}h,}h/}h1}h3}h5}h7}h9}h;}h=}h?}hA}hC}hE}hH}hJ}hL}hN}hP}hR}hT}hV}hX}h[}h]}h_}ha}hc}he}hg}hi}hk}hm}uUedgeqthsUgraphqu}Uadjlist_dict_factoryqvhpUadjqwhsUpredqx}qy(h}h}h}h}h}h}h}h}h}h}h!}h#}h%}h'}h*}h,}h/}h1}h3}h5}h7}h9}h;}h=}h?}hA}hC}hE}hH}hJ}hL}hN}hP}hR}hT}hV}hX}h[}h]}h_}ha}hc}he}hg}hi}hk}hm}uub.
