@@ -145,7 +145,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.3',
                                      fontsize=13)
-        s_name = '%s_%04i.png' % (save_name, n)
+        s_name = '%s_%04i.png ' % (save_name, n)
         graph2.draw(s_name, prog='dot')
         string += s_name
         display(Image(s_name))
