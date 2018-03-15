@@ -130,8 +130,8 @@
         <graphics name="NAGS, AGAS, ARGA" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="228" y="363" width="46" height="17"/>
     </entry>
-    <entry id="50" name="ko:K00930 ko:K12659 ko:K22478" type="ortholog" reaction="rn:R02649"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00930+K12659+K22478">
+    <entry id="50" name="ko:K00930 ko:K12659" type="ortholog" reaction="rn:R02649"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K00930+K12659">
         <graphics name="K00930..." fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="328" y="364" width="46" height="17"/>
     </entry>

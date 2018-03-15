@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE pathway SYSTEM "http://www.kegg.jp/kegg/xml/KGML_v0.7.2_.dtd">
-<!-- Creation date: Feb 15, 2018 11:38:32 +0900 (GMT+9) -->
+<!-- Creation date: Feb 5, 2018 13:45:26 +0900 (GMT+9) -->
 <pathway name="path:hsa04151" org="hsa" number="04151"
          title="PI3K-Akt signaling pathway"
          image="http://www.kegg.jp/kegg/pathway/hsa/hsa04151.png"
@@ -105,8 +105,8 @@
         <graphics name="IRS1, HIRS-1" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="304" y="424" width="46" height="17"/>
     </entry>
-    <entry id="21" name="hsa:1436 hsa:1956 hsa:1969 hsa:2064 hsa:2065 hsa:2066 hsa:2260 hsa:2261 hsa:2263 hsa:2264 hsa:2321 hsa:2322 hsa:2324 hsa:3480 hsa:3643 hsa:3791 hsa:3815 hsa:4233 hsa:4804 hsa:4914 hsa:4915 hsa:5156 hsa:5159 hsa:7010" type="gene"
-        link="http://www.kegg.jp/dbget-bin/www_bget?hsa:1436+hsa:1956+hsa:1969+hsa:2064+hsa:2065+hsa:2066+hsa:2260+hsa:2261+hsa:2263+hsa:2264+hsa:2321+hsa:2322+hsa:2324+hsa:3480+hsa:3643+hsa:3791+hsa:3815+hsa:4233+hsa:4804+hsa:4914+hsa:4915+hsa:5156+hsa:5159+hsa:7010">
+    <entry id="21" name="hsa:1436 hsa:1956 hsa:1969 hsa:2260 hsa:2261 hsa:2263 hsa:2264 hsa:2321 hsa:2322 hsa:2324 hsa:3480 hsa:3643 hsa:3791 hsa:3815 hsa:4233 hsa:4804 hsa:4914 hsa:4915 hsa:5156 hsa:5159 hsa:7010" type="gene"
+        link="http://www.kegg.jp/dbget-bin/www_bget?hsa:1436+hsa:1956+hsa:1969+hsa:2260+hsa:2261+hsa:2263+hsa:2264+hsa:2321+hsa:2322+hsa:2324+hsa:3480+hsa:3643+hsa:3791+hsa:3815+hsa:4233+hsa:4804+hsa:4914+hsa:4915+hsa:5156+hsa:5159+hsa:7010">
         <graphics name="CSF1R, C-FMS, CD115, CSF-1R, CSFR, FIM2, FMS, HDLS, M-CSF-R..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="209" y="342" width="46" height="17"/>
     </entry>
@@ -215,8 +215,8 @@
         <graphics name="Cell cycle" fgcolor="#000000" bgcolor="#FFFFFF"
              type="roundrectangle" x="1180" y="554" width="110" height="25"/>
     </entry>
-    <entry id="43" name="hsa:1435 hsa:1942 hsa:1943 hsa:1944 hsa:1945 hsa:1946 hsa:1950 hsa:2069 hsa:2246 hsa:2247 hsa:2248 hsa:2249 hsa:2250 hsa:2251 hsa:2252 hsa:2253 hsa:2254 hsa:2255 hsa:2277 hsa:2323 hsa:26281 hsa:26291 hsa:27006 hsa:284 hsa:285 hsa:3082 hsa:3479 hsa:3481 hsa:3630 hsa:374 hsa:4254 hsa:4803 hsa:4908 hsa:4909 hsa:51378 hsa:5154 hsa:5155 hsa:5228 hsa:56034 hsa:627 hsa:7039 hsa:7422 hsa:7423 hsa:7424 hsa:80310 hsa:8074 hsa:8817 hsa:8822 hsa:8823 hsa:9965" type="gene"
-        link="http://www.kegg.jp/dbget-bin/www_bget?hsa:1435+hsa:1942+hsa:1943+hsa:1944+hsa:1945+hsa:1946+hsa:1950+hsa:2069+hsa:2246+hsa:2247+hsa:2248+hsa:2249+hsa:2250+hsa:2251+hsa:2252+hsa:2253+hsa:2254+hsa:2255+hsa:2277+hsa:2323+hsa:26281+hsa:26291+hsa:27006+hsa:284+hsa:285+hsa:3082+hsa:3479+hsa:3481+hsa:3630+hsa:374+hsa:4254+hsa:4803+hsa:4908+hsa:4909+hsa:51378+hsa:5154+hsa:5155+hsa:5228+hsa:56034+hsa:627+hsa:7039+hsa:7422+hsa:7423+hsa:7424+hsa:80310+hsa:8074+hsa:8817+hsa:8822+hsa:8823+hsa:9965">
+    <entry id="43" name="hsa:1435 hsa:1942 hsa:1943 hsa:1944 hsa:1945 hsa:1946 hsa:1950 hsa:2246 hsa:2247 hsa:2248 hsa:2249 hsa:2250 hsa:2251 hsa:2252 hsa:2253 hsa:2254 hsa:2255 hsa:2277 hsa:2323 hsa:26281 hsa:26291 hsa:27006 hsa:284 hsa:285 hsa:3082 hsa:3479 hsa:3481 hsa:3630 hsa:4254 hsa:4803 hsa:4908 hsa:4909 hsa:51378 hsa:5154 hsa:5155 hsa:5228 hsa:56034 hsa:627 hsa:7039 hsa:7422 hsa:7423 hsa:7424 hsa:80310 hsa:8074 hsa:8817 hsa:8822 hsa:8823 hsa:9965" type="gene"
+        link="http://www.kegg.jp/dbget-bin/www_bget?hsa:1435+hsa:1942+hsa:1943+hsa:1944+hsa:1945+hsa:1946+hsa:1950+hsa:2246+hsa:2247+hsa:2248+hsa:2249+hsa:2250+hsa:2251+hsa:2252+hsa:2253+hsa:2254+hsa:2255+hsa:2277+hsa:2323+hsa:26281+hsa:26291+hsa:27006+hsa:284+hsa:285+hsa:3082+hsa:3479+hsa:3481+hsa:3630+hsa:4254+hsa:4803+hsa:4908+hsa:4909+hsa:51378+hsa:5154+hsa:5155+hsa:5228+hsa:56034+hsa:627+hsa:7039+hsa:7422+hsa:7423+hsa:7424+hsa:80310+hsa:8074+hsa:8817+hsa:8822+hsa:8823+hsa:9965">
         <graphics name="CSF1, CSF-1, MCSF..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="121" y="342" width="46" height="17"/>
     </entry>

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE pathway SYSTEM "http://www.kegg.jp/kegg/xml/KGML_v0.7.2_.dtd">
-<!-- Creation date: Feb 19, 2018 11:35:09 +0900 (GMT+9) -->
+<!-- Creation date: Feb 8, 2018 15:52:50 +0900 (GMT+9) -->
 <pathway name="path:hsa05210" org="hsa" number="05210"
          title="Colorectal cancer"
          image="http://www.kegg.jp/kegg/pathway/hsa/hsa05210.png"
@@ -125,9 +125,9 @@
         <graphics name="APC2, APCL..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="680" y="250" width="46" height="17"/>
     </entry>
-    <entry id="25" name="hsa:5604 hsa:5605" type="gene"
-        link="http://www.kegg.jp/dbget-bin/www_bget?hsa:5604+hsa:5605">
-        <graphics name="MAP2K1, CFC3, MAPKK1, MEK1, MKK1, PRKMK1..." fgcolor="#000000" bgcolor="#BFFFBF"
+    <entry id="25" name="hsa:5604" type="gene"
+        link="http://www.kegg.jp/dbget-bin/www_bget?hsa:5604">
+        <graphics name="MAP2K1, CFC3, MAPKK1, MEK1, MKK1, PRKMK1" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="604" y="403" width="46" height="17"/>
     </entry>
     <entry id="26" name="hsa:5594 hsa:5595" type="gene"
@@ -584,6 +584,9 @@
     <relation entry1="68" entry2="78" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
     </relation>
+    <relation entry1="79" entry2="75" type="PPrel">
+        <subtype name="activation" value="--&gt;"/>
+    </relation>
     <relation entry1="75" entry2="72" type="PCrel">
         <subtype name="activation" value="--&gt;"/>
     </relation>
@@ -603,9 +606,5 @@
     <relation entry1="77" entry2="76" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
         <subtype name="phosphorylation" value="+p"/>
-    </relation>
-    <relation entry1="79" entry2="75" type="PPrel">
-        <subtype name="activation" value="--&gt;"/>
-        <subtype name="indirect effect" value="..&gt;"/>
     </relation>
 </pathway>

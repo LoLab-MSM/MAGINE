@@ -255,9 +255,9 @@
         <graphics name="PNP, NP, PRO1837, PUNP" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1356" y="716" width="46" height="17"/>
     </entry>
-    <entry id="191" name="ko:K01241 ko:K06966" type="ortholog" reaction="rn:R00182"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K01241+K06966">
-        <graphics name="K01241..." fgcolor="#000000" bgcolor="#FFFFFF"
+    <entry id="191" name="ko:K01241" type="ortholog" reaction="rn:R00182"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K01241">
+        <graphics name="K01241" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="1237" y="580" width="46" height="17"/>
     </entry>
     <entry id="192" name="hsa:4860" type="gene" reaction="rn:R02297"
@@ -327,7 +327,7 @@
     </entry>
     <entry id="206" name="hsa:124583 hsa:955 hsa:957 hsa:9583" type="gene" reaction="rn:R00328"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:124583+hsa:955+hsa:957+hsa:9583">
-        <graphics name="CANT1, DBQD, DBQD1, EDM7, SCAN-1, SCAN1, SHAPY..." fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="CANT1, DBQD, DBQD1, SCAN-1, SCAN1, SHAPY..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="558" y="426" width="46" height="17"/>
     </entry>
     <entry id="207" name="hsa:3251" type="gene" reaction="rn:R01132"
@@ -727,7 +727,7 @@
     </entry>
     <entry id="303" name="hsa:124583 hsa:955 hsa:957 hsa:9583" type="gene" reaction="rn:R00961"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:124583+hsa:955+hsa:957+hsa:9583">
-        <graphics name="CANT1, DBQD, DBQD1, EDM7, SCAN-1, SCAN1, SHAPY..." fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="CANT1, DBQD, DBQD1, SCAN-1, SCAN1, SHAPY..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="942" y="369" width="46" height="17"/>
     </entry>
     <entry id="307" name="ko:K10213" type="ortholog" reaction="rn:R01770"

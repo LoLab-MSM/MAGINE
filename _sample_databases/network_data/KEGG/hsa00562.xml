@@ -152,7 +152,7 @@
     </entry>
     <entry id="70" name="hsa:138429 hsa:23396 hsa:8394 hsa:8395" type="gene" reaction="rn:R03469"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:138429+hsa:23396+hsa:8394+hsa:8395">
-        <graphics name="PIP5KL1, PIPKH..." fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="PIP5KL1, PIPKH, bA203J24.5..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="558" y="209" width="46" height="17"/>
     </entry>
     <entry id="71" name="hsa:5289" type="gene" reaction="rn:R03362"

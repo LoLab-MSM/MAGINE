@@ -97,7 +97,7 @@
     </entry>
     <entry id="73" name="hsa:10352 hsa:7453" type="gene" reaction="rn:R03664"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:10352+hsa:7453">
-        <graphics name="WARS2, NEMMLAS, TrpRS..." fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="WARS2, TrpRS..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="875" y="1057" width="46" height="17"/>
     </entry>
     <entry id="74" name="hsa:123263" type="gene" reaction="rn:R03940"

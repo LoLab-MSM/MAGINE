@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE pathway SYSTEM "http://www.kegg.jp/kegg/xml/KGML_v0.7.2_.dtd">
-<!-- Creation date: Feb 19, 2018 10:52:01 +0900 (GMT+9) -->
+<!-- Creation date: Nov 29, 2017 11:36:11 +0900 (GMT+9) -->
 <pathway name="path:hsa00561" org="hsa" number="00561"
          title="Glycerolipid metabolism"
          image="http://www.kegg.jp/kegg/pathway/hsa/hsa00561.png"
@@ -93,7 +93,7 @@
     <entry id="50" name="hsa:26007" type="gene" reaction="rn:R01011"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:26007">
         <graphics name="TKFC, DAK, NET45" fgcolor="#000000" bgcolor="#BFFFBF"
-             type="rectangle" x="157" y="309" width="46" height="17"/>
+             type="rectangle" x="157" y="320" width="46" height="17"/>
     </entry>
     <entry id="51" name="ko:K06116 ko:K06117" type="ortholog" reaction="rn:R00841"
         link="http://www.kegg.jp/dbget-bin/www_bget?K06116+K06117">
@@ -405,11 +405,6 @@
         <graphics name="C00631" fgcolor="#000000" bgcolor="#FFFFFF"
              type="circle" x="215" y="117" width="8" height="8"/>
     </entry>
-    <entry id="135" name="ko:K05878 ko:K05879 ko:K05881" type="ortholog" reaction="rn:R01012"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K05878+K05879+K05881">
-        <graphics name="K05878..." fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="157" y="330" width="46" height="17"/>
-    </entry>
     <relation entry1="57" entry2="61" type="ECrel">
         <subtype name="compound" value="77"/>
     </relation>
@@ -592,8 +587,8 @@
     </relation>
     <reaction id="38" name="rn:R02250" type="irreversible">
         <substrate id="71" name="cpd:C00422"/>
-        <product id="82" name="cpd:C00162"/>
         <product id="72" name="cpd:C00641"/>
+        <product id="82" name="cpd:C00162"/>
     </reaction>
     <reaction id="39" name="rn:R02251" type="irreversible">
         <substrate id="81" name="cpd:C00040"/>
@@ -610,8 +605,8 @@
     </reaction>
     <reaction id="44" name="rn:R02687" type="irreversible">
         <substrate id="72" name="cpd:C00641"/>
-        <product id="82" name="cpd:C00162"/>
         <product id="98" name="cpd:C01885"/>
+        <product id="82" name="cpd:C00162"/>
     </reaction>
     <reaction id="45" name="rn:R02241" type="irreversible">
         <substrate id="87" name="cpd:C00040"/>
@@ -654,8 +649,8 @@
     </reaction>
     <reaction id="62" name="rn:R01350" type="irreversible">
         <substrate id="71" name="cpd:C00422"/>
-        <product id="82" name="cpd:C00162"/>
         <product id="72" name="cpd:C00641"/>
+        <product id="82" name="cpd:C00162"/>
     </reaction>
     <reaction id="63" name="rn:R04470" type="irreversible">
         <substrate id="91" name="cpd:C06037"/>

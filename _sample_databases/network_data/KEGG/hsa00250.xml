@@ -75,11 +75,6 @@
         <graphics name="ASNS, ASNSD, TS11" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="647" y="273" width="46" height="17"/>
     </entry>
-    <entry id="29" name="ko:K22457" type="ortholog" reaction="rn:R01346"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22457">
-        <graphics name="K22457" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="753" y="369" width="46" height="17"/>
-    </entry>
     <entry id="30" name="ko:K09758" type="ortholog" reaction="rn:R00397"
         link="http://www.kegg.jp/dbget-bin/www_bget?K09758">
         <graphics name="K09758" fgcolor="#000000" bgcolor="#FFFFFF"

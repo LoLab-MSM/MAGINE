@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE pathway SYSTEM "http://www.kegg.jp/kegg/xml/KGML_v0.7.2_.dtd">
-<!-- Creation date: Feb 22, 2018 15:06:20 +0900 (GMT+9) -->
+<!-- Creation date: Nov 6, 2014 09:32:28 +0900 (GMT+09:00) -->
 <pathway name="path:hsa03018" org="hsa" number="03018"
          title="RNA degradation"
          image="http://www.kegg.jp/kegg/pathway/hsa/hsa03018.png"
@@ -72,7 +72,7 @@
     </entry>
     <entry id="14" name="hsa:23404" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:23404">
-        <graphics name="EXOSC2, RRP4, Rrp4p, SHRF, hRrp4p, p7" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="EXOSC2, RRP4, Rrp4p, hRrp4p, p7" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="983" y="705" width="46" height="17"/>
     </entry>
     <entry id="15" name="hsa:9652" type="gene"
@@ -107,7 +107,7 @@
     </entry>
     <entry id="21" name="hsa:23404" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:23404">
-        <graphics name="EXOSC2, RRP4, Rrp4p, SHRF, hRrp4p, p7" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="EXOSC2, RRP4, Rrp4p, hRrp4p, p7" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="530" y="109" width="46" height="17"/>
     </entry>
     <entry id="22" name="hsa:23016" type="gene"
@@ -172,7 +172,7 @@
     </entry>
     <entry id="34" name="hsa:23517" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:23517">
-        <graphics name="MTREX, Dob1, KIAA0052, Mtr4, SKIV2L2, fSAP118" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="SKIV2L2, Dob1, KIAA0052, Mtr4, fSAP118" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="477" y="297" width="46" height="17"/>
     </entry>
     <entry id="35" name="hsa:23019" type="gene"
@@ -330,9 +330,9 @@
         <graphics name="HSPD1, CPN60, GROEL, HLD4, HSP-60, HSP60, HSP65, HuCHA60, SPG13" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="430" y="861" width="46" height="17"/>
     </entry>
-    <entry id="66" name="ko:K00937 ko:K22468" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00937+K22468">
-        <graphics name="K00937..." fgcolor="#000000" bgcolor="#FFFFFF"
+    <entry id="66" name="ko:K00937" type="ortholog"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K00937">
+        <graphics name="K00937" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="378" y="883" width="46" height="17"/>
     </entry>
     <entry id="67" name="ko:K00970" type="ortholog"

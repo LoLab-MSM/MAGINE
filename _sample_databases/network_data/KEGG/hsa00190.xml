@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE pathway SYSTEM "http://www.kegg.jp/kegg/xml/KGML_v0.7.2_.dtd">
-<!-- Creation date: Mar 9, 2018 16:28:57 +0900 (GMT+9) -->
+<!-- Creation date: Jun 16, 2015 15:41:14 +0900 (GMT+9) -->
 <pathway name="path:hsa00190" org="hsa" number="00190"
          title="Oxidative phosphorylation"
          image="http://www.kegg.jp/kegg/pathway/hsa/hsa00190.png"
@@ -530,9 +530,9 @@
         <graphics name="PPA2, HSPC124, SCFAI, SCFI, SID6-306..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="954" y="455" width="46" height="17"/>
     </entry>
-    <entry id="107" name="ko:K00937 ko:K22468" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00937+K22468">
-        <graphics name="K00937..." fgcolor="#000000" bgcolor="#FFFFFF"
+    <entry id="107" name="ko:K00937" type="ortholog"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K00937">
+        <graphics name="K00937" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="864" y="455" width="46" height="17"/>
     </entry>
     <entry id="108" name="cpd:C00080" type="compound"
@@ -882,37 +882,37 @@
     </entry>
     <entry id="177" name="hsa:506" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:506">
-        <graphics name="ATP5F1B, ATP5B, ATPMB, ATPSB, HEL-S-271" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5B, ATPMB, ATPSB, HEL-S-271" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="954" y="605" width="46" height="17"/>
     </entry>
     <entry id="178" name="hsa:498" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:498">
-        <graphics name="ATP5F1A, ATP5A, ATP5A1, ATP5AL2, ATPM, COXPD22, HEL-S-123m, MC5DN4, MOM2, OMR, ORM, hATP1" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5A1, ATP5A, ATP5AL2, ATPM, COXPD22, HEL-S-123m, MC5DN4, MOM2, OMR, ORM, hATP1" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="908" y="605" width="46" height="17"/>
     </entry>
     <entry id="179" name="hsa:509" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:509">
-        <graphics name="ATP5F1C, ATP5C, ATP5C1, ATP5CL1" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5C1, ATP5C, ATP5CL1" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1000" y="605" width="46" height="17"/>
     </entry>
     <entry id="180" name="hsa:539" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:539">
-        <graphics name="ATP5PO, ATP5O, ATPO, HMC08D05, OSCP" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5O, ATPO, HMC08D05, OSCP" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="908" y="622" width="46" height="17"/>
     </entry>
     <entry id="181" name="hsa:513" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:513">
-        <graphics name="ATP5F1D, ATP5D" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5D" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1046" y="605" width="46" height="17"/>
     </entry>
     <entry id="182" name="hsa:514" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:514">
-        <graphics name="ATP5F1E, ATP5E, ATPE, MC5DN3" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5E, ATPE, MC5DN3" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1092" y="605" width="46" height="17"/>
     </entry>
     <entry id="183" name="hsa:516 hsa:517 hsa:518" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:516+hsa:517+hsa:518">
-        <graphics name="ATP5MC1, ATP5A, ATP5G, ATP5G1..." fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5G1, ATP5A, ATP5G..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1046" y="622" width="46" height="17"/>
     </entry>
     <entry id="184" name="hsa:4508" type="gene"
@@ -922,22 +922,22 @@
     </entry>
     <entry id="185" name="hsa:515" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:515">
-        <graphics name="ATP5PB, ATP5F1, PIG47" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5F1, PIG47" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1000" y="622" width="46" height="17"/>
     </entry>
     <entry id="186" name="hsa:521" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:521">
-        <graphics name="ATP5ME, ATP5I, ATP5K" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5I, ATP5K" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1138" y="622" width="46" height="17"/>
     </entry>
     <entry id="187" name="hsa:522" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:522">
-        <graphics name="ATP5PF, ATP5, ATP5A, ATP5J, ATPM, CF6, F6" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5J, ATP5, ATP5A, ATPM, CF6, F6" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1000" y="639" width="46" height="17"/>
     </entry>
     <entry id="188" name="hsa:9551" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:9551">
-        <graphics name="ATP5MF, ATP5J2, ATP5JL" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5J2, ATP5JL" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="908" y="639" width="46" height="17"/>
     </entry>
     <entry id="189" name="hsa:4509" type="gene"
@@ -947,7 +947,7 @@
     </entry>
     <entry id="190" name="hsa:10476" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:10476">
-        <graphics name="ATP5PD, ATP5H, ATPQ" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5H, ATPQ" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="1092" y="622" width="46" height="17"/>
     </entry>
     <entry id="191" name="ko:K02143" type="ortholog"
@@ -957,7 +957,7 @@
     </entry>
     <entry id="192" name="hsa:10632" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:10632">
-        <graphics name="ATP5MG, ATP5JG, ATP5L" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="ATP5L, ATP5JG" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="954" y="639" width="46" height="17"/>
     </entry>
     <entry id="193" name="ko:K02117" type="ortholog"
@@ -1094,11 +1094,6 @@
         link="http://www.kegg.jp/dbget-bin/www_bget?K02107">
         <graphics name="K02107" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="1184" y="704" width="46" height="17"/>
-    </entry>
-    <entry id="220" name="ko:K00424 ko:K22501" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00424+K22501">
-        <graphics name="K00424..." fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="734" y="813" width="46" height="17"/>
     </entry>
     <relation entry1="103" entry2="106" type="ECrel">
         <subtype name="compound" value="120"/>

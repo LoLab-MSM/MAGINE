@@ -95,11 +95,6 @@
         <graphics name="XYLB" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="491" y="727" width="46" height="17"/>
     </entry>
-    <entry id="81" name="ko:K09988" type="ortholog" reaction="rn:R01898"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K09988">
-        <graphics name="K09988" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="337" y="764" width="46" height="17"/>
-    </entry>
     <entry id="82" name="ko:K22397" type="ortholog" reaction="rn:R01782"
         link="http://www.kegg.jp/dbget-bin/www_bget?K22397">
         <graphics name="K22397" fgcolor="#000000" bgcolor="#FFFFFF"

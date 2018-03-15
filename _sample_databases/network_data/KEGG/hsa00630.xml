@@ -90,8 +90,8 @@
         <graphics name="K01569" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="911" y="377" width="46" height="17"/>
     </entry>
-    <entry id="103" name="ko:K00122 ko:K00126 ko:K00123 ko:K22515 ko:K00124 ko:K00127" type="ortholog" reaction="rn:R00519"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00122+K00126+K00123+K22515+K00124+K00127">
+    <entry id="103" name="ko:K00122 ko:K00125 ko:K00126 ko:K00123 ko:K00124 ko:K00127" type="ortholog" reaction="rn:R00519"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K00122+K00125+K00126+K00123+K00124+K00127">
         <graphics name="K00122..." fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="932" y="269" width="46" height="17"/>
     </entry>

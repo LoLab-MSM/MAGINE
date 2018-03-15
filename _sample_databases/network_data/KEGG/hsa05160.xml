@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE pathway SYSTEM "http://www.kegg.jp/kegg/xml/KGML_v0.7.2_.dtd">
-<!-- Creation date: Mar 6, 2018 11:43:46 +0900 (GMT+9) -->
+<!-- Creation date: Nov 20, 2017 10:36:35 +0900 (GMT+9) -->
 <pathway name="path:hsa05160" org="hsa" number="05160"
          title="Hepatitis C"
          image="http://www.kegg.jp/kegg/pathway/hsa/hsa05160.png"
@@ -22,7 +22,7 @@
     </entry>
     <entry id="4" name="hsa:7187" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:7187">
-        <graphics name="TRAF3, CAP-1, CAP1, CD40bp, CRAF1, IIAE5, LAP1, RNF118" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="TRAF3, CAP-1, CAP1, CD40bp, CRAF1, IIAE5, LAP1" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="517" y="394" width="46" height="17"/>
     </entry>
     <entry id="5" name="hsa:29110" type="gene"
@@ -252,7 +252,7 @@
     </entry>
     <entry id="50" name="hsa:6654 hsa:6655" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:6654+hsa:6655">
-        <graphics name="SOS1, GF1, GGF1, GINGF, HGF, NS4, SOS-1..." fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="SOS1, GF1, GGF1, GINGF, HGF, NS4..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="311" y="818" width="46" height="17"/>
     </entry>
     <entry id="51" name="hsa:3265 hsa:3845 hsa:4893" type="gene"
@@ -322,7 +322,7 @@
     </entry>
     <entry id="64" name="hsa:7186" type="gene"
         link="http://www.kegg.jp/dbget-bin/www_bget?hsa:7186">
-        <graphics name="TRAF2, MGC:45012, RNF117, TRAP, TRAP3" fgcolor="#000000" bgcolor="#BFFFBF"
+        <graphics name="TRAF2, MGC:45012, TRAP, TRAP3" fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="262" y="1004" width="46" height="17"/>
     </entry>
     <entry id="65" name="hsa:4792" type="gene"
@@ -455,62 +455,32 @@
         <graphics name="K22271" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="659" y="1098" width="46" height="17"/>
     </entry>
-    <entry id="91" name="ko:K22497" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22497">
-        <graphics name="K22497" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="546" y="174" width="46" height="17"/>
-    </entry>
-    <entry id="92" name="ko:K22274" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22274">
-        <graphics name="K22274" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="592" y="174" width="46" height="17"/>
-    </entry>
-    <entry id="93" name="ko:K22273" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22273">
-        <graphics name="K22273" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="592" y="157" width="46" height="17"/>
-    </entry>
-    <entry id="94" name="ko:K22275" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22275">
-        <graphics name="K22275" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="685" y="174" width="46" height="17"/>
-    </entry>
-    <entry id="95" name="ko:K22498" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22498">
-        <graphics name="K22498" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="638" y="182" width="46" height="17"/>
-    </entry>
-    <entry id="96" name="ko:K22472" type="ortholog"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K22472">
-        <graphics name="K22472" fgcolor="#000000" bgcolor="#FFFFFF"
-             type="rectangle" x="731" y="174" width="46" height="17"/>
-    </entry>
-    <entry id="97" name="undefined" type="group">
+    <entry id="91" name="undefined" type="group">
         <graphics fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="517" y="486" width="46" height="34"/>
         <component id="15"/>
         <component id="16"/>
     </entry>
-    <entry id="98" name="undefined" type="group">
+    <entry id="92" name="undefined" type="group">
         <graphics fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="177" y="713" width="46" height="34"/>
         <component id="19"/>
         <component id="20"/>
     </entry>
-    <entry id="99" name="undefined" type="group">
+    <entry id="93" name="undefined" type="group">
         <graphics fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="262" y="1012" width="46" height="34"/>
         <component id="63"/>
         <component id="64"/>
     </entry>
-    <entry id="100" name="undefined" type="group">
+    <entry id="94" name="undefined" type="group">
         <graphics fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="596" y="478" width="46" height="51"/>
         <component id="12"/>
         <component id="13"/>
         <component id="14"/>
     </entry>
-    <entry id="101" name="undefined" type="group">
+    <entry id="95" name="undefined" type="group">
         <graphics fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="596" y="394" width="46" height="34"/>
         <component id="5"/>
@@ -528,7 +498,7 @@
     <relation entry1="10" entry2="4" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
     </relation>
-    <relation entry1="10" entry2="97" type="PPrel">
+    <relation entry1="10" entry2="91" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
     </relation>
     <relation entry1="12" entry2="11" type="PPrel">
@@ -554,10 +524,10 @@
     <relation entry1="46" entry2="47" type="PPrel">
         <subtype name="inhibition" value="--|"/>
     </relation>
-    <relation entry1="18" entry2="98" type="PPrel">
+    <relation entry1="18" entry2="92" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
     </relation>
-    <relation entry1="98" entry2="21" type="PPrel">
+    <relation entry1="92" entry2="21" type="PPrel">
         <subtype name="binding/association" value="---"/>
     </relation>
     <relation entry1="21" entry2="22" type="PPrel">
@@ -634,7 +604,7 @@
     <relation entry1="61" entry2="62" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
     </relation>
-    <relation entry1="62" entry2="99" type="PPrel">
+    <relation entry1="62" entry2="93" type="PPrel">
         <subtype name="binding/association" value="---"/>
     </relation>
     <relation entry1="65" entry2="66" type="PPrel">
@@ -644,23 +614,23 @@
         <subtype name="activation" value="--&gt;"/>
         <subtype name="indirect effect" value="..&gt;"/>
     </relation>
-    <relation entry1="99" entry2="65" type="PPrel">
+    <relation entry1="93" entry2="65" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
         <subtype name="indirect effect" value="..&gt;"/>
     </relation>
-    <relation entry1="3" entry2="100" type="PPrel">
+    <relation entry1="3" entry2="94" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
         <subtype name="indirect effect" value="..&gt;"/>
     </relation>
-    <relation entry1="4" entry2="101" type="PPrel">
+    <relation entry1="4" entry2="95" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
         <subtype name="indirect effect" value="..&gt;"/>
     </relation>
-    <relation entry1="15" entry2="100" type="PPrel">
+    <relation entry1="15" entry2="94" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
         <subtype name="indirect effect" value="..&gt;"/>
     </relation>
-    <relation entry1="101" entry2="7" type="PPrel">
+    <relation entry1="95" entry2="7" type="PPrel">
         <subtype name="activation" value="--&gt;"/>
         <subtype name="phosphorylation" value="+p"/>
     </relation>

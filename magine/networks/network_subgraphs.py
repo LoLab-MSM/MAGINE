@@ -5,7 +5,7 @@ import networkx as nx
 
 import magine.networks.network_tools as nt
 import magine.networks.utils
-
+from magine.data.datatypes import ExperimentalData
 
 class NetworkSubgraphs(object):
     def __init__(self, network, exp_data=None, pool=None):
@@ -396,7 +396,7 @@ class NetworkSubgraphs(object):
         for i, j in sorted(self.exp_data.sig_species_over_time.items()):
             measured_list.append(j)
         nt.paint_network_overtime(graph, measured_list, colors, prefix,
-                                  self.exp_data.proteomics_time_points)
+                                  self.exp_data.proteomics_sample_ids)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
                                             color_up='tomato',
@@ -418,7 +418,7 @@ class NetworkSubgraphs(object):
         -------
 
         """
-        labels = self.exp_data.proteomics_time_points
+        labels = self.exp_data.proteomics_sample_ids
         up_measured_list = []
         down_measured_list = []
         for i, j in sorted(self.exp_data.sig_species_over_time.items()):

@@ -240,9 +240,9 @@
         <graphics name="AGL, GDE..." fgcolor="#000000" bgcolor="#BFFFBF"
              type="rectangle" x="801" y="577" width="46" height="17"/>
     </entry>
-    <entry id="134" name="ko:K00705 ko:K22451" type="ortholog" reaction="rn:R05196"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00705+K22451">
-        <graphics name="K00705..." fgcolor="#000000" bgcolor="#FFFFFF"
+    <entry id="134" name="ko:K00705" type="ortholog" reaction="rn:R05196"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K00705">
+        <graphics name="K00705" fgcolor="#000000" bgcolor="#FFFFFF"
              type="rectangle" x="1195" y="534" width="46" height="17"/>
     </entry>
     <entry id="135" name="ko:K05341" type="ortholog" reaction="rn:R01823"

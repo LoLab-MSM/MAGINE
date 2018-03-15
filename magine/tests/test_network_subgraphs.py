@@ -55,7 +55,7 @@ class TestSubgraphs(object):
         g = self.net_sub.shortest_paths_between_lists(list_2, draw=False,
                                                       single_path=True,
                                                       )
-        colors = ['red'] * len(exp_data.timepoints)
+        colors = ['red'] * len(exp_data.sample_ids)
         self.net_sub.measured_networks_over_time(g, colors, prefix='colored')
 
     def test_paint_over_time_up_down(self):

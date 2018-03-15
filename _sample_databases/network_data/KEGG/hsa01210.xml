@@ -185,8 +185,8 @@
         <graphics name="K00836" fgcolor="#000000" bgcolor="#FFFFFF"
              type="line" coords="399,204,511,204"/>
     </entry>
-    <entry id="37" name="ko:K00930 ko:K12659 ko:K22478" type="ortholog" reaction="rn:R02649"
-        link="http://www.kegg.jp/dbget-bin/www_bget?K00930+K12659+K22478">
+    <entry id="37" name="ko:K00930 ko:K12659" type="ortholog" reaction="rn:R02649"
+        link="http://www.kegg.jp/dbget-bin/www_bget?K00930+K12659">
         <graphics name="K00930..." fgcolor="#000000" bgcolor="#FFFFFF"
              type="line" coords="277,418,327,418"/>
     </entry>
