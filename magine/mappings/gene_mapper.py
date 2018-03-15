@@ -2,6 +2,7 @@ try:
     import cPickle as pickle
 except ImportError:  # python3 doesnt have cPickle
     import pickle
+import gzip
 import os
 
 import pandas as pd
@@ -150,14 +151,14 @@ class GeneMapper(object):
         """ save class instance
         """
         print('Saving class data')
-        with open(self._reload_fname, 'wb') as f:
+        with gzip.open(self._reload_fname, 'wb') as f:
             f.write(pickle.dumps(self.__dict__))
 
     def reload(self):
         """ loads class instance
         """
 
-        with open(self._reload_fname, 'rb') as f:
+        with gzip.open(self._reload_fname, 'rb') as f:
             data = f.read()
             f.close()
         self.__dict__ = pickle.loads(data)

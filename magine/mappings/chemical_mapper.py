@@ -3,7 +3,7 @@ import os
 from ast import literal_eval
 
 import pandas as pd
-
+import gzip
 from magine.data.storage import id_mapping_dir
 
 try:
@@ -50,7 +50,7 @@ class ChemicalMapper(object):
         self.hmdb_main_accession_to_protein = dict()
 
         self._instance_filename = os.path.join(id_mapping_dir,
-                                               'hmdb_instance.p')
+                                               'hmdb_instance.p.gz')
         try:
             self.reload()
         except:
@@ -165,7 +165,7 @@ class ChemicalMapper(object):
         --------
         >>> cm = ChemicalMapper()
         >>> cm.check_synonym_dict(term='dodecene', format_name='accession')
-        HMDB59874
+        HMDB0059874
 
         """
 
@@ -205,7 +205,7 @@ class ChemicalMapper(object):
 
         """
         print('Saving class data')
-        with open(self._instance_filename, 'wb') as f:
+        with gzip.open(self._instance_filename, 'wb') as f:
             f.write(pickle.dumps(self.__dict__, protocol=-1))
 
     def reload(self):
@@ -216,7 +216,7 @@ class ChemicalMapper(object):
 
         """
 
-        with open(self._instance_filename, 'rb') as f:
+        with gzip.open(self._instance_filename, 'rb') as f:
             data = f.read()
 
         try:
