@@ -37,7 +37,7 @@ def delete_disconnected_network(full_graph):
 
 
 def paint_network_overtime(graph, list_of_lists, color_list, save_name,
-                           labels=None, ipython=False):
+                           labels=None):
     """
     Adds color attribute to network over time.
     
@@ -70,22 +70,21 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
 
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
-    tmp_graph = _format_to_directions(tmp_graph)
-    if isinstance(tmp_graph, nx.DiGraph):
-        try:
-            tmp_graph = nx_to_dot(tmp_graph)
-        except ImportError:
-            print("Please install pygraphviz")
-            return
+
+    tmp_graph = _check_graphviz(tmp_graph)
+
+    if tmp_graph is None:
+        return
+
     for n, i in enumerate(list_of_lists):
         graph2 = paint_network(tmp_graph, i, color_list[n])
 
         if labels is not None:
-            graph2.graph_attr.update(label=labels[n], ranksep='0.2',
-                                     fontsize=13)
+            graph2.graph_attr.update(label=labels[n], fontsize=13)
+
         s_name = '%s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
-        if IPYTHON and ipython:
+        if IPYTHON and _is_running_in_ipython():
             display(Image(s_name))
 
         string += s_name + ' '
@@ -98,7 +97,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
 
 def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
                                    color_up='red', color_down='blue',
-                                   labels=None, ipython=False):
+                                   labels=None):
     """
     Adds color attribute to network over time.
 
@@ -134,30 +133,23 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
             return
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
-    tmp_graph = _format_to_directions(tmp_graph)
+    tmp_graph = _check_graphviz(tmp_graph)
 
-    if isinstance(tmp_graph, nx.DiGraph):
-        if pyg is None:
-            print("Please install pygraphviz in order to use "
-                  "paint_network_overtime_up_down ")
-            return
-        tmp_graph = nx_to_dot(tmp_graph)
+    if tmp_graph is None:
+        return
 
     for n, (up, down) in enumerate(zip(list_up, list_down)):
         graph2 = paint_network(tmp_graph, up, color_up)
         graph2 = paint_network(graph2, down, color_down)
-        up_s = set(up)
-        down_s = set(down)
-        both = up_s.intersection(down_s)
+        both = set(up).intersection(set(down))
         graph2 = paint_network(graph2, both, 'yellow')
 
         if labels is not None:
-            graph2.graph_attr.update(label=labels[n], ranksep='0.3',
-                                     fontsize=13)
+            graph2.graph_attr.update(label=labels[n], fontsize=13)
         s_name = '%s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
         string += s_name + ' '
-        if IPYTHON and ipython:
+        if IPYTHON and _is_running_in_ipython():
             display(Image(s_name))
 
     string1 = string + '  %s.gif' % save_name
@@ -165,6 +157,31 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
 
     os.system(string1)
     os.system(string2)
+
+
+def _check_graphviz(network):
+    if isinstance(network, nx.DiGraph):
+        if pyg is None:
+            print("Please install pygraphviz in order to use "
+                  "paint_network_overtime_up_down ")
+            return
+
+        network = _format_to_directions(network)
+
+    return nx_to_dot(network)
+
+
+def _is_running_in_ipython():
+    """Internal function that determines whether igraph is running inside
+    IPython or not."""
+    try:
+        # get_ipython is injected into the Python builtins by IPython so
+        # this should succeed in IPython but throw a NameError otherwise
+        get_ipython
+        return True
+    except NameError:
+        return False
+
 
 
 def paint_network(graph, list_to_paint, color):
