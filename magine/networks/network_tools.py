@@ -37,7 +37,7 @@ def delete_disconnected_network(full_graph):
 
 
 def paint_network_overtime(graph, list_of_lists, color_list, save_name,
-                           labels=None):
+                           labels=None, create_gif=False):
     """
     Adds color attribute to network over time.
     
@@ -90,14 +90,14 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         string += s_name + ' '
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
-
-    os.system(string1)
-    os.system(string2)
+    if create_gif:
+        os.system(string1)
+        os.system(string2)
 
 
 def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
                                    color_up='red', color_down='blue',
-                                   labels=None):
+                                   labels=None, create_gif=False):
     """
     Adds color attribute to network over time.
 
@@ -154,9 +154,10 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
 
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
+    if create_gif:
+        os.system(string1)
+        os.system(string2)
 
-    os.system(string1)
-    os.system(string2)
 
 
 def _check_graphviz(network):

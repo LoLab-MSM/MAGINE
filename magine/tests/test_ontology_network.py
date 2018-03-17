@@ -25,4 +25,4 @@ def test_ont_grouping():
     ont = OntologyNetworkGenerator(network)
 
     ont.create_network_from_list(term_list, term_dict, label_dict,
-                                 save_name='enrichr_network', draw=True)
+                                 save_name='enrichr_network', draw=False)
