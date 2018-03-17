@@ -56,7 +56,7 @@ class TestSubgraphs(object):
                                                       single_path=True,
                                                       )
         colors = ['red'] * len(exp_data.sample_ids)
-        self.net_sub.measured_networks_over_time(g, colors, prefix='colored')
+        # self.net_sub.measured_networks_over_time(g, colors, prefix='colored')
 
     def test_paint_over_time_up_down(self):
         list_2 = {'CASP3', 'BAX', 'TP53'}
@@ -64,7 +64,7 @@ class TestSubgraphs(object):
                                                       single_path=True,
                                                       )
 
-        self.net_sub.measured_networks_over_time_up_down(g, 'colored_updown')
+        # self.net_sub.measured_networks_over_time_up_down(g, 'colored_updown')
 
     def test_paths_from_list(self):
         """Test finding paths from a list."""
