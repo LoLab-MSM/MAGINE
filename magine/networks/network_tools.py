@@ -37,7 +37,7 @@ def delete_disconnected_network(full_graph):
 
 
 def paint_network_overtime(graph, list_of_lists, color_list, save_name,
-                           labels=None):
+                           labels=None, ipython=False):
     """
     Adds color attribute to network over time.
     
@@ -83,11 +83,12 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.2',
                                      fontsize=13)
-        s_name = ' %s_%04i.png' % (save_name, n)
+        s_name = '%s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
-        if IPYTHON:
+        if IPYTHON and ipython:
             display(Image(s_name))
-        string += s_name
+
+        string += s_name + ' '
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
 
@@ -97,7 +98,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
 
 def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
                                    color_up='red', color_down='blue',
-                                   labels=None):
+                                   labels=None, ipython=False):
     """
     Adds color attribute to network over time.
 
@@ -153,10 +154,10 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         if labels is not None:
             graph2.graph_attr.update(label=labels[n], ranksep='0.3',
                                      fontsize=13)
-        s_name = '%s_%04i.png ' % (save_name, n)
+        s_name = '%s_%04i.png' % (save_name, n)
         graph2.draw(s_name, prog='dot')
-        string += s_name
-        if IPYTHON:
+        string += s_name + ' '
+        if IPYTHON and ipython:
             display(Image(s_name))
 
     string1 = string + '  %s.gif' % save_name
