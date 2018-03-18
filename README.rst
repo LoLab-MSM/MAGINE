@@ -1,16 +1,16 @@
 MAGINE
 ======
 
-.. image:: https://coveralls.io/repos/github/LoLab-VU/Magine/badge.svg?branch=master
-    :target: https://coveralls.io/github/LoLab-VU/Magine?branch=master
+.. image:: https://coveralls.io/repos/github/LoLab-VU/MAGINE/badge.svg?branch=master
+    :target: https://coveralls.io/github/LoLab-VU/MAGINE?branch=master
 
-.. image:: https://travis-ci.org/LoLab-VU/Magine.svg?branch=master
-    :target: https://travis-ci.org/LoLab-VU/Magine
+.. image:: https://travis-ci.org/LoLab-VU/MAGINE.svg?branch=master
+    :target: https://travis-ci.org/LoLab-VU/MAGINE
 
-.. image:: https://landscape.io/github/LoLab-VU/Magine/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/LoLab-VU/Magine/master
+.. image:: https://landscape.io/github/LoLab-VU/MAGINE/master/landscape.svg?style=flat
+   :target: https://landscape.io/github/LoLab-VU/MAGINE/master
 
-.. image:: https://readthedocs.org/projects/magine/badge/?version=latest
+.. image:: https://readthedocs.org/projects/MAGINE/badge/?version=latest
     :target: http://magine.readthedocs.io/en/latest/?badge=latest
 
 
