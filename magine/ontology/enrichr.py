@@ -646,13 +646,13 @@ def run_enrichment_for_project(exp_data, project_name):
                 df['category'] = category
                 all_df.append(df)
 
-    pt = exp.proteomics_time_points
-    rt = exp.rna_time_points
+    pt = exp.proteomics_sample_ids
+    rt = exp.rna_sample_ids
 
     if len(pt) != 0:
-        _run(exp.proteomics_over_time, pt, 'proteomics_both')
-        _run(exp.proteomics_down_over_time, pt, 'proteomics_down')
-        _run(exp.proteomics_up_over_time, pt, 'proteomics_up')
+        _run(exp.proteomics_by_sample_id, pt, 'proteomics_both')
+        _run(exp.proteomics_up_by_sample_id, pt, 'proteomics_down')
+        _run(exp.proteomics_down_by_sample_id, pt, 'proteomics_up')
     if len(rt) != 0:
         _run(exp.rna_down_over_time, rt, 'rna_down')
         _run(exp.rna_up_over_time, rt, 'rna_up')
