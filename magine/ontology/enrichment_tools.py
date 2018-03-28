@@ -125,7 +125,8 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
         top = set(array[j, 1].split(','))
         if verbose:
             print("Finding matches for {}".format(array[j, 0]))
-
+        if top_term_name in to_remove:
+            continue
         for i in range(j + 1, len(data)):
             term_name = array[i, 0]
             if top_term_name == term_name:
