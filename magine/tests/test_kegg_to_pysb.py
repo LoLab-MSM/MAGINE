@@ -1,13 +1,13 @@
 import os
 
+import magine.networks.databases.kegg_kgml as kegg_tools
 from magine.networks.pysb_conversion.to_pysb import translate
 
 rel_dir = os.path.dirname(__file__)
 
+
 def test_kegg_to_pysb():
-    # nodes, edges = KGML2Graph("hsa04210.xml")
-    path = os.path.join(rel_dir, 'KEGG')
-    g, x = kgml_to_graph("hsa04071.xml", output_dir=path)
+    g = kegg_tools.pathway_id_to_network('hsa04071')
     nodes = g.nodes(data=True)
     edges = g.edges(data=True)
     gene_monomers = []
