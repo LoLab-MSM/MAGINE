@@ -14,6 +14,7 @@ if sys.version_info[0] == 3:
 else:
     from urllib import urlopen
 
+p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
 
 class BioGridDownload(object):
     def __init__(self):
@@ -210,18 +211,14 @@ class BioGridDownload(object):
             _add_node(r[0])
             _add_node(r[1])
 
-        nx.write_gml(protein_graph, 'biogrid_protein_only.gml')
-        chemical_graph = self._create_chemical_network()
-
-        final_graph = nt.compose(protein_graph, chemical_graph)
-        nx.write_gml(final_graph, 'biogrid.gml')
-        nx.write_gpickle(final_graph,
-                         os.path.join(network_data_dir, 'biogrid.p'))
+        final_graph = nt.compose(protein_graph,
+                                 self._create_chemical_network())
+        nx.write_gpickle(final_graph, p_name)
         return final_graph
 
 
 def create_biogrid_network():
-    p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
+
     if os.path.exists(p_name):
         g = nx.read_gpickle(p_name)
     else:
@@ -232,5 +229,6 @@ def create_biogrid_network():
 
 
 if __name__ == '__main__':
-    bgn = BioGridDownload()
-    bgn.parse_network()
+    # bgn = BioGridDownload()
+    # bgn.parse_network()
+    create_biogrid_network()
