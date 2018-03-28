@@ -2,18 +2,52 @@ import numpy as np
 import pandas as pd
 
 
-def pivot_table(data, convert_to_log, index, columns, values):
+def pivot_table(data, convert_to_log, index, columns, values, fill_value=None,
+                min_sig=0):
+    """
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+    convert_to_log : bool
+        Convert values column to log2
+    index : str
+        Index for pivot table
+    columns : str
+        Columns to pivot
+    values : str
+        Values of pivot table
+    fill_value : float, optional
+        Fill pivot table nans with
+    min_sig : int
+        Required number of significant terms to keep in a row, default 0
+    Returns
+    -------
+
+    """
     d_copy = data.copy()
     if convert_to_log:
         d_copy = log2_normalize_df(d_copy, values)
 
-    array = pd.pivot_table(d_copy, index=index,
-                           columns=columns,
-                           values=values)
-    array.fillna(0, inplace=True)
+    if min_sig:
+        assert isinstance(min_sig, int)
+        if 'significant_flag' not in d_copy.columns:
+            print('In order to filter based on minimum sig figs, '
+                  'please add a column of signficant terms with '
+                  'a tag of "significant"')
 
-    array.sort_values(by=list(sorted(d_copy[columns].unique())),
-                      ascending=False, inplace=True)
+        d_copy = filter_by_minimum_sig_columns(d_copy, index=index,
+                                               columns=columns,
+                                               min_terms=min_sig)
+
+    array = pd.pivot_table(d_copy, index=index, fill_value=fill_value,
+                           columns=columns, values=values)
+    if isinstance(columns, list):
+        x = sorted(tuple(map(tuple, d_copy[columns].values)))
+        array.sort_values(by=x, ascending=False, inplace=True)
+    elif isinstance(columns, str):
+        array.sort_values(by=list(sorted(d_copy[columns].unique())),
+                          ascending=False, inplace=True)
     return array
 
 
@@ -37,6 +71,56 @@ def log2_normalize_df(df, column):
     tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
     tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
     return tmp_df
+
+
+# TODO create test and example
+def filter_by_minimum_sig_columns(data_frame, index, columns,
+                                  min_terms=3):
+    tmp_array = data_frame.copy()
+
+    sig = pd.pivot_table(tmp_array,
+                         index=index,
+                         fill_value=0,
+                         values='significant_flag',
+                         columns=columns
+                         )
+
+    cols_to_check = list(tmp_array[columns].unique())
+    sig = sig[cols_to_check]
+    sig = sig[cols_to_check].T.sum()
+    sig = sig[sig > min_terms]
+    if isinstance(index, list):
+        keepers = {i[0] for i in sig.index.values}
+        return tmp_array[tmp_array[index[0]].isin(keepers)].copy()
+    elif isinstance(index, str):
+        keepers = {i for i in sig.index.values}
+        return tmp_array[tmp_array[index].isin(keepers)].copy()
+    else:
+        print("Index is not a str or a list. What is it?")
+
+
+def filter_by_minimum_sig_columns_old(data_frame, index, values, columns,
+                                      min_terms=3):
+    tmp_array = data_frame.copy()
+
+    sig = pd.pivot_table(tmp_array[tmp_array['significant_flag']],
+                         index=index,
+                         fill_value=0.0,
+                         values=values,
+                         columns=columns
+                         )
+
+    cols_to_check = list(tmp_array[columns].unique())
+    sig = (sig[cols_to_check].T == 0.).sum()
+    sig = sig[sig < min_terms]
+    if isinstance(index, list):
+        keepers = {i[0] for i in sig.index.values}
+        return tmp_array[tmp_array[index[0]].isin(keepers)].copy()
+    elif isinstance(index, str):
+        keepers = {i for i in sig.index.values}
+        return tmp_array[tmp_array[index].isin(keepers)].copy()
+    else:
+        print("Index is not a str or a list. What is it?")
 
 
 if __name__ == '__main__':

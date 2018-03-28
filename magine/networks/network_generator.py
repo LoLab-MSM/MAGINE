@@ -7,9 +7,11 @@ import magine.mappings.maps as mapper
 import magine.networks.network_tools as nt
 from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
-from magine.networks.databases import download_all_of_kegg, load_reactome_fi
+from magine.networks.databases import load_reactome_fi
 from magine.networks.databases.biogrid_interactions import \
     create_biogrid_network
+from magine.networks.databases.kegg_kgml import load_kegg
+from magine.networks.databases.signor import load_signor
 
 try:
     import cPickle as pickle
@@ -20,7 +22,7 @@ except ImportError:
 def build_network(gene_list, species='hsa', save_name=None,
                   all_measured_list=None, metabolite_list=None,
                   use_reactome=True, use_hmdb=False, use_biogrid=True,
-                  trim_source_sink=False):
+                  use_signor=True, trim_source_sink=False):
     """
     Construct a network from a list of gene names.
 
@@ -37,12 +39,14 @@ def build_network(gene_list, species='hsa', save_name=None,
     all_measured_list : list
         list of all species that should be considered in network
     use_reactome : bool
-        use _reactome functional interaction to expand network
+        Add ReactomeFunctionalInteraction reaction to network
     use_biogrid : bool
-        use _reactome functional interaction to expand network
+        Add BioGrid reaction to network
     use_hmdb : bool
-        use hmdb to expand network incorporating metabolites provided in
+        Add HMDB reaction to network
         all_measured_list
+    use_signor : bool
+        Add SIGNOR reaction to network
     metabolite_list : list
         List of metabolites with HMDB ids
     trim_source_sink : bool, optional
@@ -53,44 +57,34 @@ def build_network(gene_list, species='hsa', save_name=None,
     """
 
     gm = GeneMapper()
-    _kegg_raw_out_path = os.path.join(network_data_dir, 'KEGG')
-    _kegg_node_to_pathway = os.path.join(network_data_dir,
-                                         'kegg_node_to_pathway.p')
 
-    if not os.path.exists(_kegg_raw_out_path) \
-            or not os.path.exists(_kegg_node_to_pathway):
-        download_all_of_kegg(species=species)
-
-    node_to_path = pickle.load(open(_kegg_node_to_pathway, 'rb'))
+    path_to_graph, node_to_path = load_kegg(species, verbose=False)
 
     gene_list = set(x.upper() for x in gene_list)
-    to_remove = set()
+
+    to_remove = gene_list.difference(gm.gene_name_to_kegg)
+    genes_in_kegg = gene_list.intersection(gm.gene_name_to_kegg)
     pathway_list = set()
 
-    for i in gene_list:
-        gene = i.upper()
-        if i not in gm.gene_name_to_kegg:
+    for gene in genes_in_kegg:
+        tmp_list = gm.gene_name_to_kegg[gene]
+        if len(tmp_list) == 0:
             to_remove.add(gene)
-        else:
-            tmp_list = gm.gene_name_to_kegg[gene]
-            if len(tmp_list) == 0:
-                to_remove.add(gene)
-            for n in tmp_list:
-                if n in node_to_path:
-                    for j in node_to_path[n]:
-                        pathway_list.add(str(j.replace(':', '')[4:]))
+        for n in tmp_list:
+            if n in node_to_path:
+                for j in node_to_path[n]:
+                    pathway_list.add(j)
+
     if len(to_remove) != 0:
         print("{} species not found in KEGG".format(len(to_remove)))
 
     graph_list = []
     for each in pathway_list:
-        tmp = nx.read_gpickle(
-            os.path.join(_kegg_raw_out_path, "{}.p.gz".format(each))
-        )
+        tmp = path_to_graph[each]
         if len(tmp.edges()) == 0:
             continue
         graph_list.append(tmp)
-        # end_network = nt.compose(end_network, tmp)
+
     end_network = nt.compose_all(graph_list)
     end_network = mapper.convert_all(end_network, species=species)
 
@@ -112,6 +106,9 @@ def build_network(gene_list, species='hsa', save_name=None,
 
     if use_biogrid:
         end_network = expand_by_db(end_network, all_measured_list, 'biogrid')
+
+    if use_signor:
+        end_network = expand_by_db(end_network, all_measured_list, 'signor')
 
     print("Trimming network")
     # removes everything not connected to the largest graph
@@ -147,24 +144,27 @@ def expand_by_db(network, measured_list, db='reactome'):
     -------
 
     """
-    print("Checking for Reactome edges to add to network.")
+
     new_graph = nx.DiGraph()
     measured_set = set(measured_list)
     if db == 'reactome':
-        fi_network = load_reactome_fi()
+        network_to_add = load_reactome_fi()
         db_name = 'ReactomeFI'
 
     elif db == 'biogrid':
-        fi_network = create_biogrid_network()
+        network_to_add = create_biogrid_network()
         db_name = 'BioGrid'
+    elif db == 'signor':
+        network_to_add = load_signor()
+        db_name = 'signor'
     else:
-        print("Must provide 'reactome' or 'biogrid' as database")
+        print("Must provide 'reactome', 'biogrid', or 'signor'")
         return network
 
-    edges = fi_network.edges(data=True)
+    edges = network_to_add.edges(data=True)
 
     # new list in reactome_nodes
-    nodes_to_check = set(fi_network.nodes()).intersection(measured_set)
+    nodes_to_check = set(network_to_add.nodes()).intersection(measured_set)
     nodes_to_check.update(set(network.nodes()))
 
     added_nodes = set()
@@ -181,23 +181,22 @@ def expand_by_db(network, measured_list, db='reactome'):
             new_graph.add_edge(i, j, **k)
 
     for node in added_nodes:
-        attr = fi_network.node[node]
+        attr = network_to_add.node[node]
         new_graph.add_node(node, **attr)
 
     new_graph = nt.compose(network, new_graph)
 
-    print("Nodes before {} expansion = {}, after = {}"
-          "".format(db, len(network.nodes()), len(new_graph.nodes()))
-          )
-
-    print("Edges before {} expansion = {}, after = {}"
-          "".format(db, len(network.edges()), len(new_graph.edges()))
-          )
+    print("{} database".format(db_name))
+    print("\t\tbefore\tafter")
+    print(
+        "\tNodes\t{}\t{}".format(len(network.nodes()), len(new_graph.nodes())))
+    print(
+        "\tEdges\t{}\t{}".format(len(network.edges()), len(new_graph.edges())))
 
     return new_graph
 
 
-def expand_by_hmdb(graph, metabolite_list):
+def expand_by_hmdb(graph, metabolite_list, verbose=False):
     """
     Expands a network using HMDB metabolites-protein information
 
@@ -311,35 +310,37 @@ def expand_by_hmdb(graph, metabolite_list):
     new_edges = end_edges.intersection(start_edges)
     metabolites_added = missing_metabolites.intersection(end_nodes)
     still_missing = missing_metabolites.difference(end_nodes)
-    out = list()
-    out.append('Metabolites data= {}'.format(len(metabolite_set)))
-    out.append('Metabolites not in starting network = {}'
-               ''.format(len(missing_metabolites)))
-    out.append('Metabolites added to network = {}'
-               ''.format(len(metabolites_added)))
-    out.append('Metabolites not able to add = {0}'.format(len(still_missing)))
+    if verbose:
+        out = list()
+        out.append('Metabolites data= {}'.format(len(metabolite_set)))
+        out.append('Metabolites not in starting network = {}'
+                   ''.format(len(missing_metabolites)))
+        out.append('Metabolites added to network = {}'
+                   ''.format(len(metabolites_added)))
+        out.append(
+            'Metabolites not able to add = {0}'.format(len(still_missing)))
 
-    out.append('Before # nodes = {} edges = {}'.format(len(start_nodes),
-                                                       len(graph.edges())))
+        out.append('Before # nodes = {} edges = {}'.format(len(start_nodes),
+                                                           len(graph.edges())))
 
-    out.append('After # of nodes = {},'
-               ' edge = {}'.format(len(end_nodes), len(final_graph.edges())))
+        out.append('After # of nodes = {},'
+                   ' edge = {}'.format(len(end_nodes),
+                                       len(final_graph.edges())))
 
-    out.append('Added {} nodes and {} edges'.format(len(new_nodes),
-                                                    len(new_edges)))
+        out.append('Added {} nodes and {} edges'.format(len(new_nodes),
+                                                        len(new_edges)))
 
-    out.append('Number of proteins not in network'
-               ' = {}'.format(len(missing_proteins)))
-    out.append('Number of add proteins = {0}'.format(len(added_proteins)))
-    out.append(','.join(sorted(added_proteins)))
-    out.append('missing metabolites-protein info = {0}'.format(
+        out.append('Number of proteins not in network'
+                   ' = {}'.format(len(missing_proteins)))
+        out.append('Number of add proteins = {0}'.format(len(added_proteins)))
+        out.append('missing metabolites-protein info = {0}'.format(
             missing_protein_info))
-    print('\n'.join(out))
+        print('\n'.join(out))
     return final_graph
 
 
 def create_hmdb_network():
-    out_name = os.path.join(network_data_dir, 'hmdb_graph.p')
+    out_name = os.path.join(network_data_dir, 'hmdb_graph.p.gz')
     if os.path.exists(out_name):
         tmp_graph = nx.read_gpickle(out_name)
         print("HMDB network {} nodes and {} edges"
@@ -398,12 +399,13 @@ def create_background_network(save_name='background_network'):
     from magine.networks.databases.biogrid_interactions import \
         create_biogrid_network
     from magine.networks.databases.kegg_kgml import create_all_of_kegg
+    from magine.networks.databases.signor import load_signor
 
     reactome_network = load_reactome_fi()
     kegg_network = create_all_of_kegg()
     hmdb_network = create_hmdb_network()
     biogrid_network = create_biogrid_network()
-
+    signor_network = load_signor()
 
     def find_overlap(n1, n2):
         e1 = set(n1.edges())
@@ -416,16 +418,19 @@ def create_background_network(save_name='background_network'):
             print(i)
 
     full_network = nt.compose_all(
-        [hmdb_network, kegg_network, biogrid_network, reactome_network]
+        [hmdb_network, kegg_network, biogrid_network, reactome_network,
+         signor_network]
     )
+
+    nt.delete_disconnected_network(full_network)
     nt.standardize_edge_types(full_network)
 
     # find_overlap(reactome_network, full_network)
-    print("Background network {} nodes and {} edges"
-          "".format(len(full_network.nodes()), len(full_network.edges()))
-          )
+    n_nodes = len(full_network.nodes())
+    n_edges = len(full_network.edges())
+    print("Background network {} nodes and {} edges".format(n_nodes, n_edges))
 
-    nx.write_gpickle(full_network, '{}.p'.format(save_name))
+    nx.write_gpickle(full_network, '{}.p.gz'.format(save_name))
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import os
 import networkx as nx
 import pathos.multiprocessing as mp
 
-from magine.networks.utils import nx_to_dot
+from magine.networks.utils import check_graphviz
 
 try:
     from IPython.display import Image, display
@@ -71,7 +71,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
 
-    tmp_graph = _check_graphviz(tmp_graph)
+    tmp_graph = check_graphviz(tmp_graph)
 
     if tmp_graph is None:
         return
@@ -133,7 +133,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
             return
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
-    tmp_graph = _check_graphviz(tmp_graph)
+    tmp_graph = check_graphviz(tmp_graph)
 
     if tmp_graph is None:
         return
@@ -160,16 +160,6 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
 
 
 
-def _check_graphviz(network):
-    if isinstance(network, nx.DiGraph):
-        if pyg is None:
-            print("Please install pygraphviz in order to use "
-                  "paint_network_overtime_up_down ")
-            return
-
-        network = _format_to_directions(network)
-
-    return nx_to_dot(network)
 
 
 def _is_running_in_ipython():
@@ -211,36 +201,7 @@ def paint_network(graph, list_to_paint, color):
     return tmp_g
 
 
-def _format_to_directions(network):
-    activators = ['activate', 'expression', 'phosphorylate']
-    inhibitors = [
-        'inhibit', 'repression', 'dephosphorylate', 'deubiquitinate',
-        'ubiquitinate'
-    ]
-    physical_contact = ['binding', 'dissociation', 'stateChange',
-                        'compound', 'glycosylation']
-    indirect_types = ['indirect']
-    for source, target, data in network.edges(data=True):
-        if 'interactionType' in data:
-            edge_type = data['interactionType']
-            for j in activators:
-                if j in edge_type:
-                    network[source][target]['arrowhead'] = 'normal'
-            for j in inhibitors:
-                if j in edge_type:
-                    network[source][target]['arrowhead'] = 'tee'
 
-            for j in physical_contact:
-                if j in edge_type:
-                    network[source][target]['dir'] = 'both'
-                    network[source][target]['arrowtail'] = 'diamond'
-                    network[source][target]['arrowhead'] = 'diamond'
-
-            for j in indirect_types:
-                if j in edge_type:
-                    network[source][target]['arrowhead'] = 'diamond'
-                    network[source][target]['style'] = 'dashed'
-    return network
 
 
 def create_legend(graph):

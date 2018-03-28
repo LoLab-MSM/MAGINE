@@ -1,11 +1,11 @@
+import gzip
 import os
-import warnings
-import xml.etree.cElementTree as ET
+import xml.etree.cElementTree as element_tree
 
 import networkx as nx
 from bioservices import KEGG
 
-import magine.mappings.maps as mapper
+import magine.networks.network_tools as nt
 from magine.data.storage import network_data_dir
 
 try:
@@ -16,190 +16,39 @@ except:
 kegg = KEGG()
 kegg.TIMEOUT = 100
 
-
 _kegg_raw_out_path = os.path.join(network_data_dir, 'KEGG')
-_kegg_node_to_pathway = os.path.join(network_data_dir, 'kegg_node_to_pathway.p')
 
 
-def download_all_of_kegg(species='hsa'):
+def pathway_id_to_network(pathway_id, species='hsa'):
     """
-    Downloads every KEGG pathway to provided directory
-
-    """
-    print("Downloading KEGG")
-    if not os.path.exists(_kegg_raw_out_path):
-        os.mkdir(_kegg_raw_out_path)
-    kegg.organism = species
-    list_of_kegg_pathways = kegg.pathwayIds
-    print("Number of pathways  = {}".format(len(list_of_kegg_pathways)))
-    # keys are KEGG pathway ids, values are nodes
-    pathway_dict = dict()
-    for i in list_of_kegg_pathways:
-        pathway = i[5:]
-        file_name = kegg.get(pathway, "kgml")
-        out = '{}.xml'.format(pathway)
-        if file_name == 404:
-            print("%s ended with 404 error" % pathway)
-        else:
-            with open(os.path.join(_kegg_raw_out_path, out), 'w') as f:
-                f.write(file_name)
-
-        graph, pathway_name = kgml_to_graph(out,
-                                            _kegg_raw_out_path, species='hsa')
-        pathway_dict[i] = graph.nodes()
-        print('{} has {} nodes and {} edges'.format(pathway_name,
-                                                    len(graph.nodes()),
-                                                    len(graph.edges())))
-        nx.write_gpickle(graph, os.path.join(_kegg_raw_out_path,
-                                             '{}.p.gz'.format(pathway)))
-
-    # create a dictionary mapping species to pathways
-    node_to_path = dict()
-    for i in pathway_dict:
-        for node in pathway_dict[i]:
-            if node in node_to_path:
-                node_to_path[node].add(i)
-            else:
-                node_to_path[node] = set()
-                node_to_path[node].add(i)
-
-    pickle.dump(node_to_path, open(_kegg_node_to_pathway, 'wb'))
-
-
-def download_kegg_pathway(pathway, overwrite=True):
-    """
+    Creates a network from a KEGG pathway id
 
     Parameters
     ----------
-    pathway : str
-        kegg pathway to download
-    overwrite : bool
-        overwrite file if is exists
-    """
-    download = True
-    if os.path.exists("KEGG"):
-        pass
-    else:
-        os.mkdir("KEGG")
-    fname = os.path.join("KEGG", '{}.xml'.format(pathway))
-    if os.path.exists(fname):
-        if overwrite:
-            warnings.warn('Removing KEGG pathway to download new one, '
-                          'can change behavior if you set "overwrite"=False')
-        else:
-            print("%s already downloaded" % pathway)
-            download = False
-    if download:
-        file_string = kegg.get(pathway, "kgml")
-        if file_string == 404:
-            print("{} ended with 404 error".format(pathway))
-        else:
-            with open(fname, 'w') as f:
-                f.write(file_string)
-
-
-def find_kegg_pathways(protein_names, num_overlap=1, download=True,
-                       species='hsa', overwrite=True):
-    """
-
-    Parameters
-    ----------
-    protein_names : list
-        list of gene names to map to KEGG pathways
-    num_overlap : int
-        number of species that must exist in multiple pathways in order
-        to add to larger pathway
-    download : bool
-        Download the pathways
+    pathway_id : str
+        KEGG id
     species : str
-        which species pathways to consider
-    overwrite : bool
-        overwrite previous kgml files if they exist
 
     Returns
     -------
+    nx.DiGraph
 
     """
+    kegg.organism = species
+    list_of_kegg_pathways = [i[5:] for i in kegg.pathwayIds]
 
-    pathway_list = []
-    list_not_found = []
-    for i in protein_names:
-        tmp = kegg.get_pathway_by_gene(i, species)
-        list2 = []
-        if tmp is None:
-            print("%s not in KEGG?" % i)
-            list_not_found.append(i)
-            continue
-        for each in tmp:
-            list2.append(str(each))
-        pathway_list.append(list2)
-    overlap = {}
-    for i in range(len(pathway_list)):
-        for each in pathway_list[i]:
-            if each in overlap:
-                overlap[each] += 1
-            else:
-                overlap[each] = 1
-    results = []
-    for name, count in overlap.items():
-        if count > num_overlap:
-            results.append(name)
-    if download:
-        for i in results:
-            download_kegg_pathway(i, overwrite=overwrite)
-    if len(list_not_found) != 0:
-        print("Not found in KEGG", list_not_found)
-    return results
+    assert pathway_id in list_of_kegg_pathways
+    pathway = kegg.get(pathway_id, "kgml")
+    graph, pathway_name = kgml_to_nx(pathway, species=species)
+    return graph
 
 
-def create_all_of_kegg(species='hsa'):
-    p_name = os.path.join(_kegg_raw_out_path, 'all_of_kegg.p')
-
-    if os.path.exists(p_name):
-        all_of_kegg = nx.read_gpickle(p_name)
-
-    else:
-        if not os.path.exists(_kegg_node_to_pathway):
-            download_all_of_kegg(species=species)
-
-        node_to_path = pickle.load(open(_kegg_node_to_pathway, 'rb'))
-        pathway_list = set()
-        for nodes, paths in node_to_path.items():
-            for j in paths:
-                pathway_list.add(str(j.replace(':', '')[4:]))
-        all_of_kegg = nx.DiGraph()
-
-        for each in pathway_list:
-            tmp = nx.read_gpickle(
-                os.path.join(_kegg_raw_out_path, "{}.p.gz".format(each))
-            )
-            all_of_kegg = nx.compose(all_of_kegg, tmp)
-
-        drug_dict = {}
-        for i in all_of_kegg.nodes():
-            if i.startswith('dr'):
-                split_name = i.split()
-                if len(split_name) > 1:
-                    if split_name[1].startswith('cpd:'):
-                        drug_dict[i] = split_name[1]
-                        all_of_kegg.node[i]['drug'] = split_name[0]
-        all_of_kegg = nx.relabel_nodes(all_of_kegg, drug_dict)
-        all_of_kegg = mapper.convert_all(all_of_kegg, species=species)
-        nx.write_gpickle(all_of_kegg, p_name)
-
-    print("KEGG network {} nodes and {} edges"
-          "".format(len(all_of_kegg.nodes()), len(all_of_kegg.edges()))
-          )
-    return all_of_kegg
-
-
-def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
-    """ Converts a kgml to networkx DiGraph
+def kgml_to_nx(xmlfile, species='hsa'):
+    """ Converts a kgml to nx.DiGraph
 
     Parameters
     ----------
     xmlfile : str
-    output_dir : str
     species : str
 
     Returns
@@ -207,16 +56,13 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
 
     """
     try:
-        tree = ET.parse(os.path.join(output_dir, xmlfile))
+        tree = element_tree.ElementTree(element_tree.fromstring(xmlfile))
     except TypeError:
         print("This file (%s)is messed up! Investigate" % str(xmlfile))
         return nx.DiGraph(), []
     pathway_local = nx.DiGraph()
-    compounds_local = set()
-    genes = set()
     connecting_maps = []
     name_label_dict = {}
-    pathways_to_add_local = []
     organism = tree.getroot().get('org')
     pathway_name = tree.getroot().get('title')
 
@@ -229,47 +75,38 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
                                databaseSource='KEGG',
                                interactionType=type_int,
                                )
+
     if organism != species:
+        print(organism, species)
         raise NotImplementedError("Error with species not matching from KEGG")
 
     # get all nodes of pathway
-    for entry in tree.getiterator('entry'):
+    for entry in tree.iter('entry'):
+
+        # get node id
+        node_id = entry.get('id')
         node_type = entry.get('type')
         name = entry.get('name')
-        node_id = entry.get('id')
-        graphics = entry.find('graphics')
-        node_title = graphics.get('name')
-        if node_title is None:
-            connecting_maps.append(node_id)
-            continue
-        if node_type == 'map':
-            connecting_maps.append(node_id)
-            pathways_to_add_local.append(name[5:])
-            continue
-        elif node_type in ('gene', 'compound'):
+        if node_type in ('gene', 'compound'):
             names = name.split()
             name_label_dict[node_id] = names
             for i in names:
                 _add_node(i, node_type)
-                if node_type == 'gene':
-                    genes.add(i)
-                elif node_type == 'compound':
-                    compounds_local.add(i)
-                else:
-                    print("Not a gene or compound!!!")
-                    print(i)
         else:
+            # add everything that is not a gene or compound to exclude
+            # orthologs are from other species
+            # groups is just a trick for KGML to layout species together
+            # maps point to other dbs
+            if node_type not in ('map', 'ortholog', 'group'):
+                print("Not a gene or compound!!!")
+                print(node_type, node_id)
             connecting_maps.append(node_id)
 
     # Add all relations of pathway
-    for rel in tree.getiterator('relation'):
-        # int_type = rel.get('type')
-        int_type = ''
+    for rel in tree.iter('relation'):
         e1 = rel.get('entry1')
         e2 = rel.get('entry2')
-        if e1 in connecting_maps:
-            continue
-        if e2 in connecting_maps:
+        if e1 in connecting_maps or e2 in connecting_maps:
             continue
         try:
             int_type = set()
@@ -285,10 +122,11 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
                 _add_edge(i, j, int_type)
 
     # Add all reactions of pathway
-    for reaction in tree.getiterator('reaction'):
+    for reaction in tree.iter('reaction'):
 
         id_local = reaction.get('id')
         if id_local in connecting_maps:
+            print(id_local)
             continue
 
         reaction_type = "chemical|reaction|{}".format(reaction.get('type'))
@@ -306,5 +144,129 @@ def kgml_to_graph(xmlfile, output_dir='KEGG', species='hsa'):
     return pathway_local, pathway_name
 
 
+def download_all_of_kegg(species='hsa', verbose=False):
+    """
+    Downloads every KEGG pathway to provided directory
+
+    """
+
+    if not os.path.exists(_kegg_raw_out_path):
+        os.mkdir(_kegg_raw_out_path)
+
+    kegg.organism = species
+    list_of_kegg_pathways = [i[5:] for i in kegg.pathwayIds]
+    if verbose:
+        print("Number of pathways  = {}".format(len(list_of_kegg_pathways)))
+
+    # keys are KEGG pathways ids, values are kegg pathways
+    kegg_dict = dict()
+
+    for pathway_id in list_of_kegg_pathways:
+        pathway = kegg.get(pathway_id, "kgml")
+
+        if pathway == 404:
+            print("%s ended with 404 error" % pathway_id)
+            continue
+
+        graph, pathway_name = kgml_to_graph(pathway, species=species)
+
+        kegg_dict[pathway_id] = graph
+        if verbose:
+            print('{} has {} nodes and {} edges'.format(pathway_name,
+                                                        len(graph.nodes()),
+                                                        len(graph.edges())))
+
+    # create a dictionary mapping species to pathways
+    node_to_path = dict()
+    for i in kegg_dict:
+        for node in kegg_dict[i].nodes():
+            if node in node_to_path:
+                node_to_path[node].add(i)
+            else:
+                node_to_path[node] = set()
+                node_to_path[node].add(i)
+
+    # save kegg pathway its to networks
+    n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
+    save_path_id_to_graph = os.path.join(network_data_dir, n)
+    save_gzip_pickle(save_path_id_to_graph, kegg_dict)
+
+    # save nodes to pathways
+    n = '{}_kegg_node_to_pathway.p.gz'.format(species)
+    save_node_to_path = os.path.join(network_data_dir, n)
+    save_gzip_pickle(save_node_to_path, node_to_path)
+
+
+def create_all_of_kegg(species='hsa', verbose=False):
+    """
+    Combines all KEGG pathways into a single network
+
+    Parameters
+    ----------
+    species : species
+        Default 'hsa'
+    verbose : bool
+
+    Returns
+    -------
+
+    """
+    p_name = os.path.join(_kegg_raw_out_path,
+                          '{}_all_of_kegg.p.gz'.format(species))
+    # load in network if it exists
+    if os.path.exists(p_name):
+        if verbose:
+            print('Reading in KEGG network')
+        all_of_kegg = nx.read_gpickle(p_name)
+    else:
+        # create the network
+        path_to_graph, _ = load_kegg(species, verbose)
+
+        # merge into single networks
+        all_of_kegg = nt.compose_all(path_to_graph.values())
+
+        # relabel notes
+        if species == 'hsa':
+            from magine.mappings.maps import convert_all
+            all_of_kegg = convert_all(all_of_kegg, species=species)
+
+        # save network
+        nx.write_gpickle(all_of_kegg, p_name)
+
+    if verbose:
+        n_n = len(all_of_kegg.nodes())
+        n_e = len(all_of_kegg.edges())
+        print("KEGG network {} nodes and {} edges".format(n_n, n_e))
+    return all_of_kegg
+
+
+def load_kegg(species, verbose=False):
+    n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
+    save_path_id_to_graph = os.path.join(network_data_dir, n)
+    if not os.path.exists(save_path_id_to_graph):
+        download_all_of_kegg(species=species, verbose=verbose)
+
+    n = '{}_kegg_node_to_pathway.p.gz'.format(species)
+    save_node_to_path = os.path.join(network_data_dir, n)
+
+    # load all networks
+    return load_gz_p(save_path_id_to_graph), load_gz_p(save_node_to_path)
+
+
+def save_gzip_pickle(file_name, obj):
+    with gzip.open(file_name, 'wb') as f:
+        f.write(pickle.dumps(obj, protocol=-1))
+
+
+def load_gz_p(file_name):
+    with gzip.open(file_name, 'rb') as f:
+        data = f.read()
+    try:
+        return pickle.loads(data, encoding='utf-8')
+    except:
+        return pickle.loads(data)
+
+
 if __name__ == '__main__':
-    create_all_of_kegg()
+    download_all_of_kegg('hsa')
+    create_all_of_kegg('hsa')

@@ -1,20 +1,17 @@
 import json
-try:
-    import igraph as ig
-except ImportError:
-    ig = None
+
 import networkx as nx
 
 
-def networkx_to_igraph(network):
+def nx_to_igraph(network):
     try:
-        import igraph as ig
+        import igraph
     except ImportError:
         raise ImportError('requires igraph ',
                           'http://pygraphviz.github.io/')
 
     nx.write_gml(network, 'test.gml')
-    igraph_network = ig.read('test.gml')
+    igraph_network = igraph.read('test.gml')
     return igraph_network
 
 
@@ -75,16 +72,20 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
     -------
 
     """
-    try:
-        py_dot = nx.nx_agraph.to_agraph(graph)
-        py_dot.write('{}.dot'.format(save_name))
-        arg = '-Gdpi={} -Gconcentrate={}'.format(
-            dpi, 'true' if concentrate else 'false'
-        )
-        py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine,
-                    args=arg)
-    except ImportError:
-        print("No pygraphivz installed")
+
+    py_dot = nx_to_dot(graph)
+    py_dot.write('{}.dot'.format(save_name))
+    arg = '-Gdpi={} -Gconcentrate={}'.format(
+        dpi, 'true' if concentrate else 'false'
+    )
+    py_dot.draw('{}.{}'.format(save_name, image_format), prog=engine, args=arg)
+
+
+def check_graphviz(network):
+    if isinstance(network, nx.DiGraph):
+        network = format_to_directions(network)
+
+    return nx_to_dot(network)
 
 
 def nx_to_dot(graph):
@@ -94,13 +95,15 @@ def nx_to_dot(graph):
     except ImportError:
         raise ImportError('requires pygraphviz ',
                           'http://pygraphviz.github.io/')
+
+    graph = format_to_directions(graph)
+
     directed = graph.is_directed()
     strict = graph.number_of_selfloops() == 0 and not graph.is_multigraph()
     new_g = pygraphviz.AGraph(name=graph.name,
                               strict=strict,
                               directed=directed,
                               encoding='utf8')
-
     # default graph attributes
     new_g.graph_attr.update(graph.graph.get('graph', {}))
     new_g.node_attr.update(graph.graph.get('node', {}))
@@ -114,3 +117,35 @@ def nx_to_dot(graph):
     for u, v, data in graph.edges_iter(data=True):
         new_g.add_edge(u, v, **dict((k, str(v)) for k, v in data.items()))
     return new_g
+
+
+def format_to_directions(network):
+    activators = ['activate', 'expression', 'phosphorylate']
+    inhibitors = [
+        'inhibit', 'repression', 'dephosphorylate', 'deubiquitinate',
+        'ubiquitinate'
+    ]
+    physical_contact = ['binding', 'dissociation', 'stateChange',
+                        'compound', 'glycosylation']
+    indirect_types = ['indirect']
+    for source, target, data in network.edges(data=True):
+        if 'interactionType' in data:
+            edge_type = data['interactionType']
+            for j in activators:
+                if j in edge_type:
+                    network[source][target]['arrowhead'] = 'normal'
+            for j in inhibitors:
+                if j in edge_type:
+                    network[source][target]['arrowhead'] = 'tee'
+
+            for j in physical_contact:
+                if j in edge_type:
+                    network[source][target]['dir'] = 'both'
+                    network[source][target]['arrowtail'] = 'diamond'
+                    network[source][target]['arrowhead'] = 'diamond'
+
+            for j in indirect_types:
+                if j in edge_type:
+                    network[source][target]['arrowhead'] = 'diamond'
+                    network[source][target]['style'] = 'dashed'
+    return network

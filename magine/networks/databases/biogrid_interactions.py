@@ -221,7 +221,7 @@ class BioGridDownload(object):
 
 
 def create_biogrid_network():
-    p_name = os.path.join(network_data_dir, 'biogrid.p')
+    p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
     if os.path.exists(p_name):
         g = nx.read_gpickle(p_name)
     else:
