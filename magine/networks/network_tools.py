@@ -256,7 +256,7 @@ def add_attribute_to_network(graph, list_to_add_attribute, attribute,
 
     Returns
     -------
-    out : networkx graph
+    nx.DiGraph
 
 
     >>> from networkx import DiGraph
