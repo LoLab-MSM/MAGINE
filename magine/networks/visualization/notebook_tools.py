@@ -1,16 +1,31 @@
 import numpy as np
 import pandas as pd
+
 import magine.ontology.enrichment_tools as et
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.networks.ontology_network import OntologyNetworkGenerator
-from magine.networks.visualization.notebooks.view import display_graph, \
-    render_graph
+
 pd.set_option('display.precision', 5)
 pd.set_option('display.max_colwidth', 100)
 
 
 def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
-                      cytoscape_js=False):
+                      threshold=0):
+    """
+
+    Parameters
+    ----------
+    terms : list
+    df : pd.DataFrame
+    network : nx.DiGraph
+    save_name : str
+    draw_png : bool
+    threshold
+
+    Returns
+    -------
+
+    """
     df = df[df['term_name'].isin(terms)].copy()
     df['combined_score'] = np.abs(df['combined_score'])
     df['combined_score'] = np.log2(df['combined_score'])
@@ -29,44 +44,33 @@ def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
     ong = OntologyNetworkGenerator(molecular_network=network)
     print("Looking for direct edges")
     term_g, molecular_g = ong.create_network_from_list(
-        terms, term_dict, label_dict, save_name=save_name, draw=draw_png)
+        terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
+        threshold=threshold
+    )
 
-    if cytoscape_js:
-        display_graph(term_g)
-        display_graph(molecular_g)
     return term_g, molecular_g
 
 
-def find_neighbors(g, start, up_stream=True, down_stream=True, max_dist=1,
-                   render=False):
+def find_neighbors(g, start, up_stream=True, down_stream=True, max_dist=1):
     subgraph_gen = NetworkSubgraphs(g)
     sg = subgraph_gen.neighbors(start, up_stream, down_stream, max_dist)
-    if render:
-        render_graph(sg)
-    else:
-        return sg
+    return sg
 
 
 def find_neighbors_of_list(g, list_start, up_stream=True, down_stream=True,
-                           max_dist=1, render=False):
+                           max_dist=1):
     subgraph_gen = NetworkSubgraphs(g)
 
     new_g = subgraph_gen.neighbors_of_list(list_start, up_stream, down_stream,
                                            max_dist)
-
-    if render:
-        render_graph(new_g)
-    else:
-        return new_g
+    return new_g
 
 
-def subgraph_from_list(g, list_of_nodes, render=False):
+def subgraph_from_list(g, list_of_nodes):
     subgraph_gen = NetworkSubgraphs(g)
     new_g = subgraph_gen.shortest_paths_between_lists(list_of_nodes)
-    if render:
-        render_graph(new_g)
-    else:
-        return new_g
+
+    return new_g
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@ import networkx as nx
 
 import magine.networks.network_tools as nt
 import magine.networks.utils
-from magine.data.datatypes import ExperimentalData
+
 
 class NetworkSubgraphs(object):
     def __init__(self, network, exp_data=None, pool=None):
@@ -27,8 +27,8 @@ class NetworkSubgraphs(object):
             self.map = map
         else:
             self.map = pool.map
+        # self._paths = dict(self.map(partial(f, network=self.network), sorted(self.nodes)))
 
-        # self._paths = dict(self.map(partial(f, network=self.network), self.nodes))
 
     def find_paths(self, source, target):
         try:
@@ -486,7 +486,7 @@ class NetworkSubgraphs(object):
 
     @staticmethod
     def _include_only(network, include_list):
-        assert isinstance(include_list, list)
+        assert isinstance(include_list, (list, set))
         sg = network.copy()
         all_nodes = set(sg.nodes())
         not_found = all_nodes.difference(set(include_list))
@@ -501,7 +501,7 @@ class NetworkSubgraphs(object):
     def _save_or_draw(graph, save_name, draw, img_format='png'):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
-            graph = nt._format_to_directions(graph)
+            graph = magine.networks.utils.format_to_directions(graph)
             magine.networks.utils.export_to_dot(graph, save_name=save_name,
                                                 image_format=img_format)
 
@@ -516,23 +516,41 @@ def _find_nx_path(node, network, single_path):
 
 def _nx_find_path(network, node1, node2, single_path=False):
     try:
-        if not single_path:
-            return [p for p in
-                    nx.all_shortest_paths(network, node1, node2)]
-        else:
+        if single_path:
             return [nx.shortest_path(network, node1, node2)]
+        else:
+            return [p for p in nx.all_shortest_paths(network, node1, node2)]
+
     except nx.NetworkXNoPath:
         return []
 
 
 def f(node, network):
+    """
+
+    Parameters
+    ----------
+    node : str
+    network : nx.DiGraph
+
+    Returns
+    -------
+
+    """
+    print(node)
+    if len(network.successors(node)) == 0:
+        return node, []
     paths = tuple(
         all_shortest_paths(network, node, p) for p in network.nodes() if
         p != node)
+    print(paths)
     paths = [x for x in paths if x]
+    print(paths)
     _dicts = {}
     for i in paths:
         _dicts[i[-1]] = i[:-1]
+        print(_dicts[i[-1]])
+    quit()
     return node, paths
 
     return node, nx.single_source_shortest_path(network, node)
@@ -570,7 +588,7 @@ if __name__ == '__main__':
     net.add_edge('R', 'D', intType='here')
     net.add_edge('X', 'R', intType='here')
 
-
+    # net = nx.read_gpickle('background_network.p.gz')
     # print(x.neighbors('X').nodes())
     # print(x.downstream_network_of_specie('D').nodes())
     # quit()

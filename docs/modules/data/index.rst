@@ -10,12 +10,12 @@ magine\.data\.datatypes module
    :show-inheritance:
 
 
-magine\.data\.formatter module
+magine\.data\.tools module
 ------------------------------
 
 Tools to process data.
 
-.. automodule:: magine.data.formatter
+.. automodule:: magine.data.tools
    :members:
    :undoc-members:
    :show-inheritance:

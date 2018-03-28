@@ -13,6 +13,14 @@ magine\.ontology\.enrichr module
    :undoc-members:
    :show-inheritance:
 
+magine\.ontology\.enrichment_tools module
+--------------------------------
+
+.. automodule:: magine.ontology.enrichment_tools
+:members:
+      :undoc-members:
+      :show-inheritance:
+
 
 magine\.ontology\.ontology\_analysis module
 -------------------------------------------
