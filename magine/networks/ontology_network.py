@@ -5,7 +5,7 @@ import networkx as nx
 import pandas as pd
 
 from magine.networks.utils import export_to_dot
-from magine.networks.visualization.igraph_tools import create_figure
+from magine.networks.visualization.igraph_tools import create_igraph_figure
 
 
 class OntologyNetworkGenerator(object):
@@ -219,7 +219,7 @@ class OntologyNetworkGenerator(object):
 
             if draw:
                 export_to_dot(go_graph, save_name)
-                create_figure(mol_net, save_name + '_subgraph_igraph')
+                create_igraph_figure(mol_net, save_name + '_subgraph_igraph')
 
         return go_graph, mol_net
 
