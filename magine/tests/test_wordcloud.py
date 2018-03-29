@@ -2,7 +2,7 @@ import os
 
 import pandas as pd
 
-from magine.plotting.wordcloud_tools import create_wordcloud
+import magine.plotting.wordcloud_tools as wt
 
 
 def test_filter():
@@ -10,9 +10,20 @@ def test_filter():
                            'Data', 'enrichr_test_enrichr.csv')
 
     df = pd.read_csv(dirname)
-    x, d = create_wordcloud(df)
+    df2 = df.copy()
+    df['db'] = 'kegg'
+    df2['db'] = 'reactome'
+    df2['sample_id'] = 2
+
+    df = pd.concat([df, df2])
+
+    x = wt.create_wordcloud(df)
 
     x.plot('test_wc')
+
+    wt.word_cloud_from_array(df,
+                             sample_ids=[1, 2]
+                             )
 
 
 if __name__ == '__main__':

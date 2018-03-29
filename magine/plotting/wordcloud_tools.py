@@ -1,10 +1,10 @@
 import types
-
 import matplotlib.pyplot as plt
 import pandas as pd
+from wordcloud import WordCloud, STOPWORDS
 
 import magine.ontology.enrichment_tools as et
-from magine.plotting.wordcloud_mod import WordCloud
+
 
 process_dbs = [
     'GO_Biological_Process_2017',
@@ -25,18 +25,19 @@ basic_words = {'signaling', 'signalling', 'receptor', 'events', 'protein',
                'downstream', 'activated', 'target',
                }
 
-
+basic_words.update(STOPWORDS)
 # basic_words = set()
 
 
-def word_cloud_from_array(enrichment_array, category, sample_ids,
-                          database_list=process_dbs, save_name=None):
+def word_cloud_from_array(enrichment_array, sample_ids, category=None,
+                          database_list=None, save_name=None):
     samples = []
     all_samples = []
     for i in sample_ids:
         sample = et.filter_dataframe(enrichment_array, p_value=0.05,
-                                     db=database_list, category=category,
-                                     sample_id=i)
+                                     db=database_list, sample_id=i,
+                                     category=category)
+
         all_samples.append(sample)
         if len(sample) != 0:
             if save_name is not None:
@@ -44,7 +45,9 @@ def word_cloud_from_array(enrichment_array, category, sample_ids,
             else:
                 output = None
             hits_1 = create_wordcloud(sample, save_name=output)
-            df1 = pd.DataFrame(hits_1.items(), columns=['words', 'counts'])
+            df1 = pd.DataFrame(
+                hits_1.word_dict.items(), columns=['words', 'counts']
+            )
             df1.sort_values('counts', ascending=False, inplace=True)
             df1['sample'] = i
             samples.append(df1.copy())
@@ -64,7 +67,8 @@ def create_wordcloud(df, save_name=None):
     data = df.apply(_cleanup_term_name, axis=1)
     text = ' '.join(data)
     # Generate a word cloud image
-    wc = WordCloud(margin=0, background_color=None, mode='RGBA', min_count=1,
+    wc = WordCloud(margin=0, background_color=None, mode='RGBA',
+                   # min_count=1,
                    width=800, height=600, collocations=True,
                    stopwords=basic_words)
     wordcloud = wc.generate(text)
@@ -93,7 +97,8 @@ def create_wordcloud(df, save_name=None):
         plt.close()
 
     wordcloud.plot = types.MethodType(plot, wordcloud)
-    return wordcloud, word_dict
+    wordcloud.word_dict = word_dict
+    return wordcloud
 
 
 def _cleanup_term_name(row):

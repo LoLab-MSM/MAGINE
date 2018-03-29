@@ -30,7 +30,21 @@ def jaccard_index(first_set, second_set):
         first_set.union(second_set))
 
 
-def filter_db(local_df, options, column):
+def filter_rows(local_df, column, options):
+    """
+    Filters a pandas dataframe provides a column and filter selection.
+
+    Parameters
+    ----------
+    local_df : pd.DataFrame
+    column : str
+    options : str, list
+        Can be a single entry or a list
+
+    Returns
+    -------
+    pd.DataFrame
+    """
     copy_df = local_df.copy()
     valid_opts = list(local_df[column].unique())
     if isinstance(options, str):
@@ -48,6 +62,29 @@ def filter_db(local_df, options, column):
 
 def filter_dataframe(df, p_value=None, combined_score=None, db=None,
                      sample_id=None, category=None, rank=None):
+    """
+    Filters an enrichment array.
+
+    This is an aggregate function that allows ones to filter an entire
+    dataframe with a single function call.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    p_value : float
+        filters all values less than or equal
+    combined_score : float
+        filters all values greater than or equal
+    db : str, list
+
+    sample_id : str, list
+    category : str, list
+    rank : int
+
+    Returns
+    -------
+
+    """
     copy_df = df.copy()
     if p_value is not None:
         assert isinstance(p_value, float)
@@ -58,11 +95,11 @@ def filter_dataframe(df, p_value=None, combined_score=None, db=None,
     if isinstance(rank, (int, float)):
         copy_df = copy_df[copy_df['rank'] <= rank]
     if db is not None:
-        copy_df = filter_db(copy_df, db, 'db')
+        copy_df = filter_rows(copy_df, 'db', db)
     if sample_id is not None:
-        copy_df = filter_db(copy_df, sample_id, 'sample_id')
+        copy_df = filter_rows(copy_df, 'sample_id', sample_id)
     if category is not None:
-        copy_df = filter_db(copy_df, category, 'category')
+        copy_df = filter_rows(copy_df, 'category', category)
     copy_df.sort_values('combined_score', inplace=True, ascending=False)
     return copy_df
 
