@@ -16,6 +16,7 @@ else:
 
 p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
 
+
 class BioGridDownload(object):
     def __init__(self):
         self.url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-ALL-LATEST.tab2.zip'
@@ -79,14 +80,15 @@ class BioGridDownload(object):
                     return name
             return None
 
-        # cleanup names
-        df['chemType'] = df['Chemical Type']
-        df['gene'] = df['Official Symbol']
-        df['interactionType'] = df['Action']
-
+        df['databaseSource'] = self._db_name
         df['pubmedId'] = df['Pubmed ID'].astype(str)
 
-        df['databaseSource'] = self._db_name
+        # cleanup names
+        df.rename(columns={'Chemical Type': 'chemType',
+                           'Official Symbol': 'gene',
+                           'Action': 'interactionType'},
+                  inplace=True)
+
         # keep the same info as other databases (store as compound)
         df.loc[df['chemType'] == 'small molecule', 'chemType'] = 'compound'
 
@@ -99,7 +101,6 @@ class BioGridDownload(object):
         # add HMDB attribute if it exists
         df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1).astype(str)
 
-
         # create network
         chem_g = nx.from_pandas_dataframe(
             df,
@@ -111,8 +112,7 @@ class BioGridDownload(object):
         # df.to_csv('biogrid.csv')
 
         chem_table = df.as_matrix(
-            ['gene', 'target', 'chemName', 'chemType', 'hmdbID'
-             ]
+            ['gene', 'target', 'chemName', 'chemType', 'hmdbID']
         )
 
         nodes_added = set()
@@ -140,9 +140,7 @@ class BioGridDownload(object):
                 add_node(gene, 'gene')
 
             if chemical not in nodes_added:
-                add_node(chemical, chem_typed, chemical_name, hmdb_id
-                         )
-        # nx.write_gml(chem_g, 'biogrid_chem_only.gml')
+                add_node(chemical, chem_typed, chemical_name, hmdb_id)
         return chem_g
 
     def parse_network(self):
@@ -177,14 +175,18 @@ class BioGridDownload(object):
                         ]
 
         table = table[protein_cols]
+        # Remove puring binding and no modification
         table = table[~table['Modification'].isin(['-', 'No Modification'])]
 
         # clean up names
-        table['source'] = table['Official Symbol Interactor A']
-        table['target'] = table['Official Symbol Interactor B']
         table['interactionType'] = table['Modification'].str.lower()
         table['pubmedId'] = table['Pubmed ID'].astype(str)
-        table['databaseSource'] = table['Source Database']
+
+        # cleanup names
+        table.rename(columns={'Official Symbol Interactor A': 'source',
+                              'Official Symbol Interactor B': 'target',
+                              'Source Database': 'databaseSource'},
+                     inplace=True)
 
         # create graph
         protein_graph = nx.from_pandas_dataframe(
@@ -200,16 +202,17 @@ class BioGridDownload(object):
         added_genes = set()
 
         def _add_node(node):
-            if node not in added_genes:
-                protein_graph.add_node(node,
-                                       databaseSource=self._db_name,
-                                       speciesType='gene')
-                added_genes.add(node)
+            protein_graph.add_node(node,
+                                   databaseSource=self._db_name,
+                                   speciesType='gene')
+            added_genes.add(node)
 
         # add names to graph
         for r in table:
-            _add_node(r[0])
-            _add_node(r[1])
+            if r[0] not in added_genes:
+                _add_node(r[0])
+            if r[1] not in added_genes:
+                _add_node(r[1])
 
         final_graph = nt.compose(protein_graph,
                                  self._create_chemical_network())
@@ -218,17 +221,16 @@ class BioGridDownload(object):
 
 
 def create_biogrid_network():
-
     if os.path.exists(p_name):
         g = nx.read_gpickle(p_name)
     else:
         g = BioGridDownload().parse_network()
-    print("BIOGRID network has {} nodes and {} edges "
-          "".format(len(g.nodes()), len(g.edges())))
+    nn, ne = len(g.nodes()), len(g.edges())
+    print("BIOGRID network has {} nodes and {} edges".format(nn, ne))
     return g
 
 
 if __name__ == '__main__':
-    # bgn = BioGridDownload()
-    # bgn.parse_network()
-    create_biogrid_network()
+    bgn = BioGridDownload()
+    bgn.parse_network()
+    # create_biogrid_network()
