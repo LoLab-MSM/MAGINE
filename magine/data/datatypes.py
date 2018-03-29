@@ -458,7 +458,7 @@ class ExperimentalData(object):
 
         """
         plot_list_of_genes(
-            self.proteins, list_of_genes=list_of_genes,
+            self.proteins, genes=list_of_genes,
             save_name=save_name,
             out_dir=out_dir, title=title, plot_type=plot_type,
             image_format=image_format

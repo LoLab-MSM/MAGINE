@@ -25,7 +25,7 @@ class TestSpeciesPlotting(object):
 
         """
         list_species = ['PARP1', 'TP53']
-        plotter.plot_list_of_genes(self.data, list_of_genes=list_species,
+        plotter.plot_list_of_genes(self.data, genes=list_species,
                                    out_dir=self.out_dir,
                                    save_name='OUT_test_plotly',
                                    plot_type='plotly',
@@ -39,7 +39,7 @@ class TestSpeciesPlotting(object):
 
         """
         list_species = ['PARP1', 'TP53']
-        plotter.plot_list_of_genes(self.data, list_of_genes=list_species,
+        plotter.plot_list_of_genes(self.data, genes=list_species,
                                    out_dir=self.out_dir,
                                    save_name='OUT_test_matplotlib',
                                    plot_type='matplotlib')
