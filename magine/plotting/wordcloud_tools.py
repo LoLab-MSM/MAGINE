@@ -26,11 +26,26 @@ basic_words = {'signaling', 'signalling', 'receptor', 'events', 'protein',
                }
 
 basic_words.update(STOPWORDS)
-# basic_words = set()
 
 
 def word_cloud_from_array(enrichment_array, sample_ids, category=None,
                           database_list=None, save_name=None):
+    """
+    Creates a word cloud for each sample_id
+
+
+    Parameters
+    ----------
+    enrichment_array : pd.DataFrame
+    sample_ids : list
+    category : str, list, optional
+    database_list : str, list, optional
+    save_name : str
+
+    Returns
+    -------
+
+    """
     samples = []
     all_samples = []
     for i in sample_ids:
@@ -64,6 +79,27 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
 
 
 def create_wordcloud(df, save_name=None):
+    """
+    Creates a word cloud based on enrichment array
+
+    Must have column 'term_name'.
+    It takes this column, flattens it into a large string.
+    Then we pass it to the python package wordcloud, which generates the
+    wordcloud.
+
+    It returns the figure with a save method and a dictionary of counts.
+
+
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+    save_name : str
+
+    Returns
+    -------
+
+    """
     data = df.apply(_cleanup_term_name, axis=1)
     text = ' '.join(data)
     # Generate a word cloud image
@@ -73,17 +109,6 @@ def create_wordcloud(df, save_name=None):
                    stopwords=basic_words)
     wordcloud = wc.generate(text)
     word_dict = wc.process_text(text)
-
-    if save_name is not None:
-        plt.figure()
-        plt.imshow(wordcloud, interpolation='bilinear')
-        plt.xticks([])
-        plt.yticks([])
-        plt.axis("off")
-        plt.savefig('{}.png'.format(save_name), bbox_inches='tight', dpi=150)
-        plt.title(save_name)
-        plt.show()
-        plt.close()
 
     def plot(self, save_name):
         plt.figure()
@@ -97,6 +122,10 @@ def create_wordcloud(df, save_name=None):
         plt.close()
 
     wordcloud.plot = types.MethodType(plot, wordcloud)
+
+    if save_name is not None:
+        wordcloud.plot(save_name)
+
     wordcloud.word_dict = word_dict
     return wordcloud
 
