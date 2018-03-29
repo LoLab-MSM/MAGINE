@@ -61,7 +61,7 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
                 output = None
             hits_1 = create_wordcloud(sample, save_name=output)
             df1 = pd.DataFrame(
-                hits_1.word_dict.items(), columns=['words', 'counts']
+                list(hits_1.word_dict.items()), columns=['words', 'counts']
             )
             df1.sort_values('counts', ascending=False, inplace=True)
             df1['sample'] = i
