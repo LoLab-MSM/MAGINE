@@ -1,15 +1,12 @@
 import json
 import os
 import re
-import time
 
 import numpy as np
 import pandas as pd
-import pathos.multiprocessing as mp
 import requests
 
-import magine.html_templates.html_tools as html_tools
-from magine.plotting.species_plotting import plot_list_of_genes
+from magine.plotting.species_plotting import write_table_to_html
 
 _path = os.path.dirname(__file__)
 
@@ -270,25 +267,23 @@ class Enrichr(object):
         -------
 
         """
-        assert isinstance(sample_lists, list), "Please provide list of lists"
-        assert isinstance(sample_lists[0],
-                          list), "Please provide list of lists"
+        assert isinstance(sample_lists, list), "List required"
+        assert isinstance(sample_lists[0], list), "List of lists required"
+
         df_all = []
         for i, j in zip(sample_lists, sample_ids):
-            # print("{} / {}".format(j, sample_ids))
             df = self.run(i, gene_set_lib)
             df['sample_id'] = j
+            df['db'] = gene_set_lib
             df_all.append(df)
+
         df_all = pd.concat(df_all)
-        non_sig = []
-        for i, g in df_all.groupby('term_name'):
-            if len(g[g['adj_p_value'] < 0.05]) == 0:
-                non_sig.append(i)
-        df_all = df_all[~df_all['term_name'].isin(non_sig)]
+        df_all = self._filter_sig_across_term(df_all)
 
         if df_all.shape[0] == 0:
             print("No significant terms for {}".format(gene_set_lib))
             return None
+
         index = ['term_name']
 
         if 'term_id' in list(df.columns):
@@ -296,25 +291,25 @@ class Enrichr(object):
 
         p_df = pd.pivot_table(df_all, index=index,
                               columns='sample_id',
-                              values=['term_name', 'rank', 'p_value',
-                                      'z_score',
-                                      'combined_score', 'adj_p_value',
-                                      'genes'],
+                              values=['combined_score', 'adj_p_value',
+                                      'rank', 'p_value', 'z_score', 'genes'],
                               aggfunc='first', fill_value=np.nan
                               )
 
         if save_name:
-            p_df.to_excel('{}_enricher.xlsx'.format(save_name),
+            s_name = '{}_enrichr'
+            p_df.to_excel('{}.xlsx'.format((s_name, save_name)),
                           merge_cells=True)
+            df_all.to_csv('{}.csv'.format((s_name, save_name)), index=False)
 
-            df_all.to_csv('{}_enrichr.csv'.format(save_name), index=False)
         if create_html:
             if exp_data is None:
                 exp_data = self.exp_data
 
             if exp_data is None:
                 print("exp_data required to make plots over samples")
-                quit()
+                return p_df
+
             write_table_to_html(data=df_all, save_name=save_name,
                                 out_dir=out_dir, run_parallel=run_parallel,
                                 exp_data=exp_data)
@@ -460,6 +455,7 @@ class Enrichr(object):
 
         # stack results
         df_all = pd.concat(df_all, ignore_index=True)
+
         # filter terms that are not significant in any sample
         df_all = self._filter_sig_across_term(df_all)
 
@@ -704,182 +700,6 @@ def get_background_list(lib_name):
 
     return term_to_gene
 
-
-def write_table_to_html(data, save_name='index', out_dir=None,
-                        run_parallel=False, exp_data=None):
-    """
-    Creates a table of all the plots of all genes for each GO term.
-
-    Uses last calculated enrichment array.
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-    save_name : str
-        name of html output file
-    out_dir : str, optional
-        output path for all plots
-    run_parallel : bool
-        Create plots in parallel
-
-    Returns
-    -------
-
-    """
-
-    # print(data.dtypes)
-    # tmp = pivot_table_for_export(data)
-    # print(tmp.dtypes)
-    list_of_terms = list(data['term_name'].unique())
-    fig_dict, to_remove = create_gene_plots(data=data,
-                                            list_of_terms=list_of_terms,
-                                            save_name=save_name,
-                                            out_dir=out_dir,
-                                            exp_data=exp_data,
-                                            run_parallel=run_parallel
-                                            )
-
-    for i in fig_dict:
-        data.loc[data['term_name'] == i, 'term_name'] = fig_dict[i]
-
-    data = data[~data['term_name'].isin(to_remove)]
-
-    index = ['term_name']
-    if 'term_id' in list(data.columns):
-        index.insert(0, 'term_id')
-
-    tmp = pd.pivot_table(data, index=index,
-                         columns='sample_id',
-                         values=['term_name', 'rank', 'p_value', 'z_score',
-                                 'combined_score', 'adj_p_value', 'genes'],
-                         aggfunc='first', fill_value=np.nan
-                         )
-    html_out = save_name
-
-    print("Saving to : {}".format(html_out))
-
-    html_tools.write_single_table(tmp, 'MAGINE GO analysis', html_out)
-    html_out = save_name + '_filter'
-
-    html_tools.write_filter_table(tmp, html_out)
-
-
-def create_gene_plots(data, list_of_terms, save_name, out_dir=None,
-                      exp_data=None, run_parallel=False, plot_type='plotly'):
-    """ Creates a figure for each GO term in data
-
-    Data should be a result of running calculate_enrichment.
-    This function creates a plot of all proteins per term if a term is
-    significant and the number of the reference set is larger than 5 and
-    the total number of species measured is less than 100.
-
-
-    Parameters
-    ----------
-    data : pandas.DataFrame
-        previously ran enrichment analysis
-    save_name : str
-        name to save file
-    out_dir : str
-        output path for file
-    exp_data : magine.ExperimentalData
-        data to plot
-    run_parallel : bool
-        To run in parallel using pathos.multiprocessing
-    plot_type : str
-        plotly or matplotlib
-
-    Returns
-    -------
-    out_array : dict
-        dict where keys are pointers to figure locations
-    """
-
-    if out_dir is not None:
-        if not os.path.exists(out_dir):
-            os.mkdir(out_dir)
-        if not os.path.exists(os.path.join(out_dir, 'Figures')):
-            os.mkdir(os.path.join(out_dir, 'Figures'))
-    data = data.copy()
-    figure_locations = {}
-    plots_to_create = []
-    to_remove = set()
-    assert plot_type == ('plotly' or 'matplotlib')
-    # filter data by significance and number of references
-    if len(list_of_terms) == 0:
-        print("No significant GO terms!!!")
-        return figure_locations, to_remove
-    # here we are going to iterate through all sig GO terms and create
-    # a list of plots to create. For the HTML side, we need to point to
-    # a location
-
-    # create plot of genes over time
-    for n, i in enumerate(list_of_terms):
-        local_exp_data = exp_data.data.copy()
-        # want to plot all species over time
-        index = data['term_name'] == i
-
-        name = data[index]['term_name'].unique()
-
-        if len(name) > 0:
-            name = name[0]
-
-        gene_set = set()
-        genes = data[index]['genes']
-        for g in genes:
-            if isinstance(g, list):
-                each = g
-            else:
-                each = g.split(',')
-
-            gene_set = {j for j in each}
-
-        if plot_type == 'matplotlib':
-            # too many genes isn't helpful on plots, so skip them
-            if len(gene_set) > 100:
-                figure_locations[i] = '<a>{0}</a>'.format(name)
-                continue
-        local_save_name = 'Figures/{0}_{1}'.format(n, save_name)
-        if out_dir is not None:
-            local_save_name = '{0}/{1}'.format(out_dir, local_save_name)
-
-        local_save_name = local_save_name.replace(':', '')
-        out_point = '<a href="{0}.html">{1}</a>'.format(local_save_name, name)
-        figure_locations[i] = out_point
-
-        title = "{0} : {1}".format(str(i), name)
-        local_df = local_exp_data[
-            local_exp_data[gene].isin(list(gene_set))].copy()
-        p_input = (local_df, list(gene_set), local_save_name, '.', title,
-                   plot_type)
-
-        plots_to_create.append(p_input)
-
-    # return figure_locations, to_remove
-
-    print("Starting to create plots for each GO term")
-    # just keeping this code just in case using pathos is a bad idea
-    # ultimately, using matplotlib is slow.
-
-    if run_parallel:
-        st2 = time.time()
-        pool = mp.Pool()
-        pool.map_async(plot_list_of_genes, plots_to_create)
-        # pool.map(plot_list_of_genes, plots_to_create)
-        pool.close()
-        pool.join()
-        end2 = time.time()
-        print("parallel time = {}".format(end2 - st2))
-        print("Done creating plots for each GO term")
-
-    else:
-        st1 = time.time()
-        for i in plots_to_create:
-            plot_list_of_genes(i)
-        end1 = time.time()
-        print("sequential time = {}".format(end1 - st1))
-
-    return figure_locations, to_remove
 
 
 if __name__ == '__main__':

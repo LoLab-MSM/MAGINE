@@ -1,7 +1,6 @@
 import os
 import re
 import time
-from ast import literal_eval
 from textwrap import wrap
 
 import matplotlib.pyplot as plt
@@ -14,10 +13,7 @@ from plotly.offline import plot
 import magine.html_templates.html_tools as ht
 from magine.data.formatter import pivot_table_for_export, log2_normalize_df
 
-# plotly.plotly.sign_in(username='james.ch.pino',
-#                       api_key='BnUcJSpmPcMKZg0yEFaL')
-
-gene = 'gene'
+gene_index = 'gene'
 protein = 'protein'
 metabolites = 'metabolites'
 meta_index = 'compound'
@@ -28,8 +24,64 @@ flag = 'significant_flag'
 cm = plt.get_cmap('jet')
 
 
-def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
-                             run_parallel=False, plot_type='plotly'):
+def write_table_to_html(data, save_name='index', out_dir=None,
+                        run_parallel=False, exp_data=None):
+    """
+    Creates a table of all the plots of all genes for each GO term.
+
+    Uses last calculated enrichment array.
+
+    Parameters
+    ----------
+    data : pandas.DataFrame
+    save_name : str
+        name of html output file
+    out_dir : str, optional
+        output path for all plots
+    run_parallel : bool
+        Create plots in parallel
+
+    Returns
+    -------
+
+    """
+
+    list_of_terms = list(data['term_name'].unique())
+    fig_dict, to_remove = plot_genes_by_ont(data=data,
+                                            list_of_terms=list_of_terms,
+                                            save_name=save_name,
+                                            out_dir=out_dir,
+                                            exp_data=exp_data,
+                                            run_parallel=run_parallel
+                                            )
+
+    for i in fig_dict:
+        data.loc[data['term_name'] == i, 'term_name'] = fig_dict[i]
+
+    data = data[~data['term_name'].isin(to_remove)]
+
+    index = ['term_name']
+    if 'term_id' in list(data.columns):
+        index.insert(0, 'term_id')
+
+    tmp = pd.pivot_table(data, index=index,
+                         columns='sample_id',
+                         values=['combined_score', 'adj_p_value', 'rank',
+                                 'genes', 'p_value', 'z_score'],
+                         aggfunc='first', fill_value=np.nan
+                         )
+    html_out = save_name
+
+    print("Saving to : {}".format(html_out))
+
+    ht.write_single_table(tmp, 'MAGINE GO analysis', html_out)
+    html_out = save_name + '_filter'
+
+    ht.write_filter_table(tmp, html_out)
+
+
+def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
+                      exp_data=None, run_parallel=False, plot_type='plotly'):
     """ Creates a figure for each GO term in data
 
     Data should be a result of running calculate_enrichment.
@@ -42,8 +94,10 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
     ----------
     data : pandas.DataFrame
         previously ran enrichment analysis
+    list_of_terms : list_list
+
     save_name : str
-        name to save file   
+        name to save file
     out_dir : str
         output path for file
     exp_data : magine.ExperimentalData
@@ -52,15 +106,13 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
         To run in parallel using pathos.multiprocessing
     plot_type : str
         plotly or matplotlib
-    
+
     Returns
     -------
     out_array : dict
         dict where keys are pointers to figure locations
     """
 
-    if isinstance(data, str):
-        data = pd.read_csv(data)
     if out_dir is not None:
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
@@ -70,17 +122,9 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
     figure_locations = {}
     plots_to_create = []
     to_remove = set()
-    assert plot_type in ('plotly', 'matplotlib')
-    # get list of all terms
-    list_of_go_terms = data['GO_id'].unique()
-
+    assert plot_type == ('plotly' or 'matplotlib')
     # filter data by significance and number of references
-    list_of_sig_go = data[(data['ref'] >= 5)
-                          &
-                          (data['ref'] <= 2000)
-                          &
-                          (data['pvalue'] < 0.05)]['GO_id'].unique()
-    if len(list_of_sig_go) == 0:
+    if len(list_of_terms) == 0:
         print("No significant GO terms!!!")
         return figure_locations, to_remove
     # here we are going to iterate through all sig GO terms and create
@@ -88,21 +132,15 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
     # a location
 
     # create plot of genes over time
-    for n, i in enumerate(list_of_go_terms):
+    for n, i in enumerate(list_of_terms):
         local_exp_data = exp_data.data.copy()
         # want to plot all species over time
-        index = data['GO_id'] == i
+        index = data['term_name'] == i
 
-        name = data[index]['GO_name'].unique()
+        name = data[index]['term_name'].unique()
 
         if len(name) > 0:
             name = name[0]
-
-        # want to only plot significant species
-        if i not in list_of_sig_go:
-            to_remove.add(i)
-            figure_locations[i] = '<a>{0}</a>'.format(name)
-            continue
 
         gene_set = set()
         genes = data[index]['genes']
@@ -110,16 +148,16 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
             if isinstance(g, list):
                 each = g
             else:
-                each = literal_eval(g)
+                each = g.split(',')
 
-            gene_set = {j for j in each}
+            gene_set.update(set(each))
 
         if plot_type == 'matplotlib':
             # too many genes isn't helpful on plots, so skip them
             if len(gene_set) > 100:
                 figure_locations[i] = '<a>{0}</a>'.format(name)
                 continue
-        local_save_name = 'Figures/go_{0}_{1}'.format(i, save_name)
+        local_save_name = 'Figures/{0}_{1}'.format(n, save_name)
         if out_dir is not None:
             local_save_name = '{0}/{1}'.format(out_dir, local_save_name)
 
@@ -129,35 +167,14 @@ def create_gene_plots_per_go(data, save_name, out_dir=None, exp_data=None,
 
         title = "{0} : {1}".format(str(i), name)
         local_df = local_exp_data[
-            local_exp_data[gene].isin(list(gene_set))].copy()
-        p_input = (local_df, list(gene_set), local_save_name, '.', title,
-                   plot_type)
+            local_exp_data[gene_index].isin(list(gene_set))].copy()
+        p_input = (local_df, list(gene_set), 'gene', local_save_name, '.',
+                   title, plot_type)
 
         plots_to_create.append(p_input)
 
-    # return figure_locations, to_remove
-
-    print("Starting to create plots for each GO term")
-    # just keeping this code just in case using pathos is a bad idea
-    # ultimately, using matplotlib is slow.
-
-    if run_parallel:
-        st2 = time.time()
-        pool = mp.Pool()
-        pool.map_async(plot_list_of_genes, plots_to_create)
-        # pool.map(plot_list_of_genes, plots_to_create)
-        pool.close()
-        pool.join()
-        end2 = time.time()
-        print("parallel time = {}".format(end2 - st2))
-        print("Done creating plots for each GO term")
-
-    else:
-        st1 = time.time()
-        for i in plots_to_create:
-            plot_list_of_genes(i)
-        end1 = time.time()
-        print("sequential time = {}".format(end1 - st1))
+    print("Starting to create plots for each ontology term")
+    _make_plots(plots_to_create, plot_list_of_genes, run_parallel)
 
     return figure_locations, to_remove
 
@@ -167,11 +184,8 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
     # create plots of everything
     if isinstance(data, str):
         data = pd.read_csv(data)
-    # print(data.dtypes)
-    # tmp = pivot_table_for_export(data)
-    # print(tmp.dtypes)
 
-    fig_dict, to_remove = create_gene_plots_per_go(
+    fig_dict, to_remove = plot_genes_by_ont(
         data, save_name, out_dir, exp_data, run_parallel=run_parallel
     )
 
@@ -192,26 +206,6 @@ def write_table_to_html_with_figures(data, exp_data, save_name='index',
         html_out = os.path.join(out_dir, html_out)
 
     ht.write_filter_table(tmp, html_out)
-    """
-    items = []
-    for i, row in data.iterrows():
-        if i > 100:
-            continue
-        i = str(i)
-
-        an_item = dict(GO_id=row['GO_id'], id_num=i,
-                       enrichment_score=row['enrichment_score'],
-                       pvalue=row['pvalue'],
-                       genes=row['genes'],
-                       n_genes=row['n_genes'],
-                       )
-        items.append(an_item)
-
-    keys = ['GO_ID', 'enrichment_score', 'p-value', 'n_genes']
-    html_out = enrich_template.render(header=keys, items=items)
-    with open('{}.html'.format(save_name), 'w') as f:
-        f.write(html_out)
-    """
 
 
 def plot_dataframe(exp_data, html_filename, out_dir='proteins',
@@ -257,29 +251,51 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     species_to_plot = local_data[idx_key].unique()
 
     print("Plotting {} {}".format(len(species_to_plot), type_of_species))
-    # """
     figure_locations = {}
     list_of_plots = []
+
+    suffix = 'html' if plot_type == 'plotly' else 'pdf'
+
     for i in species_to_plot:
         save_name = re.sub('[/_.]', '', i)
         list_of_plots.append(
-            (local_data, [i], save_name, out_dir, i, plot_type)
+            (
+            local_data, [i], type_of_species, save_name, out_dir, i, plot_type)
         )
+        figure_locations[i] = '<a href="{0}/{1}.{2}">{1}</a>'.format(out_dir,
+                                                                     save_name,
+                                                                     suffix)
 
-        if plot_type == 'plotly':
-            out_point = '<a href="{0}/{1}.html">{1}</a>'.format(out_dir,
-                                                                save_name)
-            figure_locations[i] = out_point
-        else:
-            out_point = '<a href="{0}/{1}.pdf">{1}</a>'.format(out_dir,
-                                                               save_name)
-            figure_locations[i] = out_point
+    _make_plots(list_of_plots, plot_func, run_parallel)
 
-    if run_parallel:
+    # Place a link to the species for each key
+    for i in figure_locations:
+        local_data.loc[exp_data[idx_key] == i, idx_key] = figure_locations[i]
+
+    if type_of_species == 'protein':
+        cols = ['gene', 'treated_control_fold_change', 'protein',
+                'p_value_group_1_and_group_2', 'time', 'data_type',
+                'significant_flag',
+                ]
+    elif type_of_species == 'metabolites':
+
+        cols = ['compound',
+                'treated_control_fold_change',
+                'p_value_group_1_and_group_2', 'significant_flag',
+                'data_type', 'time',  # 'time_points',
+                ]
+        if 'compound_id' in local_data.columns:
+            cols.insert(2, 'compound_id')
+
+    local_data = local_data[cols]
+    ht.write_filter_table(local_data, html_filename)
+
+
+def _make_plots(plots_to_make, plot_func, parallel=False):
+    if parallel:
         st2 = time.time()
         pool = mp.Pool()
-        pool.map_async(plot_func, list_of_plots)
-        # pool.map(plot_list_of_genes, plots_to_create)
+        pool.map_async(plot_func, plots_to_make)
         pool.close()
         pool.join()
         end2 = time.time()
@@ -288,48 +304,15 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
     else:
         st1 = time.time()
-        map(plot_func, list_of_plots)
+        map(plot_func, plots_to_make)
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
 
-    # Place a link to the species for each key
-    for i in figure_locations:
-        local_data.loc[exp_data[idx_key] == i, idx_key] = figure_locations[i]
-    # """
 
-    # Pivot the pandas df to be samples vs species
-    # genes_out, meta_out = pivot_tables_for_export(local_data)
-
-    if type_of_species == 'protein':
-        # output = genes_out
-        cols = ['gene', 'treated_control_fold_change', 'protein',
-                'p_value_group_1_and_group_2', 'time', 'data_type',
-                'significant_flag',  # 'time_points',
-                ]
-    elif type_of_species == 'metabolites':
-        # output = meta_out
-        cols = ['compound',
-                'treated_control_fold_change',
-                'p_value_group_1_and_group_2', 'significant_flag',
-                'data_type', 'time',  # 'time_points',
-                ]
-        if 'compound_id' in local_data.columns:
-            cols.insert(2, 'compound_id')
-        # output = output[['treated_control_fold_change',
-        #                  'p_value_group_1_and_group_2',
-        # 'data_type',
-        # 'significant_flag',
-        # ]]
-    local_data = local_data[cols]
-    # if out_dir is not None:
-    #     html_filename = os.path.join(out_dir, html_filename)
-    # write_single_table(local_data, html_filename, idx_key)
-    ht.write_filter_table(local_data, html_filename)
-
-
-def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
-                             out_dir=None, title=None, plot_type='plotly',
-                             image_format='pdf'):
+def plot_list_of_metabolites(dataframe, list_of_metab=None,
+                             species_type='gene',
+                             save_name='test', out_dir=None, title=None,
+                             plot_type='plotly', image_format='pdf'):
     """
 
     Parameters
@@ -358,7 +341,7 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
             os.mkdir(out_dir)
 
     if list_of_metab is None:
-        dataframe, list_of_metab, save_name, out_dir, title, plot_type = dataframe
+        dataframe, list_of_metab, species_type, save_name, out_dir, title, plot_type = dataframe
 
     if 'sample_id' not in dataframe.dtypes:
         dataframe['sample_id'] = dataframe['time']
@@ -370,12 +353,15 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
         x_point_dict = {i: x_points[n] for n, i in enumerate(x_points)}
     else:
         x_point_dict = {i: n for n, i in enumerate(x_points)}
+    if species_type == 'metabolites':
+        idx = meta_index
+    else:
+        idx = gene_index
 
-    local_df = dataframe[dataframe[meta_index].isin(list_of_metab)].copy()
+    local_df = dataframe[dataframe[idx].isin(list_of_metab)].copy()
     local_df = log2_normalize_df(local_df, fold_change=fold_change)
 
-    n_plots = len(local_df[meta_index].unique())
-    group = local_df.groupby(meta_index)
+    n_plots = len(local_df[idx].unique())
 
     color_list = [cm(1. * i / n_plots) for i in range(n_plots)]
     colors = enumerate(color_list)
@@ -388,8 +374,10 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
     plotly_list = []
     names_list = []
     total_counter = 0
-    for n, m in group:
-        name = n
+
+    group = local_df.groupby(idx)
+    for name, m in group:
+
         index_counter = 0
         x = np.array(m[sample_id])
         if len(x) < 1:
@@ -409,22 +397,22 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
         total_counter += 1
         # create matplotlib plot
         if plot_type == 'matplotlib':
-            label = "\n".join(wrap(n, 40))
+            label = "\n".join(wrap(name, 40))
             p = ax.plot(x_index, y, '.-', label=label)
             if len(s_flag) != 0:
                 color = p[0].get_color()
                 ax.plot(x_index[s_flag], y[s_flag], '^', color=color)
+
         # create plotly plot
         elif plot_type == 'plotly':
             c = next(colors)[1]
-            plotly_list.append(_create_ploty_graph(x_index, y, n, n, c))
+            plotly_list.append(_create_ploty_graph(x_index, y, name, name, c))
             if len(s_flag) != 0:
                 index_counter += 1
                 total_counter += 1
                 plotly_list.append(_create_ploty_graph(x_index[s_flag],
-                                                       y[s_flag], n, n,
-                                                       c,
-                                                       marker='x-open-dot'))
+                                                       y[s_flag], name, name,
+                                                       c, marker='x-open-dot'))
         names_list.append([name, index_counter])
 
     if plot_type == 'matplotlib':
@@ -438,16 +426,16 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None, save_name='test',
                            plotly_list)
 
 
-def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
+def plot_list_of_genes(df, genes=None, save_name='test',
                        out_dir=None, title=None, plot_type='plotly',
                        image_format='pdf'):
     """
 
     Parameters
     ----------
-    dataframe: pandas.DataFrame
+    df: pandas.DataFrame
         magine formatted dataframe
-    list_of_genes: list
+    genes: list
         List of genes to be plotter
     save_name: str
         Filename to be saved as
@@ -465,10 +453,10 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
 
     """
 
-    if list_of_genes is None:
-        dataframe, list_of_genes, save_name, out_dir, title, plot_type = dataframe
+    if genes is None:
+        df, genes, species_type, save_name, out_dir, title, plot_type = df
 
-    ldf = dataframe.copy(deep=True)
+    ldf = df.copy(deep=True)
     if out_dir is not None:
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
@@ -487,11 +475,11 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
         x_point_dict = {i: n for n, i
                         in enumerate(x_points)}
 
-    local_df = ldf[ldf[gene].isin(list_of_genes)].copy(deep=True)
-    local_df = log2_normalize_df(local_df, fold_change=fold_change)
+    ldf = ldf[ldf[gene_index].isin(genes)].copy(deep=True)
+    ldf = log2_normalize_df(ldf, fold_change=fold_change)
 
-    n_plots = len(local_df[gene].unique())
-    num_colors = len(local_df[protein].unique())
+    n_plots = len(ldf[gene_index].unique())
+    num_colors = len(ldf[protein].unique())
     color_list = [cm(1. * i / num_colors) for i in range(num_colors)]
 
     if plot_type == 'matplotlib':
@@ -504,7 +492,7 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
     plotly_list = []
     names_list = []
     total_counter = 0
-    group = local_df.groupby(gene)
+    group = ldf.groupby(gene_index)
     for i, j in group:
         name = i
         group2 = j.groupby(protein)
@@ -527,6 +515,7 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
 
             index_counter += 1
             total_counter += 1
+
             # create matplotlib plot
             if plot_type == 'matplotlib':
                 label = "\n".join(wrap(n, 40))
@@ -534,6 +523,7 @@ def plot_list_of_genes(dataframe, list_of_genes=None, save_name='test',
                 if len(s_flag) != 0:
                     color = p[0].get_color()
                     ax.plot(x_index[s_flag], y[s_flag], '^', color=color)
+
             # create plotly plot
             elif plot_type == 'plotly':
                 c = next(colors)[1]
@@ -581,7 +571,6 @@ def _save_matplotlib_output(ax, save_name, out_dir, image_format, x_point_dict,
 
 def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
                        x_point_dict, title, x_points, plotly_list):
-    from magine.html_templates.html_tools import format_ploty
     true_list = [True] * total_counter
     scroll_list = [dict(args=['visible', true_list],
                         label='All',
@@ -627,7 +616,7 @@ def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
 
     x = plot(fig, filename=tmp_savename, auto_open=False,
              include_plotlyjs=False, output_type='div')
-    format_ploty(x, tmp_savename)
+    ht.format_ploty(x, tmp_savename)
 
 
 def _create_ploty_graph(x, y, label, enum, color, marker='circle'):

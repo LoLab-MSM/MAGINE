@@ -1,9 +1,11 @@
 import os
-import pandas as pd
 import tempfile
+
+import pandas as pd
+
+import magine.plotting.species_plotting as plotter
 from magine.plotting.venn_diagram_maker import create_venn3, create_venn2
 from magine.plotting.volcano_plots import volcano_plot
-import magine.plotting.species_plotting as plotter
 
 
 class TestSpeciesPlotting(object):
@@ -66,6 +68,7 @@ class TestSpeciesPlotting(object):
     def test_plot_list_of_metabolites(self):
         ex_list = ['HMDB1', 'HMDB2']
         plotter.plot_list_of_metabolites(dataframe=self.data,
+                                         species_type='metabolites',
                                          list_of_metab=ex_list,
                                          out_dir=self.out_dir,
                                          save_name='metabolites'
