@@ -13,6 +13,9 @@ MAGINE
 .. image:: https://readthedocs.org/projects/MAGINE/badge/?version=latest
     :target: http://magine.readthedocs.io/en/latest/?badge=latest
 
+.. image:: https://mybinder.org/badge.svg 
+:target: https://mybinder.org/v2/gh/LoLab-VU/MAGINE/master
+
 
 Mechanism of Action Generator involving Network Expansion
 
