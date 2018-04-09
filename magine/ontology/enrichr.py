@@ -562,7 +562,6 @@ class Enrichr(object):
         return data[~data['term_name'].isin(non_sig)]
 
 
-
 def run_enrichment_for_project(exp_data, project_name):
     local_dbs = [
 
@@ -699,7 +698,6 @@ def get_background_list(lib_name):
         )
 
     return term_to_gene
-
 
 
 if __name__ == '__main__':
