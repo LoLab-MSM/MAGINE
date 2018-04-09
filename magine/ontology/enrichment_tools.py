@@ -1,5 +1,10 @@
 import itertools
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy.cluster.hierarchy as sch
+
 
 def jaccard_index(first_set, second_set):
     """
@@ -8,8 +13,8 @@ def jaccard_index(first_set, second_set):
 
     Parameters
     ----------
-    first_set : :obj: `set`
-    second_set : :obj: `set`
+    first_set : set
+    second_set : set
 
 
 
@@ -23,11 +28,10 @@ def jaccard_index(first_set, second_set):
     .. [1] `Wikipedia entry for the Jaccard index
            <https://en.wikipedia.org/wiki/Jaccard_index>`_
     """
-    first_set = set(first_set)
-    second_set = set(second_set)
+    set1 = set(first_set)
+    set2 = set(second_set)
 
-    return float(len(first_set.intersection(second_set))) / len(
-        first_set.union(second_set))
+    return float(len(set1.intersection(set2))) / len(set1.union(set2))
 
 
 def filter_rows(local_df, column, options):
@@ -50,8 +54,8 @@ def filter_rows(local_df, column, options):
     if isinstance(options, str):
         if options not in valid_opts:
             print('{} not in {}'.format(options, valid_opts))
-
-        copy_df = local_df[local_df[column] == options]
+        else:
+            copy_df = local_df[local_df[column] == options]
     elif isinstance(options, list):
         for i in options:
             if i not in valid_opts:
@@ -113,7 +117,13 @@ def filter_based_on_words(df, words):
     return df[df['term_name'].str.lower().str.contains('|'.join(words))]
 
 
-def filter_similar_terms(data, threshold=0.75, verbose=False, sort_by='combined_score'):
+def all_genes_from_df(df):
+    genes = df['genes']
+    return set(itertools.chain.from_iterable(genes.str.split(',').as_matrix()))
+
+
+def filter_similar_terms(data, threshold=0.75, verbose=False,
+                         sort_by='combined_score'):
     if sort_by == 'rank':
         ascending = True
     else:
@@ -127,6 +137,85 @@ def filter_similar_terms(data, threshold=0.75, verbose=False, sort_by='combined_
     print("Number of rows went from {} to {}".format(data.shape[0],
                                                      data_copy.shape[0]))
     return data_copy
+
+
+def find_similar_terms(term, df):
+    first_genes = term_to_genes(df, term)
+    rest_of_df = df[~(df['term_name'] == term)]
+    array = rest_of_df[['term_name', 'genes']].as_matrix()
+    dist_m = [None] * len(array)
+    for j in range(len(array)):
+        name = array[j, 0]
+        c = jaccard_index(first_genes, set(array[j, 1].split(',')))
+        dist_m[j] = [name, c]
+
+    dist_m = pd.DataFrame(dist_m, columns=['term_name', 'similarity_score'])
+    dist_m.sort_values('similarity_score', inplace=True, ascending=False)
+    return dist_m
+
+
+def dist_matrix(df, fig_size=(8, 8)):
+    array = df[['term_name', 'genes']].as_matrix()
+    n_dim = len(array)
+    dist_mat = np.empty((n_dim, n_dim), dtype=float)
+
+    for i, ac in enumerate(array):
+        first_genes = set(array[i, 1].split(','))
+        for j, bc in enumerate(array):
+            if i > j:
+                continue
+            second_genes = set(array[j, 1].split(','))
+            c = jaccard_index(first_genes, second_genes)
+            dist_mat[i, j] = c
+            dist_mat[j, i] = c
+    names = array[:, 0]
+
+    return cluster_distance_mat(dist_mat, names, fig_size)
+
+
+def cluster_distance_mat(dist_mat, names, fig_size=(8, 8)):
+    # Compute and plot first dendrogram.
+    fig = plt.figure(figsize=fig_size)
+
+    # Compute and plot second dendrogram.
+    ax2 = fig.add_axes([0.3, 0.71, 0.6, 0.2])
+    Y = sch.linkage(dist_mat, method='average')
+    Z2 = sch.dendrogram(Y)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+
+    # Plot distance matrix.
+    axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.6])
+
+    # reorder matrix
+    idx1 = Z2['leaves']
+    dist_mat = dist_mat[idx1, :]
+    dist_mat = dist_mat[:, idx1]
+    names = names[idx1]
+
+    # create figure
+    im = axmatrix.matshow(dist_mat, aspect='auto', origin='lower',
+                          cmap=plt.cm.Reds, vmin=0, vmax=1)
+
+    # add xtick labels
+    axmatrix.set_xticks(range(len(names)))
+    axmatrix.set_xticklabels(names, minor=False)
+    axmatrix.xaxis.set_label_position('bottom')
+    axmatrix.xaxis.tick_bottom()
+    plt.xticks(rotation=90, fontsize=8)
+
+    # add ytick labels
+    axmatrix.set_yticks(range(len(names)))
+    axmatrix.set_yticklabels(names, minor=False)
+    axmatrix.yaxis.set_label_position('left')
+    axmatrix.yaxis.tick_left()
+    plt.yticks(rotation=0, fontsize=8)
+
+    # add colorbar
+    axcolor = fig.add_axes([0.94, 0.1, 0.02, 0.6])
+    plt.colorbar(im, cax=axcolor)
+
+    return fig
 
 
 def remove_redundant(data, threshold=0.75, verbose=False,
@@ -149,6 +238,7 @@ def remove_redundant(data, threshold=0.75, verbose=False,
     data_copy = data_copy[~data_copy['term_name'].isin(to_remove)]
     print("Number of rows went from {} to {}".format(data.shape[0],
                                                      data_copy.shape[0]))
+
     return data_copy
 
 
@@ -185,6 +275,5 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
 if __name__ == '__main__':
     a = {0, 1, 2}
     b = {0, 1, 3}
-    b = {0, 1}
     print(b.difference(a))
     jaccard_index(a, b)
