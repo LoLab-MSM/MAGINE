@@ -16,8 +16,6 @@ except:
 kegg = KEGG()
 kegg.TIMEOUT = 100
 
-_kegg_raw_out_path = os.path.join(network_data_dir, 'KEGG')
-
 
 def pathway_id_to_network(pathway_id, species='hsa'):
     """
@@ -150,9 +148,6 @@ def download_all_of_kegg(species='hsa', verbose=False):
 
     """
 
-    if not os.path.exists(_kegg_raw_out_path):
-        os.mkdir(_kegg_raw_out_path)
-
     kegg.organism = species
     list_of_kegg_pathways = [i[5:] for i in kegg.pathwayIds]
     if verbose:
@@ -168,7 +163,7 @@ def download_all_of_kegg(species='hsa', verbose=False):
             print("%s ended with 404 error" % pathway_id)
             continue
 
-        graph, pathway_name = kgml_to_graph(pathway, species=species)
+        graph, pathway_name = kgml_to_nx(pathway, species=species)
 
         kegg_dict[pathway_id] = graph
         if verbose:
@@ -197,7 +192,7 @@ def download_all_of_kegg(species='hsa', verbose=False):
     save_gzip_pickle(save_node_to_path, node_to_path)
 
 
-def create_all_of_kegg(species='hsa', verbose=False):
+def create_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
     """
     Combines all KEGG pathways into a single network
 
@@ -205,16 +200,18 @@ def create_all_of_kegg(species='hsa', verbose=False):
     ----------
     species : species
         Default 'hsa'
+    fresh_download : bool
+        Download kegg new
     verbose : bool
 
     Returns
     -------
 
     """
-    p_name = os.path.join(_kegg_raw_out_path,
+    p_name = os.path.join(network_data_dir,
                           '{}_all_of_kegg.p.gz'.format(species))
     # load in network if it exists
-    if os.path.exists(p_name):
+    if os.path.exists(p_name) and not fresh_download:
         if verbose:
             print('Reading in KEGG network')
         all_of_kegg = nx.read_gpickle(p_name)
@@ -268,5 +265,5 @@ def load_gz_p(file_name):
 
 
 if __name__ == '__main__':
-    download_all_of_kegg('hsa')
+    # download_all_of_kegg('hsa')
     create_all_of_kegg('hsa')
