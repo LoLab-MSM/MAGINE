@@ -1,10 +1,10 @@
 import types
+
 import matplotlib.pyplot as plt
 import pandas as pd
 from wordcloud import WordCloud, STOPWORDS
 
 import magine.ontology.enrichment_tools as et
-
 
 process_dbs = [
     'GO_Biological_Process_2017',
@@ -131,7 +131,7 @@ def create_wordcloud(df, save_name=None):
 
 
 def _cleanup_term_name(row):
-    if not isinstance(row['term_name'], str):
+    if not isinstance(row['term_name'], (str, unicode)):
         print(row)
     x = row['term_name'].split('_')[0].lower()
     x = ' ' + x
