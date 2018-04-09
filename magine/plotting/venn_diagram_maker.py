@@ -1,11 +1,9 @@
-import os
-
 import matplotlib.pyplot as plt
 from matplotlib_venn import venn2 as _venn2, venn3 as _venn3
 
 
-def create_venn3(list1, list2, list3, label1, label2, label3, save_name,
-                 out_dir=None, image_format='png', title=None):
+def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
+                 image_format='png', title=None):
     """
     
     Parameters
@@ -17,9 +15,6 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name,
     label2 : str
     label3 : str
     save_name : str
-        
-    out_dir : str, optional
-        location to save figure
     image_format : str
         default png
     title: str
@@ -35,17 +30,16 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name,
                                     '%s(%s)' % (label2, str(len(set2))),
                                     '%s(%s)' % (label3, str(len(set3)))))
     plt.tight_layout()
-    save_name = "{}.{}".format(save_name, image_format)
-    if out_dir is not None:
-        save_name = os.path.join(out_dir, save_name)
-    if title:
+    if title is not None:
         plt.title(title)
-    plt.savefig(save_name, bbox_inches='tight')
-    plt.close()
+    if save_name is not None:
+        save_name = "{}.{}".format(save_name, image_format)
+        plt.savefig(save_name, bbox_inches='tight')
+    return v
 
 
-def create_venn2(list1, list2, label1, label2, save_name, title=None,
-                 out_dir=None, image_format='png'):
+def create_venn2(list1, list2, label1, label2, save_name=None, title=None,
+                 image_format='png'):
     """
     
     Parameters
@@ -55,7 +49,6 @@ def create_venn2(list1, list2, label1, label2, save_name, title=None,
     label1 : str
     label2 : str
     save_name : str
-    out_dir : str, optional
     image_format : str, optional
         default png
 
@@ -68,10 +61,10 @@ def create_venn2(list1, list2, label1, label2, save_name, title=None,
     v = _venn2([set1, set2], ('%s(%s)' % (label1, str(len(set1))),
                               '%s(%s)' % (label2, str(len(set2))),))
     plt.tight_layout()
-    save_name = "{}.{}".format(save_name, image_format)
-    if out_dir is not None:
-        save_name = os.path.join(out_dir, save_name)
     if title is not None:
         plt.title(title)
-    plt.savefig(save_name, bbox_inches='tight')
-    plt.close()
+    if save_name is not None:
+        save_name = "{}.{}".format(save_name, image_format)
+        plt.savefig(save_name, bbox_inches='tight')
+
+    return v
