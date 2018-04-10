@@ -131,7 +131,7 @@ def create_wordcloud(df, save_name=None):
 
 
 def _cleanup_term_name(row):
-    if not isinstance(row['term_name'], (str, unicode)):
+    if not isinstance(row['term_name'], str):
         print(row)
     x = row['term_name'].split('_')[0].lower()
     x = ' ' + x
