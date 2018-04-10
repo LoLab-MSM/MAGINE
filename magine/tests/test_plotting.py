@@ -90,8 +90,7 @@ class TestVennDiagram(object):
         self.out_dir = tempfile.mkdtemp()
 
     def test_venn_2(self):
-        create_venn2(self.x, self.y, 'X', 'Y', 'test_1', out_dir=self.out_dir)
+        create_venn2(self.x, self.y, 'X', 'Y', 'test_1')
 
     def test_venn_3(self):
-        create_venn3(self.x, self.y, self.z, 'X', 'Y', 'z', 'test_1',
-                     out_dir=self.out_dir)
+        create_venn3(self.x, self.y, self.z, 'X', 'Y', 'z', 'test_1')
