@@ -40,6 +40,7 @@ def display_graph(graph, add_parent=False, layout_algorithm='cose-bilkent',
     d['widget_height'] = str(height)
     d['layout'] = layout_algorithm
     d['style_json'] = json.dumps(styles['default'])
+    d['fitbutton'] = "fit" + str(uuid.uuid4())
 
     template = env.get_template('subgraph_2.html')
     widget = template.render(d)
