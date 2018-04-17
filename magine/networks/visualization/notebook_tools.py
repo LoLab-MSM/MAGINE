@@ -5,8 +5,9 @@ import magine.ontology.enrichment_tools as et
 from magine.networks.network_subgraphs import NetworkSubgraphs
 from magine.networks.ontology_network import OntologyNetworkGenerator
 
-pd.set_option('display.precision', 5)
-pd.set_option('display.max_colwidth', 100)
+
+# pd.set_option('display.precision', 5)
+# pd.set_option('display.max_colwidth', 100)
 
 
 def create_subnetwork(terms, df, network, save_name=None, draw_png=False,

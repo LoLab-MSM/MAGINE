@@ -32,7 +32,9 @@ class BioGridDownload(object):
                          low_memory=False,
                          encoding='utf8',
                          )
+
         df = df[df['Organism'] == 'Homo sapiens']
+
         chem_cols = ['Official Symbol',
                      'Action',
                      'Chemical Name',
@@ -56,7 +58,7 @@ class BioGridDownload(object):
         def convert_to_name(row):
             db = row['Chemical Source']
             id_chem_source = row['Chemical Source ID']
-            c_name = row['Chemical Name']
+            c_name = row['chemName']
             if db == 'DRUGBANK':
                 if id_chem_source in self._cm.drugbank_to_hmdb:
                     new_name = self._cm.drugbank_to_hmdb[id_chem_source][0]
@@ -159,7 +161,6 @@ class BioGridDownload(object):
                             encoding='utf8',
                             error_bad_lines=False,
                             low_memory=False)
-
         # only keep human
         # TODO enable other organisms
         table = table[table['Organism Interactor A'].isin(['9606'])]

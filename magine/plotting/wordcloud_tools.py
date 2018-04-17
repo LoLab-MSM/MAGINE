@@ -22,7 +22,7 @@ basic_words = {'signaling', 'signalling', 'receptor', 'events', 'protein',
                'mrna', 'cellular', 'viral', 'host', 'processing', 'activation',
                'rrna', 'network', 'rna', 'cancer', 'disease', 'cascade',
                'transcript', 'influenza', 'beta', 'pathways', 'gene', 'hiv',
-               'downstream', 'activated', 'target',
+               'downstream', 'activated', 'target', 'dn', 'up'
                }
 
 basic_words.update(STOPWORDS)
@@ -110,8 +110,8 @@ def create_wordcloud(df, save_name=None):
     wordcloud = wc.generate(text)
     word_dict = wc.process_text(text)
 
-    def plot(self, save_name):
-        plt.figure()
+    def plot(self, save_name, figsize=(8, 5)):
+        plt.figure(figsize=figsize)
         plt.imshow(self, interpolation='bilinear')
         plt.xticks([])
         plt.yticks([])
@@ -127,6 +127,13 @@ def create_wordcloud(df, save_name=None):
         wordcloud.plot(save_name)
 
     wordcloud.word_dict = word_dict
+
+    df1 = pd.DataFrame(list(word_dict.items()),
+                       columns=['words', 'counts'])
+
+    df1.sort_values('counts', ascending=False, inplace=True)
+    wordcloud.data = df1
+
     return wordcloud
 
 

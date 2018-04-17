@@ -45,8 +45,8 @@ pathways = [
 
 kinase = [
     'KEA_2015',
-    # 'LINCS_L1000_Kinase_Perturbations_down',
-    # 'LINCS_L1000_Kinase_Perturbations_up',
+    'LINCS_L1000_Kinase_Perturbations_down',
+    'LINCS_L1000_Kinase_Perturbations_up',
     'Kinase_Perturbations_from_GEO_down',
     'Kinase_Perturbations_from_GEO_up',
 
@@ -87,7 +87,68 @@ all_dbs = [
 ]
 
 
+def clean_term_names(row):
+    term_name = row['term_name']
+
+    if not isinstance(term_name, str):
+        return term_name
+    db = row['db']
+    if db in ['GO_Biological_Process_2017',
+              'GO_Molecular_Function_2017', 'GO_Cellular_Component_2017']:
+        if 'GO:' in term_name:
+            term_name = term_name.split('\(', 1)[0]
+    if db == 'Human_Phenotype_Ontology':
+        if 'HP:' in term_name:
+            term_name = term_name.split('\(', 1)[0]
+    if db == 'MGI_Mammalian_Phenotype_2017':
+        if term_name.startswith('MP:'):
+            term_name = term_name.split('_', 1)[1]
+
+    if db == 'DrugMatrix':
+        drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
+        direction = re.search(r'-(.{2})$', term_name).group(0)
+        term_name = drug_name + direction
+
+    term_name = term_name.strip()
+    term_name = term_name.lower()
+    for i, j in replace_pairs:
+        if i in term_name:
+            term_name = term_name.replace(i, j)
+
+    return term_name
+
+
+replace_pairs = [
+    ('mus musculus', 'mus'),
+    ('homo sapiens', 'hsa'),
+    ('rattus norvegicus', 'rat'),
+    ('oncorhynchus mykiss', 'onc_mykiss'),
+    ('macaca fascicularis', 'mfa'),
+    ('oryzias latipes', 'ola'),
+    ('sus scrofa', 'ssc'),
+    ('danio rerio', 'dre'),
+    ('bos taurus', 'bta'),
+    ('dictyostelium discoideum', 'dicty'),
+    ('myzus persicae', 'm.persicae'),
+    ('staphylococcus aureus', 's.aureus'),
+    ('escherichia coli', 'e.coli'),
+    ('pseudomonas aeruginosa', 'p.aeruginosa'),
+    ('drosophila melanogaste', 'fly'),
+    ('mycobacterium tuberculosis', 'm.tuberculosis'),
+    ('hordeum vulgare', 'h.vulgare'),
+    (' (mouse)', '_mus'),
+    (' (human)', '_hsa'),
+    ('Homo sapiens', 'hsa'),
+    ('Mus musculus', 'hsa'),
+    ('hg19', '_hsa'),
+    ('mm9', '_mus'),
+
+]
+
+
 class Enrichr(object):
+    query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
+
     def __init__(self, exp_data=None, verbose=False):
         self._url = 'http://amp.pharm.mssm.edu/Enrichr'
         self._valid_libs = _valid_libs
@@ -104,45 +165,12 @@ class Enrichr(object):
         for lib_name in sorted(self._valid_libs):
             print(lib_name)
 
-    def run(self, list_of_genes, gene_set_lib='GO_Biological_Process_2017'):
-        """
-
-        Parameters
-        ----------
-        list_of_genes : list_like
-            List of genes using HGNC gene names
-        gene_set_lib : str
-            Name of gene set library
-            To print options use Enrichr.print_valid_libs
-        Returns
-        -------
-
-        """
-        assert isinstance(list_of_genes, (list, set))
+    def run_id(self, list_id, gene_set_lib):
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
             return pd.DataFrame()
-        if self.verbose:
-            print("Running Enrichr with gene set {}".format(gene_set_lib))
 
-        description = 'Example gene list'
-        genes_str = '\n'.join(list_of_genes)
-        payload = {
-            'list': (None, genes_str),
-            'description': (None, description)
-        }
-
-        response = requests.post(self._url + '/addList', files=payload)
-        if not response.ok:
-            raise Exception('Error analyzing gene list')
-
-        data = json.loads(response.text)
-        user_list_id = data['userListId']
-
-        query = '{url}/{function}?userListId={list_id}&backgroundType={lib}'
-
-        q = query.format(url=self._url, function='enrich',
-                         list_id=user_list_id, lib=gene_set_lib)
+        q = self.query.format(url=self._url, list_id=list_id, lib=gene_set_lib)
 
         response = requests.get(q)
 
@@ -152,91 +180,102 @@ class Enrichr(object):
                 response = requests.get(q)
 
         data = json.loads(response.text)
+        if len(data[gene_set_lib]) == 0:
+            return pd.DataFrame()
         #####
         # ENRICHR return a list of entries with each entry having these terms
         # Rank, Term name, P-value, Z-score, Combined score, Overlapping genes,
         # Adjusted p-value, Old p-value, Old adjusted p-value
         #####
-        list_of_dict = []
-        for i in data[gene_set_lib]:
-            tmp_dict = dict()
-            tmp_dict['rank'] = i[0]
-            tmp_dict['term_name'] = i[1]
-            tmp_dict['p_value'] = i[2]
-            tmp_dict['z_score'] = i[3]
-            tmp_dict['combined_score'] = i[4]
-            tmp_dict['genes'] = ','.join(g for g in sorted(i[5]))
-            tmp_dict['n_genes'] = len(i[5])
-            tmp_dict['adj_p_value'] = i[6]
-            list_of_dict.append(tmp_dict)
+
+        df = pd.DataFrame(
+            data.values()[0],
+            columns=['rank', 'term_name', 'p_value', 'z_score',
+                     'combined_score', 'gene_hits', 'adj_p_value', '_', '_']
+        )
+
+        def compress_genes(row):
+            return ','.join(g for g in sorted(row['gene_hits']))
+
+        def get_length(row):
+            return len(row['gene_hits'])
+
+        df['genes'] = df.apply(compress_genes, axis=1)
+        df['n_genes'] = df.apply(get_length, axis=1)
+
         cols = ['term_name', 'rank', 'p_value', 'z_score', 'combined_score',
                 'adj_p_value', 'genes', 'n_genes']
 
-        df = pd.DataFrame(list_of_dict, columns=cols)
         df = df[~df['term_name'].isnull()]
+        df = df[cols]
+        df['db'] = gene_set_lib
+
         if df.shape[0] == 0:
             return df[cols]
+        return df
 
-        def _cut_word(row):
-            term_name = row['term_name']
+    def _add_gene_list(self, gene_list):
 
-            replace_pairs = [
-                ('mus musculus', 'mus'),
-                ('homo sapiens', 'hsa'),
-                ('rattus norvegicus', 'rat'),
-                ('oncorhynchus mykiss', 'onc_mykiss'),
-                ('macaca fascicularis', 'mfa'),
-                ('oryzias latipes', 'ola'),
-                ('sus scrofa', 'ssc'),
-                ('danio rerio', 'dre'),
-                ('bos taurus', 'bta'),
-                ('dictyostelium discoideum', 'dicty'),
-                ('myzus persicae', 'm.persicae'),
-                ('staphylococcus aureus', 's.aureus'),
-                ('escherichia coli', 'e.coli'),
-                ('pseudomonas aeruginosa', 'p.aeruginosa'),
-                ('drosophila melanogaste', 'fly'),
-                ('mycobacterium tuberculosis', 'm.tuberculosis'),
-                ('hordeum vulgare', 'h.vulgare'),
-                (' (mouse)', '_mus'),
-                (' (human)', '_hsa'),
-            ]
-            if len(term_name.split('_Homo sapiens')) > 1:
-                return term_name.split('_Homo sapiens')[0] + '_hsa'
-            elif len(term_name.split('Mus musculus')) > 1:
-                return term_name.split('Mus musculus')[0] + '_mus'
-            elif term_name.endswith('hg19'):
-                return term_name.replace('hg19', '_hsa')
-            elif term_name.endswith('mm9'):
-                return term_name.replace('mm9', '_mus')
-            for i, j in replace_pairs:
-                if i in term_name:
-                    return term_name.replace(i, j)
-            return term_name
+        genes_str = '\n'.join(gene_list)
 
-        def get_go_id(row):
-            s = row['term_name']
-            go_id = re.search(r'\((GO.*?)\)', s).group(1)
-            return go_id
+        payload = {
+            'list': (None, genes_str),
+            'description': (None, 'MAGINE analysis')
+        }
 
-        def remove_term_id(row):
-            s = row['term_id']
-            term = row['term_name'].replace('(' + s + ')', '')
-            if term[-1] == ' ':
-                term = term[:-1]
-            return term
+        response = requests.post(self._url + '/addList', files=payload)
+        if not response.ok:
+            raise Exception('Error analyzing gene list')
 
-        if gene_set_lib.startswith('GO') and not gene_set_lib.endswith('b'):
-            df['term_id'] = df.apply(get_go_id, axis=1)
-            df['term_name'] = df.apply(remove_term_id, axis=1)
-            cols.insert(0, 'term_id')
+        data = json.loads(response.text)
+        return data['userListId']
 
-        df['term_name'] = df.apply(_cut_word, axis=1)
+    def _run_list_of_dbs(self, gene_list_id, databases):
+        data = []
+        for count, i in enumerate(databases):
+            if self.verbose:
+                print('\t\t{}/{} databases'.format(count, len(databases)))
+            data.append(self.run_id(gene_list_id, i))
+
+        return pd.concat(data)
+
+    def run(self, list_of_genes, gene_set_lib='GO_Biological_Process_2017'):
+        """
+
+        Parameters
+        ----------
+        list_of_genes : list_like
+            List of genes using HGNC gene names
+        gene_set_lib : str or list
+            Name of gene set library
+            To print options use Enrichr.print_valid_libs
+        Returns
+        -------
+
+        """
+        assert isinstance(list_of_genes, (list, set))
+
+        if self.verbose:
+            print("Running Enrichr with gene set {}".format(gene_set_lib))
+
+        user_list_id = self._add_gene_list(list_of_genes)
+        if isinstance(gene_set_lib, str):
+
+            df = self.run_id(user_list_id, gene_set_lib)
+        else:
+            df = self._run_list_of_dbs(user_list_id, gene_set_lib)
+
+        init_size = len(df)
+        df['term_name'] = clean_term_names(df)
+        after_size = len(df)
+        print(init_size == after_size)
+        assert init_size == after_size, 'not the same shape {}'.format(
+            gene_set_lib)
 
         if self.verbose:
             print("Done calling Enrichr.")
 
-        return df[cols]
+        return df
 
     def run_samples(self, sample_lists, sample_ids,
                     gene_set_lib='GO_Biological_Process_2017', save_name=None,
@@ -394,30 +433,25 @@ class Enrichr(object):
 
         """
 
-        def _run(list_dbs):
-            all_df = []
-            for i in list_dbs:
-                if self.verbose:
-                    print("\tRunning {}".format(i))
-                df = self.run(list_of_genes=list_g, gene_set_lib=i)
-                if df is None:
-                    continue
-                df['db'] = i
-                all_df.append(df)
-            return pd.concat(all_df, ignore_index=True)
-
         if db == 'transcription_factors':
-            return _run(transcription_factors)
+            return self.run(list_of_genes=list_g,
+                            gene_set_lib=transcription_factors)
+
         if db == 'pathways':
-            return _run(pathways)
+            return self.run(list_of_genes=list_g,
+                            gene_set_lib=pathways)
         if db == 'kinases':
-            return _run(kinase)
+            return self.run(list_of_genes=list_g,
+                            gene_set_lib=kinase)
         if db == 'drug':
-            return _run(disease_drug)
+            return self.run(list_of_genes=list_g,
+                            gene_set_lib=disease_drug)
         if db == 'ontologies':
-            return _run(ontologies)
+            return self.run(list_of_genes=list_g,
+                            gene_set_lib=ontologies)
         if db == 'all':
-            return _run(all_dbs)
+            return self.run(list_of_genes=list_g,
+                            gene_set_lib=all_dbs)
 
     def run_sample_set_of_dbs(self, sample_lists, sample_ids, save_name=None,
                               db='pathways', pivot=True):
@@ -562,6 +596,101 @@ class Enrichr(object):
         return data[~data['term_name'].isin(non_sig)]
 
 
+db_types = {
+    'transcription': [
+        'ChEA 2016',
+        'TRANSFAC_and_JASPAR_PWMs',
+        'ARCHS4_TFs_Coexp',
+        'Enrichr_Submissions_TF-Gene_Coocurrence',
+        'Genome_Browser_PWMs',
+        'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+        'Epigenomics_Roadmap_HM_ChIP-seq',
+        'TargetScan_microRNA_2017',
+        'miRTarBase_2017',
+        'ENCODE_TF_ChIP-seq_2015',
+        'TF-LOF_Expression_from_GEO',
+        'ENCODE_Histone_Modifications_2015',
+        'Transcription_Factor_PPIs'
+    ],
+    'pathways': [
+        'KEGG_2016',
+        'WikiPathways_2016',
+        'ARCHS4_Kinases_Coexp',
+        'Reactome_2016',
+        'BioCarta_2016',
+        'NCI-Nature_2016',
+        'Panther_2016',
+        'BioPlex_2017',
+        'PPI_Hub_Proteins',
+        'KEA_2015',
+        'LINCS_L1000_Kinase_Perturbations_down',
+        'LINCS_L1000_Kinase_Perturbations_up',
+        'Kinase_Perturbations_from_GEO_down',
+        'Kinase_Perturbations_from_GEO_up',
+        'NURSA_Human_Endogenous_Complexome',
+        'CORUM',
+        'Phosphatase_Substrates_from_DEPOD',
+    ],
+    'ontologies': [
+        'GO_Cellular_Component_2017b',
+        'GO_Biological_Process_2017b',
+        'GO_Molecular_Function_2017b',
+        'MGI_Mammalian_Phenotype_2017',
+        'Human_Phenotype_Ontology',
+        'Jensen_TISSUES',
+        'Jensen_COMPARTMENTS',
+        'Jensen_DISEASES',
+    ],
+    'disease_drug': [
+        'LINCS_L1000_Chem_Pert_up',
+        'LINCS_L1000_Chem_Pert_down',
+        'LINCS_L1000_Ligand_Perturbations_up',
+        'ARCHS4_IDG_Coexp',
+        'DrugMatrix',
+        'Old_CMAP_up',
+        'Old_CMAP_down',
+        'GeneSigDB',
+        'OMIM_Disease',
+        'OMIM_Expanded',
+        'VirusMINT',
+        'MSigDB_Oncogenic_Signatures',
+        'Virus_Perturbations_from_GEO_up',
+        'Virus_Perturbations_from_GEO_down',
+    ],
+    'cell_type': [
+        'Human_Gene_Atlas',
+        'ARCHS4_Tissues',
+        'ARCHS4_Cell-lines',
+        'Allen_Brain_Atlas_up',
+        'Allen_Brain_Atlas_down',
+        'GTEx_Tissue_Sample_Gene_Expression_Profiles_up',
+        'GTEx_Tissue_Sample_Gene_Expression_Profiles_down',
+        'Cancer_Cell_Line_Encyclopedia',
+        'NCI-60_Cancer_Cell_Lines',
+        'ESCAPE',
+    ],
+    'crowd': [
+        'Disease_Perturbations_from_GEO_down',
+        'Disease_Perturbations_from_GEO_up',
+        'Drug_Perturbations_from_GEO_down',
+        'Drug_Perturbations_from_GEO_up',
+        'Single_Gene_Perturbations_from_GEO_up',
+        'Single_Gene_Perturbations_from_GEO_down',
+        'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO',
+        'Aging_Perturbations_from_GEO_up',
+        'Aging_Perturbations_from_GEO_down',
+        'Ligand_Perturbations_from_GEO_up',
+        'Ligand_Perturbations_from_GEO_down',
+        'MCF7_Perturbations_from_GEO_up',
+        'MCF7_Perturbations_from_GEO_down',
+        'Microbe_Perturbations_from_GEO_up',
+        'Microbe_Perturbations_from_GEO_down',
+        'SysMyo_Muscle_Gene_Sets',
+    ]
+
+}
+
+
 def run_enrichment_for_project(exp_data, project_name):
     local_dbs = [
 
@@ -574,10 +703,15 @@ def run_enrichment_for_project(exp_data, project_name):
         'Reactome_2016',
         'KEA_2015',
 
+
         # ontologies
         'GO_Biological_Process_2017',
         'GO_Molecular_Function_2017',
         'GO_Cellular_Component_2017',
+
+        'GO_Biological_Process_2017b',
+        'GO_Molecular_Function_2017b',
+        'GO_Cellular_Component_2017b',
 
         # transcription
         'ChEA_2016',
@@ -585,7 +719,7 @@ def run_enrichment_for_project(exp_data, project_name):
         'ENCODE_TF_ChIP-seq_2015',
 
         # cell types
-        'Jensen_TISSUES',
+        # 'Jensen_TISSUES',
         'Human_Gene_Atlas',
         'Tissue_Protein_Expression_from_ProteomicsDB',
         'ARCHS4_Cell-lines',
@@ -612,51 +746,55 @@ def run_enrichment_for_project(exp_data, project_name):
         'Drug_Perturbations_from_GEO_2014',
 
     ]
-    e = Enrichr()
+    e = Enrichr(verbose=True)
     exp = exp_data
     all_df = []
     _dir = 'enrichment_output'
     if not os.path.exists(_dir):
         os.mkdir(_dir)
-    print("Running {} databases, might tight awhile".format(len(local_dbs)))
 
-    def _run(samples, timepoints, category):
+    print("Running {} databases, might take some time".format(len(local_dbs)))
+
+    def _run_new(samples, timepoints, category):
         print("Running {}".format(category))
         for genes, sample_id in zip(samples, timepoints):
             print('\t time point = {}'.format(sample_id))
-            for i in local_dbs:
-                print("\t\t database = {}".format(i))
-                current = "{}-{}-{}-{}".format(str(i), str(category),
-                                               str(sample_id), project_name)
-
-                name = os.path.join(_dir, current + '.csv.gz')
-                try:
-                    df = pd.read_csv(name, index_col=None, encoding='utf-8')
-                except:
-                    df = e.run(genes, i)
-                    df.to_csv(name, index=False, encoding='utf-8',
-                              compression='gzip')
-                df['db'] = i
+            current = "{}_{}_{}".format(str(category),
+                                        str(sample_id),
+                                        project_name)
+            name = os.path.join(_dir, current + '.csv.gz')
+            try:
+                df = pd.read_csv(name, index_col=None, encoding='utf-8')
+            except:
+                df = e.run(genes, local_dbs)
                 df['sample_id'] = sample_id
                 df['category'] = category
-                all_df.append(df)
+                df.to_csv(name, index=False, encoding='utf-8',
+                          compression='gzip')
+            all_df.append(df)
 
     pt = exp.proteomics_sample_ids
     rt = exp.rna_sample_ids
-
     if len(pt) != 0:
-        _run(exp.proteomics_by_sample_id, pt, 'proteomics_both')
-        _run(exp.proteomics_up_by_sample_id, pt, 'proteomics_down')
-        _run(exp.proteomics_down_by_sample_id, pt, 'proteomics_up')
+        _run_new(exp.proteomics_by_sample_id, pt, 'proteomics_both')
+        _run_new(exp.proteomics_up_by_sample_id, pt, 'proteomics_down')
+        _run_new(exp.proteomics_down_by_sample_id, pt, 'proteomics_up')
     if len(rt) != 0:
-        _run(exp.rna_down_over_time, rt, 'rna_down')
-        _run(exp.rna_up_over_time, rt, 'rna_up')
-        _run(exp.rna_over_time, rt, 'rna_both')
+        _run_new(exp.rna_down_over_time, rt, 'rna_down')
+        _run_new(exp.rna_up_over_time, rt, 'rna_up')
+        _run_new(exp.rna_over_time, rt, 'rna_both')
     final_df = pd.concat(all_df, ignore_index=True)
     final_df = final_df[
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
+    print(final_df.shape)
+    final_df = final_df[~final_df['term_name'].isnull()]
+    print(final_df.shape)
+    final_df['term_name'] = final_df.apply(clean_term_names, axis=1)
+    print(final_df.shape)
+    final_df = final_df[~final_df['term_name'].isnull()]
+    print(final_df.shape)
     final_df.to_csv('{}.csv.gz'.format(project_name), encoding='utf-8',
                     compression='gzip')
     print("Done with enrichment")
@@ -709,9 +847,12 @@ if __name__ == '__main__':
               'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
               'ATF7', 'ATP5F1']
 
-    df = e.run(g_list, 'GO_Biological_Process_2017')
-    print(df.head(10))
-    print(list(df['term_name'])[0:2])
+    df2 = e.run(g_list, ['GO_Biological_Process_2017', 'KEA_2015'])
+    print(df2['db'].unique())
+    print(df2.head(10))
+    quit()
+    print(df2.head(10))
+    print(list(df2['term_name'])[0:2])
 
     lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]

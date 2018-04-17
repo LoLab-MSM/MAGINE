@@ -249,7 +249,7 @@ def convert_to_rankable_time(data):
         if 'min' in nondigits:
             out = '{0:05d} {1}'
         elif 'hr' in nondigits:
-            out = '{0:02d} {1}'
+            out = '{0:03d} {1}'
         elif 's' in nondigits:
             out = '{0:06d} {1}'
 

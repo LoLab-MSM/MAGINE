@@ -114,6 +114,8 @@ def term_to_genes(df, term):
 
 
 def filter_based_on_words(df, words):
+    if isinstance(words, str):
+        words = [words]
     return df[df['term_name'].str.lower().str.contains('|'.join(words))]
 
 
@@ -158,18 +160,39 @@ def dist_matrix(df, fig_size=(8, 8)):
     array = df[['term_name', 'genes']].as_matrix()
     n_dim = len(array)
     dist_mat = np.empty((n_dim, n_dim), dtype=float)
-
+    lookup = dict()
     for i, ac in enumerate(array):
         first_genes = set(array[i, 1].split(','))
         for j, bc in enumerate(array):
             if i > j:
                 continue
-            second_genes = set(array[j, 1].split(','))
+            term_name = array[j, 0]
+            if term_name in lookup:
+                second_genes = lookup[term_name]
+            else:
+                second_genes = set(array[j, 1].split(','))
+                lookup[term_name] = second_genes
             c = jaccard_index(first_genes, second_genes)
             dist_mat[i, j] = c
             dist_mat[j, i] = c
     names = array[:, 0]
 
+    return cluster_distance_mat(dist_mat, names, fig_size)
+
+
+def dist_matrix2(df, fig_size=(8, 8)):
+    names = df['term_name'].unique()
+    n_dim = len(names)
+    dist_mat = np.empty((n_dim, n_dim), dtype=float)
+    for i, n1 in enumerate(names):
+        first_genes = term_to_genes(df, n1)
+        for j, n2 in enumerate(names):
+            if i > j:
+                continue
+            second_genes = term_to_genes(df, n2)
+            c = jaccard_index(first_genes, second_genes)
+            dist_mat[i, j] = c
+            dist_mat[j, i] = c
     return cluster_distance_mat(dist_mat, names, fig_size)
 
 
@@ -245,7 +268,7 @@ def remove_redundant(data, threshold=0.75, verbose=False,
 def _terms_to_remove(data, threshold=0.75, verbose=False):
 
     array = data[['term_name', 'genes']].as_matrix()
-
+    lookup = dict()
     to_remove = set()
     for j in range(len(data) - 2):
         top_term_name = array[j, 0]
@@ -256,9 +279,15 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
             continue
         for i in range(j + 1, len(data)):
             term_name = array[i, 0]
+
             if top_term_name == term_name:
                 continue
-            new_set = set(array[i, 1].split(','))
+            if term_name in lookup:
+                new_set = lookup[term_name]
+            else:
+                new_set = set(array[i, 1].split(','))
+                lookup[term_name] = new_set
+
             if len(new_set.difference(top)) == 0:
                 to_remove.add(term_name)
                 continue

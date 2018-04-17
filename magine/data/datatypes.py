@@ -189,7 +189,7 @@ class ExperimentalData(object):
         self.proteomics_sign_changed = dict()
 
         self.proteomics_sample_ids = np.sort(
-            self.proteins[sample_id].unique())
+            self.proteins_non_rna[sample_id].unique())
         self.rna_sample_ids = np.sort(self.rna_seq[sample_id].unique())
 
         self.proteomics_by_sample_id = []
