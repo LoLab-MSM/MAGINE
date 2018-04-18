@@ -91,10 +91,10 @@ def filter_dataframe(df, p_value=None, combined_score=None, db=None,
     """
     copy_df = df.copy()
     if p_value is not None:
-        assert isinstance(p_value, float)
+        assert isinstance(p_value, (int, float))
         copy_df = copy_df[copy_df['adj_p_value'] <= p_value]
     if combined_score is not None:
-        assert isinstance(combined_score, float)
+        assert isinstance(combined_score, (int, float))
         copy_df = copy_df[copy_df['combined_score'] >= combined_score]
     if isinstance(rank, (int, float)):
         copy_df = copy_df[copy_df['rank'] <= rank]

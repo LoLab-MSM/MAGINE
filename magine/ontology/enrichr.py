@@ -96,10 +96,13 @@ def clean_term_names(row):
     if db in ['GO_Biological_Process_2017',
               'GO_Molecular_Function_2017', 'GO_Cellular_Component_2017']:
         if 'GO:' in term_name:
-            term_name = term_name.split('\(', 1)[0]
+            term_name = term_name.split(r'(GO:', 1)[0]
+        elif 'go:' in term_name:
+            term_name = term_name.split(r'(go:', 1)[0]
     if db == 'Human_Phenotype_Ontology':
         if 'HP:' in term_name:
-            term_name = term_name.split('\(', 1)[0]
+            term_name = term_name.split(r'(HP:', 1)[0]
+
     if db == 'MGI_Mammalian_Phenotype_2017':
         if term_name.startswith('MP:'):
             term_name = term_name.split('_', 1)[1]
@@ -165,6 +168,43 @@ class Enrichr(object):
         for lib_name in sorted(self._valid_libs):
             print(lib_name)
 
+    def run(self, list_of_genes, gene_set_lib='GO_Biological_Process_2017'):
+        """
+
+        Parameters
+        ----------
+        list_of_genes : list_like
+            List of genes using HGNC gene names
+        gene_set_lib : str or list
+            Name of gene set library
+            To print options use Enrichr.print_valid_libs
+        Returns
+        -------
+
+        """
+        assert isinstance(list_of_genes, (list, set))
+
+        if self.verbose:
+            print("Running Enrichr with gene set {}".format(gene_set_lib))
+
+        user_list_id = self._add_gene_list(list_of_genes)
+        if isinstance(gene_set_lib, str):
+
+            df = self.run_id(user_list_id, gene_set_lib)
+        else:
+            df = self._run_list_of_dbs(user_list_id, gene_set_lib)
+
+        init_size = len(df)
+        df['term_name'] = df.apply(clean_term_names, axis=1)
+        after_size = len(df)
+        assert init_size == after_size, 'not the same shape {}'.format(
+            gene_set_lib)
+
+        if self.verbose:
+            print("Done calling Enrichr.")
+
+        return df
+
     def run_id(self, list_id, gene_set_lib):
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
@@ -189,7 +229,7 @@ class Enrichr(object):
         #####
 
         df = pd.DataFrame(
-            data.values()[0],
+            data[gene_set_lib],
             columns=['rank', 'term_name', 'p_value', 'z_score',
                      'combined_score', 'gene_hits', 'adj_p_value', '_', '_']
         )
@@ -239,43 +279,7 @@ class Enrichr(object):
 
         return pd.concat(data)
 
-    def run(self, list_of_genes, gene_set_lib='GO_Biological_Process_2017'):
-        """
 
-        Parameters
-        ----------
-        list_of_genes : list_like
-            List of genes using HGNC gene names
-        gene_set_lib : str or list
-            Name of gene set library
-            To print options use Enrichr.print_valid_libs
-        Returns
-        -------
-
-        """
-        assert isinstance(list_of_genes, (list, set))
-
-        if self.verbose:
-            print("Running Enrichr with gene set {}".format(gene_set_lib))
-
-        user_list_id = self._add_gene_list(list_of_genes)
-        if isinstance(gene_set_lib, str):
-
-            df = self.run_id(user_list_id, gene_set_lib)
-        else:
-            df = self._run_list_of_dbs(user_list_id, gene_set_lib)
-
-        init_size = len(df)
-        df['term_name'] = clean_term_names(df)
-        after_size = len(df)
-        print(init_size == after_size)
-        assert init_size == after_size, 'not the same shape {}'.format(
-            gene_set_lib)
-
-        if self.verbose:
-            print("Done calling Enrichr.")
-
-        return df
 
     def run_samples(self, sample_lists, sample_ids,
                     gene_set_lib='GO_Biological_Process_2017', save_name=None,
@@ -598,7 +602,7 @@ class Enrichr(object):
 
 db_types = {
     'transcription': [
-        'ChEA 2016',
+        'ChEA_2016',
         'TRANSFAC_and_JASPAR_PWMs',
         'ARCHS4_TFs_Coexp',
         'Enrichr_Submissions_TF-Gene_Coocurrence',
