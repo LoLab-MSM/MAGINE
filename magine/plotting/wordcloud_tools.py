@@ -2,7 +2,7 @@ import types
 
 import matplotlib.pyplot as plt
 import pandas as pd
-from wordcloud import WordCloud, STOPWORDS
+from wordcloud import STOPWORDS, WordCloud
 
 import magine.ontology.enrichment_tools as et
 
@@ -29,7 +29,7 @@ basic_words.update(STOPWORDS)
 
 
 def word_cloud_from_array(enrichment_array, sample_ids, category=None,
-                          database_list=None, save_name=None):
+                          database_list=None, save_name=None, p_value=0.05):
     """
     Creates a word cloud for each sample_id
 
@@ -49,7 +49,7 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
     samples = []
     all_samples = []
     for i in sample_ids:
-        sample = et.filter_dataframe(enrichment_array, p_value=0.05,
+        sample = et.filter_dataframe(enrichment_array, p_value=p_value,
                                      db=database_list, sample_id=i,
                                      category=category)
 
@@ -73,8 +73,8 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
     df.columns = df.columns.droplevel()
     df['sum'] = df[samples].sum(axis=1)
     df.sort_values('sum', ascending=False, inplace=True)
-    print("\nSorted by sum of all")
-    print(df.sort_values('sum', ascending=False).head(25))
+    # print("\nSorted by sum of all")
+    # print(df.sort_values('sum', ascending=False).head(25))
     return all_samples, df
 
 

@@ -1,6 +1,5 @@
 import json
 import os
-import re
 
 import numpy as np
 import pandas as pd
@@ -93,24 +92,25 @@ def clean_term_names(row):
     if not isinstance(term_name, str):
         return term_name
     db = row['db']
-    if db in ['GO_Biological_Process_2017',
-              'GO_Molecular_Function_2017', 'GO_Cellular_Component_2017']:
+    if db in ['GO_Biological_Process_2017', 'GO_Biological_Process_2017b',
+              'GO_Molecular_Function_2017', 'GO_Molecular_Function_2017b',
+              'GO_Cellular_Component_2017', 'GO_Cellular_Component_2017b']:
         if 'GO:' in term_name:
-            term_name = term_name.split(r'(GO:', 1)[0]
+            term_name = term_name.split('(GO:', 1)[0]
         elif 'go:' in term_name:
-            term_name = term_name.split(r'(go:', 1)[0]
+            term_name = term_name.split('(go:', 1)[0]
     if db == 'Human_Phenotype_Ontology':
         if 'HP:' in term_name:
-            term_name = term_name.split(r'(HP:', 1)[0]
+            term_name = term_name.split('(HP:', 1)[0]
 
     if db == 'MGI_Mammalian_Phenotype_2017':
         if term_name.startswith('MP:'):
             term_name = term_name.split('_', 1)[1]
 
-    if db == 'DrugMatrix':
-        drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
-        direction = re.search(r'-(.{2})$', term_name).group(0)
-        term_name = drug_name + direction
+    # if db == 'DrugMatrix':
+    #     drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
+    #     direction = re.search(r'-(.{2})$', term_name).group(0)
+    #     term_name = drug_name + direction
 
     term_name = term_name.strip()
     term_name = term_name.lower()
@@ -851,9 +851,10 @@ if __name__ == '__main__':
               'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
               'ATF7', 'ATP5F1']
 
-    df2 = e.run(g_list, ['GO_Biological_Process_2017', 'KEA_2015'])
+    df2 = e.run(g_list, ['GO_Biological_Process_2017b', 'KEA_2015'])
     print(df2['db'].unique())
     print(df2.head(10))
+    print(df2['term_name'].values)
     quit()
     print(df2.head(10))
     print(list(df2['term_name'])[0:2])
