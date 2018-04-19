@@ -279,8 +279,6 @@ class Enrichr(object):
 
         return pd.concat(data)
 
-
-
     def run_samples(self, sample_lists, sample_ids,
                     gene_set_lib='GO_Biological_Process_2017', save_name=None,
                     create_html=False, out_dir=None, run_parallel=False,
@@ -340,10 +338,10 @@ class Enrichr(object):
                               )
 
         if save_name:
-            s_name = '{}_enrichr'
-            p_df.to_excel('{}.xlsx'.format((s_name, save_name)),
-                          merge_cells=True)
-            df_all.to_csv('{}.csv'.format((s_name, save_name)), index=False)
+            s_name = '{}_enrichr'.format(save_name)
+            # save files
+            p_df.to_excel('{}.xlsx'.format(s_name), merge_cells=True)
+            df_all.to_csv('{}.csv'.format(s_name), index=False)
 
         if create_html:
             if exp_data is None:

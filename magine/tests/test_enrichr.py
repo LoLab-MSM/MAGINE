@@ -27,12 +27,11 @@ def test_multi_sample():
 
 def test_multi_sample_plotting():
     up = exp_data.proteomics_up_by_sample_id
-    df2 = e.run_samples(up,
-                        ['1', '2', '3'],
-                        save_name='enrichr_test',
-                        exp_data=exp_data,
-                        create_html=True,
-                        out_dir='html_output2')
+    e.run_samples(up, ['1', '2', '3'],
+                  save_name='enrichr_test',
+                  exp_data=exp_data,
+                  create_html=True,
+                  out_dir='html_output2')
 
 
 def test_set_of_dbs():

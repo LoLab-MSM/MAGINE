@@ -14,7 +14,7 @@ def test_ont_grouping():
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
     df = e.run(list_2, 'GO_Biological_Process_2017')
     df['genes'] = df['genes'].str.split(',')
-    df['termID'] = df['term_id'].str.replace(':', '')
+    df['termID'] = df['term_name'].str.replace(':', '')
     term_dict = dict(zip(df['termID'], df['genes']))
     label_dict = dict(zip(df['termID'], df['term_name']))
     term_list = list(df.head(3)['termID'])
