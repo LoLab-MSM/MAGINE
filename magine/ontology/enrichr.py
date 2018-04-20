@@ -121,6 +121,29 @@ def clean_term_names(row):
     return term_name
 
 
+def clean_tf_names(data):
+    def return_single_tf(row):
+        """
+        Gets TF name only
+        """
+        tf = row['term_name']
+        if '_' in tf:
+            tf = tf.split('_')[0]
+        return tf.upper()
+
+    tf_dbs = ['ARCHS4_TFs_Coexp',
+              'ChEA_2016',
+              'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+              'ENCODE_TF_ChIP-seq_2015',
+              'Enrichr_Submissions_TF-Gene_Coocurrence',
+              'TRANSFAC_and_JASPAR_PWMs',
+              'TF-LOF_Expression_from_GEO',
+              'Transcription_Factor_PPIs']
+    tfs = data[data['db'].isin(tf_dbs)].copy()
+    tfs['term_name'] = tfs.apply(return_single_tf, axis=1)
+    return tfs
+
+
 replace_pairs = [
     ('mus musculus', 'mus'),
     ('homo sapiens', 'hsa'),
