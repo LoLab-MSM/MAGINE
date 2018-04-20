@@ -92,3 +92,68 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                     center=center, annot=labels, fmt=fmt)
 
     return fig
+
+
+def heatmap_by_terms(data, terms, colors, convert_to_log=False,
+                     y_tick_labels='auto', cluster_col=False,
+                     columns='sample_id', index='term_name',
+                     values='combined_score', div_colors=False, num_colors=7,
+                     fig_size=(6, 4), annotate_sig=False):
+    array = pivot_table(data, convert_to_log, columns=columns, index=index,
+                        fill_value=0.0, values=values)
+
+    vals = set(array.index.values)
+    final_sorted = sorted(terms[0].intersection(vals))
+    added = set(final_sorted)
+    # create colors for each
+    row_colors = [colors[0] for _ in added]
+
+    for term, color in zip(terms, colors):
+        for i in sorted(term.intersection(vals)):
+            if i not in added:
+                row_colors.append(color)
+                final_sorted.append(i)
+                added.add(i)
+
+    array = array.reindex(final_sorted)
+
+    labels = None
+    fmt = None
+
+    if annotate_sig:
+        # Have to rank by column for this to work
+        if 'significant_flag' in data.columns:
+            tmp2 = pivot_table(data.copy(), False, columns=columns,
+                               index=index, fill_value=False,
+                               values='significant_flag', min_sig=False)
+
+            tmp2 = tmp2.reindex(array.index)
+            tmp2[tmp2 > 0] = True
+            tmp2 = tmp2.replace(False, '')
+            tmp2 = tmp2.replace(True, '*')
+
+            labels = tmp2.as_matrix()
+            fmt = ''
+        else:
+            annotate_sig = False
+            print("To annotate please add a significant_flag column to data")
+
+    if div_colors:
+        pal = sns.color_palette("coolwarm", num_colors)
+        center = 0
+    else:
+        pal = sns.light_palette("red", as_cmap=True)
+        center = None
+
+    fig = sns.clustermap(array,
+                         yticklabels=y_tick_labels,
+                         row_colors=row_colors,
+                         figsize=fig_size,
+                         col_cluster=cluster_col,
+                         row_cluster=False,
+                         center=center,
+                         cmap=pal,
+                         annot=labels, fmt=fmt
+                         )
+
+    return fig
