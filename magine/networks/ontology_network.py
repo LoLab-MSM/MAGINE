@@ -4,7 +4,7 @@ import os
 import networkx as nx
 import pandas as pd
 
-from magine.networks.utils import export_to_dot
+from magine.networks.exporters import export_to_dot
 from magine.networks.visualization.igraph_tools import create_igraph_figure
 
 

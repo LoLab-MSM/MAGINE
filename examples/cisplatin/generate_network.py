@@ -2,7 +2,8 @@ import os
 
 import networkx as nx
 
-import magine.networks.network_tools as nt
+import magine.networks.dev_tools as nt
+import magine.networks.utils
 from exp_data import exp_data
 from magine.networks.network_generator import build_network
 
@@ -28,9 +29,12 @@ if __name__ == '__main__':
     measured = set(exp_data.list_species)
     sig_measured = set(exp_data.list_sig_species)
 
-    network = nt.add_attribute_to_network(network, sig_measured, 'sigMeasured',
+    network = magine.networks.utils.add_attribute_to_network(network,
+                                                             sig_measured,
+                                                             'sigMeasured',
                                           'red', 'blue')
-    network = nt.add_attribute_to_network(network, measured, 'measured', 'red',
+    network = magine.networks.utils.add_attribute_to_network(network, measured,
+                                                             'measured', 'red',
                                           'blue')
     # add labels for if node is measured in any of our data_types
     m, sig_m = exp_data.get_measured_by_datatype()
@@ -38,12 +42,16 @@ if __name__ == '__main__':
     for exp_type, spec in m.items():
         attr_name = exp_type.replace('_', '')
         attr_name = attr_name.replace('-', '')
-        network = nt.add_attribute_to_network(network, spec, attr_name, 'red',
+        network = magine.networks.utils.add_attribute_to_network(network, spec,
+                                                                 attr_name,
+                                                                 'red',
                                               'blue')
     # add labels for if node is measured in any of our time points
     for time, spec in exp_data.sig_species_over_time.items():
         time = 'timepoint{}'.format(time)
-        network = nt.add_attribute_to_network(network, spec, time, 'red', 'blue')
+        network = magine.networks.utils.add_attribute_to_network(network, spec,
+                                                                 time, 'red',
+                                                                 'blue')
 
     print("Saving network")
     # write to GML for cytoscape or other program

@@ -1,7 +1,7 @@
 import sys
 
 from magine.networks.network_generator import build_network
-from magine.networks.network_subgraphs import NetworkSubgraphs
+from magine.networks.subgraphs import Subgraph
 
 list_name = sys.argv[1]
 save_name = sys.argv[2]
@@ -49,7 +49,7 @@ print("Network has {} edgess".format(network.number_of_edges()))
 # Now we are going to have all connections between the species
 
 
-x = NetworkSubgraphs(network)
+x = Subgraph(network)
 sub = x.shortest_paths_between_lists(
         list_of_proteins,
         single_path=True,

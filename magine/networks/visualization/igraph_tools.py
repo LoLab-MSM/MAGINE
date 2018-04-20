@@ -3,8 +3,8 @@ import time
 
 import seaborn as sns
 
-import magine.networks.network_tools as tools
-from magine.networks.utils import nx_to_igraph
+import magine.networks.utils
+from magine.networks.exporters import nx_to_igraph
 
 
 def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
@@ -173,8 +173,9 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     tmp_graph = graph.copy()
     pos = None
     for n, i in enumerate(measured_list):
-        graph2 = tools.add_attribute_to_network(tmp_graph, i, 'color',
-                                                color_list[n],
+        graph2 = magine.networks.utils.add_attribute_to_network(tmp_graph, i,
+                                                                'color',
+                                                                color_list[n],
                                                 'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
@@ -192,15 +193,3 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     if compile_images:
         os.system(string1)
         os.system(string2)
-
-
-def _is_running_in_ipython():
-    """Internal function that determines whether igraph is running inside
-    IPython or not."""
-    try:
-        # get_ipython is injected into the Python builtins by IPython so
-        # this should succeed in IPython but throw a NameError otherwise
-        get_ipython
-        return True
-    except NameError:
-        return False

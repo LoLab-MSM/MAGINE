@@ -1,6 +1,8 @@
 import os
+
 import pandas as pd
-import magine.ontology.enrichment_tools as et
+
+import magine.enrichment.enrichment_tools as et
 
 data_dir = os.path.dirname(__file__)
 

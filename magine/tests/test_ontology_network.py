@@ -2,8 +2,8 @@ import os
 
 import networkx as nx
 
+from magine.enrichment.enrichr import Enrichr
 from magine.networks.ontology_network import OntologyNetworkGenerator
-from magine.ontology.enrichr import Enrichr
 
 
 def test_ont_grouping():

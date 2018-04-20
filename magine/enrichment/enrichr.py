@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import numpy as np
 import pandas as pd
@@ -107,10 +108,10 @@ def clean_term_names(row):
         if term_name.startswith('MP:'):
             term_name = term_name.split('_', 1)[1]
 
-    # if db == 'DrugMatrix':
-    #     drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
-    #     direction = re.search(r'-(.{2})$', term_name).group(0)
-    #     term_name = drug_name + direction
+    if db == 'DrugMatrix':
+        drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
+        direction = re.search(r'-(.{2})$', term_name).group(0)
+        term_name = drug_name + direction
 
     term_name = term_name.strip()
     term_name = term_name.lower()

@@ -6,7 +6,7 @@ import requests
 
 from magine.data.storage import id_mapping_dir
 from magine.data.storage import network_data_dir
-from magine.ontology.ontology_analysis import MagineGO
+from magine.enrichment.ontology_analysis import MagineGO
 
 try:
     import cPickle as pickle

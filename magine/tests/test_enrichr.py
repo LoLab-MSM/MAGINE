@@ -1,4 +1,4 @@
-from magine.ontology.enrichr import Enrichr
+from magine.enrichment.enrichr import Enrichr
 from magine.tests.sample_experimental_data import exp_data
 
 e = Enrichr()

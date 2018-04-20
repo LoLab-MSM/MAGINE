@@ -102,8 +102,8 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'statsmodels.stats', 'statsmodels.stats.proportion',
                 'statsmodels.stats.proportion.binom_test',
                 'pygraphviz',
-                # 'magine.ontology.ontology_tools',
-                # 'magine.ontology.go_from_goatools'
+                # 'magine.enrichment.ontology_tools',
+                # 'magine.enrichment.go_from_goatools'
                 ]
 
 for mod_name in MOCK_MODULES:

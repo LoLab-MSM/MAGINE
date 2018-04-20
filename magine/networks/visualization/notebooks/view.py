@@ -1,10 +1,12 @@
 import json
 import uuid
+
 import networkx as nx
 from IPython.display import display, HTML, Javascript
+
 from magine.html_templates.cy_stypes import styles
 from magine.html_templates.html_tools import env
-from magine.networks.utils import nx_to_json
+from magine.networks.exporters import nx_to_json
 
 
 def init():

@@ -3,11 +3,12 @@ from functools import partial
 
 import networkx as nx
 
-import magine.networks.network_tools as nt
+import magine.networks.dev_tools as nt
+import magine.networks.exporters
 import magine.networks.utils
 
 
-class NetworkSubgraphs(object):
+class Subgraph(object):
     def __init__(self, network, exp_data=None, pool=None):
         """
         Generates network subgraphs
@@ -27,8 +28,6 @@ class NetworkSubgraphs(object):
             self.map = map
         else:
             self.map = pool.map
-        # self._paths = dict(self.map(partial(f, network=self.network), sorted(self.nodes)))
-
 
     def find_paths(self, source, target):
         try:
@@ -68,10 +67,10 @@ class NetworkSubgraphs(object):
         Examples
         --------
         >>> from networkx import DiGraph
-        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> from magine.networks.subgraphs import Subgraph
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
-        >>> net_sub = NetworkSubgraphs(g)
+        >>> net_sub = Subgraph(g)
         >>> path_a_d = net_sub.shortest_paths_between_two_proteins('a','d')
         >>> path_a_d.edges()
         [('a', 'd')]
@@ -131,10 +130,10 @@ class NetworkSubgraphs(object):
         Examples
         --------
         >>> from networkx import DiGraph
-        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> from magine.networks.subgraphs import Subgraph
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
-        >>> net_sub = NetworkSubgraphs(g)
+        >>> net_sub = Subgraph(g)
         >>> path_a_d = net_sub.shortest_paths_between_lists(['a','c','d'])
         >>> path_a_d.edges()
         [('a', 'b'), ('a', 'd'), ('c', 'd'), ('b', 'c')]
@@ -259,11 +258,11 @@ class NetworkSubgraphs(object):
         Examples
         --------
         >>> from networkx import DiGraph
-        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> from magine.networks.subgraphs import Subgraph
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), \
         ('e', 'd')])
-        >>> net_sub = NetworkSubgraphs(g)
+        >>> net_sub = Subgraph(g)
         >>> upstream_d = net_sub.upstream_network_of_specie('d')
         >>> upstream_d.edges()
         [('a', 'd'), ('c', 'd'), ('b', 'c'), ('e', 'd')]
@@ -315,11 +314,11 @@ class NetworkSubgraphs(object):
         Examples
         --------
         >>> from networkx import DiGraph
-        >>> from magine.networks.network_subgraphs import NetworkSubgraphs
+        >>> from magine.networks.subgraphs import Subgraph
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'),\
          ('e', 'd')])
-        >>> net_sub = NetworkSubgraphs(g)
+        >>> net_sub = Subgraph(g)
         >>> downstream_d = net_sub.downstream_network_of_specie('d')
         >>> downstream_d.edges()
         []
@@ -395,8 +394,9 @@ class NetworkSubgraphs(object):
         measured_list = []
         for i, j in sorted(self.exp_data.sig_species_over_time.items()):
             measured_list.append(j)
-        nt.paint_network_overtime(graph, measured_list, colors, prefix,
-                                  self.exp_data.proteomics_sample_ids)
+        magine.networks.utils.paint_network_overtime(graph, measured_list,
+                                                     colors, prefix,
+                                                     self.exp_data.proteomics_sample_ids)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
                                             color_up='tomato',
@@ -426,12 +426,13 @@ class NetworkSubgraphs(object):
 
         for i, j in sorted(self.exp_data.sig_species_down_over_time.items()):
             down_measured_list.append(j)
-        nt.paint_network_overtime_up_down(graph, list_up=up_measured_list,
-                                          list_down=down_measured_list,
-                                          save_name=prefix,
-                                          color_down=color_down,
-                                          color_up=color_up,
-                                          labels=labels)
+        magine.networks.utils.paint_network_overtime_up_down(graph,
+                                                             list_up=up_measured_list,
+                                                             list_down=down_measured_list,
+                                                             save_name=prefix,
+                                                             color_down=color_down,
+                                                             color_up=color_up,
+                                                             labels=labels)
 
     def _check_node(self, node_list):
         """
@@ -451,7 +452,7 @@ class NetworkSubgraphs(object):
                 missing_nodes.add(i)
         if len(missing_nodes) != 0:
             print("Warning : {} do not exist in graph\n"
-                  "Removing from list".format(missing_nodes))
+                  "Removing from list".format(len(missing_nodes)))
             node_list.difference_update(missing_nodes)
         return sorted(node_list)
 
@@ -501,9 +502,9 @@ class NetworkSubgraphs(object):
     def _save_or_draw(graph, save_name, draw, img_format='png'):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
-            graph = magine.networks.utils.format_to_directions(graph)
-            magine.networks.utils.export_to_dot(graph, save_name=save_name,
-                                                image_format=img_format)
+            graph = magine.networks.exporters.format_to_directions(graph)
+            magine.networks.exporters.export_to_dot(graph, save_name=save_name,
+                                                    image_format=img_format)
 
 
 def _find_nx_path(node, network, single_path):
@@ -525,57 +526,6 @@ def _nx_find_path(network, node1, node2, single_path=False):
         return []
 
 
-def f(node, network):
-    """
-
-    Parameters
-    ----------
-    node : str
-    network : nx.DiGraph
-
-    Returns
-    -------
-
-    """
-    print(node)
-    if len(network.successors(node)) == 0:
-        return node, []
-    paths = tuple(
-        all_shortest_paths(network, node, p) for p in network.nodes() if
-        p != node)
-    print(paths)
-    paths = [x for x in paths if x]
-    print(paths)
-    _dicts = {}
-    for i in paths:
-        _dicts[i[-1]] = i[:-1]
-        print(_dicts[i[-1]])
-    quit()
-    return node, paths
-
-    return node, nx.single_source_shortest_path(network, node)
-
-
-def all_shortest_paths(G, source, target):
-    pred = nx.predecessor(G, source)
-    if target not in pred:
-        return []
-    stack = [[target, 0]]
-    top = 0
-    while top >= 0:
-        node, i = stack[top]
-        if node == source:
-            return [p for p, n in reversed(stack[:top + 1])]
-        if len(pred[node]) > i:
-            top += 1
-            if top == len(stack):
-                stack.append([pred[node][i], 0])
-            else:
-                stack[top] = [pred[node][i], 0]
-        else:
-            stack[top - 1][1] += 1
-            top -= 1
-
 if __name__ == '__main__':
     net = nx.DiGraph()
     net.add_node('X', label='XX', db='test1')
@@ -588,16 +538,25 @@ if __name__ == '__main__':
     net.add_edge('R', 'D', intType='here')
     net.add_edge('X', 'R', intType='here')
 
-    # net = nx.read_gpickle('background_network.p.gz')
+    net = nx.read_gpickle('background_network.p.gz')
+
+    net = net.subgraph(
+        net.neighbors('BAX') + ['BAX'] + net.neighbors('TP53') + ['TP53'])
+    # print(len(net.edges()))
+    # quit()
     # print(x.neighbors('X').nodes())
     # print(x.downstream_network_of_specie('D').nodes())
-    # quit()
+
     # print(x.path_between_2('X', ['Y', 'B', 'C']))
     # quit()
 
     # print(x.shortest_paths_between_two_proteins('X', 'Y', bidirectional=True, single_path=False).edges())
-    x = NetworkSubgraphs(net)
+    x = Subgraph(net)
+    import sys
 
+    print(sys.getsizeof(x._paths))
+    print(x._paths['BAX'])
+    quit()
     print(x.find_paths('X', 'Y'))
     print(x.find_paths('Y', 'X'))
 

@@ -7,15 +7,15 @@ from goatools import obo_parser
 from goatools.semantic import TermCounts, ic, resnik_sim, semantic_similarity
 
 from magine.data.storage import id_mapping_dir
-
-from magine.ontology.ontology_analysis import MagineGO
+from magine.enrichment.ontology_analysis import MagineGO
 
 obo_file = os.path.join(id_mapping_dir, 'go.obo')
 
 if not os.path.exists(obo_file):
     print("Using ontology for first time")
     print("Downloading files")
-    from magine.ontology.databases.gene_ontology import download_and_process_go
+    from magine.enrichment.databases.gene_ontology import \
+        download_and_process_go
     download_and_process_go()
     assert os.path.exists(obo_file)
 

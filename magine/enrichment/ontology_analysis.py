@@ -3,14 +3,15 @@ GO analysis function using orange bioinformatics
 """
 
 import os
+
 import numpy as np
 import pandas as pd
-from magine.data.storage import network_data_dir
-from magine.ontology.databases.gene_ontology import download_and_process_go
-from magine.plotting.species_plotting import write_table_to_html_with_figures
-
-from statsmodels.stats.proportion import binom_test
 from statsmodels.stats.multitest import fdrcorrection
+from statsmodels.stats.proportion import binom_test
+
+from magine.data.storage import network_data_dir
+from magine.enrichment.databases.gene_ontology import download_and_process_go
+from magine.plotting.species_plotting import write_table_to_html_with_figures
 
 try:
     import cPickle as pickle

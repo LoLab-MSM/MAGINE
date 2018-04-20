@@ -1,7 +1,7 @@
 from magine.data.datatypes import ExperimentalData
+from magine.enrichment.enrichr import Enrichr
 from magine.html_templates.html_tools import workflow_template
 from magine.networks.network_generator import build_network
-from magine.ontology.enrichr import Enrichr
 from magine.plotting.species_plotting import plot_dataframe
 
 if __name__ == '__main__':

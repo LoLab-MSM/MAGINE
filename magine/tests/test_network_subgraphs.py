@@ -2,7 +2,7 @@ import os
 
 import networkx as nx
 
-from magine.networks.network_subgraphs import NetworkSubgraphs
+from magine.networks.subgraphs import Subgraph
 from magine.tests.sample_experimental_data import exp_data
 
 _path = os.path.join(os.path.dirname(__file__), 'Network_files',
@@ -15,7 +15,7 @@ _path = os.path.join(os.path.dirname(__file__), 'Network_files',
 class TestSubgraphs(object):
     def __init__(self):
         self.network = nx.read_gml(_path)
-        self.net_sub = NetworkSubgraphs(self.network, exp_data)
+        self.net_sub = Subgraph(self.network, exp_data)
 
     def test_downstream_nodes(self):
         """Test finding downstream nodes."""

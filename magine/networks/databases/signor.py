@@ -28,9 +28,6 @@ def download():
     """
 
     table = pd.read_csv('signor.csv.gz', compression='gzip', encoding='utf-8')
-    print(table.dtypes)
-    print(table.head(10))
-    print(table.shape)
 
     # filter out non direct
     table = table[table['DIRECT'] == 't']
@@ -44,8 +41,6 @@ def download():
 
     # Not sure what they mean, so will remove. Ideally other DBs have this info
     table = table[~(table['MECHANISM'] == 'post transcriptional regulation')]
-
-    print(table.shape)
 
     def map_to_activate_inhibit(row):
         effect = ''
@@ -61,9 +56,6 @@ def download():
                 mechanism = 'repression'
             elif effect == 'activate':
                 mechanism = 'expression'
-        else:
-            print(row)
-            print(mechanism)
         if effect == '':
             return mechanism
         else:

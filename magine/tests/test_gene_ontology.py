@@ -2,7 +2,7 @@
 import tempfile
 import os
 import networkx as nx
-from magine.ontology.ontology_analysis import GoAnalysis
+from magine.enrichment.ontology_analysis import GoAnalysis
 from magine.networks.go_network_generator import GoNetworkGenerator
 from magine.tests.sample_experimental_data import exp_data
 

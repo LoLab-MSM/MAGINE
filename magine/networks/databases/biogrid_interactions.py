@@ -5,7 +5,7 @@ import sys
 import networkx as nx
 import pandas as pd
 
-import magine.networks.network_tools as nt
+import magine.networks.utils
 from magine.data.storage import network_data_dir
 from magine.mappings import ChemicalMapper
 
@@ -215,8 +215,8 @@ class BioGridDownload(object):
             if r[1] not in added_genes:
                 _add_node(r[1])
 
-        final_graph = nt.compose(protein_graph,
-                                 self._create_chemical_network())
+        final_graph = magine.networks.utils.compose(protein_graph,
+                                                    self._create_chemical_network())
         nx.write_gpickle(final_graph, p_name)
         return final_graph
 
