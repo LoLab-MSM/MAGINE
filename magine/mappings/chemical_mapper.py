@@ -53,7 +53,6 @@ class ChemicalMapper(object):
                                                'hmdb_instance.p.gz')
 
         try:
-
             self.reload()
             print('Loading class data')
         except:
@@ -209,9 +208,9 @@ class ChemicalMapper(object):
 
         """
         try:
-            with gzip.open(self._instance_filename, 'r') as f:
+            with gzip.open(self._instance_filename, 'rb') as f:
                 data = f.read()
-            self.__dict__ = pickle.loads(data, encoding='utf-8')
+            self.__dict__ = pickle.loads(data)
         except:
             with gzip.open(self._instance_filename, 'rb') as f:
                 data = f.read()
