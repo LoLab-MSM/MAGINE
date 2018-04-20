@@ -18,6 +18,7 @@ before_install:
 - pip install -r requirements.txt
 - pip install nose-exclude
 - pip install nose-timer
+- pip install codecov
 
 install:
   python setup.py build --build-lib=build/lib
@@ -26,4 +27,5 @@ script:
   - python copy_sample_data.py
   - travis_wait 45 nosetests build/lib/magine/tests --with-coverage --cover-inclusive --cover-package=build/lib/magine --logging-level=INFO --with-timer
 after_success:
-  coveralls
+  - codecov
+  - coveralls
