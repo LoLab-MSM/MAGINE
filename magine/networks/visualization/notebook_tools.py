@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-import magine.enrichment.enrichment_tools as et
+import magine.enrichment.tools as et
 from magine.networks.ontology_network import OntologyNetworkGenerator
 from magine.networks.subgraphs import Subgraph
 

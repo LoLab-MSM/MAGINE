@@ -2,7 +2,7 @@ import sys
 
 import pandas as pd
 
-import magine.enrichment.enrichment_tools as et
+import magine.enrichment.tools as et
 
 
 def return_table_from_model(save_name, project_name, category, dbs):

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from wordcloud import STOPWORDS, WordCloud
 
-import magine.enrichment.enrichment_tools as et
+import magine.enrichment.tools as et
 
 process_dbs = [
     'GO_Biological_Process_2017',

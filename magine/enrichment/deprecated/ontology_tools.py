@@ -5,9 +5,9 @@ import networkx as nx
 import pandas as pd
 from goatools import obo_parser
 from goatools.semantic import TermCounts, ic, resnik_sim, semantic_similarity
+from magine.enrichment.ontology_analysis import MagineGO
 
 from magine.data.storage import id_mapping_dir
-from magine.enrichment.ontology_analysis import MagineGO
 
 obo_file = os.path.join(id_mapping_dir, 'go.obo')
 

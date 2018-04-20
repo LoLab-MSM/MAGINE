@@ -2,9 +2,8 @@
 omit =
     # omit anything in a .local directory anywhere
     *.html
-    build/lib/magine/enrichment/ontology_analysis.py
-    build/lib/magine/enrichment/ontology_tools.py
-    build/lib/magine/enrichment/databases/gene_ontology.py
+    build/lib/magine/enrichment/deprecated/*
+    build/lib/magine/enrichment/deprecated/databases/gene_ontology.py
     build/lib/magine/networks/visualization/cytoscape_view.py
     build/lib/magine/data/formatter.py
     build/lib/magine/mappings/databases/pubchem.py

@@ -6,11 +6,11 @@ import os
 
 import numpy as np
 import pandas as pd
+from magine.enrichment.databases.gene_ontology import download_and_process_go
 from statsmodels.stats.multitest import fdrcorrection
 from statsmodels.stats.proportion import binom_test
 
 from magine.data.storage import network_data_dir
-from magine.enrichment.databases.gene_ontology import download_and_process_go
 from magine.plotting.species_plotting import write_table_to_html_with_figures
 
 try:
