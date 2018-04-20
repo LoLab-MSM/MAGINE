@@ -1,9 +1,9 @@
+import gzip
 import itertools
 import os
-from ast import literal_eval
 
 import pandas as pd
-import gzip
+
 from magine.data.storage import id_mapping_dir
 
 try:
@@ -51,9 +51,13 @@ class ChemicalMapper(object):
 
         self._instance_filename = os.path.join(id_mapping_dir,
                                                'hmdb_instance.p.gz')
+
         try:
+
             self.reload()
+            print('Loading class data')
         except:
+            print('Initializing Chemical mapping')
             self.load()
 
     def load(self):
@@ -117,10 +121,6 @@ class ChemicalMapper(object):
         return {k: sorted(set(list(v))) for k, v in self.database.groupby(key)[value]}
 
     def _from_list_dict(self, key, value):
-        # return {k: sorted(
-        #     set([item for sublist in v.tolist() for item in sublist]))
-        #     for k, v in self.database.groupby(key)[value]}
-        # return list(itertools.chain.from_iterable(l)
         return {k: sorted(set(list(itertools.chain.from_iterable(v.tolist()))))
                 for k, v in self.database.groupby(key)[value]}
 
@@ -164,24 +164,17 @@ class ChemicalMapper(object):
         Examples
         --------
         >>> cm = ChemicalMapper()
-        >>> cm.check_synonym_dict(term='dodecene', format_name='accession')
-        HMDB0059874
+        >>> cm.check_synonym_dict(term='dodecene', format_name='main_accession')
+        ['HMDB0000933', 'HMDB0059874']
 
         """
+        synonyms = self.database.copy()
+        synonyms['synonyms'] = synonyms['synonyms'].apply(','.join)
+        synonyms['synonyms'] = synonyms['synonyms'].str.lower()
 
-        for index, row in self.database.iterrows():
-            each = row.synonyms
-            if isinstance(each, list):
-                if term in each:
-                    return self.database.iloc[index][format_name]
-            else:
-                print(type(each), repr(each))
-                each = literal_eval(str(each))
-                print(type(each), repr(each))
-                quit()
-                if term in each:
-                    return self.database.iloc[index][format_name]
-        return None
+        hits = synonyms[synonyms['synonyms'].str.contains(term.lower())]
+        matches = sorted(set(hits[format_name].values))
+        return matches
 
     def print_info(self):
         """ print information about the dataframe
@@ -206,7 +199,7 @@ class ChemicalMapper(object):
         """
         print('Saving class data')
         with gzip.open(self._instance_filename, 'wb') as f:
-            f.write(pickle.dumps(self.__dict__, protocol=-1))
+            f.write(pickle.dumps(self.__dict__, protocol=0))
 
     def reload(self):
         """ loads class instance
@@ -215,14 +208,14 @@ class ChemicalMapper(object):
         -------
 
         """
-
-        with gzip.open(self._instance_filename, 'rb') as f:
-            data = f.read()
-
         try:
+            with gzip.open(self._instance_filename, 'r') as f:
+                data = f.read()
             self.__dict__ = pickle.loads(data, encoding='utf-8')
         except:
-            self.__dict__ = pickle.loads(data)
+            with gzip.open(self._instance_filename, 'rb') as f:
+                data = f.read()
+            self.__dict__ = pickle.loads(data, encoding='latin1')
 
 
 def tidy_split(df, column, sep='|', keep=False):
@@ -266,4 +259,4 @@ if __name__ == "__main__":
     cm = ChemicalMapper()
     # print(list(cm.hmdb_accession_to_protein)[:10])
     # print(cm.hmdb_accession_to_protein['HMDB00005'])
-    print(cm.check_synonym_dict(term='dodecene', format_name='accession'))
+    print(cm.check_synonym_dict(term='dodecene', format_name='main_accession'))

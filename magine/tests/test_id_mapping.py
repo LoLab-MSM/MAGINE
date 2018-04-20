@@ -12,8 +12,8 @@ class TestChemicalMapper(object):
 
     def test_synonyms(self):
         hmdb = self.cm.check_synonym_dict(term='dodecene',
-                                          format_name='accession')
-        assert (hmdb == 'HMDB0059874')
+                                          format_name='main_accession')
+        assert (hmdb == ['HMDB0000933', 'HMDB0059874'])
 
     def test_protein_network(self):
         item = 'HMDB42489'
