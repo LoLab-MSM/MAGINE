@@ -9,7 +9,7 @@ matplotlib
 matplotlib-venn
 bioservices
 pathos
-goatools==0.6.10
+seaborn
 plotly
 python-igraph
 appdirs
