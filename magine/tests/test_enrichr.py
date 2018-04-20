@@ -38,6 +38,8 @@ def test_set_of_dbs():
     lists = [['BAX', 'BCL2', 'CASP3'],
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
-    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='t')
+    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'],
+                                  databases=['KEGG_2016', 'NCI-Nature_2016'],
+                                  save_name='t')
     print(df2.shape)
-    assert df2.shape == (235, 21)
+    assert df2.shape == (74, 21)

@@ -455,8 +455,8 @@ class Enrichr(object):
             return self.run(list_of_genes=list_g,
                             gene_set_lib=all_dbs)
 
-    def run_sample_set_of_dbs(self, sample_lists, sample_ids, save_name=None,
-                              db='pathways', pivot=True):
+    def run_sample_set_of_dbs(self, sample_lists, sample_ids, databases,
+                              save_name=None, pivot=True):
         """
 
         Parameters
@@ -467,8 +467,8 @@ class Enrichr(object):
             Names for each sample_id
         save_name : str, optional
             If you want to save the output as csv/xlsx
-        db : str
-            Database set. Default "pathway"
+        databases : list_like
+            Database set.
 
         pivot: bool
             Pivot the table to have additional columns per sample_id
@@ -480,12 +480,15 @@ class Enrichr(object):
         assert isinstance(sample_lists, list), "Please provide list of lists"
         assert isinstance(sample_lists[0],
                           list), "Please provide list of lists"
+
+        assert isinstance(databases, list), 'please provide database list'
+
         df_all = []
         for i, j in zip(sample_lists, sample_ids):
 
             if self.verbose:
                 print("{} / {}".format(j, sample_ids))
-            tmp_df = self.run_set_of_dbs(i, db)
+            tmp_df = self.run(i, databases)
             tmp_df['sample_id'] = j
             df_all.append(tmp_df)
 
@@ -497,7 +500,7 @@ class Enrichr(object):
 
         # verify results exist
         if df_all.shape[0] == 0:
-            print("No significant terms for {}".format(db))
+            print("No significant terms for {}".format(databases))
             return None
 
         if pivot:
@@ -694,6 +697,7 @@ db_types = {
 
 
 def run_enrichment_for_project(exp_data, project_name):
+
     local_dbs = [
 
         'KEGG_2016',
@@ -748,6 +752,9 @@ def run_enrichment_for_project(exp_data, project_name):
         'Drug_Perturbations_from_GEO_2014',
 
     ]
+    local_dbs = []
+    for i, j in db_types.items():
+        local_dbs += j
     e = Enrichr(verbose=True)
     exp = exp_data
     all_df = []
