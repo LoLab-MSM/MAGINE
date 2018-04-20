@@ -1,10 +1,7 @@
 Visualization tools
 ===================
 
-Cytoscape interface
--------------------
-
-.. automodule:: magine.networks.visualization.cytoscape_view
+.. automodule:: magine.networks.visualization
    :members:
    :undoc-members:
    :show-inheritance:

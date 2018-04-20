@@ -10,19 +10,19 @@ magine\.networks\.network\_generator module
    :undoc-members:
    :show-inheritance:
 
-magine\.networks\.go\_network\_generator module
+magine\.networks\.ontology\_network module
 -----------------------------------------------
 
-.. automodule:: magine.networks.go_network_generator
+.. automodule:: magine.networks.ontology_network
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-magine\.networks\.network\_subgraphs module
+magine\.networks\.subgraphs module
 -------------------------------------------
 
-.. automodule:: magine.networks.network_subgraphs
+.. automodule:: magine.networks.subgraphs
    :members:
    :undoc-members:
    :show-inheritance:

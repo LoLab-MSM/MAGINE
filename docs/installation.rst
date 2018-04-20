@@ -1,10 +1,6 @@
 Installation
 ============
 
-
-Install MAGINE natively on your computer
-----------------------------------------
-
 1. **Install Anaconda**
 
    Our recommended approach is to use `Anaconda`_, which is a distribution of
@@ -18,56 +14,59 @@ Install MAGINE natively on your computer
    and download the **Python 2.7 version**. The default installer options
    are usually appropriate.
 
-   .. note::
-       **Windows users:** If you are unsure whether to use the 32-bit or
-       64-bit installer, press the Windows Start button, search for “About
-       your PC”, and under “System type” it will specify 32-bit operating
-       system or 64-bit operating system
+
+        **Windows users:** If you are unsure whether to use the 32-bit or
+           64-bit installer, press the Windows Start button, search for “About
+           your PC”, and under “System type” it will specify 32-bit operating
+           system or 64-bit operating system
 
 2. **Open a terminal**
 
-    We will install most packages with conda
+    We will install most packages with conda::
 
-    :command:`conda config --add channels conda-forge`
-    :command:`conda install orange jinja2 statsmodels networkx graphviz python-igraph`
+       $ conda create -n magine_env python=2
+       $ source activate magine_env
+       $ conda config --add channels conda-forge
+       $ conda install jinja2 statsmodels networkx graphviz
+       $ conda install -c marufr python-igraph
 
 3. (Linux and MacOS only) **Install pygraphviz**
+    ::
 
-    :command:`conda install -c pdrops pygraphviz=1.2`
+     $conda install -c pdrops pygraphviz=1.2
+
 
 4. (Windows only) **Install pygraphviz**
 
     Windows users pygraphviz on Windows can be a little troublesome to
     install. Luckily there are binaries that can be downloaded from here
     http://www.lfd.uci.edu/~gohlke/pythonlibs/ . Select the same python version (27).
-    One it is downloaded you can install with
-    :command:`pip install PATH_TO_DOWNlOAD`
+    One it is downloaded you can install with::
+
+      $ pip install PATH_TO_DOWNlOAD
+
     where you would type the .whl file that you download.
 
-5. **Install MAGINE **
+
+5. **Install MAGINE**
 
    The installation is very straightforward with ``pip`` - type the
-   following in a terminal:
-       :command:`git clone https://github.com/LoLab-VU/magine`
-       :command:`pip install -r requirements.txt`
-       :command:`export PYTHONPATH=`pwd`:$PYTHONPATH`
+   following in a terminal::
 
-   .. note::
-        **Mac users:** To open a terminal on a Mac, open Spotlight search
+      $ git clone https://github.com/LoLab-VU/magine
+      $ pip install -r requirements.txt
+      $ export PYTHONPATH=`pwd`:$PYTHONPATH
+
+     **Mac users:** To open a terminal on a Mac, open Spotlight search
             (press command key and space), type ``terminal`` and press enter.
 
 
-6. **Install MAGINE (not currently working, please follow step 5) **
+6. **Install MAGINE (not currently working, please follow step 5)**
 
    The installation is very straightforward with ``pip`` - type the
-   following in a terminal:
+   following in a terminal::
 
-       :command:`pip install git+git:https://github.com/LoLab-VU/Magine`
-
-   .. note::
-        **Mac users:** To open a terminal on a Mac, open Spotlight search
-          (press command key and space), type ``terminal`` and press enter.
-
+      $ pip install git+git:https://github.com/LoLab-VU/Magine
 
 7. **Start Python and MAGINE**
 
@@ -78,6 +77,12 @@ Install MAGINE natively on your computer
    You will then be at the Python prompt. Type ``import magine`` to try
    loading magine. If no error messages appear and the next Python prompt
    appears, you have succeeded in installing magine!
+
+
+Documentation
+-------------
+
+The manual is available online at http://magine.readthedocs.io.
 
 
 .. _Anaconda: https://www.continuum.io/downloads
