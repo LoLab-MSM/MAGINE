@@ -4,8 +4,7 @@ import os
 import networkx as nx
 
 import magine.mappings.maps as mapper
-import magine.networks.dev_tools as nt
-import magine.networks.utils
+import magine.networks.utils as nt
 from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import load_reactome_fi
@@ -86,7 +85,7 @@ def build_network(gene_list, species='hsa', save_name=None,
             continue
         graph_list.append(tmp)
 
-    end_network = magine.networks.utils.compose_all(graph_list)
+    end_network = nt.compose_all(graph_list)
     end_network = mapper.convert_all(end_network, species=species)
 
     if all_measured_list is None:
@@ -113,9 +112,9 @@ def build_network(gene_list, species='hsa', save_name=None,
 
     print("Trimming network")
     # removes everything not connected to the largest graph
-    magine.networks.utils.delete_disconnected_network(end_network)
+    nt.delete_disconnected_network(end_network)
     # makes all similar edge names the same
-    magine.networks.utils.standardize_edge_types(end_network)
+    nt.standardize_edge_types(end_network)
 
     if trim_source_sink:
         end_network = nt.trim_sink_source_nodes(end_network, all_measured_list,
@@ -185,7 +184,7 @@ def expand_by_db(network, measured_list, db='reactome'):
         attr = network_to_add.node[node]
         new_graph.add_node(node, **attr)
 
-    new_graph = magine.networks.utils.compose(network, new_graph)
+    new_graph = nt.compose(network, new_graph)
 
     print("{} database".format(db_name))
     print("\t\tbefore\tafter")
@@ -304,7 +303,7 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
                 else:
                     missing_proteins.add(each)
 
-    final_graph = magine.networks.utils.compose(graph, tmp_graph)
+    final_graph = nt.compose(graph, tmp_graph)
     end_nodes = set(final_graph.nodes())
     end_edges = set(final_graph.edges())
     new_nodes = end_nodes.intersection(start_nodes)
@@ -418,13 +417,13 @@ def create_background_network(save_name='background_network'):
         for i in sorted(e1.difference(e2)):
             print(i)
 
-    full_network = magine.networks.utils.compose_all(
+    full_network = nt.compose_all(
         [hmdb_network, kegg_network, biogrid_network, reactome_network,
          signor_network]
     )
 
-    magine.networks.utils.delete_disconnected_network(full_network)
-    magine.networks.utils.standardize_edge_types(full_network)
+    nt.delete_disconnected_network(full_network)
+    nt.standardize_edge_types(full_network)
 
     # find_overlap(reactome_network, full_network)
     n_nodes = len(full_network.nodes())
