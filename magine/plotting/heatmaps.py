@@ -94,7 +94,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     return fig
 
 
-def heatmap_by_terms(data, terms, colors, convert_to_log=False,
+def heatmap_by_terms(data, terms, colors, color_labels, convert_to_log=False,
                      y_tick_labels='auto', cluster_col=False,
                      columns='sample_id', index='term_name',
                      values='combined_score', div_colors=False, num_colors=7,
@@ -135,7 +135,6 @@ def heatmap_by_terms(data, terms, colors, convert_to_log=False,
             labels = tmp2.as_matrix()
             fmt = ''
         else:
-            annotate_sig = False
             print("To annotate please add a significant_flag column to data")
 
     if div_colors:
@@ -155,5 +154,7 @@ def heatmap_by_terms(data, terms, colors, convert_to_log=False,
                          cmap=pal,
                          annot=labels, fmt=fmt
                          )
-
+    for color, label in zip(colors, color_labels):
+        fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
+    fig.ax_col_dendrogram.legend(loc="center", ncol=6)
     return fig

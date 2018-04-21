@@ -30,7 +30,7 @@ def nx_to_json(network):
     """
     nodes, edges = [], []
 
-    for node_id in network.nodes_iter():
+    for node_id in network.nodes():
         node = network.node[node_id]
         new_node = {}
         node_columns = node.keys()
@@ -42,7 +42,7 @@ def nx_to_json(network):
         new_node['data'] = data
         nodes.append(new_node)
 
-    for source, target, data in network.edges_iter(data=True):
+    for source, target, data in network.edges(data=True):
         data['source'] = str(source)
         data['target'] = str(target)
         edges.append({'data': data})

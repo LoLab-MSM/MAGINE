@@ -17,7 +17,8 @@ def test_nx_to_jsonh():
     g.add_edge('a', 'b')
     json_g = exporters.nx_to_json(g)
     answer = {'edges': '[{"data": {"source": "a", "target": "b"}}]',
-              'nodes': '[{"data": {"id": "b", "name": "b"}}, {"data": {"id": "a", "name": "a"}}]'}
+              'nodes': '[{"data": {"id": "a", "name": "a"}}, {"data": {"id": "b", "name": "b"}}]'}
+
     assert json_g['edges'] == answer['edges']
     assert json_g['nodes'] == answer['nodes']
 

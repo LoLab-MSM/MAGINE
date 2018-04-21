@@ -5,9 +5,6 @@ from nose.tools import raises
 
 from magine.data.formatter import load_csv, load_directory
 
-pd.set_option('display.width', 10000)
-pd.set_option('max_colwidth', 100)
-
 full_path = os.path.join(os.path.dirname(__file__), 'Data', 'hilic')
 
 
