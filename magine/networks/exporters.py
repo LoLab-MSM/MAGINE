@@ -75,7 +75,7 @@ def nx_to_dot(graph):
         new_g.add_node(n, **data)
 
     # loop over edges
-    for u, v, data in graph.edges_iter(data=True):
+    for u, v, data in graph.edges(data=True):
         new_g.add_edge(u, v, **dict((k, str(v)) for k, v in data.items()))
     return new_g
 
