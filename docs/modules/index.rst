@@ -8,7 +8,7 @@ MAGINE Modules Reference
    html_templates/index.rst
    mappings/index.rst
    networks/index.rst
-          enrichment/index.rst
+   enrichment/index.rst
    plotting/index.rst
 
 
