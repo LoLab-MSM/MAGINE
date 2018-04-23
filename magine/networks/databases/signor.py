@@ -17,10 +17,17 @@ def download():
         'MODIFICATIONA', 'MODASEQ', 'MODIFICATIONB', 'MODBSEQ', 'PMID',
         'DIRECT', 'SENTENCE', 'SIGNOR_ID']
 
+    """
     table = pd.read_csv('https://signor.uniroma2.it/getData.php?organism=9606',
                         names=col_names, delimiter='\t', index_col=None,
                         error_bad_lines=False, encoding='utf-8'
                         )
+
+    table.to_csv('signor.csv.gz', compression='gzip', index=False,
+                 encoding='utf-8')
+    """
+
+    table = pd.read_csv('signor.csv.gz', compression='gzip', encoding='utf-8')
 
     # filter out non direct
     table = table[table['DIRECT'] == 't']
@@ -62,7 +69,7 @@ def download():
     table['source'] = table['ENTITYA']
     table['target'] = table['ENTITYB']
 
-    protein_graph = nx.from_pandas_edgelist(
+    protein_graph = nx.from_pandas_dataframe(
         table,
         'source',
         'target',

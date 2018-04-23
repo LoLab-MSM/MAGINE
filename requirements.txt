@@ -16,4 +16,3 @@ seaborn
 IPython==5.3.0
 jupyter==1.0.0
 wordcloud
-openpyxl
