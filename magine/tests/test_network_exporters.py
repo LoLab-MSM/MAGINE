@@ -1,6 +1,6 @@
 import igraph
 import networkx as nx
-import pygraphviz
+import pydotplus
 
 import magine.networks.exporters as exporters
 
@@ -27,4 +27,4 @@ def test_nx_to_dot():
     g = nx.DiGraph()
     g.add_edge('a', 'b')
     dot_g = exporters.nx_to_dot(g)
-    assert isinstance(dot_g, pygraphviz.AGraph)
+    assert isinstance(dot_g, pydotplus.Dot)
