@@ -84,8 +84,7 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'scipy.sparse', 'scipy.linalg', 'seaborn',
                 'seaborn.color_palette', 'seaborn.color_palette',
 
-                # 'mpl_toolkits', 'mpl_toolkits.axes_grid1',
-                # 'mpl_toolkits.axes_grid1.make_axes_locatable',
+                'python-igraph', 'igraph'
 
                 'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
                 'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
@@ -93,13 +92,6 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
 
                 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
                 'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
-
-                'statsmodels', 'statsmodels.sandbox',
-                'statsmodels.sandbox.stats',
-                'statsmodels.sandbox.stats.multicomp',
-                'statsmodels.sandbox.stats.multicomp.fdrcorrection0',
-                'statsmodels.stats', 'statsmodels.stats.proportion',
-                'statsmodels.stats.proportion.binom_test',
                 ]
 
 for mod_name in MOCK_MODULES:
