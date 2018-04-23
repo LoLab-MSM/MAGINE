@@ -5,13 +5,7 @@ import networkx as nx
 import magine.networks.exporters as exporters
 
 try:
-    import pygraphviz as pyg
-except ImportError:
-    pyg = None
-
-try:
     from IPython.display import Image, display
-
     IPYTHON = True
 except RuntimeError:
     IPYTHON = False
@@ -204,7 +198,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
 
     Parameters
     ----------
-    graph : pygraphviz.AGraph
+    graph : nx.DiGraph
         Network
     list_of_lists : list_like
         List of lists, where the inner list contains the node to add the
@@ -228,11 +222,6 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
 
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
-
-    # tmp_graph = check_graphviz(tmp_graph)
-
-    if tmp_graph is None:
-        return
 
     for n, i in enumerate(list_of_lists):
         graph2 = add_color_graphviz_fmt(tmp_graph, i, color_list[n])

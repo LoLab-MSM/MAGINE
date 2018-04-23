@@ -142,7 +142,7 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     Parameters
     ----------
     compile_images
-    graph : pygraphviz.AGraph
+    graph : nx.DiGraph
         Network
     exp_data : list_like
         List of lists, where the inner list contains the node to add the

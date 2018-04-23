@@ -1,7 +1,22 @@
 import json
+import sys
 import tempfile
 
 import networkx as nx
+
+PY2 = sys.version_info[0] == 2
+
+if PY2:
+    def make_str(x):
+        """Return the string representation of t."""
+        if isinstance(x, unicode):
+            return x
+        else:
+            return unicode(str(x), 'unicode-escape')
+else:
+    def make_str(x):
+        """Return the string representation of t."""
+        return str(x)
 
 
 def nx_to_igraph(network):
@@ -9,7 +24,7 @@ def nx_to_igraph(network):
         import igraph
     except ImportError:
         raise ImportError('requires igraph ',
-                          'http://pygraphviz.github.io/')
+                          )
     file_descriptor, file_path = tempfile.mkstemp(suffix='.gml')
 
     nx.write_gml(network, file_path)
@@ -51,37 +66,45 @@ def nx_to_json(network):
 
 
 def nx_to_dot(graph):
-    try:
-        import pygraphviz
-    except ImportError:
-        raise ImportError('requires pygraphviz ',
-                          'http://pygraphviz.github.io/')
+    import pydotplus
 
     graph = format_to_directions(graph)
-
-    directed = graph.is_directed()
+    # set Graphviz graph type
+    if graph.is_directed():
+        graph_type = 'digraph'
+    else:
+        graph_type = 'graph'
     strict = graph.number_of_selfloops() == 0 and not graph.is_multigraph()
-    new_g = pygraphviz.AGraph(name=graph.name,
-                              strict=strict,
-                              directed=directed,
-                              encoding='utf8')
-    # default graph attributes
-    new_g.graph_attr.update(graph.graph.get('graph', {}))
-    new_g.node_attr.update(graph.graph.get('node', {}))
-    new_g.edge_attr.update(graph.graph.get('edge', {}))
 
-    # add nodes
+    name = graph.name
+    graph_defaults = graph.graph.get('graph', {})
+    if name is '':
+        new_g = pydotplus.Dot('', graph_type=graph_type, strict=strict,
+                              **graph_defaults)
+    else:
+        new_g = pydotplus.Dot('"%s"' % name, graph_type=graph_type,
+                              strict=strict, **graph_defaults)
+    try:
+        new_g.set_node_defaults(**graph.graph['node'])
+    except KeyError:
+        pass
+    try:
+        new_g.set_edge_defaults(**graph.graph['edge'])
+    except KeyError:
+        pass
+
     for n, data in graph.nodes(data=True):
-        new_g.add_node(n, **data)
+        str_data = dict((k, make_str(v)) for k, v in data.items())
+        new_g.add_node(pydotplus.Node(make_str(n), **str_data))
 
-    # loop over edges
     for u, v, data in graph.edges(data=True):
-        new_g.add_edge(u, v, **dict((k, str(v)) for k, v in data.items()))
+        str_data = dict((k, make_str(v)) for k, v in data.items())
+        edge = pydotplus.Edge(make_str(u), make_str(v), **str_data)
+        new_g.add_edge(edge)
     return new_g
 
 
-def export_to_dot(graph, save_name, image_format='png', engine='dot',
-                  dpi=100, concentrate=False):
+def export_to_dot(graph, save_name, image_format='png', engine='dot'):
     """
     Converts networkx graph to graphviz dot
 
@@ -95,10 +118,6 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
     engine : str
         graphviz engine
             dot, twopi,
-    dpi: int
-        resolution of figure
-    concentrate : bool
-        Concentrate bi-edges into one edge
 
     Returns
     -------
@@ -110,11 +129,8 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot',
         basename = save_name[:-4]
     else:
         basename = save_name
-    py_dot.write('{}.dot'.format(basename))
-    arg = '-Gdpi={} -Gconcentrate={}'.format(
-        dpi, 'true' if concentrate else 'false'
-    )
-    py_dot.draw('{}.{}'.format(basename, image_format), prog=engine, args=arg)
+    py_dot.write('{}.{}'.format(basename, image_format), prog=engine,
+                 format=image_format)
 
 
 def check_graphviz(network):
