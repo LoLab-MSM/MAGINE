@@ -125,7 +125,7 @@ def download_reactome_functional_interaction():
     table.loc[rev_cols, ['source', 'target']] = \
         table.loc[rev_cols, ['target', 'source']].values
 
-    protein_graph = nx.from_pandas_dataframe(
+    protein_graph = nx.from_pandas_edgelist(
         table,
         'source',
         'target',

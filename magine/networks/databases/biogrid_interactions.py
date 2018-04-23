@@ -190,7 +190,7 @@ class BioGridDownload(object):
                      inplace=True)
 
         # create graph
-        protein_graph = nx.from_pandas_dataframe(
+        protein_graph = nx.from_pandas_edgelist(
             table,
             'source',
             'target',
