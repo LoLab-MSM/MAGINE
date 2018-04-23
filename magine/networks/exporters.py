@@ -1,7 +1,22 @@
 import json
+import sys
 import tempfile
 
 import networkx as nx
+
+PY2 = sys.version_info[0] == 2
+
+if PY2:
+    def make_str(x):
+        """Return the string representation of t."""
+        if isinstance(x, unicode):
+            return x
+        else:
+            return unicode(str(x), 'unicode-escape')
+else:
+    def make_str(x):
+        """Return the string representation of t."""
+        return str(x)
 
 
 def nx_to_igraph(network):
@@ -48,31 +63,6 @@ def nx_to_json(network):
         edges.append({'data': data})
 
     return {'nodes': json.dumps(nodes), 'edges': json.dumps(edges)}
-
-
-import sys
-
-PY2 = sys.version_info[0] == 2
-
-if PY2:
-    def make_str(x):
-        """Return the string representation of t."""
-        if isinstance(x, unicode):
-            return x
-        else:
-            # Note, this will not work unless x is ascii-encoded.
-            # That is good, since we should be working with unicode anyway.
-            # Essentially, unless we are reading a file, we demand that users
-            # convert any encoded strings to unicode before using the library.
-            #
-            # Also, the str() is necessary to convert integers, etc.
-            # unicode(3) works, but unicode(3, 'unicode-escape') wants a buffer.
-            #
-            return unicode(str(x), 'unicode-escape')
-else:
-    def make_str(x):
-        """Return the string representation of t."""
-        return str(x)
 
 
 def nx_to_dot(graph):
@@ -128,10 +118,6 @@ def export_to_dot(graph, save_name, image_format='png', engine='dot'):
     engine : str
         graphviz engine
             dot, twopi,
-    dpi: int
-        resolution of figure
-    concentrate : bool
-        Concentrate bi-edges into one edge
 
     Returns
     -------

@@ -10,6 +10,7 @@ def test_single_run():
               'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX', 'BAK1',
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
     df = e.run(list_2, 'GO_Biological_Process_2017')
+    print(df.head(10))
     terms = df['term_name']
     assert len(terms) == 185
 
@@ -50,3 +51,7 @@ def test_tf_names():
     tfs = clean_tf_names(df)
     for i in tfs['term_name']:
         assert '_' not in i
+
+
+if __name__ == '__main__':
+    test_single_run()

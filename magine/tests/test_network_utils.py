@@ -2,7 +2,7 @@ import networkx as nx
 
 import magine.networks.utils as utils
 
-
+"""
 def test_paint_over_time():
     graph = nx.DiGraph()
     graph.add_nodes_from(['a', 'b', 'c'])
@@ -28,6 +28,8 @@ def test_paint_over_time_up_down():
                                          labels=labels,
                                          save_name='ok',
                                          create_gif=False)
+
+"""
 
 
 def test_delete_disconnected():
