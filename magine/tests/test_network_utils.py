@@ -36,8 +36,8 @@ def test_delete_disconnected():
     g.add_edge('a', 'b')
     large_g_connected = utils.delete_disconnected_network(g)
     large_g_connected.nodes()
-    assert large_g_connected.nodes() == ['b', 'a']
-    assert large_g_connected.edges() == [('a', 'b')]
+    assert set(large_g_connected.nodes()) == {'b', 'a'}
+    assert set(large_g_connected.edges()) == {('a', 'b')}
 
 
 def test_add_attribute_to_network():
