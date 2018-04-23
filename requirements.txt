@@ -1,5 +1,5 @@
 pygraphviz
-networkx==2.1
+networkx==1.11
 py2cytoscape
 jinja2
 scipy
@@ -10,6 +10,7 @@ matplotlib
 matplotlib-venn
 bioservices
 pathos
+goatools==0.6.10
 plotly
 appdirs
 seaborn
