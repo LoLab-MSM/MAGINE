@@ -1,5 +1,5 @@
 language: python
-sudo: true
+sudo: false
 dist: trusty
 python:
 - '2.7'
