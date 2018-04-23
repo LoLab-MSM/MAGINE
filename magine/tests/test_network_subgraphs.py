@@ -133,12 +133,11 @@ class TestSubgraphs(object):
                       'MIR125B2', 'CASP8', 'PPP2R5A', 'PPP2R2A', 'MAP3K11',
                       'DUSP7', 'BRAF', 'CREB3L4', 'ATF4', 'ATF6B', 'ATF2',
                       'BCL2'}
-
-        assert set(list(g.nodes)) == layer_2_up
+        assert set(g.nodes()) == layer_2_up
 
         g = self.net_sub.neighbors(gene, False, True, 1)
         layer_1_down = {'CASP3', 'CYCS', 'BAX', 'CAPN2', 'CAPN1', 'BCL2'}
-        assert set(g.nodes) == layer_1_down
+        assert set(g.nodes()) == layer_1_down
 
         g = self.net_sub.neighbors(gene, False, True, 2)
         layer_2_down = {'ACTG1', 'SPTAN1', 'CYCS', 'SPTA1', 'CASP12',
@@ -148,7 +147,7 @@ class TestSubgraphs(object):
                         'BAX', 'PARP3', 'CASP7', 'TP53', 'CASP3', 'BAD',
                         'BAK1', 'ACTB', 'PAK1', 'PAK2', 'BCL2'}
 
-        assert set(list(g.nodes)) == layer_2_down
+        assert set(g.nodes()) == layer_2_down
 
     def test_expand(self):
         g = nx.DiGraph()
@@ -161,7 +160,7 @@ class TestSubgraphs(object):
             'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14', 'CYCS',
             'CAPN1', 'BCL2'
         }
-        assert trues == set(list(ng.nodes))
+        assert trues == set(ng.nodes())
 
         includes = ['CASP3', 'CAPN2']
 
@@ -171,7 +170,7 @@ class TestSubgraphs(object):
         trues = {
             'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14',
         }
-        assert trues == set(ng.nodes)
+        assert trues == set(ng.nodes())
 
 
 if __name__ == '__main__':

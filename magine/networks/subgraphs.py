@@ -135,7 +135,7 @@ class Subgraph(object):
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
         >>> net_sub = Subgraph(g)
         >>> path_a_d = net_sub.shortest_paths_between_lists(['a','c','d'])
-        >>> list(path_a_d.edges)
+        >>> path_a_d.edges()
         [('a', 'b'), ('a', 'd'), ('c', 'd'), ('b', 'c')]
         """
 
@@ -183,15 +183,15 @@ class Subgraph(object):
             return sg
 
         def _add_node(n):
-            sg.add_node(n, **self.network.nodes[n])
+            sg.add_node(n, **self.network.node[n])
 
         def _add_edge(i, j):
-            sg.add_edge(i, j, **self.network.edges[i, j])
+            sg.add_edge(i, j, **self.network[i][j])
 
         _add_node(node)
 
         def _get_upstream(new_node):
-            upstream = list(self.network.predecessors(new_node))
+            upstream = self.network.predecessors(new_node)
             for i in upstream:
                 if i != new_node:
                     _add_node(i)
@@ -199,7 +199,7 @@ class Subgraph(object):
             return upstream
 
         def _get_downstream(new_node):
-            downstream = list(self.network.successors(new_node))
+            downstream = self.network.successors(new_node)
             for i in downstream:
                 if i != new_node:
                     _add_node(i)
@@ -463,12 +463,12 @@ class Subgraph(object):
 
         def _add_node(node):
             if node not in current_nodes:
-                graph.add_node(node, **self.network.nodes[node])
+                graph.add_node(node, **self.network.node[node])
                 current_nodes.add(node)
 
         def _add_edge(i, j):
             if (i, j) not in _edges:
-                graph.add_edge(i, j, **self.network.edges[i, j])
+                graph.add_edge(i, j, **self.network.edge[i][j])
                 _edges.add((i, j))
 
         # flatten paths into list of lists

@@ -308,7 +308,7 @@ def compose_all(graphs):
 
 def _add_nodes(old_network, new_network):
     new_nodes = set(new_network.nodes())
-    for i, data in old_network.nodes(data=True):
+    for i, data in old_network.nodes_iter(data=True):
         if i not in new_nodes:
             new_network.add_node(i, **data)
         else:
@@ -328,11 +328,11 @@ def _add_nodes(old_network, new_network):
 
 def _add_edges(current_network, new_network):
     edges = set(new_network.edges())
-    for i, j, data in current_network.edges(data=True):
+    for i, j, data in current_network.edges_iter(data=True):
         if (i, j) not in edges:
             new_network.add_edge(i, j, **data)
         else:
-            existing_info = new_network.edges[i, j]
+            existing_info = new_network.edge[i][j]
             for n, d in data.items():
                 if n not in existing_info:
                     new_network[i][j][n] = d
@@ -515,7 +515,7 @@ def trim_sink_source_nodes(network, list_of_nodes, remove_self_edge=False):
 
 def remove_self_edges(network):
     tmp_network = network.copy()
-    tmp_network.remove_edges_from(nx.selfloop_edges(tmp_network))
+    tmp_network.remove_edges_from(tmp_network.selfloop_edges())
     return tmp_network
 
 
