@@ -273,9 +273,6 @@ class Enrichr(object):
         df = df[~df['term_name'].isnull()]
         df = df[cols]
         df['db'] = gene_set_lib
-
-        if df.shape[0] == 0:
-            return df[cols]
         return df
 
     def _add_gene_list(self, gene_list):
@@ -380,105 +377,6 @@ class Enrichr(object):
                                 exp_data=exp_data)
         return p_df
 
-    def run_key_dbs(self, list_g, labels, save_name, create_html=False,
-                    run_parallel=False):
-        """
-
-        Parameters
-        ----------
-        list_g : list_like
-            List of lists of genes
-        labels : list_like
-            List of lists of labels
-        save_name : str
-            prefix of names
-        create_html : bool
-            if you want to create html of all the outputs
-        run_parallel : bool
-            Create plots in parallel
-        Returns
-        -------
-
-        """
-
-        print("Working on {}".format(save_name))
-
-        def _run(list_dbs, db_name):
-            # Create a Pandas Excel writer using XlsxWriter as the engine.
-            writer = pd.ExcelWriter('{}_{}.xlsx'.format(save_name, db_name),
-                                    engine='xlsxwriter')
-            if self.verbose:
-                print("\tWorking on {}".format(db_name))
-            html_list = []
-            for i in list_dbs:
-                print("\t\tRunning {}".format(i))
-                if create_html:
-                    outdir = save_name + '_' + i
-                    if not os.path.exists(outdir):
-                        os.mkdir(outdir)
-                else:
-                    outdir = None
-
-                df = self.run_samples(sample_lists=list_g, sample_ids=labels,
-                                      gene_set_lib=i, create_html=create_html,
-                                      save_name=outdir, out_dir=outdir,
-                                      run_parallel=run_parallel,
-                                      )
-                if df is None:
-                    continue
-
-                html_list.append(dict(database=i,
-                                      filename='{}_filter.html'.format(
-                                          outdir)))
-                if len(i) > 30:
-                    i = i[:30]
-                df.to_excel(writer, sheet_name=i, freeze_panes=(1, 2))
-
-            # Close the Pandas Excel writer and output the Excel file.
-            writer.save()
-            return [db_name, html_list, save_name + '_' + db_name]
-
-        h1 = _run(transcription_factors, 'transcription_factors')
-        h2 = _run(pathways, 'pathways')
-        h3 = _run(kinase, 'kinases')
-        h4 = _run(disease_drug, 'drug_and_disease')
-        h5 = _run(ontologies, 'ontologies')
-        return [h1, h2, h3, h4, h5]
-
-    def run_set_of_dbs(self, list_g, db='drug'):
-        """
-
-        Parameters
-        ----------
-        list_g : list_like
-            List of lists of genes
-        db : str
-        Returns
-        -------
-        pandas.DataFrame
-
-        """
-
-        if db == 'transcription_factors':
-            return self.run(list_of_genes=list_g,
-                            gene_set_lib=transcription_factors)
-
-        if db == 'pathways':
-            return self.run(list_of_genes=list_g,
-                            gene_set_lib=pathways)
-        if db == 'kinases':
-            return self.run(list_of_genes=list_g,
-                            gene_set_lib=kinase)
-        if db == 'drug':
-            return self.run(list_of_genes=list_g,
-                            gene_set_lib=disease_drug)
-        if db == 'ontologies':
-            return self.run(list_of_genes=list_g,
-                            gene_set_lib=ontologies)
-        if db == 'all':
-            return self.run(list_of_genes=list_g,
-                            gene_set_lib=all_dbs)
-
     def run_sample_set_of_dbs(self, sample_lists, sample_ids, databases,
                               save_name=None, pivot=True):
         """
@@ -548,61 +446,6 @@ class Enrichr(object):
                           encoding='utf8')
 
         return df_all
-
-    def run_dbs_testing(self, list_g, labels, save_name):
-        """
-
-        Parameters
-        ----------
-        list_g : list_like
-            List of lists of genes
-        labels : list_like
-            List of lists of labels
-        save_name : str
-            prefix of names
-        Returns
-        -------
-
-        """
-
-        print("Working on {}".format(save_name))
-
-        names = []
-
-        def _run(list_dbs, db_name):
-            # Create a Pandas Excel writer using XlsxWriter as the engine.
-
-            print("\tWorking on {}".format(db_name))
-            all_df = []
-            for i in list_dbs:
-                print("\t\tRunning {}".format(i))
-
-                df = self.run_samples(sample_lists=list_g, sample_ids=labels,
-                                      gene_set_lib=i
-                                      )
-                if df is None:
-                    continue
-                df['db'] = i
-                all_df.append(df)
-
-            all_df = pd.concat(all_df)
-            sn = '{}_{}.csv'.format(db_name, save_name)
-            all_df.to_csv(sn, encoding='utf8')
-            names.append(sn)
-
-        _run(transcription_factors, 'transcription_factors')
-        _run(pathways, 'pathways')
-        _run(kinase, 'kinases')
-        _run(disease_drug, 'drug_and_disease')
-        _run(ontologies, 'ontologies')
-
-        writer = pd.ExcelWriter('{}.xlsx'.format(save_name),
-                                engine='xlsxwriter')
-        for i in names:
-            df = pd.read_csv(i)
-            df.to_excel(writer, sheet_name=i.split('_')[0], merge_cells=True,
-                        freeze_panes=(2, 1), encoding='utf8')
-        writer.save()
 
     @staticmethod
     def _filter_sig_across_term(data, p_value_thresh=0.05):
@@ -722,60 +565,6 @@ db_types = {
 
 def run_enrichment_for_project(exp_data, project_name):
 
-    local_dbs = [
-
-        'KEGG_2016',
-        'NCI-Nature_2016',
-        'Panther_2016',
-        'WikiPathways_2016',
-        'BioCarta_2016',
-        'Humancyc_2016',
-        'Reactome_2016',
-        'KEA_2015',
-
-
-        # ontologies
-        'GO_Biological_Process_2017',
-        'GO_Molecular_Function_2017',
-        'GO_Cellular_Component_2017',
-
-        'GO_Biological_Process_2017b',
-        'GO_Molecular_Function_2017b',
-        'GO_Cellular_Component_2017b',
-
-        # transcription
-        'ChEA_2016',
-        'TRANSFAC_and_JASPAR_PWMs',
-        'ENCODE_TF_ChIP-seq_2015',
-
-        # cell types
-        # 'Jensen_TISSUES',
-        'Human_Gene_Atlas',
-        'Tissue_Protein_Expression_from_ProteomicsDB',
-        'ARCHS4_Cell-lines',
-        'ARCHS4_Tissues',
-        'Cancer_Cell_Line_Encyclopedia',
-        'NCI-60_Cancer_Cell_Lines',
-
-        # pertubations
-        'Kinase_Perturbations_from_GEO_down',
-        'Kinase_Perturbations_from_GEO_up',
-        'LINCS_L1000_Kinase_Perturbations_down',
-        'LINCS_L1000_Kinase_Perturbations_up',
-        'Ligand_Perturbations_from_GEO_down',
-        'Ligand_Perturbations_from_GEO_up',
-        'Old_CMAP_down',
-        'Old_CMAP_up',
-
-        # phenotypes
-        'Human_Phenotype_Ontology',
-        'MGI_Mammalian_Phenotype_2017',
-        'Jensen_DISEASES',
-        'dbGaP',
-        'DrugMatrix',
-        'Drug_Perturbations_from_GEO_2014',
-
-    ]
     local_dbs = []
     for i, j in db_types.items():
         local_dbs += j

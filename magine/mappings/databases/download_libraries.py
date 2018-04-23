@@ -2,10 +2,12 @@
 import os
 import zipfile
 from xml.etree import cElementTree as ElementTree
-from magine.data.storage import id_mapping_dir
+
 import numpy as np
 import pandas as pd
 import requests
+
+from magine.data.storage import id_mapping_dir
 
 
 def download_uniprot(species='hsa'):
@@ -139,6 +141,7 @@ class HMDB(object):
         out_dir = os.path.join(self.tmp_dir, 'HMDB')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
+        if len(os.listdir(out_dir)) == 0:
             self._unzip_hmdb(out_dir)
 
         count = 0
@@ -181,10 +184,9 @@ class HMDB(object):
         """ unzips hmdb metabolites file
         """
         hmdb_file = os.path.join(self.tmp_dir, self.target_file)
-
         if not os.path.exists(hmdb_file):
-
             self._download_hmdb()
+
         print("Unzipping metabolites file")
         zip_ref = zipfile.ZipFile(hmdb_file, 'r')
         zip_ref.extractall(out_directory)

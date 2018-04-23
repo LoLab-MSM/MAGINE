@@ -1,4 +1,4 @@
-from magine.enrichment.enrichr import Enrichr
+from magine.enrichment.enrichr import Enrichr, clean_tf_names
 from magine.tests.sample_experimental_data import exp_data
 
 e = Enrichr()
@@ -43,3 +43,10 @@ def test_set_of_dbs():
                                   save_name='t')
     print(df2.shape)
     assert df2.shape == (74, 21)
+
+
+def test_tf_names():
+    df = e.run(['BAX', 'BCL2', 'MCL1'], ['ARCHS4_TFs_Coexp', 'ChEA_2016'])
+    tfs = clean_tf_names(df)
+    for i in tfs['term_name']:
+        assert '_' not in i

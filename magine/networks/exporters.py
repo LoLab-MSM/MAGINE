@@ -81,7 +81,7 @@ def nx_to_dot(graph):
 
 
 def export_to_dot(graph, save_name, image_format='png', engine='dot',
-                  dpi=200, concentrate=False):
+                  dpi=100, concentrate=False):
     """
     Converts networkx graph to graphviz dot
 
