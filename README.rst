@@ -7,8 +7,8 @@ MAGINE
 .. image:: https://travis-ci.org/LoLab-VU/MAGINE.svg?branch=master
     :target: https://travis-ci.org/LoLab-VU/MAGINE
 
-.. image:: https://landscape.io/github/LoLab-VU/MAGINE/master/landscape.svg?style=flat
-   :target: https://landscape.io/github/LoLab-VU/MAGINE/master
+.. image:: https://codecov.io/gh/LoLab-VU/MAGINE/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/LoLab-VU/MAGINE
 
 .. image:: https://readthedocs.org/projects/MAGINE/badge/?version=latest
     :target: http://magine.readthedocs.io/en/latest/?badge=latest
