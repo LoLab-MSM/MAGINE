@@ -12,7 +12,7 @@ before_install:
 - export PATH="$HOME/miniconda/bin:$PATH"
 - conda update --yes conda
 - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy matplotlib networkx nose pandas graphviz jinja2 plotly
-- conda install -c conda-forge python-igraph
+- conda install --yes -c conda-forge python-igraph
 - mkdir -p ~/.config/matplotlib
 - echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
 - pip install python-coveralls
