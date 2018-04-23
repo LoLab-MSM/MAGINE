@@ -92,7 +92,7 @@ def add_attribute_to_network(graph, list_to_add_attribute, attribute,
     return tmp_g
 
 
-def paint_network(graph, list_to_paint, color):
+def add_color_graphviz_fmt(graph, list_to_paint, color):
     """
 
     Parameters
@@ -105,12 +105,12 @@ def paint_network(graph, list_to_paint, color):
 
     Examples
     --------
-    >>> from magine.networks.utils import paint_network
+    >>> from magine.networks.utils import add_color_graphviz_fmt
     >>> from networkx import DiGraph
     >>> g = DiGraph()
     >>> g.add_nodes_from(['a', 'b', 'c'])
-    >>> new_g = paint_network(g, ['a','b'], 'red')
-    >>> new_g = paint_network(new_g, ['c'], 'blue')
+    >>> new_g = add_color_graphviz_fmt(g, ['a','b'], 'red')
+    >>> new_g = add_color_graphviz_fmt(new_g, ['c'], 'blue')
     >>> new_g.node['a']
     {'style': 'filled', 'color': 'black', 'measured': True, 'fillcolor': 'red'}
     >>> new_g.node['c']
@@ -141,7 +141,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
 
     Parameters
     ----------
-    graph : pygraphviz.AGraph
+    graph : nx.DiGraph
         Network
     list_up : list_like
         List of lists, where the inner list contains the node to add the
@@ -156,7 +156,8 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         prefix for images to be saved
     labels: list_like
         list of labels to add to graph per sample
-
+    create_gif : bool
+        Create a gif from series of images
     Returns
     -------
 
@@ -173,10 +174,10 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
     tmp_graph = graph.copy()
 
     for n, (up, down) in enumerate(zip(list_up, list_down)):
-        graph2 = paint_network(tmp_graph, up, color_up)
-        graph2 = paint_network(graph2, down, color_down)
+        graph2 = add_color_graphviz_fmt(tmp_graph, up, color_up)
+        graph2 = add_color_graphviz_fmt(graph2, down, color_down)
         both = set(up).intersection(set(down))
-        graph2 = paint_network(graph2, both, 'yellow')
+        graph2 = add_color_graphviz_fmt(graph2, both, 'yellow')
 
         if labels is not None:
             graph2.graph['label'] = labels[n]
@@ -234,7 +235,7 @@ def paint_network_overtime(graph, list_of_lists, color_list, save_name,
         return
 
     for n, i in enumerate(list_of_lists):
-        graph2 = paint_network(tmp_graph, i, color_list[n])
+        graph2 = add_color_graphviz_fmt(tmp_graph, i, color_list[n])
 
         if labels is not None:
             graph2.graph['label'] = labels[n]

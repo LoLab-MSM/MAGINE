@@ -12,7 +12,7 @@ def test_paint_over_time():
     utils.paint_network_overtime(graph, nodes, colors,
                                  labels=labels,
                                  save_name='ok',
-                                 create_gif=True)
+                                 create_gif=False)
 
 
 def test_paint_over_time_up_down():
@@ -27,4 +27,24 @@ def test_paint_over_time_up_down():
                                          color_up='red',
                                          labels=labels,
                                          save_name='ok',
-                                         create_gif=True)
+                                         create_gif=False)
+
+
+def test_delete_disconnected():
+    g = nx.DiGraph()
+    g.add_nodes_from(['a', 'b', 'c'])
+    g.add_edge('a', 'b')
+    large_g_connected = utils.delete_disconnected_network(g)
+    large_g_connected.nodes()
+    assert large_g_connected.nodes() == ['b', 'a']
+    assert large_g_connected.edges() == [('a', 'b')]
+
+
+def test_add_attribute_to_network():
+
+    g = nx.DiGraph()
+    g.add_nodes_from(['a', 'b', 'c'])
+    new_g = utils.add_attribute_to_network(g, ['a', 'b'], 'inTest', 'true')
+    assert new_g.node['a'] == {'inTest': 'true'}
+
+    assert new_g.node['c'] == {'inTest': 'false'}
