@@ -81,7 +81,7 @@ def build_network(gene_list, species='hsa', save_name=None,
     graph_list = []
     for each in pathway_list:
         tmp = path_to_graph[each]
-        if len(tmp.edges()) == 0:
+        if len(tmp.edges) == 0:
             continue
         graph_list.append(tmp)
 
@@ -113,6 +113,7 @@ def build_network(gene_list, species='hsa', save_name=None,
     print("Trimming network")
     # removes everything not connected to the largest graph
     nt.delete_disconnected_network(end_network)
+
     # makes all similar edge names the same
     nt.standardize_edge_types(end_network)
 

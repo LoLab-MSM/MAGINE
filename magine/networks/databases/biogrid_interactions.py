@@ -24,8 +24,9 @@ class BioGridDownload(object):
         self._db_name = 'BioGrid'
         self._cm = ChemicalMapper()
 
-    def _create_chemical_network(self):
+    def _chem_network(self):
         df = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
+                         # self.url2,
                          compression='zip',
                          delimiter='\t',
                          error_bad_lines=False,
@@ -104,7 +105,7 @@ class BioGridDownload(object):
         df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1).astype(str)
 
         # create network
-        chem_g = nx.from_pandas_dataframe(
+        chem_g = nx.from_pandas_edgelist(
             df,
             'gene',
             'target',
@@ -156,6 +157,7 @@ class BioGridDownload(object):
         """
 
         table = pd.read_csv(io.BytesIO(urlopen(self.url).read()),
+                            # self.url,
                             compression='zip',
                             delimiter='\t',
                             encoding='utf8',
@@ -216,7 +218,7 @@ class BioGridDownload(object):
                 _add_node(r[1])
 
         final_graph = magine.networks.utils.compose(protein_graph,
-                                                    self._create_chemical_network())
+                                                    self._chem_network())
         nx.write_gpickle(final_graph, p_name)
         return final_graph
 

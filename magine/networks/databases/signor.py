@@ -15,7 +15,7 @@ def download():
         'DATABASEB', 'EFFECT', 'MECHANISM', 'RESIDUE', 'SEQUENCE', 'TAX_ID',
         'CELL_DATA', 'TISSUE_DATA', 'MODULATOR_COMPLEX', 'TARGET_COMPLEX',
         'MODIFICATIONA', 'MODASEQ', 'MODIFICATIONB', 'MODBSEQ', 'PMID',
-        'DIRECT', 'SENTENCE', 'SIGNOR_ID']
+        'DIRECT', 'SENTENCE', 'SIGNOR_ID', 'na', 'na2', 'na3']
 
     table = pd.read_csv('https://signor.uniroma2.it/getData.php?organism=9606',
                         names=col_names, delimiter='\t', index_col=None,
