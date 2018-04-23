@@ -2,6 +2,13 @@ import json
 import os
 import re
 
+# Will be OK in Python 2
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
+
 import numpy as np
 import pandas as pd
 import requests
@@ -89,13 +96,15 @@ all_dbs = [
 
 def clean_term_names(row):
     term_name = row['term_name']
-
-    if not isinstance(term_name, str):
+    if not isinstance(term_name, basestring):
         return term_name
+
     db = row['db']
+
     if db in ['GO_Biological_Process_2017', 'GO_Biological_Process_2017b',
               'GO_Molecular_Function_2017', 'GO_Molecular_Function_2017b',
               'GO_Cellular_Component_2017', 'GO_Cellular_Component_2017b']:
+
         if 'GO:' in term_name:
             term_name = term_name.split('(GO:', 1)[0]
         elif 'go:' in term_name:
@@ -112,6 +121,15 @@ def clean_term_names(row):
         drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
         direction = re.search(r'-(.{2})$', term_name).group(0)
         term_name = drug_name + direction
+    if db in ['LINCS_L1000_Chem_Pert_up', 'LINCS_L1000_Chem_Pert_down', ]:
+        exp_id, rest = term_name.split('-', 1)
+        drug_name, _ = rest.rsplit('-', 1)
+        term_name = drug_name
+    if db in ['Old_CMAP_down', 'Old_CMAP_up', ]:
+        term_name = term_name.rsplit('-', 1)[0]
+    if db in ['Ligand_Perturbations_from_GEO_down',
+              'Ligand_Perturbations_from_GEO_up']:
+        term_name = term_name.split('_', 1)[0]
 
     term_name = term_name.strip()
     term_name = term_name.lower()
@@ -469,6 +487,25 @@ class Enrichr(object):
 
 
 db_types = {
+    'histone': [
+        'Epigenomics_Roadmap_HM_ChIP-seq',
+        'ENCODE_Histone_Modifications_2015',
+        'ESCAPE',
+    ],
+    'mrna': [
+        'TargetScan_microRNA_2017',
+        'miRTarBase_2017',
+    ],
+    'kinases': [
+        'KEA_2015',
+        'LINCS_L1000_Kinase_Perturbations_down',
+        'LINCS_L1000_Kinase_Perturbations_up',
+        'Kinase_Perturbations_from_GEO_down',
+        'Kinase_Perturbations_from_GEO_up',
+        'Phosphatase_Substrates_from_DEPOD',
+        'ARCHS4_Kinases_Coexp',
+        'ARCHS4_IDG_Coexp',
+    ],
     'transcription': [
         'ChEA_2016',
         'TRANSFAC_and_JASPAR_PWMs',
@@ -476,70 +513,57 @@ db_types = {
         'Enrichr_Submissions_TF-Gene_Coocurrence',
         'Genome_Browser_PWMs',
         'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-        'Epigenomics_Roadmap_HM_ChIP-seq',
-        'TargetScan_microRNA_2017',
-        'miRTarBase_2017',
         'ENCODE_TF_ChIP-seq_2015',
         'TF-LOF_Expression_from_GEO',
-        'ENCODE_Histone_Modifications_2015',
         'Transcription_Factor_PPIs'
     ],
     'pathways': [
         'KEGG_2016',
         'WikiPathways_2016',
-        'ARCHS4_Kinases_Coexp',
         'Reactome_2016',
         'BioCarta_2016',
         'NCI-Nature_2016',
         'Panther_2016',
         'BioPlex_2017',
-        'PPI_Hub_Proteins',
-        'KEA_2015',
-        'LINCS_L1000_Kinase_Perturbations_down',
-        'LINCS_L1000_Kinase_Perturbations_up',
-        'Kinase_Perturbations_from_GEO_down',
-        'Kinase_Perturbations_from_GEO_up',
+    ],
+    'complex': [
         'NURSA_Human_Endogenous_Complexome',
         'CORUM',
-        'Phosphatase_Substrates_from_DEPOD',
+        'PPI_Hub_Proteins',
     ],
     'ontologies': [
         'GO_Cellular_Component_2017b',
         'GO_Biological_Process_2017b',
         'GO_Molecular_Function_2017b',
         'MGI_Mammalian_Phenotype_2017',
-        'Human_Phenotype_Ontology',
-        'Jensen_TISSUES',
         'Jensen_COMPARTMENTS',
-        'Jensen_DISEASES',
     ],
-    'disease_drug': [
+    'drug': [
+        'DrugMatrix',
+        'Drug_Perturbations_from_GEO_2014',
+        'Old_CMAP_up',
+        'Old_CMAP_down',
         'LINCS_L1000_Chem_Pert_up',
         'LINCS_L1000_Chem_Pert_down',
         'LINCS_L1000_Ligand_Perturbations_up',
-        'ARCHS4_IDG_Coexp',
-        'DrugMatrix',
-        'Old_CMAP_up',
-        'Old_CMAP_down',
-        'GeneSigDB',
+        'LINCS_L1000_Ligand_Perturbations_down',
+    ],
+    'disease': [
         'OMIM_Disease',
         'OMIM_Expanded',
-        'VirusMINT',
-        'MSigDB_Oncogenic_Signatures',
-        'Virus_Perturbations_from_GEO_up',
-        'Virus_Perturbations_from_GEO_down',
+        'Jensen_DISEASES',
+        'Human_Phenotype_Ontology'
     ],
     'cell_type': [
-        'Human_Gene_Atlas',
+
         'ARCHS4_Tissues',
         'ARCHS4_Cell-lines',
         'Allen_Brain_Atlas_up',
         'Allen_Brain_Atlas_down',
-        'GTEx_Tissue_Sample_Gene_Expression_Profiles_up',
-        'GTEx_Tissue_Sample_Gene_Expression_Profiles_down',
         'Cancer_Cell_Line_Encyclopedia',
+        'Human_Gene_Atlas',
         'NCI-60_Cancer_Cell_Lines',
-        'ESCAPE',
+        'Jensen_TISSUES',
     ],
     'crowd': [
         'Disease_Perturbations_from_GEO_down',
@@ -566,8 +590,9 @@ db_types = {
 def run_enrichment_for_project(exp_data, project_name):
 
     local_dbs = []
-    for i, j in db_types.items():
-        local_dbs += j
+    for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
+              'kinases', 'histone']:
+        local_dbs += db_types[i]
     e = Enrichr(verbose=True)
     exp = exp_data
     all_df = []
@@ -599,8 +624,8 @@ def run_enrichment_for_project(exp_data, project_name):
     rt = exp.rna_sample_ids
     if len(pt) != 0:
         _run_new(exp.proteomics_by_sample_id, pt, 'proteomics_both')
-        _run_new(exp.proteomics_up_by_sample_id, pt, 'proteomics_down')
-        _run_new(exp.proteomics_down_by_sample_id, pt, 'proteomics_up')
+        _run_new(exp.proteomics_up_by_sample_id, pt, 'proteomics_up')
+        _run_new(exp.proteomics_down_by_sample_id, pt, 'proteomics_down')
     if len(rt) != 0:
         _run_new(exp.rna_down_over_time, rt, 'rna_down')
         _run_new(exp.rna_up_over_time, rt, 'rna_up')
@@ -610,13 +635,7 @@ def run_enrichment_for_project(exp_data, project_name):
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
-    print(final_df.shape)
     final_df = final_df[~final_df['term_name'].isnull()]
-    print(final_df.shape)
-    final_df['term_name'] = final_df.apply(clean_term_names, axis=1)
-    print(final_df.shape)
-    final_df = final_df[~final_df['term_name'].isnull()]
-    print(final_df.shape)
     final_df.to_csv('{}.csv.gz'.format(project_name), encoding='utf-8',
                     compression='gzip')
     print("Done with enrichment")
