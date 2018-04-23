@@ -49,7 +49,6 @@ setup(
                           'networkx',
                           'requests',
                           'py2cytoscape',
-                          'pygraphviz',
                           'pandas',
                           'xlrd',
                           'matplotlib-venn',

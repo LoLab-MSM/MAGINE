@@ -53,25 +53,7 @@ Installation
        $ conda install jinja2 statsmodels networkx graphviz 
        $ conda install -c marufr python-igraph
 
-3. (Linux and MacOS only) **Install pygraphviz**
-    ::
-
-     $conda install -c pdrops pygraphviz=1.2
-
-
-4. (Windows only) **Install pygraphviz**
-
-    Windows users pygraphviz on Windows can be a little troublesome to
-    install. Luckily there are binaries that can be downloaded from here
-    http://www.lfd.uci.edu/~gohlke/pythonlibs/ . Select the same python version (27).
-    One it is downloaded you can install with::
-
-      $ pip install PATH_TO_DOWNlOAD
-
-    where you would type the .whl file that you download.
-
-
-5. **Install MAGINE**
+3. **Install MAGINE**
 
    The installation is very straightforward with ``pip`` - type the
    following in a terminal::
@@ -84,14 +66,8 @@ Installation
             (press command key and space), type ``terminal`` and press enter.
 
 
-6. **Install MAGINE (not currently working, please follow step 5)**
 
-   The installation is very straightforward with ``pip`` - type the
-   following in a terminal::
-
-      $ pip install git+git:https://github.com/LoLab-VU/Magine
-
-7. **Start Python and MAGINE**
+4. **Start Python and MAGINE**
 
    If you installed Python using `Anaconda`_ on Windows, search for and select
    ``IPython`` from your Start Menu (Windows). Otherwise, open a terminal

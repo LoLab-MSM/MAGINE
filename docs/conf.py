@@ -78,8 +78,6 @@ author = u'James C. Pino'
 # Note that for sub-modules, all parent modules must be listed explicitly.
 MOCK_MODULES = ['pandas', 'pandas.plotting',
 
-                'pygraphviz',
-
                 'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
                 'scipy.special', 'scipy.optimize', 'scipy.stats',
                 'scipy.stats.stats', 'scipy.stats.stats.distributions',
@@ -102,9 +100,6 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'statsmodels.sandbox.stats.multicomp.fdrcorrection0',
                 'statsmodels.stats', 'statsmodels.stats.proportion',
                 'statsmodels.stats.proportion.binom_test',
-                'pygraphviz',
-                # 'magine.enrichment.ontology_tools',
-                # 'magine.enrichment.go_from_goatools'
                 ]
 
 for mod_name in MOCK_MODULES:
