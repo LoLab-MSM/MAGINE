@@ -405,7 +405,7 @@ class Subgraph(object):
 
         Parameters
         ----------
-        graph : pygraphviz.AGraph
+        graph : nx.DiGraph
 
         prefix : str
             Prefix for image files

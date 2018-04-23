@@ -549,66 +549,9 @@ def subtract_network_from_network(net1, net2):
     nodes1 = set(net1.nodes())
     nodes2 = set(net2.nodes())
     overlap = nodes2.intersection(nodes1)
-    return copy_graph1.remove_edges_from(overlap)
+    copy_graph1.remove_edges_from(overlap)
 
-
-def print_network_stats(network, exp_data):
-    """
-
-    Parameters
-    ----------
-    network : nx.DiGraph
-    exp_data : magine.data.datatypes.ExperimentalData
-
-    Returns
-    -------
-
-    """
-    nodes = set(network.nodes())
-    g_nodes = set()
-    m_nodes = set()
-    for i, d in network.nodes(data=True):
-
-        if 'speciesType' not in d:
-            print("Doesn't have species type... {} = {}".format(i, d))
-            continue
-        if d['speciesType'] == 'gene':
-            g_nodes.add(i)
-        elif d['speciesType'] == 'compound' or d[
-            'speciesType'] == 'metabolite':
-            m_nodes.add(i)
-        else:
-            g_nodes.add(i)
-            print(i, d)
-
-    total_species = set(exp_data.list_species)
-    sig_total_species = set(exp_data.list_sig_species)
-    sig_genes = set(exp_data.list_sig_proteins)
-    genes = set(exp_data.list_proteins)
-    sig_met = set(exp_data.list_sig_metabolites)
-    met = set(exp_data.list_metabolites)
-    n_measured = len(nodes.intersection(total_species))
-    n_genes = len(nodes.intersection(sig_genes))
-    n_meta = len(nodes.intersection(sig_met))
-    n_sig_measured = len(nodes.intersection(sig_total_species))
-    n_nodes = len(nodes)
-    st = ''
-    st += 'Number of nodes = {}\n'.format(n_nodes)
-    st += 'Number of edges = {}\n'.format(len(network.edges()))
-    st += "Number of total nodes measured = {}\n".format(n_measured)
-    st += "Fraction of total nodes measured = {}\n".format(
-        100. * n_measured / n_nodes)
-    st += "Number of total nodes sig. changed = {}\n".format(n_sig_measured)
-    st += "Fraction of total nodes sig. changed = {}\n".format(
-        100. * n_sig_measured / n_nodes)
-    st += "Number of protein nodes sig. changed = {}\n".format(n_genes)
-    st += "Fraction of protein nodes measured = {}\n".format(
-        100. * n_genes / len(g_nodes))
-    st += "Number of metabolite nodes sig. changed = {}\n".format(n_meta)
-    st += "Fraction of total nodes measured = {}\n".format(
-        100. * n_meta / len(m_nodes))
-
-    print(st)
+    return copy_graph1
 
 
 def run_from_ipython():

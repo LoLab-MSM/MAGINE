@@ -50,3 +50,29 @@ def test_add_attribute_to_network():
     assert new_g.node['a'] == {'inTest': 'true'}
 
     assert new_g.node['c'] == {'inTest': 'false'}
+
+
+def test_trim_source_sink():
+    graph = nx.DiGraph()
+    graph.add_edge('A', 'B')
+    graph.add_edge('B', 'C')
+    graph.add_edge('B', 'B')
+    graph.add_edge('D', 'C')
+    graph.add_edge('C', 'N')
+    trimmed = utils.trim_sink_source_nodes(graph, ['A', 'B', 'D'],
+                                           remove_self_edge=True)
+    assert set(trimmed.edges()) == {('B', 'C'), ('A', 'B'), ('D', 'C')}
+    return
+    import matplotlib.pyplot as plt
+    plt.subplot(121)
+    nx.draw(graph,
+            pos=nx.nx_pydot.graphviz_layout(graph, 'dot'),
+            with_labels=True)
+    plt.subplot(122)
+    nx.draw(trimmed,
+            pos=nx.nx_pydot.graphviz_layout(graph, 'dot'),
+            with_labels=True)
+    plt.show()
+
+
+test_trim_source_sink()
