@@ -76,43 +76,24 @@ def log2_normalize_df(df, column):
 # TODO create test and example
 def filter_by_minimum_sig_columns(data_frame, index, columns,
                                   min_terms=3):
+    # create safe copy of array
     tmp_array = data_frame.copy()
 
+    # get list of columns
+    cols_to_check = list(tmp_array[columns].unique())
+
+    assert 'significant_flag' in tmp_array, 'Requires significant_flag column'
+    # pivot
     sig = pd.pivot_table(tmp_array,
                          index=index,
                          fill_value=0,
                          values='significant_flag',
                          columns=columns
-                         )
+                         )[cols_to_check]
 
-    cols_to_check = list(tmp_array[columns].unique())
-    sig = sig[cols_to_check]
-    sig = sig[cols_to_check].T.sum()
-    sig = sig[sig > min_terms]
-    if isinstance(index, list):
-        keepers = {i[0] for i in sig.index.values}
-        return tmp_array[tmp_array[index[0]].isin(keepers)].copy()
-    elif isinstance(index, str):
-        keepers = {i for i in sig.index.values}
-        return tmp_array[tmp_array[index].isin(keepers)].copy()
-    else:
-        print("Index is not a str or a list. What is it?")
-
-
-def filter_by_minimum_sig_columns_old(data_frame, index, values, columns,
-                                      min_terms=3):
-    tmp_array = data_frame.copy()
-
-    sig = pd.pivot_table(tmp_array[tmp_array['significant_flag']],
-                         index=index,
-                         fill_value=0.0,
-                         values=values,
-                         columns=columns
-                         )
-
-    cols_to_check = list(tmp_array[columns].unique())
-    sig = (sig[cols_to_check].T == 0.).sum()
-    sig = sig[sig < min_terms]
+    # convert everything thats not 0 to 1
+    sig[sig > 0] = 1
+    sig = sig[sig.T.sum() >= min_terms]
     if isinstance(index, list):
         keepers = {i[0] for i in sig.index.values}
         return tmp_array[tmp_array[index[0]].isin(keepers)].copy()
