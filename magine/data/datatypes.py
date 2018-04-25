@@ -627,7 +627,7 @@ class ExperimentalData(object):
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
-            sec_0, sec_1, sec_2 = v_plot.filter_data(sample, bh_critera,
+            sec_0, sec_1, sec_2 = v_plot.create_mask(sample, bh_critera,
                                                      p_value,
                                                      fold_change_cutoff)
 

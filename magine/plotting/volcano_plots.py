@@ -17,12 +17,9 @@ species_type = 'species_type'
 sample_id = 'time'
 
 
-def filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
-    tmp = data.loc[:, (p_val, fold_change, flag)].copy()
-    # convert to log10 scale
-    tmp[p_val] = np.log10(data[p_val]) * -1
-    # convert to log2 space
-    tmp = log2_normalize_df(tmp, fold_change=fold_change)
+def create_mask(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
+    """ Creates a mask for volcano plots.
+
 
     # Visual example of volcano plot
     # section 0 are significant criteria
@@ -34,6 +31,29 @@ def filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
     #    2    #    2   #      2     #
     #         #        #            #
     #################################
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+    use_sig : bool
+    p_value : float
+        p_value threshold
+    fold_change_cutoff : float
+        fold change threshold
+
+    Returns
+    -------
+
+    """
+    # copy of data
+    tmp = data.loc[:, (p_val, fold_change, flag)].copy()
+
+    # convert to log10 scale
+    tmp[p_val] = np.log10(data[p_val]) * -1
+
+    # convert to log2 space
+    tmp = log2_normalize_df(tmp, fold_change=fold_change)
 
     if use_sig:
         sec_0 = tmp[tmp[flag]]
@@ -50,6 +70,19 @@ def filter_data(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
 
 
 def add_volcano_plot(fig_axis, section_0, section_1, section_2):
+    """ Adds a volcano plot to a fig axis
+
+    Parameters
+    ----------
+    fig_axis : plt.Figure.axes
+    section_0 : pd.DataFrame
+    section_1 : pd.DataFrame
+    section_2 : pd.DataFrame
+
+    Returns
+    -------
+
+    """
     fig_axis.scatter(section_0['log2fc'], section_0[p_val], marker='.',
                      color='blue')
     if section_1 is not None:
@@ -61,15 +94,16 @@ def add_volcano_plot(fig_axis, section_0, section_1, section_2):
     fig_axis.set_xlabel('log$_2$ Fold Change', fontsize=16)
 
 
-def volcano_plot(data, save_name=None, out_dir=None,
-                 bh_criteria=False, p_value=0.1, fold_change_cutoff=1.5,
-                 x_range=None, y_range=None):
+def volcano_plot(data, save_name=None, out_dir=None, bh_criteria=False,
+                 p_value=0.1, fold_change_cutoff=1.5, x_range=None,
+                 y_range=None):
     """ Create a volcano plot of data
+
     Creates a volcano plot of data type provided
 
     Parameters
     ----------
-    data : pandas.Dataframe
+    data : pandas.DataFrame
         data to create volcano plots from
     save_name: str
         name to save figure
@@ -94,7 +128,7 @@ def volcano_plot(data, save_name=None, out_dir=None,
 
     data = data.dropna(subset=[p_val])
     data = data[np.isfinite(data[fold_change])]
-    filtered_data = filter_data(data, bh_criteria, p_value,
+    filtered_data = create_mask(data, bh_criteria, p_value,
                                 fold_change_cutoff)
     sec_0, sec_1, sec_2 = filtered_data
     fig = plt.figure()
@@ -122,7 +156,7 @@ def save_plot(fig, save_name, out_dir=None, image_type='png'):
     
     Parameters
     ----------
-    fig : matplotlib.pyplot.figure
+    fig : plt.Figure
         Figure to be saved
     save_name : str
         output file name
