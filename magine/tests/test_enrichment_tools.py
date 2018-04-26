@@ -31,11 +31,17 @@ def test_jaccard_index():
 
 
 def test_filter_sim_terms():
-    slimmed = et.filter_similar_terms(df)
+    slimmed = et.remove_redundant(df, level='all')
+    print(slimmed.shape)
     assert slimmed.shape == (3, 10)
 
-    sim2 = et.remove_redundant(df)
+    sim2 = et.remove_redundant(df, level='sample')
+    print(sim2.shape)
     assert sim2.shape == (0, 10)
+
+    sim2 = et.remove_redundant(df, level='dataframe', verbose=True)
+    print(sim2.shape)
+    assert sim2.shape == (19, 10)
 
 
 def test_genes_from_df():

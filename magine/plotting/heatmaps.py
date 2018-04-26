@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import scipy.cluster.hierarchy as sch
 import seaborn as sns
 
 from magine.data.tools import pivot_table
@@ -94,14 +95,17 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     return fig
 
 
-def heatmap_by_terms(data, terms, colors, color_labels, convert_to_log=False,
-                     y_tick_labels='auto', cluster_col=False,
-                     columns='sample_id', index='term_name',
+def heatmap_by_terms(data, terms, color_labels, colors=None,
+                     convert_to_log=False, y_tick_labels='auto',
+                     columns='sample_id', index='term_name', cluster_col=False,
                      values='combined_score', div_colors=False, num_colors=7,
                      fig_size=(6, 4), annotate_sig=False):
+    # pivot datatable
     array = pivot_table(data, convert_to_log, columns=columns, index=index,
                         fill_value=0.0, values=values)
 
+    if colors is None:
+        colors = sns.color_palette("Dark2", len(terms))
     vals = set(array.index.values)
     final_sorted = sorted(terms[0].intersection(vals))
     added = set(final_sorted)
@@ -115,6 +119,10 @@ def heatmap_by_terms(data, terms, colors, color_labels, convert_to_log=False,
                 final_sorted.append(i)
                 added.add(i)
 
+    # only keep indexes that are in the provided sets
+    array = array[array.index.isin(final_sorted)]
+
+    # resort according to color
     array = array.reindex(final_sorted)
 
     labels = None
@@ -157,4 +165,49 @@ def heatmap_by_terms(data, terms, colors, color_labels, convert_to_log=False,
     for color, label in zip(colors, color_labels):
         fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
     fig.ax_col_dendrogram.legend(loc="center", ncol=6)
+    return fig
+
+
+def cluster_distance_mat(dist_mat, names, fig_size=(8, 8)):
+    # Compute and plot first dendrogram.
+    fig = plt.figure(figsize=fig_size)
+
+    # Compute and plot second dendrogram.
+    ax2 = fig.add_axes([0.3, 0.71, 0.6, 0.2])
+    Y = sch.linkage(dist_mat, method='average')
+    Z2 = sch.dendrogram(Y)
+    ax2.set_xticks([])
+    ax2.set_yticks([])
+
+    # Plot distance matrix.
+    axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.6])
+
+    # reorder matrix
+    idx1 = Z2['leaves']
+    dist_mat = dist_mat[idx1, :]
+    dist_mat = dist_mat[:, idx1]
+    names = names[idx1]
+
+    # create figure
+    im = axmatrix.matshow(dist_mat, aspect='auto', origin='lower',
+                          cmap=plt.cm.Reds, vmin=0, vmax=1)
+
+    # add xtick labels
+    axmatrix.set_xticks(range(len(names)))
+    axmatrix.set_xticklabels(names, minor=False)
+    axmatrix.xaxis.set_label_position('bottom')
+    axmatrix.xaxis.tick_bottom()
+    plt.xticks(rotation=90, fontsize=8)
+
+    # add ytick labels
+    axmatrix.set_yticks(range(len(names)))
+    axmatrix.set_yticklabels(names, minor=False)
+    axmatrix.yaxis.set_label_position('left')
+    axmatrix.yaxis.tick_left()
+    plt.yticks(rotation=0, fontsize=8)
+
+    # add colorbar
+    axcolor = fig.add_axes([0.94, 0.1, 0.02, 0.6])
+    plt.colorbar(im, cax=axcolor)
+
     return fig

@@ -1,9 +1,9 @@
 import itertools
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import scipy.cluster.hierarchy as sch
+
+from magine.plotting.heatmaps import cluster_distance_mat
 
 
 def jaccard_index(first_set, second_set):
@@ -124,23 +124,6 @@ def all_genes_from_df(df):
     return set(itertools.chain.from_iterable(genes.str.split(',').as_matrix()))
 
 
-def filter_similar_terms(data, threshold=0.75, verbose=False,
-                         sort_by='combined_score'):
-    if sort_by == 'rank':
-        ascending = True
-    else:
-        ascending = False
-    data.sort_values(sort_by, inplace=True, ascending=ascending)
-    data_copy = data.copy()
-
-    to_remove = _terms_to_remove(data_copy, threshold, verbose)
-
-    data_copy = data_copy[~data_copy['term_name'].isin(to_remove)]
-    print("Number of rows went from {} to {}".format(data.shape[0],
-                                                     data_copy.shape[0]))
-    return data_copy
-
-
 def find_similar_terms(term, df):
     first_genes = term_to_genes(df, term)
     rest_of_df = df[~(df['term_name'] == term)]
@@ -156,109 +139,29 @@ def find_similar_terms(term, df):
     return dist_m
 
 
-def dist_matrix(df, fig_size=(8, 8)):
-    array = df[['term_name', 'genes']].as_matrix()
-    n_dim = len(array)
-    dist_mat = np.empty((n_dim, n_dim), dtype=float)
-    lookup = dict()
-    for i, ac in enumerate(array):
-        first_genes = set(array[i, 1].split(','))
-        for j, bc in enumerate(array):
-            if i > j:
-                continue
-            term_name = array[j, 0]
-            if term_name in lookup:
-                second_genes = lookup[term_name]
-            else:
-                second_genes = set(array[j, 1].split(','))
-                lookup[term_name] = second_genes
-            c = jaccard_index(first_genes, second_genes)
-            dist_mat[i, j] = c
-            dist_mat[j, i] = c
-    names = array[:, 0]
-
-    return cluster_distance_mat(dist_mat, names, fig_size)
-
-
-def dist_matrix2(df, fig_size=(8, 8)):
-    names = df['term_name'].unique()
-    n_dim = len(names)
-    dist_mat = np.empty((n_dim, n_dim), dtype=float)
-    for i, n1 in enumerate(names):
-        first_genes = term_to_genes(df, n1)
-        for j, n2 in enumerate(names):
-            if i > j:
-                continue
-            second_genes = term_to_genes(df, n2)
-            c = jaccard_index(first_genes, second_genes)
-            dist_mat[i, j] = c
-            dist_mat[j, i] = c
-    return cluster_distance_mat(dist_mat, names, fig_size)
-
-
-def cluster_distance_mat(dist_mat, names, fig_size=(8, 8)):
-    # Compute and plot first dendrogram.
-    fig = plt.figure(figsize=fig_size)
-
-    # Compute and plot second dendrogram.
-    ax2 = fig.add_axes([0.3, 0.71, 0.6, 0.2])
-    Y = sch.linkage(dist_mat, method='average')
-    Z2 = sch.dendrogram(Y)
-    ax2.set_xticks([])
-    ax2.set_yticks([])
-
-    # Plot distance matrix.
-    axmatrix = fig.add_axes([0.3, 0.1, 0.6, 0.6])
-
-    # reorder matrix
-    idx1 = Z2['leaves']
-    dist_mat = dist_mat[idx1, :]
-    dist_mat = dist_mat[:, idx1]
-    names = names[idx1]
-
-    # create figure
-    im = axmatrix.matshow(dist_mat, aspect='auto', origin='lower',
-                          cmap=plt.cm.Reds, vmin=0, vmax=1)
-
-    # add xtick labels
-    axmatrix.set_xticks(range(len(names)))
-    axmatrix.set_xticklabels(names, minor=False)
-    axmatrix.xaxis.set_label_position('bottom')
-    axmatrix.xaxis.tick_bottom()
-    plt.xticks(rotation=90, fontsize=8)
-
-    # add ytick labels
-    axmatrix.set_yticks(range(len(names)))
-    axmatrix.set_yticklabels(names, minor=False)
-    axmatrix.yaxis.set_label_position('left')
-    axmatrix.yaxis.tick_left()
-    plt.yticks(rotation=0, fontsize=8)
-
-    # add colorbar
-    axcolor = fig.add_axes([0.94, 0.1, 0.02, 0.6])
-    plt.colorbar(im, cax=axcolor)
-
-    return fig
-
-
-def remove_redundant(data, threshold=0.75, verbose=False,
+def remove_redundant(data, threshold=0.75, verbose=False, level='sample',
                      sort_by='combined_score'):
-    if sort_by == 'rank':
+    data_copy = data.copy()
+    if sort_by in ('rank', 'adj_p_value'):
         ascending = True
     else:
         ascending = False
-    data.sort_values(sort_by, inplace=True, ascending=ascending)
 
-    data_copy = data.copy()
-    sample_ids = list(sorted(data['sample_id'].unique()))
+    data_copy.sort_values(sort_by, inplace=True, ascending=ascending)
 
-    to_remove = set()
-    for i in sample_ids:
-        tmp = data_copy[data_copy['sample_id'] == i]
-        redundant_terms = _terms_to_remove(tmp, threshold, verbose)
-        to_remove.update(redundant_terms)
+    if level == 'sample':
+        terms_to_remove = set()
+        sample_ids = list(sorted(data['sample_id'].unique()))
+        for i in sample_ids:
+            tmp = data_copy[data_copy['sample_id'] == i]
+            redundant_terms = _terms_to_remove(tmp, threshold, verbose)
+            terms_to_remove.update(redundant_terms)
+    elif level == 'dataframe':
+        terms_to_remove = _calculate_similarity(data_copy, threshold, verbose)
+    else:
+        terms_to_remove = _terms_to_remove(data_copy, threshold, verbose)
 
-    data_copy = data_copy[~data_copy['term_name'].isin(to_remove)]
+    data_copy = data_copy[~(data_copy['term_name'].isin(terms_to_remove))]
     print("Number of rows went from {} to {}".format(data.shape[0],
                                                      data_copy.shape[0]))
 
@@ -300,6 +203,72 @@ def _terms_to_remove(data, threshold=0.75, verbose=False):
                     print("\t\tRemoving {}".format(term_name))
     return to_remove
 
+
+def _calculate_similarity(df, threshold=0.75, verbose=False):
+    names = df['term_name'].unique()
+    to_remove = set()
+    visited = set()
+    for i, term_1 in enumerate(names):
+        first_genes = term_to_genes(df, term_1)
+        if verbose:
+            print("Checking {}".format(term_1))
+        for j, term_2 in enumerate(names):
+            if (term_1, term_2) in visited or (term_2, term_1) in visited:
+                continue
+            else:
+                visited.add((term_1, term_2))
+                visited.add((term_2, term_1))
+            if i >= j:
+                continue
+            second_genes = term_to_genes(df, term_2)
+            if len(first_genes.difference(second_genes)) == 0:
+                to_remove.add(term_2)
+                if verbose:
+                    print("\t'{}' is a subset of '{}'".format(term_1, term_2))
+                continue
+            else:
+                score = jaccard_index(first_genes, second_genes)
+                if verbose:
+                    print("\tScore for {} is {:.3f}".format(term_2, score))
+                if score > threshold:
+                    to_remove.add(term_2)
+                    if verbose:
+                        print("\t\tRemoving {}".format(term_2))
+    return to_remove
+
+
+def dist_matrix(df, fig_size=(8, 8)):
+    array = df[['term_name', 'genes']].as_matrix()
+    n_dim = len(array)
+    dist_mat = np.empty((n_dim, n_dim), dtype=float)
+    for i, ac in enumerate(array):
+        first_genes = set(array[i, 1].split(','))
+        for j, bc in enumerate(array):
+            if i > j:
+                continue
+            second_genes = set(array[j, 1].split(','))
+            c = jaccard_index(first_genes, second_genes)
+            dist_mat[i, j] = c
+            dist_mat[j, i] = c
+    names = array[:, 0]
+
+    return cluster_distance_mat(dist_mat, names, fig_size)
+
+
+def dist_matrix2(df, fig_size=(8, 8)):
+    names = df['term_name'].unique()
+    n_dim = len(names)
+    dist_mat = np.empty((n_dim, n_dim), dtype=float)
+    for i, n1 in enumerate(names):
+        first_genes = term_to_genes(df, n1)
+        for j, n2 in enumerate(names):
+            if i > j:
+                continue
+            second_genes = term_to_genes(df, n2)
+            c = jaccard_index(first_genes, second_genes)
+            dist_mat[i, j] = c
+            dist_mat[j, i] = c
+    return cluster_distance_mat(dist_mat, names, fig_size)
 
 if __name__ == '__main__':
     a = {0, 1, 2}
