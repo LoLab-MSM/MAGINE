@@ -9,7 +9,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                        cluster_row=False, cluster_col=False,
                        columns='sample_id', index='term_name',
                        values='combined_score', div_colors=False, num_colors=7,
-                       fig_size=(6, 4), rank_index=False, annotate_sig=False):
+                       fig_size=(6, 4), rank_index=False, annotate_sig=False,
+                       linewidths=0.0):
     """
 
     Parameters
@@ -33,6 +34,14 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         Use divergent colors for plotting
     fig_size : tuple
         Size of figure, passed to matplotlib/seaborn
+    rank_index : bool
+        Order by index.
+    num_colors : int
+        Number of colors for color bar
+    annotate_sig : bool
+        Add '*' annotation to plot for significant changed terms
+    linewidths : float or None
+        Add white line between plots
     Returns
     -------
 
@@ -90,7 +99,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         fig = plt.figure(figsize=fig_size)
         ax = fig.add_subplot(111)
         sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
-                    center=center, annot=labels, fmt=fmt)
+                    center=center, annot=labels, fmt=fmt,
+                    linewidths=linewidths)
 
     return fig
 
