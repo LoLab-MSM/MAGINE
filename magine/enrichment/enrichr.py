@@ -1,7 +1,7 @@
 import json
 import os
 import re
-
+import time
 # Will be OK in Python 2
 try:
     basestring
@@ -232,7 +232,7 @@ class Enrichr(object):
         user_list_id = self._add_gene_list(list_of_genes)
         if isinstance(gene_set_lib, str):
 
-            df = self.run_id(user_list_id, gene_set_lib)
+            df = self._run_id(user_list_id, gene_set_lib)
         else:
             df = self._run_list_of_dbs(user_list_id, gene_set_lib)
 
@@ -247,14 +247,18 @@ class Enrichr(object):
 
         return df
 
-    def run_id(self, list_id, gene_set_lib):
+    def _run_id(self, list_id, gene_set_lib):
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
             return pd.DataFrame()
 
         q = self.query.format(url=self._url, list_id=list_id, lib=gene_set_lib)
-
-        response = requests.get(q)
+        while True:
+            try:
+                response = requests.get(q)
+                break
+            except:
+                time.sleep(1)
 
         if not response.ok:
             # quick way to wait for response
@@ -314,7 +318,7 @@ class Enrichr(object):
         for count, i in enumerate(databases):
             if self.verbose:
                 print('\t\t{}/{} databases'.format(count, len(databases)))
-            data.append(self.run_id(gene_list_id, i))
+            data.append(self._run_id(gene_list_id, i))
 
         return pd.concat(data)
 
@@ -591,7 +595,7 @@ def run_enrichment_for_project(exp_data, project_name):
 
     local_dbs = []
     for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
-              'kinases', 'histone']:
+              'kinases', 'histone', 'cell_type']:
         local_dbs += db_types[i]
     e = Enrichr(verbose=True)
     exp = exp_data
@@ -618,6 +622,8 @@ def run_enrichment_for_project(exp_data, project_name):
                 df['category'] = category
                 df.to_csv(name, index=False, encoding='utf-8',
                           compression='gzip')
+            df['sample_id'] = sample_id
+            df['category'] = category
             all_df.append(df)
 
     pt = exp.proteomics_sample_ids
