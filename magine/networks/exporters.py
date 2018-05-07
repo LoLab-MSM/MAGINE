@@ -4,20 +4,6 @@ import tempfile
 
 import networkx as nx
 
-PY2 = sys.version_info[0] == 2
-
-if PY2:
-    def make_str(x):
-        """Return the string representation of t."""
-        if isinstance(x, unicode):
-            return x
-        else:
-            return unicode(str(x), 'unicode-escape')
-else:
-    def make_str(x):
-        """Return the string representation of t."""
-        return str(x)
-
 
 def nx_to_igraph(network):
     try:
@@ -170,3 +156,18 @@ def format_to_directions(network):
                     network[source][target]['arrowhead'] = 'diamond'
                     network[source][target]['style'] = 'dashed'
     return network
+
+
+PY2 = sys.version_info[0] == 2
+
+if PY2:
+    def make_str(x):
+        """Return the string representation of t."""
+        if isinstance(x, unicode):
+            return x
+        else:
+            return unicode(str(x), 'unicode-escape')
+else:
+    def make_str(x):
+        """Return the string representation of t."""
+        return str(x)
