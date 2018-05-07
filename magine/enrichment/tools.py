@@ -141,6 +141,31 @@ def find_similar_terms(term, df):
 
 def remove_redundant(data, threshold=0.75, verbose=False, level='sample',
                      sort_by='combined_score'):
+    """
+    Calculate similarity between all term sets and removes redundant terms.
+
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+    threshold : float, default 0.75
+    verbose : bool, default False
+        Print similarity scores and removed terms.
+    level : {'sample', 'dataframe', 'overall'}, default 'sample'
+        Level to filter dataframe. 'sample' will pivot the dataframe and
+        filter each group of 'sample_id' individually. 'dataframe' will merge
+        all genes that share the same 'term_name'. 'overall' will consider each
+        term_name individually.
+    sort_by : {'combined_score', 'rank', 'adj_p_value', 'n_genes'},
+                default 'combined_score'
+        Keyword to sort the dataframe. The scoring starts at the top term and
+        compares to all the lower terms. Options are
+
+
+    Returns
+    -------
+
+    """
     data_copy = data.copy()
     if sort_by in ('rank', 'adj_p_value'):
         ascending = True
@@ -269,6 +294,7 @@ def dist_matrix2(df, fig_size=(8, 8)):
             dist_mat[i, j] = c
             dist_mat[j, i] = c
     return cluster_distance_mat(dist_mat, names, fig_size)
+
 
 if __name__ == '__main__':
     a = {0, 1, 2}
