@@ -148,8 +148,8 @@ class ExperimentalData(object):
         self.sample_ids = sorted(list(self.data[sample_id].unique()))
 
         self.proteins = df[df[species_type] == protein].dropna(subset=[gene])
-
         self.proteins_sig = self.proteins[self.proteins[flag]]
+
         self.rna_seq = self.proteins[self.proteins[exp_method] == rna]
         self.rna_seq_sig = self.rna_seq[self.rna_seq[flag]]
 
@@ -222,10 +222,12 @@ class ExperimentalData(object):
                 set(self.proteomics_up[i] + self.proteomics_down[i]))
 
             self.proteomics_by_sample_id.append(
-                self.proteomics_sign_changed[i])
+                self.proteomics_sign_changed[i]
+            )
             self.proteomics_up_by_sample_id.append(self.proteomics_up[i])
             self.proteomics_down_by_sample_id.append(self.proteomics_down[i])
 
+        for i in self.sample_ids:
             self.genes_over_time.append(self.filter(i, True, mol_type='genes'))
             self.genes_up_over_time.append(self.filter(i, True, 'up', 'genes'))
             self.genes_down_over_time.append(
@@ -346,7 +348,7 @@ class ExperimentalData(object):
         else:
             return list(tmp[gene].unique())
 
-    def filter(self, sample_id_name=0.0, significant=False,
+    def filter(self, sample_id_name=None, significant=False,
                fold_change_value=None, mol_type=None):
         """
         Returns list of proteins species according to criteria
@@ -363,29 +365,32 @@ class ExperimentalData(object):
             can be 'gene', 'metabolite', or None for both
         Returns
         -------
-        gene list : list
+        species list : list
             List of all gene species that match criteria
 
         """
-        if sample_id_name == 0.0:
-            sample_id_name = False
+
         tmp = self.data.copy()
 
-        if sample_id_name:
+        if sample_id_name is not None:
             tmp = tmp[tmp[sample_id] == sample_id_name]
 
         if significant:
             tmp = tmp[tmp[flag]]
 
+        # separate up and down regulated
         if fold_change_value == 'up':
             tmp = tmp[tmp[fold_change] >= 0]
         elif fold_change_value == 'down':
             tmp = tmp[tmp[fold_change] <= 0]
+
+        # extract subset of species
         if mol_type == 'genes':
             return list(tmp[gene].unique())
         elif mol_type == 'metabolite':
             return list(tmp[metabolites].unique())
         else:
+            # checks if metabolites in data
             if 'compound_id' not in tmp.dtypes:
                 return list(tmp[gene].unique())
             else:
