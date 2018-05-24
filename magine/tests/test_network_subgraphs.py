@@ -22,20 +22,20 @@ class TestSubgraphs(object):
         down_nodes = {'MTMR14', 'GABARAPL1', 'HMDB03850', 'GABARAPL2', 'EEA1',
                       'ATG16L1', 'ATG16L2', 'WIPI1', 'GABARAP', 'WIPI2',
                       'ATG12', 'ATG5', 'ZFYVE1'}
-        for i in self.net_sub.downstream_network_of_specie('MTMR14').nodes():
+        for i in self.net_sub.downstream_of_node('MTMR14').nodes():
             assert i in down_nodes
 
     def test_upstream_nodes(self):
         """Test finding upstream nodes."""
         up_nodes = {'MTMR4', 'MTMR14', 'MTMR3', 'ZFYVE1', 'HMDB03850'}
-        for i in self.net_sub.upstream_network_of_specie('ZFYVE1').nodes():
+        for i in self.net_sub.upstream_of_node('ZFYVE1').nodes():
             assert i in up_nodes
 
     def test_path_between_two_does_not_exist(self):
         start = 'HSPA9'
         end = 'ZFYVE1'
-        g = self.net_sub.shortest_paths_between_two_proteins(start, end,
-                                                             bidirectional=True)
+        g = self.net_sub.paths_between_pair(start, end,
+                                            bidirectional=True)
         assert g is None
 
     def test_path_between_two(self):
@@ -46,23 +46,23 @@ class TestSubgraphs(object):
                  'PIK3CA', 'PIK3CB', 'MAP3K1', 'PIK3CD', 'PIK3R3',
                  'PIK3R2', 'PIK3R1', 'TP53', 'CASP3', 'PTEN', 'PAK1',
                  'PAK2', 'BCL2'}
-        g = self.net_sub.shortest_paths_between_two_proteins(start, end,
-                                                             bidirectional=True)
+        g = self.net_sub.paths_between_pair(start, end,
+                                            bidirectional=True)
         assert set(g.nodes()) == nodes
 
     def test_paint_over_time(self):
         list_2 = {'CASP3', 'BAX', 'TP53'}
-        g = self.net_sub.shortest_paths_between_lists(list_2, draw=False,
-                                                      single_path=True,
-                                                      )
+        g = self.net_sub.paths_between_list(list_2, draw=False,
+                                            single_path=True,
+                                            )
         colors = ['red'] * len(exp_data.sample_ids)
         # self.net_sub.measured_networks_over_time(g, colors, prefix='colored')
 
     def test_paint_over_time_up_down(self):
         list_2 = {'CASP3', 'BAX', 'TP53'}
-        g = self.net_sub.shortest_paths_between_lists(list_2, draw=False,
-                                                      single_path=True,
-                                                      )
+        g = self.net_sub.paths_between_list(list_2, draw=False,
+                                            single_path=True,
+                                            )
 
         # self.net_sub.measured_networks_over_time_up_down(g, 'colored_updown')
 
@@ -75,15 +75,15 @@ class TestSubgraphs(object):
                  ('MTMR4', 'HMDB03850'),
                  ('MTMR3', 'HMDB03850')}
 
-        g = self.net_sub.shortest_paths_between_lists(up_nodes, draw=False,
-                                                      save_name='ns_test')
+        g = self.net_sub.paths_between_list(up_nodes, draw=False,
+                                            save_name='ns_test')
 
         assert set(g.edges()) == edges
 
         list_2 = {'CASP3', 'BAX', 'TP53'}
-        g = self.net_sub.shortest_paths_between_lists(list_2, draw=False,
-                                                      single_path=False,
-                                                      save_name='smaller_list')
+        g = self.net_sub.paths_between_list(list_2, draw=False,
+                                            single_path=False,
+                                            save_name='smaller_list')
         nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8',
                  'MAPK9', 'BCL2'}
         assert set(g.nodes()) == nodes
@@ -154,18 +154,20 @@ class TestSubgraphs(object):
         g.add_edge('BCL2L1', 'BAX')
         g.add_edge('MAPK14', 'BAX')
 
-        ng = self.net_sub.expand_neighbors(g, 'BAX', down_stream=True)
+        ng = self.net_sub.expand_neighbors(network=g, nodes=['BAX'],
+                                           downstream=True)
 
         trues = {
             'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14', 'CYCS',
             'CAPN1', 'BCL2'
         }
+        print(set(ng.nodes()))
         assert trues == set(ng.nodes())
 
         includes = ['CASP3', 'CAPN2']
 
-        ng = self.net_sub.expand_neighbors(g, 'BAX', down_stream=True,
-                                           include_list=includes)
+        ng = self.net_sub.expand_neighbors(g, 'BAX', downstream=True,
+                                           include_only=includes)
 
         trues = {
             'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14',

@@ -5,7 +5,7 @@ import networkx as nx
 
 import magine.networks.dev_tools as nt
 import magine.networks.exporters
-import magine.networks.utils
+import magine.networks.utils as utils
 
 
 class Subgraph(object):
@@ -35,12 +35,10 @@ class Subgraph(object):
         except:
             return None
 
-    def shortest_paths_between_two_proteins(self, node_1, node_2,
-                                            bidirectional=False,
-                                            single_path=False,
-                                            draw=False, image_format='png'):
+    def paths_between_pair(self, node_1, node_2, bidirectional=False,
+                           single_path=False, draw=False, image_format='png'):
         """
-        Generates a graph based on all shortest paths between two species
+        Generates a graph based on all shortest paths between two species.
 
 
         Parameters
@@ -71,10 +69,10 @@ class Subgraph(object):
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
         >>> net_sub = Subgraph(g)
-        >>> path_a_d = net_sub.shortest_paths_between_two_proteins('a','d')
+        >>> path_a_d = net_sub.paths_between_pair('a','d')
         >>> path_a_d.edges()
         [('a', 'd')]
-        >>> path_a_e = net_sub.shortest_paths_between_two_proteins('a','e')
+        >>> path_a_e = net_sub.paths_between_pair('a','e')
 
         """
 
@@ -96,11 +94,12 @@ class Subgraph(object):
 
         return graph
 
-    def shortest_paths_between_lists(self, species_list, save_name=None,
-                                     single_path=False, draw=False, pool=None,
-                                     image_format='png', max_length=None,
-                                     include_only=None):
+    def paths_between_list(self, species_list, save_name=None,
+                           single_path=False, draw=False, pool=None,
+                           image_format='png', max_length=None,
+                           include_only=None):
         """
+        Returns graph containing all shortest paths between list.
 
         Parameters
         ----------
@@ -134,7 +133,7 @@ class Subgraph(object):
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
         >>> net_sub = Subgraph(g)
-        >>> path_a_d = net_sub.shortest_paths_between_lists(['a','c','d'])
+        >>> path_a_d = net_sub.paths_between_list(['a','c','d'])
         >>> path_a_d.edges()
         [('a', 'b'), ('a', 'd'), ('c', 'd'), ('b', 'c')]
         """
@@ -172,15 +171,43 @@ class Subgraph(object):
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
-    def neighbors(self, node, up=True, down=True, max_dist=1,
-                  include_only=None):
-        if max_dist > 3:
-            print("Max distance is 3. Big networks")
-            max_dist = 3
-        sg = nx.DiGraph()
+    def neighbors(self, node, upstream=True, downstream=True, max_dist=1,
+                  include_only=None, start_network=None):
+        """
+        Create network of node and its neighbors.
+
+        Parameters
+        ----------
+        node : str
+        upstream : bool
+        downstream : bool
+        max_dist : int
+        include_only : list
+        start_network : nx.DiGraph
+
+
+        Returns
+        -------
+
+        """
+
+        if not upstream and not downstream:
+            print("Must provide up_stream=True or down_stream=True. "
+                  "Returning None")
+            return None
+
+        if start_network is None:
+            sg = nx.DiGraph()
+        else:
+            sg = start_network.copy()
 
         if node not in self.nodes:
+            print("Node not in graph")
             return sg
+
+        if max_dist > 3:
+            print("Max distance is larger than 3. Warning! "
+                  "Result will be largenetworks")
 
         def _add_node(n):
             sg.add_node(n, **self.network.node[n])
@@ -188,30 +215,30 @@ class Subgraph(object):
         def _add_edge(i, j):
             sg.add_edge(i, j, **self.network[i][j])
 
-        _add_node(node)
-
         def _get_upstream(new_node):
-            upstream = self.network.predecessors(new_node)
-            for i in upstream:
+            up_nodes = self.network.predecessors(new_node)
+            for i in up_nodes:
                 if i != new_node:
                     _add_node(i)
                     _add_edge(i, new_node)
-            return upstream
+            return up_nodes
 
         def _get_downstream(new_node):
-            downstream = self.network.successors(new_node)
-            for i in downstream:
+            down_nodes = self.network.successors(new_node)
+            for i in down_nodes:
                 if i != new_node:
                     _add_node(i)
                     _add_edge(new_node, i)
-            return downstream
+            return down_nodes
+
+        _add_node(node)
 
         up_layer = [node]
         down_layer = [node]
         for _ in range(0, max_dist):
-            if up:
+            if upstream:
                 up_layer = {i for n in up_layer for i in _get_upstream(n)}
-            if down:
+            if downstream:
                 down_layer = {i for n in down_layer for i in
                               _get_downstream(n)}
         if include_only is not None:
@@ -219,21 +246,41 @@ class Subgraph(object):
 
         return sg
 
-    def neighbors_of_list(self, list_start, up_stream=True, down_stream=True,
-                          max_dist=1, include_only=None):
-        new_g = nx.DiGraph()
-        for start in list_start:
-            sg = self.neighbors(start, up_stream, down_stream, max_dist)
-            new_g = nx.compose(new_g, sg)
+    def expand_neighbors(self, network=None, nodes=None, upstream=False,
+                         downstream=False, max_dist=1, include_only=None):
+
+        if network is None:
+            new_g = nx.DiGraph()
+        else:
+            new_g = network.copy()
+
+        if nodes is None:
+            assert network is not None, "Must provide network or list of nodes"
+            nodes = list(new_g.nodes())
+        elif isinstance(nodes, str):
+            nodes = [nodes]
+        elif not isinstance(nodes, (list, set)):
+            print("Must provide node, list of nodes, or expand_all=True")
+            return network
+
+        for start in nodes:
+            new_g = self.neighbors(
+                start, start_network=new_g, max_dist=max_dist,
+                upstream=upstream, downstream=downstream
+            )
 
         if include_only is not None:
+            include_only = set(include_only)
+            include_only.update(set(nodes))
+            if network is not None:
+                include_only.update(set(network.nodes()))
             new_g = self._include_only(new_g, include_only)
 
         return new_g
 
-    def upstream_network_of_specie(self, species_1, include_list=None,
-                                   save_name=None, compress=False,
-                                   draw=False):
+    def upstream_of_node(self, species_1, include_list=None,
+                         save_name=None, compress=False,
+                         draw=False):
         """
         Generate network of all upstream species of provides species
 
@@ -263,10 +310,10 @@ class Subgraph(object):
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), \
         ('e', 'd')])
         >>> net_sub = Subgraph(g)
-        >>> upstream_d = net_sub.upstream_network_of_specie('d')
+        >>> upstream_d = net_sub.upstream_of_node('d')
         >>> upstream_d.edges()
         [('a', 'd'), ('c', 'd'), ('b', 'c'), ('e', 'd')]
-        >>> upstream_c = net_sub.upstream_network_of_specie('c')
+        >>> upstream_c = net_sub.upstream_of_node('c')
         >>> upstream_c.edges()
         [('a', 'b'), ('b', 'c')]
 
@@ -287,9 +334,9 @@ class Subgraph(object):
 
         return graph
 
-    def downstream_network_of_specie(self, species_1, include_list=None,
-                                     save_name=None, compress=False,
-                                     draw=False, ):
+    def downstream_of_node(self, species_1, include_list=None,
+                           save_name=None, compress=False,
+                           draw=False, ):
         """
         Generate network of all downstream species of provides species
 
@@ -319,10 +366,10 @@ class Subgraph(object):
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'),\
          ('e', 'd')])
         >>> net_sub = Subgraph(g)
-        >>> downstream_d = net_sub.downstream_network_of_specie('d')
+        >>> downstream_d = net_sub.downstream_of_node('d')
         >>> downstream_d.edges()
         []
-        >>> downstream_c = net_sub.downstream_network_of_specie('c')
+        >>> downstream_c = net_sub.downstream_of_node('c')
         >>> downstream_c.edges()
         [('c', 'd')]
 
@@ -344,37 +391,6 @@ class Subgraph(object):
 
         return graph
 
-    def expand_neighbors(self, network, nodes=None, up_stream=False,
-                         down_stream=False, include_list=None,
-                         expand_all=False):
-        if include_list is None:
-            include_list = set(self.nodes.copy())
-        else:
-            include_list = self._check_node(include_list)
-        if expand_all:
-            nodes = set(network.nodes())
-        elif isinstance(nodes, str):
-            nodes = [nodes]
-        elif not isinstance(nodes, (list, set)):
-            print("Must provide node, list of nodes, or expand_all=True")
-            return network
-
-        new_net = network.copy()
-
-        for i in nodes:
-            if up_stream:
-                upstream = self.network.predecessors(i)
-                up_nodes = [g for g in upstream if g in include_list]
-                for n in up_nodes:
-                    new_net.add_edge(n, i, **self.network[n][i])
-
-            if down_stream:
-                downstream = self.network.successors(i)
-                up_nodes = [g for g in downstream if g in include_list]
-                for n in up_nodes:
-                    new_net.add_edge(i, n, **self.network[i][n])
-        return new_net
-
     def measured_networks_over_time(self, graph, colors, prefix):
         """ Adds color to a network over time
         
@@ -394,9 +410,8 @@ class Subgraph(object):
         measured_list = []
         for i, j in sorted(self.exp_data.sig_species_over_time.items()):
             measured_list.append(j)
-        magine.networks.utils.paint_network_overtime(graph, measured_list,
-                                                     colors, prefix,
-                                                     self.exp_data.proteomics_sample_ids)
+        utils.paint_network_overtime(graph, measured_list, colors, prefix,
+                                     self.exp_data.sample_ids)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
                                             color_up='tomato',
@@ -426,13 +441,11 @@ class Subgraph(object):
 
         for i, j in sorted(self.exp_data.sig_species_down_over_time.items()):
             down_measured_list.append(j)
-        magine.networks.utils.paint_network_overtime_up_down(graph,
-                                                             list_up=up_measured_list,
-                                                             list_down=down_measured_list,
-                                                             save_name=prefix,
-                                                             color_down=color_down,
-                                                             color_up=color_up,
-                                                             labels=labels)
+        utils.paint_network_overtime_up_down(graph, list_up=up_measured_list,
+                                             list_down=down_measured_list,
+                                             save_name=prefix,
+                                             color_down=color_down,
+                                             color_up=color_up, labels=labels)
 
     def _check_node(self, node_list):
         """
@@ -545,12 +558,11 @@ if __name__ == '__main__':
     # print(len(net.edges()))
     # quit()
     # print(x.neighbors('X').nodes())
-    # print(x.downstream_network_of_specie('D').nodes())
+    # print(x.downstream_of_node('D').nodes())
 
     # print(x.path_between_2('X', ['Y', 'B', 'C']))
     # quit()
 
-    # print(x.shortest_paths_between_two_proteins('X', 'Y', bidirectional=True, single_path=False).edges())
     x = Subgraph(net)
     import sys
 
@@ -560,10 +572,10 @@ if __name__ == '__main__':
     print(x.find_paths('X', 'Y'))
     print(x.find_paths('Y', 'X'))
 
-    g = x.shortest_paths_between_lists(['X', 'Y', 'B', 'D'], single_path=True,
-                                       draw=False, save_name='test')
+    g = x.paths_between_list(['X', 'Y', 'B', 'D'], single_path=True,
+                             draw=False, save_name='test')
 
     print(g.nodes())
-    # g = x.shortest_paths_between_lists(['X', 'Y'], single_path=False,  draw=True, save_name='test')
+    # g = x.paths_between_list(['X', 'Y'], single_path=False,  draw=True, save_name='test')
     # print(g.nodes(data=True))
 

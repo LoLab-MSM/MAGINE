@@ -79,7 +79,7 @@ def find_neighbors_of_list(g, list_start, up_stream=True, down_stream=True,
 
 def subgraph_from_list(g, list_of_nodes):
     subgraph_gen = Subgraph(g)
-    new_g = subgraph_gen.shortest_paths_between_lists(list_of_nodes)
+    new_g = subgraph_gen.paths_between_list(list_of_nodes)
 
     return new_g
 

@@ -89,7 +89,7 @@ def create_gene_dictionaries(network, species='hsa'):
     # check stores dictionaries
     for i in nodes:
         str_gene = str(i)
-        network.node[i]['keggName'] = str_gene
+        network.node[i]['keggName'] = str_gene.replace(':', '')
         if str_gene.startswith(species):
             if str_gene in manual_dict:
                 kegg_to_gene_name[str_gene] = manual_dict[str_gene]
@@ -115,10 +115,7 @@ def create_gene_dictionaries(network, species='hsa'):
     if len(unknown_genes) == 0:
         return kegg_to_gene_name, 1
     # create string to call uniprot for mapping
-    search_string = ''
-    for n, i in enumerate(unknown_genes):
-        search_string += str(i) + '\t'
-    search_string = search_string.rstrip('\t')
+    search_string = '\t'.join(unknown_genes)
 
     # This is where it gets tricky. Checking to see if there is a uniprot
     # mapping for the species, if not, trying from KEGG side. Sometimes kegg

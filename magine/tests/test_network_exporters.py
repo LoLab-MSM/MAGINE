@@ -18,7 +18,9 @@ def test_nx_to_jsonh():
     json_g = exporters.nx_to_json(g)
     answer = {'edges': '[{"data": {"source": "a", "target": "b"}}]',
               'nodes': '[{"data": {"id": "a", "name": "a"}}, {"data": {"id": "b", "name": "b"}}]'}
-
+    print(json_g['edges'])
+    print(json_g['nodes'])
+    print(answer['nodes'])
     assert json_g['edges'] == answer['edges']
     assert json_g['nodes'] == answer['nodes']
 
