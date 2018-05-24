@@ -133,7 +133,7 @@ def download_reactome_functional_interaction():
         create_using=nx.DiGraph()
     )
 
-    table = table.as_matrix(['source', 'target'])
+    table = table[['source', 'target']].values
     added_genes = set()
 
     def _add_node(node):

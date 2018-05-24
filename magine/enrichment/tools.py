@@ -110,7 +110,7 @@ def filter_dataframe(df, p_value=None, combined_score=None, db=None,
 
 def term_to_genes(df, term):
     genes = df[df['term_name'] == term]['genes']
-    return set(itertools.chain.from_iterable(genes.str.split(',').as_matrix()))
+    return set(itertools.chain.from_iterable(genes.str.split(',').values))
 
 
 def filter_based_on_words(df, words):
@@ -121,13 +121,13 @@ def filter_based_on_words(df, words):
 
 def all_genes_from_df(df):
     genes = df['genes']
-    return set(itertools.chain.from_iterable(genes.str.split(',').as_matrix()))
+    return set(itertools.chain.from_iterable(genes.str.split(',').values))
 
 
 def find_similar_terms(term, df):
     first_genes = term_to_genes(df, term)
     rest_of_df = df[~(df['term_name'] == term)]
-    array = rest_of_df[['term_name', 'genes']].as_matrix()
+    array = rest_of_df[['term_name', 'genes']].values
     dist_m = [None] * len(array)
     for j in range(len(array)):
         name = array[j, 0]
@@ -194,8 +194,7 @@ def remove_redundant(data, threshold=0.75, verbose=False, level='sample',
 
 
 def _terms_to_remove(data, threshold=0.75, verbose=False):
-
-    array = data[['term_name', 'genes']].as_matrix()
+    array = data[['term_name', 'genes']].values
     lookup = dict()
     to_remove = set()
     for j in range(len(data) - 2):
@@ -263,7 +262,7 @@ def _calculate_similarity(df, threshold=0.75, verbose=False):
 
 
 def dist_matrix(df, fig_size=(8, 8)):
-    array = df[['term_name', 'genes']].as_matrix()
+    array = df[['term_name', 'genes']].values
     n_dim = len(array)
     dist_mat = np.empty((n_dim, n_dim), dtype=float)
     for i, ac in enumerate(array):

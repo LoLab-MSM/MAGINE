@@ -15,19 +15,17 @@ def download():
         'DATABASEB', 'EFFECT', 'MECHANISM', 'RESIDUE', 'SEQUENCE', 'TAX_ID',
         'CELL_DATA', 'TISSUE_DATA', 'MODULATOR_COMPLEX', 'TARGET_COMPLEX',
         'MODIFICATIONA', 'MODASEQ', 'MODIFICATIONB', 'MODBSEQ', 'PMID',
-        'DIRECT', 'SENTENCE', 'SIGNOR_ID']
+        'DIRECT', 'SENTENCE', 'SIGNOR_ID', 'NA', 'NA', 'NA']
 
-    """
     table = pd.read_csv('https://signor.uniroma2.it/getData.php?organism=9606',
                         names=col_names, delimiter='\t', index_col=None,
                         error_bad_lines=False, encoding='utf-8'
                         )
-
     table.to_csv('signor.csv.gz', compression='gzip', index=False,
                  encoding='utf-8')
-    """
 
-    table = pd.read_csv('signor.csv.gz', compression='gzip', encoding='utf-8')
+    table = pd.read_csv('signor.csv.gz', compression='gzip', encoding='utf-8',
+                        index_col=None)
 
     # filter out non direct
     table = table[table['DIRECT'] == 't']
@@ -77,7 +75,7 @@ def download():
         create_using=nx.DiGraph()
     )
 
-    table = table.as_matrix(['source', 'target'])
+    table = table[['source', 'target']].values
     added_genes = set()
 
     def _add_node(node):

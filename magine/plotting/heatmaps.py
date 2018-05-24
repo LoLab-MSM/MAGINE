@@ -66,7 +66,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
             tmp2 = tmp2.replace(False, '')
             tmp2 = tmp2.replace(True, '*')
 
-            labels = tmp2.as_matrix()
+            labels = tmp2.values
             fmt = ''
         else:
             annotate_sig = False
@@ -150,7 +150,7 @@ def heatmap_by_terms(data, terms, color_labels, colors=None,
             tmp2 = tmp2.replace(False, '')
             tmp2 = tmp2.replace(True, '*')
 
-            labels = tmp2.as_matrix()
+            labels = tmp2.values
             fmt = ''
         else:
             print("To annotate please add a significant_flag column to data")

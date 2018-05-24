@@ -50,7 +50,7 @@ print("Network has {} edgess".format(network.number_of_edges()))
 
 
 x = Subgraph(network)
-sub = x.shortest_paths_between_lists(
+sub = x.paths_between_list(
         list_of_proteins,
         single_path=True,
         save_name='{}_trimmed_network'.format(save_name),

@@ -22,7 +22,7 @@ def test_correlation():
 
     tmp = tmp['treated_control_fold_change']
 
-    tmp = tmp.as_matrix()
+    tmp = tmp.values
     good_index = (tmp == 0.0).sum(axis=1) < 3
     tmp = np.array(tmp)
     tmp = tmp[good_index]

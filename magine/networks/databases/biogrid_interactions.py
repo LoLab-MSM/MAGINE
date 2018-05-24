@@ -5,7 +5,7 @@ import sys
 import networkx as nx
 import pandas as pd
 
-import magine.networks.utils
+import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
 from magine.mappings import ChemicalMapper
 
@@ -112,10 +112,8 @@ class BioGridDownload(object):
             create_using=nx.DiGraph()
         )
         # df.to_csv('biogrid.csv')
-
-        chem_table = df.as_matrix(
-            ['gene', 'target', 'chemName', 'chemType', 'hmdbID']
-        )
+        cols = ['gene', 'target', 'chemName', 'chemType', 'hmdbID']
+        chem_table = df[cols].values
 
         nodes_added = set()
 
@@ -198,7 +196,7 @@ class BioGridDownload(object):
             create_using=nx.DiGraph()
         )
 
-        table = table.as_matrix(['source', 'target'])
+        table = table[['source', 'target']].values
 
         added_genes = set()
 
@@ -215,8 +213,8 @@ class BioGridDownload(object):
             if r[1] not in added_genes:
                 _add_node(r[1])
 
-        final_graph = magine.networks.utils.compose(protein_graph,
-                                                    self._create_chemical_network())
+        final_graph = utils.compose(protein_graph,
+                                    self._create_chemical_network())
         nx.write_gpickle(final_graph, p_name)
         return final_graph
 
