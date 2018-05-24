@@ -48,7 +48,8 @@ styles = {
             }
         },
         {
-            'selector': "edge[interactionType *= 'inhibit'],edge[interactionType *= 'deactivat']",
+            'selector': "edge[interactionType *= 'inhibit'],"
+                        "edge[interactionType *= 'deactivat']",
             'css': {
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'tee',
@@ -77,10 +78,8 @@ styles = {
                      "border-width": 3.0,
                      "border-color": "rgb(51,51,51)",
                      "font-size": 9,
-
-                     "height": "mapData(weight, 0, 100, 20, 75)",
-                     "width": "mapData(weight, 0, 100, 20, 75)",
-
+                     "height": 35,
+                     "width": 35,
                      "content": "data(name)",
 
                      "text-wrap": "wrap",
@@ -100,10 +99,8 @@ styles = {
                      "border-width": 3.0,
                      "border-color": "rgb(51,51,51)",
                      "font-size": 9,
-
-                     "height": "mapData(weight, 0, 100, 20, 75)",
-                     "width": "mapData(weight, 0, 100, 20, 75)",
-
+                     "height": 35,
+                     "width": 35,
                      'content': 'data(chemName)',
 
                      "text-wrap": "wrap",
@@ -114,8 +111,6 @@ styles = {
                      "font-family": "SansSerif",
                      "text-valign": "center",
                      "border-opacity": 1.0},
-
-
             },
 
             {"selector": "$node > node",
@@ -147,12 +142,12 @@ styles = {
                      "font-family": "SansSerif",
                      "target-arrow-color": "rgb(51,51,51)"},
              },
-            {
-                "selector": "edge[interactionType *= 'inhibit'],edge[interactionType *= 'deactivat']",
-                "css": {'curve-style': 'bezier',
-                        'target-arrow-shape': 'tee',
-                        },
-                },
+            {"selector": "edge[interactionType *= 'inhibit']"
+                         ",edge[interactionType *= 'deactivat']",
+             "css": {'curve-style': 'bezier',
+                     'target-arrow-shape': 'tee',
+                     },
+             },
             {"selector": "edge:selected",
              "css": {"line-color": "rgb(255,0,0)",
                      "label": "data(interactionType)",

@@ -1,5 +1,4 @@
 import os
-import time
 
 import seaborn as sns
 
@@ -8,8 +7,8 @@ from magine.networks.exporters import nx_to_igraph
 
 
 def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
-                         positions=None, bbox=(2000, 2000), cluster=False,
-                         margin=(10, 200, 10, 10), node_size=50):
+                         positions=None, cluster=False, node_size=50,
+                         bbox=None, margin=None):
     """
 
     Parameters
@@ -44,6 +43,10 @@ def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
         print("No igraph, cannot use plotting function")
         return
     g = nx_to_igraph(mol_net)
+    if bbox is None:
+        bbox = [2400, 2400]
+    if margin is None:
+        margin = [50, 50, 50, 50]
     if not isinstance(g, igraph.Graph):
         return
     _valid_layouts = {
@@ -67,13 +70,13 @@ def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
             # gcopy.delete_edges(edges)
             if positions is None:
                 positions = gcopy.layout(layout)
-
-            rgb_colors = sns.color_palette("Set2", len(membership))
+            n_clusters = len(set(membership))
+            rgb_colors = sns.color_palette("tab20", n_clusters)
             colors = rgb_colors.as_hex()
             mark_groups = dict()
             for n, color in enumerate(colors):
-                mem = [i for i, j in enumerate(membership) if j == n]
-                mark_groups[tuple(mem)] = color
+                mem = tuple(i for i, j in enumerate(membership) if j == n)
+                mark_groups[mem] = color
 
     if positions is None:
         positions = g.layout(layout)
@@ -83,26 +86,33 @@ def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
     visual_style["vertex_shape"] = "circle"
     visual_style["vertex_size"] = node_size
     visual_style["layout"] = positions
-    # visual_style["bbox"] = bbox
     visual_style["margin"] = margin
+    # visual_style["edge_curved"] = True
 
     if 'color' in g.es.attributes():
         visual_style["edge_color"] = g.es["color"]
 
-    if 'color' in g.vs.attributes():
-        visual_style["vertex_color"] = g.vs["color"]
-
     if save_name is not None:
         if not save_name.endswith('.png'):
             save_name += '.png'
-    if cluster:
-        bbox = (bbox[0] + margin[1] * 1.25, bbox[1] + 100)
-    plot = igraph.Plot(save_name, bbox=bbox,
-                       background='white')
-    plot.add(g,
-             mark_groups=mark_groups,
-             **visual_style)
 
+    if cluster:
+        # add some white space to add labels
+        bbox_plus_margin = [bbox[0] + bbox[0] * .45, bbox[1] + bbox[0] * .1]
+        margin[2] += bbox[0] * .25
+        margin[0] += bbox[0] * .05
+    else:
+        bbox_plus_margin = bbox
+
+    # create entire surface
+    plot = igraph.Plot(save_name,
+                       bbox=bbox_plus_margin,
+                       background='white')
+
+    # add plot to surface
+    plot.add(g, mark_groups=mark_groups, bbox=bbox, **visual_style)
+
+    # have to redraw to add the plot
     plot.redraw()
 
     if membership is not None:
@@ -115,17 +125,19 @@ def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
 
         labels = dict()
         for vertex in g.vs():
-            labels[vertex['termName'].replace(',', '\n')] = rgb_colors[
-                membership[vertex.index]]
-
-        for n, i in enumerate(labels):
-            text_drawer = TextDrawer(ctx, text=i, halign=TextDrawer.LEFT)
-            y_coord = 100 + (n * 200)
-            text_drawer.draw_at(x=bbox[0] - margin[1], y=y_coord, width=400,
-                                wrap=True)
-            ctx.set_source_rgba(*labels[i])
-            ctx.arc(bbox[0] - (margin[1] * 1.2), y_coord - 10, node_size, 0,
-                    6.28)
+            name = vertex['termName'].replace(',', '\n')
+            if name in labels:
+                continue
+            labels[name] = rgb_colors[membership[vertex.index]]
+        spacing = bbox[1] / len(labels)
+        ctx.set_font_size(24)
+        for n, (label, rgb_c) in enumerate(labels.items()):
+            text_drawer = TextDrawer(ctx, text=label, halign=TextDrawer.LEFT)
+            x_coord = bbox[0] + 25
+            y_coord = 100 + (n * spacing)
+            text_drawer.draw_at(x=x_coord, y=y_coord, width=300, wrap=True)
+            ctx.set_source_rgba(*rgb_c)
+            ctx.arc(x_coord - 1.5 * node_size, y_coord, node_size, 0, 6.28)
             ctx.fill()
             ctx.set_source_rgba(0, 0, 0, 1)
     # Save the plot
@@ -135,7 +147,8 @@ def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
 
 
 def paint_network_overtime(graph, exp_data, color_list, save_name,
-                           compile_images=False):
+                           compile_images=False, cluster=False, fig_width=1500,
+                           fig_height=1500, layout='auto'):
     """
     Adds color attribute to network over time.
 
@@ -151,12 +164,19 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
         list of colors for each time point
     save_name : str
         prefix for images to be saved
-
+    cluster : bool
+        Group nodes based on category 'term_name'
+    fig_width : int
+        Size of fig
+    fig_height : int
+        Size of fig
+    layout : str
+        Layout format for igraph
     Returns
     -------
 
     """
-    from IPython.display import Image, display
+    # from IPython.display import Image, display
     labels = []
     measured_list = []
     for i, j in sorted(exp_data.sig_species_over_time.items()):
@@ -173,20 +193,21 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     tmp_graph = graph.copy()
     pos = None
     for n, i in enumerate(measured_list):
-        graph2 = magine.networks.utils.add_attribute_to_network(tmp_graph, i,
-                                                                'color',
-                                                                color_list[n],
-                                                'white')
+        graph2 = magine.networks.utils.add_attribute_to_network(
+            tmp_graph, i, 'color', color_list[n], 'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
         result, pos = create_igraph_figure(graph2, s_name, positions=pos,
-                                           node_size=25, bbox=(1000, 1000),
-                                           margin=(100, 200, 200, 10),
-                                           cluster=True, title=labels[n])
+                                           node_size=50,
+                                           bbox=[fig_width, fig_height],
+                                           margin=[100, 100, 100, 100],
+                                           cluster=cluster, title=labels[n],
+                                           layout=layout,
+                                           )
 
-        display(Image(s_name))
-        time.sleep(3)
+        # display(Image(s_name))
         string += ' ' + s_name
+        # yield result
     string1 = string + '  %s.gif' % save_name
     string2 = string + '  %s.pdf' % save_name
 

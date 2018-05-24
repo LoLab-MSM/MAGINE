@@ -1,11 +1,17 @@
 import itertools
 import os
 
+import matplotlib.pyplot as plt
 import networkx as nx
+import numpy as np
 import pandas as pd
 
+import magine.enrichment.tools as et
+import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
+from magine.networks.visualization.cytoscape_view import RenderModel
 from magine.networks.visualization.igraph_tools import create_igraph_figure
+from magine.plotting.heatmaps import heatmap_from_array
 
 
 class OntologyNetworkGenerator(object):
@@ -255,14 +261,16 @@ def visualize_go_network(go_network, data, save_name,
         print('No nodes')
         quit()
 
-    labels = data['sample_index'].unique()
+    labels = data['sample_id'].unique()
 
     score_array = pd.pivot_table(data, index=['term_name'],
                                  columns='sample_id')
 
     heatmap_from_array(data, cluster_row=False, convert_to_log=True,
                        index='term_name', values='combined_score',
-                       columns='sample_id', div_colors=True)
+                       columns='sample_id', div_colors=False)
+
+    plt.savefig('{}_heatplot.png'.format(save_name), bbox_inches='tight')
 
     x = score_array['combined_score'].fillna(0)
 
@@ -285,16 +293,95 @@ def visualize_go_network(go_network, data, save_name,
                                  prefix=save_name,
                                  out_dir=out_dir,
                                  )
+    _s = "convert -delay 100 -dispose previous -loop 0 " \
+         "ont_network_*_formatted.png {}.gif"
     if merge:
         os.system(_s.format(save_name))
 
 
-_s = "convert -delay 100 -dispose previous -loop 0 ont_network_*_formatted.png {}.gif"
+def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
+                      threshold=0, remove_isolated=False, create_only=False,
+                      merge=False, out_dir=None):
+    """
 
+    Parameters
+    ----------
 
-def _create_names(n):
-    names = []
-    for i in range(n):
-        names.append('time_{0:04d}'.format(i))
-        print('time_{0:04d}'.format(i))
-    return names
+    df : pd.DataFrame
+    network : nx.DiGraph
+    terms : list, optional
+        List of terms to use in ont network. Default is all terms
+    save_name : str
+    draw_png : bool
+    threshold : float, int
+        Threshold for number of edges between two terms to consider in graph
+    remove_isolated : bool
+        Remove nodes that are not connected in the final graphs
+    create_only : bool
+        Create ontology network only, don't visualize with cytoscape
+    merge : bool
+        Create gif of cytoscape session
+    out_dir : str
+        Output directory of images
+    Returns
+    -------
+
+    """
+
+    if terms is not None:
+        df_copy = df[df['term_name'].isin(terms)].copy()
+    else:
+        df_copy = df.copy()
+        terms = list(df['term_name'].unique())
+
+    # normalize enriched scores
+    df_copy['combined_score'] = np.abs(df_copy['combined_score'])
+    df_copy['combined_score'] = np.log2(df_copy['combined_score'])
+    df_copy.loc[df['combined_score'] > 150, 'combined_score'] = 150
+
+    labels = df_copy['sample_id'].unique()
+    # create dictionary of values
+    label_dict, term_dict = dict(), dict()
+    for i in set(terms):
+        genes = set(et.term_to_genes(df, i))
+        term_dict[i] = genes
+        label_dict[i] = i
+
+    ong = OntologyNetworkGenerator(molecular_network=network)
+
+    print("Creating ontology network")
+    term_g, molecular_g = ong.create_network_from_list(
+        terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
+        threshold=threshold
+    )
+
+    if remove_isolated:
+        nt.remove_isolated_nodes(term_g)
+        nt.remove_isolated_nodes(molecular_g)
+
+    heatmap_from_array(df_copy, cluster_row=False, convert_to_log=True,
+                       index='term_name', values='combined_score',
+                       columns='sample_id', div_colors=False)
+
+    score_array = pd.pivot_table(df_copy, index=['term_name'],
+                                 columns='sample_id')
+    x = score_array['combined_score'].fillna(0)
+
+    for i in term_g.nodes():
+        values = x.loc[i]
+        term_g.node[i]['color'] = 'red'
+        term_g.node[i]['label'] = i
+        for n, time in enumerate(labels):
+            term_g.node[i][time] = float(values[time])
+    if not create_only:
+
+        rm = RenderModel(term_g, layout='force-directed')
+        rm.visualize_by_list_of_time(labels,
+                                     prefix=save_name,
+                                     out_dir=out_dir,
+                                     )
+        _s = "convert -delay 100 -dispose previous -loop 0 " \
+             "ont_network_*_formatted.png {}.gif"
+        if merge:
+            os.system(_s.format(save_name))
+    return term_g, molecular_g

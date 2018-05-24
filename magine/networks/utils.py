@@ -295,6 +295,24 @@ def compose_all(graphs):
     return g
 
 
+def remove_isolated_nodes(net):
+    """
+    Removes nodes with no edges from network.
+
+    It modifies the provided graph inplace.
+
+    Parameters
+    ----------
+    net : nx.DiGraph
+
+    """
+    to_remove = set()
+    for i in net.nodes():
+        if len(net.predecessors(i)) == 0 and len(net.successors(i)) == 0:
+            to_remove.add(i)
+        net.remove_nodes_from(to_remove)
+
+
 def _add_nodes(old_network, new_network):
     new_nodes = set(new_network.nodes())
     for i, data in old_network.nodes_iter(data=True):

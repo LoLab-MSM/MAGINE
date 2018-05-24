@@ -418,7 +418,7 @@ class Subgraph(object):
         -------
 
         """
-        labels = self.exp_data.proteomics_sample_ids
+        labels = self.exp_data.sample_ids
         up_measured_list = []
         down_measured_list = []
         for i, j in sorted(self.exp_data.sig_species_over_time.items()):

@@ -819,7 +819,20 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
     gene_d = tmp_data[tmp_data[species_type] == protein].copy()
 
     def _calculate_table(d, value, index):
+        """
+
+        Parameters
+        ----------
+        d : pandas.DataFrame
+        value
+        index
+
+        Returns
+        -------
+
+        """
         d_return = d.pivot_table(values=value, index=index, columns='time',
+                                 fill_value='-',
                                  aggfunc=lambda x: int(x.dropna().nunique()))
         return d_return
 
@@ -830,16 +843,13 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
         gene_index = 'protein'
         compound_index = 'compound_id'
 
-    tmp_data2 = _calculate_table(gene_d, gene_index, exp_method)
-
+    count_table = _calculate_table(gene_d, gene_index, exp_method)
     if do_metab:
         tmp_data1 = _calculate_table(meta_d, compound_index, exp_method)
-        t = pandas.concat([tmp_data1, tmp_data2]).fillna('-')
-    else:
-        t = tmp_data2.fillna('-')
+        count_table = pandas.concat([tmp_data1, count_table]).fillna('-')
 
     unique_col = {}
-    for i in t.index:
+    for i in count_table.index:
         loc = tmp_data[tmp_data[exp_method] == i]
         if i in exp_methods_metabolite:
             n = len(loc[compound_index].dropna().unique())
@@ -847,12 +857,13 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
             n = len(loc[gene_index].dropna().unique())
         unique_col[i] = int(n)
 
-    t['Total Unique Across'] = pandas.Series(unique_col, index=t.index)
+    count_table['Total Unique Across'] = pandas.Series(unique_col,
+                                                       index=count_table.index)
 
     if plot:
         ax = plt.subplot(111, frame_on=False)
 
-        table(ax, t, loc='center')
+        table(ax, count_table, loc='center')
         ax.xaxis.set_visible(False)
         ax.yaxis.set_visible(False)
         plt.tight_layout()
@@ -861,10 +872,10 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
                         bbox_inches='tight')
 
     if save_name is not None:
-        t.to_csv('{0}.csv'.format(save_name))
+        count_table.to_csv('{0}.csv'.format(save_name))
     if write_latex and save_name is not None:
-        _write_to_latex(pd_table=t, save_name=save_name)
-    return t
+        _write_to_latex(pd_table=count_table, save_name=save_name)
+    return count_table
 
 
 def _write_to_latex(pd_table, save_name):

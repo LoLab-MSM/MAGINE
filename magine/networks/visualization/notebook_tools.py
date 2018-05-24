@@ -6,12 +6,8 @@ from magine.networks.ontology_network import OntologyNetworkGenerator
 from magine.networks.subgraphs import Subgraph
 
 
-# pd.set_option('display.precision', 5)
-# pd.set_option('display.max_colwidth', 100)
-
-
 def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
-                      threshold=0):
+                      threshold=0, remove_isolated=False):
     """
 
     Parameters
@@ -21,7 +17,10 @@ def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
     network : nx.DiGraph
     save_name : str
     draw_png : bool
-    threshold
+    threshold : float, int
+        Threshold for number of edges between two terms to consider in graph
+    remove_isolated : bool
+        Remove nodes that are not connected in the final graph
 
     Returns
     -------
@@ -34,7 +33,7 @@ def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
 
     term_dict = dict()
     label_dict = dict()
-    for i in terms:
+    for i in set(terms):
         genes = set(et.term_to_genes(df, i))
         term_dict[i] = genes
         label_dict[i] = i
@@ -48,8 +47,19 @@ def create_subnetwork(terms, df, network, save_name=None, draw_png=False,
         terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
         threshold=threshold
     )
+    if remove_isolated:
+        _remove_isolated_nodes(term_g)
+        _remove_isolated_nodes(molecular_g)
 
     return term_g, molecular_g
+
+
+def _remove_isolated_nodes(net):
+    to_remove = set()
+    for i in net.nodes():
+        if len(net.predecessors(i)) == 0 and len(net.successors(i)) == 0:
+            to_remove.add(i)
+        net.remove_nodes_from(to_remove)
 
 
 def find_neighbors(g, start, up_stream=True, down_stream=True, max_dist=1):
