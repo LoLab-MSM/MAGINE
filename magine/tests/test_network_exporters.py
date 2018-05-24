@@ -17,7 +17,8 @@ def test_nx_to_jsonh():
     g.add_edge('a', 'b')
     json_g = exporters.nx_to_json(g)
     answer = {'edges': '[{"data": {"source": "a", "target": "b"}}]',
-              'nodes': '[{"data": {"id": "a", "name": "a"}}, {"data": {"id": "b", "name": "b"}}]'}
+              'nodes': '[{"data": {"id": "a", "name": "a"}},'
+                       ' {"data": {"id": "b", "name": "b"}}]'}
     print(json_g['edges'])
     print(json_g['nodes'])
     print(answer['nodes'])

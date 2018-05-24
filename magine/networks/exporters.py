@@ -48,7 +48,8 @@ def nx_to_json(network):
         data['target'] = str(target)
         edges.append({'data': data})
 
-    return {'nodes': json.dumps(nodes), 'edges': json.dumps(edges)}
+    return {'nodes': json.dumps(sorted(nodes)),
+            'edges': json.dumps(sorted(edges))}
 
 
 def nx_to_dot(graph):
