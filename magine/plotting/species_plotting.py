@@ -40,7 +40,7 @@ def write_table_to_html(data, save_name='index', out_dir=None,
         output path for all plots
     run_parallel : bool
         Create plots in parallel
-
+    exp_data : magine.data.datatypes.ExperimentalData
     Returns
     -------
 
@@ -60,24 +60,9 @@ def write_table_to_html(data, save_name='index', out_dir=None,
 
     data = data[~data['term_name'].isin(to_remove)]
 
-    index = ['term_name']
-    if 'term_id' in list(data.columns):
-        index.insert(0, 'term_id')
-
-    tmp = pd.pivot_table(data, index=index,
-                         columns='sample_id',
-                         values=['combined_score', 'adj_p_value', 'rank',
-                                 'genes', 'p_value', 'z_score'],
-                         aggfunc='first', fill_value=np.nan
-                         )
-    html_out = save_name
-
-    print("Saving to : {}".format(html_out))
-
-    ht.write_single_table(tmp, 'MAGINE GO analysis', html_out)
+    ht.write_single_table(data, 'MAGINE GO analysis', save_name)
     html_out = save_name + '_filter'
-
-    ht.write_filter_table(tmp, html_out)
+    ht.write_filter_table(data, html_out)
 
 
 def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
@@ -133,7 +118,6 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
 
     # create plot of genes over time
     for n, i in enumerate(list_of_terms):
-        local_exp_data = exp_data.data.copy()
         # want to plot all species over time
         index = data['term_name'] == i
 
@@ -166,8 +150,8 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
         figure_locations[i] = out_point
 
         title = "{0} : {1}".format(str(i), name)
-        local_df = local_exp_data[
-            local_exp_data[gene_index].isin(list(gene_set))].copy()
+        local_df = exp_data.data[
+            exp_data.data[gene_index].isin(list(gene_set))].copy()
         p_input = (local_df, list(gene_set), 'gene', local_save_name, '.',
                    title, plot_type)
 
