@@ -63,6 +63,7 @@ Installation
    following in a terminal::
 
       $ git clone https://github.com/LoLab-VU/magine
+      $ cd magine
       $ pip install -r requirements.txt
       $ export PYTHONPATH=`pwd`:$PYTHONPATH
 
