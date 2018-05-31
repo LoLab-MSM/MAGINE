@@ -162,7 +162,33 @@ class GeneMapper(object):
             data = f.read()
             f.close()
         self.__dict__ = pickle.loads(data)
+        
+    def check_synonym_dict(self, term, format_name):
+        """ checks hmdb database for synonyms and returns formatted name
 
+        Parameters
+        ----------
+        term : str
+        format_name : str
+
+        Returns
+        -------
+        dict
+
+        """
+        synonyms = self.hgnc.copy()
+        synonyms = synonyms[~synonyms['alias_symbol'].isna()]
+        synonyms['alias_symbol'] = synonyms['alias_symbol'].str.upper()
+
+        hits = synonyms[synonyms['alias_symbol'].str.contains(term.upper())].copy()
+        hits['alias_symbol'] = hits['alias_symbol'].str.split('|')
+
+        for i, row in hits.iterrows():
+            if term in row['alias_symbol']:
+                return [row[format_name]]
+        matches = sorted(set(hits[format_name].values))
+        return matches
+    
     @staticmethod
     def to_dict(data, key, value):
         """
