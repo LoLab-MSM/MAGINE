@@ -1,3 +1,5 @@
+import json
+
 import igraph
 import networkx as nx
 import pydotplus
@@ -12,18 +14,29 @@ def test_nx_to_igraph():
     assert isinstance(i_g, igraph.Graph)
 
 
-def test_nx_to_jsonh():
+def ordered(obj):
+    if isinstance(obj, dict):
+        return sorted((k, ordered(v)) for k, v in obj.items())
+    if isinstance(obj, list):
+        return sorted(ordered(x) for x in obj)
+    else:
+        return obj
+
+
+def test_nx_to_json():
     g = nx.DiGraph()
     g.add_edge('a', 'b')
     json_g = exporters.nx_to_json(g)
     answer = {'edges': '[{"data": {"source": "a", "target": "b"}}]',
               'nodes': '[{"data": {"id": "a", "name": "a"}},'
                        ' {"data": {"id": "b", "name": "b"}}]'}
-    print(json_g['edges'])
-    print(json_g['nodes'])
-    print(answer['nodes'])
-    assert json_g['edges'] == answer['edges']
-    assert json_g['nodes'] == answer['nodes']
+    a_edges = json.loads(json_g['edges'])
+    b_edges = json.loads(answer['edges'])
+    a_nodes = json.loads(json_g['nodes'])
+    b_nodes = json.loads(answer['nodes'])
+
+    assert ordered(a_edges) == ordered(b_edges)
+    assert ordered(a_nodes) == ordered(b_nodes)
 
 
 def test_nx_to_dot():
