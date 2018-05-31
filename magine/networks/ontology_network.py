@@ -9,7 +9,6 @@ import pandas as pd
 import magine.enrichment.tools as et
 import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
-from magine.networks.visualization.cytoscape_view import RenderModel
 from magine.networks.visualization.igraph_tools import create_igraph_figure
 from magine.plotting.heatmaps import heatmap_from_array
 
@@ -327,7 +326,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     -------
 
     """
-
+    from magine.networks.visualization.cytoscape_view import RenderModel
     if terms is not None:
         df_copy = df[df['term_name'].isin(terms)].copy()
     else:
