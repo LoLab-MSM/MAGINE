@@ -3,6 +3,7 @@ import itertools
 import numpy as np
 import pandas as pd
 
+from magine.data import Data
 from magine.plotting.heatmaps import cluster_distance_mat
 
 
@@ -32,6 +33,139 @@ def jaccard_index(first_set, second_set):
     set2 = set(second_set)
 
     return float(len(set1.intersection(set2))) / len(set1.union(set2))
+
+
+def load_enrichment_csv(file):
+    dataframe = pd.read_csv(file)
+    return EnrichmentData(dataframe)
+
+
+class EnrichmentData(Data):
+
+    def __init__(self, *args, **kwargs):
+        super(EnrichmentData, self).__init__(*args, **kwargs)
+        self._index = 'term_name'
+
+    @property
+    def _constructor(self):
+        return EnrichmentData
+
+    def filter_rows(self, column, options, inplace=False):
+        """
+        Filters a pandas dataframe provides a column and filter selection.
+
+        Parameters
+        ----------
+        column : str
+        options : str, list
+            Can be a single entry or a list
+        inplace : bool
+            Filter inplace
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        new_data = self.copy()
+        valid_opts = list(new_data[column].unique())
+        if isinstance(options, str):
+            if options not in valid_opts:
+                print('{} not in {}'.format(options, valid_opts))
+            else:
+                new_data = new_data[new_data[column] == options]
+        elif isinstance(options, list):
+            for i in options:
+                if i not in valid_opts:
+                    print('{} not in {}'.format(i, valid_opts))
+            new_data = new_data[new_data[column].isin(options)]
+
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data
+
+    def filter_multi(self, p_value=None, combined_score=None, db=None,
+                     sample_id=None, category=None, rank=None, inplace=False):
+        """
+        Filters an enrichment array.
+
+        This is an aggregate function that allows ones to filter an entire
+        dataframe with a single function call.
+
+        Parameters
+        ----------
+        p_value : float
+            filters all values less than or equal
+        combined_score : float
+            filters all values greater than or equal
+        db : str, list
+        sample_id : str, list
+        category : str, list
+        rank : int
+        inplace : bool
+            Filter inplace
+
+        Returns
+        -------
+
+        """
+        new_data = self.copy()
+        if p_value is not None:
+            assert isinstance(p_value, (int, float))
+            new_data = new_data[new_data['adj_p_value'] <= p_value]
+        if combined_score is not None:
+            assert isinstance(combined_score, (int, float))
+            new_data = new_data[new_data['combined_score'] >= combined_score]
+        if isinstance(rank, (int, float)):
+            new_data = new_data[new_data['rank'] <= rank]
+        if db is not None:
+            new_data = filter_rows(new_data, 'db', db)
+        if sample_id is not None:
+            new_data = filter_rows(new_data, 'sample_id', sample_id)
+        if category is not None:
+            new_data = filter_rows(new_data, 'category', category)
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data
+
+    def term_to_genes(self, term):
+        genes = self[self['term_name'] == term]['genes']
+        return set(itertools.chain.from_iterable(genes.str.split(',').values))
+
+    def filter_based_on_words(self, words, inplace=False):
+        """ Filter term_name based on key terms
+
+        Parameters
+        ----------
+        words : list, str
+            List of words to use to keep rows in dataframe
+        inplace : bool
+            Filter the dataframe in place or return filtered copy
+        Returns
+        -------
+        pandas.DataFrame
+
+        """
+        if isinstance(words, str):
+            words = [words]
+        df = self.copy()
+        df = df[df['term_name'].str.lower().str.contains('|'.join(words))]
+        if inplace:
+            self._update_inplace(df)
+        else:
+            return df
+
+    def all_genes_from_df(self):
+        """ Returns all genes from gene columns in a set
+
+        Returns
+        -------
+        set
+        """
+        return set(
+            itertools.chain.from_iterable(self['genes'].str.split(',').values)
+        )
 
 
 def filter_rows(local_df, column, options):
