@@ -284,8 +284,8 @@ class EnrichmentResult(Data):
         names = self['term_name'].values
         array = self['genes'].values
         n_dim = len(names)
-        total_size = ((n_dim * (n_dim - 1)) / 2)
-        scores = np.zeros(total_size)
+        total_size = int(((n_dim * (n_dim - 1)) / 2))
+        scores = np.zeros(total_size, dtype=float)
         ind = 0
         for i, ac in enumerate(array):
             first_genes = set(ac.split(','))
@@ -300,8 +300,8 @@ class EnrichmentResult(Data):
     def _get_distance_all(self):
         names = self['term_name'].unique()
         n_dim = len(names)
-        total_size = ((n_dim * (n_dim - 1)) / 2)
-        scores = np.zeros(total_size)
+        total_size = int(((n_dim * (n_dim - 1)) / 2))
+        scores = np.zeros(total_size, dtype=float)
         ind = 0
         for i, n1 in enumerate(names):
             first_genes = self.term_to_genes(n1)
