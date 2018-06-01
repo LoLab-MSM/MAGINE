@@ -19,8 +19,7 @@ def load_enrichment_csv(file_name):
     EnrichmentResult
 
     """
-    dataframe = pd.read_csv(file_name)
-    return EnrichmentResult(dataframe)
+    return EnrichmentResult(pd.read_csv(file_name))
 
 
 class EnrichmentResult(Data):

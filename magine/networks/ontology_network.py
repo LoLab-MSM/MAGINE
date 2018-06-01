@@ -6,7 +6,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-import magine.enrichment.tools as et
 import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
 from magine.networks.visualization.igraph_tools import create_igraph_figure
@@ -342,7 +341,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     # create dictionary of values
     label_dict, term_dict = dict(), dict()
     for i in set(terms):
-        genes = set(et.term_to_genes(df, i))
+        genes = set(df.term_to_genes(i))
         term_dict[i] = genes
         label_dict[i] = i
 

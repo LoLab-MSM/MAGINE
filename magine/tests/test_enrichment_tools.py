@@ -3,7 +3,7 @@ import os
 import matplotlib.figure
 import pandas as pd
 
-import magine.enrichment.tools as et
+import magine.enrichment.enrichment_result as et
 
 data_dir = os.path.dirname(__file__)
 
@@ -47,6 +47,8 @@ class TestEnrichmentResult(object):
         assert all_g == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'}
 
     def test_filter_sim_terms(self):
+        sim2 = self.data.remove_redundant(level='sample', sort_by='rank')
+        assert sim2.shape == (18, 10)
 
         sim2 = self.data.remove_redundant(level='sample')
         assert sim2.shape == (18, 10)

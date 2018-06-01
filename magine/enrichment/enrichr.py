@@ -14,7 +14,7 @@ import pandas as pd
 import requests
 
 from magine.plotting.species_plotting import write_table_to_html
-from magine.enrichment.tools import EnrichmentResult
+from magine.enrichment.enrichment_result import EnrichmentResult
 
 _path = os.path.dirname(__file__)
 
