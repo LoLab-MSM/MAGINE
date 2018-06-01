@@ -90,35 +90,3 @@ class Data(pd.DataFrame):
             return tmp_array[tmp_array[self._index].isin(keepers)].copy()
         else:
             print("Index is not a str or a list. What is it?")
-
-
-class EnrichmentData(Data):
-
-    def __init__(self, *args, **kwargs):
-        super(EnrichmentData, self).__init__(*args, **kwargs)
-        self._index = 'term_name'
-
-    @property
-    def _constructor(self):
-        return EnrichmentData
-
-
-class ConcentrationData(Data):
-
-    def __init__(self, *args, **kwargs):
-        super(ConcentrationData, self).__init__(*args, **kwargs)
-        self._index = 'protein'
-
-    @property
-    def _constructor(self):
-        return ConcentrationData
-
-
-def load_enrichment_csv(file):
-    dataframe = pd.read_csv(file)
-    return EnrichmentData(dataframe)
-
-
-def load_concentration(file):
-    dataframe = pd.read_csv(file)
-    return ConcentrationData(dataframe)
