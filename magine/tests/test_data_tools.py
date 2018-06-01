@@ -2,7 +2,22 @@ import pandas as pd
 from nose.tools import raises
 
 import magine.data.tools as tools
-from magine.data import ConcentrationData
+from magine.data import Data
+
+
+class ConcentrationData(Data):
+    def __init__(self, *args, **kwargs):
+        super(ConcentrationData, self).__init__(*args, **kwargs)
+        self._index = 'protein'
+
+    @property
+    def _constructor(self):
+        return ConcentrationData
+
+
+def load_concentration(file):
+    dataframe = pd.read_csv(file)
+    return ConcentrationData(dataframe)
 
 
 def test_pivot():
