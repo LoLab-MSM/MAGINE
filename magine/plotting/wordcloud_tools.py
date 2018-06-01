@@ -10,7 +10,6 @@ try:
 # Allows isinstance(foo, basestring) to work in Python 3
 except:
     basestring = str
-import magine.enrichment.tools as et
 
 process_dbs = [
     'GO_Biological_Process_2017',
@@ -55,9 +54,9 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
     samples = []
     all_samples = []
     for i in sample_ids:
-        sample = et.filter_dataframe(enrichment_array, p_value=p_value,
-                                     db=database_list, sample_id=i,
-                                     category=category)
+        sample = enrichment_array.filter_dataframe(
+            p_value=p_value, db=database_list, sample_id=i, category=category
+        )
 
         all_samples.append(sample)
         if len(sample) != 0:

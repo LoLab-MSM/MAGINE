@@ -65,7 +65,7 @@ class TestEnrichmentResult(object):
         assert isinstance(dist, matplotlib.figure.Figure)
 
     def test_find_similar_terms(self):
-        sim = self.data.find_similar_terms('apoptotic process', df)
+        sim = self.data.find_similar_terms('apoptotic process')
         print(sim)
 
 
