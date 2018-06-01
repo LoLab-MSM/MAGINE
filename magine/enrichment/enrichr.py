@@ -14,6 +14,7 @@ import pandas as pd
 import requests
 
 from magine.plotting.species_plotting import write_table_to_html
+from magine.enrichment.tools import EnrichmentResult
 
 _path = os.path.dirname(__file__)
 
@@ -183,7 +184,7 @@ class Enrichr(object):
     def _run_id(self, list_id, gene_set_lib):
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
-            return pd.DataFrame()
+            return EnrichmentResult()
 
         q = self.query.format(url=self._url, list_id=list_id, lib=gene_set_lib)
         while True:
@@ -200,14 +201,14 @@ class Enrichr(object):
 
         data = json.loads(response.text)
         if len(data[gene_set_lib]) == 0:
-            return pd.DataFrame()
+            return EnrichmentResult()
         #####
         # ENRICHR return a list of entries with each entry having these terms
         # Rank, Term name, P-value, Z-score, Combined score, Overlapping genes,
         # Adjusted p-value, Old p-value, Old adjusted p-value
         #####
 
-        df = pd.DataFrame(
+        df = EnrichmentResult(
             data[gene_set_lib],
             columns=['rank', 'term_name', 'p_value', 'z_score',
                      'combined_score', 'gene_hits', 'adj_p_value', '_', '_']
@@ -247,18 +248,19 @@ class Enrichr(object):
         return data['userListId']
 
     def _run_list_of_dbs(self, gene_list_id, databases):
-        data = []
         for count, i in enumerate(databases):
+            if count == 0:
+                data = self._run_id(gene_list_id, i)
+            else:
+                data.append(self._run_id(gene_list_id, i))
             if self.verbose:
                 print('\t\t{}/{} databases'.format(count, len(databases)))
-            data.append(self._run_id(gene_list_id, i))
-
-        return pd.concat(data)
+        return data
 
     def run_samples(self, sample_lists, sample_ids,
-                    gene_set_lib='GO_Biological_Process_2017', save_name=None,
+                    database='GO_Biological_Process_2017', save_name=None,
                     create_html=False, out_dir=None, run_parallel=False,
-                    exp_data=None):
+                    exp_data=None, pivot=False):
         """
 
         Parameters
@@ -267,7 +269,7 @@ class Enrichr(object):
             List of lists of genes for enrichment analysis
         sample_ids : list
             list of ids for the provided sample list
-        gene_set_lib : str
+        database : str, list
             Type of gene set, refer to Enrichr.print_valid_libs
         save_name : str, optional
             if provided it will save a file as a pivoted table with
@@ -280,123 +282,49 @@ class Enrichr(object):
             If create_html, it will create plots using multiprocessing
         exp_data : magine.data.ExperimentalData
             Must be provided if create_html=True
+        pivot : bool
+
         Returns
         -------
-
+        EnrichmentResult
         """
         assert isinstance(sample_lists, list), "List required"
         assert isinstance(sample_lists[0], list), "List of lists required"
 
-        df_all = []
-        for i, j in zip(sample_lists, sample_ids):
-            df = self.run(i, gene_set_lib)
+        for count, (i, j) in enumerate(zip(sample_lists, sample_ids)):
+            df = self.run(i, database)
             df['sample_id'] = j
-            df['db'] = gene_set_lib
-            df_all.append(df)
+            if count == 0:
+                df_all = df
+            else:
+                df_all.append(df)
 
-        df_all = pd.concat(df_all)
         df_all = self._filter_sig_across_term(df_all)
-
-        if df_all.shape[0] == 0:
-            print("No significant terms for {}".format(gene_set_lib))
-            return None
-
-        index = ['term_name']
-
-        if 'term_id' in list(df.columns):
-            index.insert(0, 'term_id')
-
-        p_df = pd.pivot_table(df_all, index=index,
-                              columns='sample_id',
-                              values=['combined_score', 'adj_p_value',
-                                      'rank', 'p_value', 'z_score', 'genes'],
-                              aggfunc='first', fill_value=np.nan
-                              )
 
         if save_name:
             s_name = '{}_enrichr'.format(save_name)
-            # save files
-            p_df.to_excel('{}.xlsx'.format(s_name), merge_cells=True)
+            if pivot:
+                # pivot output
+                index = ['term_name', 'db']
+
+                p_df = pd.pivot_table(
+                    df_all, index=index, columns='sample_id', aggfunc='first',
+                    fill_value=np.nan,
+                    values=['term_name', 'rank', 'p_value', 'z_score',
+                            'combined_score', 'adj_p_value', 'genes'],
+                )
+                # save files
+                p_df.to_excel('{}.xlsx'.format(s_name), merge_cells=True)
             df_all.to_csv('{}.csv'.format(s_name), index=False)
 
         if create_html:
             if exp_data is None:
                 print("exp_data required to make plots over samples")
-                return p_df
+                return df_all
 
             write_table_to_html(data=df_all, save_name=save_name,
                                 out_dir=out_dir, run_parallel=run_parallel,
                                 exp_data=exp_data)
-        return p_df
-
-    def run_sample_set_of_dbs(self, sample_lists, sample_ids, databases,
-                              save_name=None, pivot=True):
-        """
-
-        Parameters
-        ----------
-        sample_lists : list_like
-            List of lists, where each list contains genes
-        sample_ids : list_like
-            Names for each sample_id
-        save_name : str, optional
-            If you want to save the output as csv/xlsx
-        databases : list_like
-            Database set.
-
-        pivot: bool
-            Pivot the table to have additional columns per sample_id
-
-        Returns
-        -------
-
-        """
-        assert isinstance(sample_lists, list), "Please provide list of lists"
-        assert isinstance(sample_lists[0],
-                          list), "Please provide list of lists"
-
-        assert isinstance(databases, list), 'please provide database list'
-
-        df_all = []
-        for i, j in zip(sample_lists, sample_ids):
-
-            if self.verbose:
-                print("{} / {}".format(j, sample_ids))
-            tmp_df = self.run(i, databases)
-            tmp_df['sample_id'] = j
-            df_all.append(tmp_df)
-
-        # stack results
-        df_all = pd.concat(df_all, ignore_index=True)
-
-        # filter terms that are not significant in any sample
-        df_all = self._filter_sig_across_term(df_all)
-
-        # verify results exist
-        if df_all.shape[0] == 0:
-            print("No significant terms for {}".format(databases))
-            return None
-
-        if pivot:
-            # pivot output
-            index = ['term_name', 'db']
-
-            if 'term_id' in list(df_all.columns):
-                index.insert(0, 'term_id')
-
-            df_all = pd.pivot_table(
-                df_all, index=index, columns='sample_id', aggfunc='first',
-                fill_value=np.nan,
-                values=['term_name', 'rank', 'p_value', 'z_score',
-                        'combined_score', 'adj_p_value', 'genes'],
-            )
-
-        if save_name:
-            df_all.to_excel('{}_enricher.xlsx'.format(save_name),
-                            merge_cells=True)
-            df_all.to_csv('{}_enrichr.csv'.format(save_name), index=False,
-                          encoding='utf8')
-
         return df_all
 
     @staticmethod
@@ -405,7 +333,7 @@ class Enrichr(object):
         removes terms if there are no significant terms
         Parameters
         ----------
-        data : pd.DataFrame
+        data : EnrichmentResult
 
 
         Returns
@@ -603,32 +531,8 @@ def get_background_list(lib_name):
 
     for term, genes_dict in results[lib_name]['terms'].items():
         genes = sorted(set(i for i in genes_dict))
-        # term_to_gene[term] = '|'.join(sorted(set(i for i in genes_dict)))
         term_to_gene.append(
             dict(term=term.lower(), gene_list=genes, n_genes=len(genes))
         )
 
     return term_to_gene
-
-
-if __name__ == '__main__':
-    e = Enrichr()
-    g_list = ['PHF14', 'RBM3', 'MSL1', 'PHF21A', 'ARL10', 'INSR', 'JADE2',
-              'P2RX7', 'LINC00662', 'CCDC101', 'PPM1B', 'KANSL1L', 'CRYZL1',
-              'ANAPC16', 'TMCC1', 'CDH8', 'RBM11', 'CNPY2', 'HSPA1L', 'CUL2',
-              'PLBD2', 'LARP7', 'TECPR2', 'ZNF302', 'CUX1', 'MOB2', 'CYTH2',
-              'SEC22C', 'EIF4E3', 'ROBO2', 'ADAMTS9-AS2', 'CXXC1', 'LINC01314',
-              'ATF7', 'ATP5F1']
-
-    df2 = e.run(g_list, ['GO_Biological_Process_2017b', 'KEA_2015'])
-    print(df2['db'].unique())
-    print(df2.head(10))
-    print(df2['term_name'].values)
-    quit()
-    print(df2.head(10))
-    print(list(df2['term_name'])[0:2])
-
-    lists = [['BAX', 'BCL2', 'CASP3'], ['CASP10', 'CASP8', 'BAK'],
-             ['BIM', 'CASP3']]
-    df2 = e.run_samples(lists, ['1', '2', '3'], save_name='test')
-    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'], save_name='test')

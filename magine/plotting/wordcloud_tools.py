@@ -41,7 +41,7 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
 
     Parameters
     ----------
-    enrichment_array : pd.DataFrame
+    enrichment_array : magine.enrichment.tools.EnrichmentResults
     sample_ids : list
     category : str, list, optional
     database_list : str, list, optional
@@ -54,7 +54,7 @@ def word_cloud_from_array(enrichment_array, sample_ids, category=None,
     samples = []
     all_samples = []
     for i in sample_ids:
-        sample = enrichment_array.filter_dataframe(
+        sample = enrichment_array.filter_multi(
             p_value=p_value, db=database_list, sample_id=i, category=category
         )
 

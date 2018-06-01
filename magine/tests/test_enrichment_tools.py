@@ -47,16 +47,18 @@ class TestEnrichmentResult(object):
         assert all_g == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'}
 
     def test_filter_sim_terms(self):
-        slimmed = self.data.remove_redundant(level='all')
-        assert slimmed.shape == (3, 10)
 
         sim2 = self.data.remove_redundant(level='sample')
-        assert sim2.shape == (0, 10)
+        assert sim2.shape == (18, 10)
+
+        slimmed = self.data.remove_redundant(level='all')
+        assert slimmed.shape == (18, 10)
 
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
-        assert sim2.shape == (19, 10)
+        assert sim2.shape == (29, 10)
 
     def test_dist(self):
+
         dist = self.data.dist_matrix()
 
         assert isinstance(dist, matplotlib.figure.Figure)
@@ -68,10 +70,9 @@ class TestEnrichmentResult(object):
         sim = self.data.find_similar_terms('apoptotic process')
         print(sim)
 
+    def test_jaccard_index(self):
+        term1 = ['BAX', 'BCL2', 'MCL1', 'CASP3']
+        term2 = ['BAX', 'BCL2', 'MCL1', 'TP53']
+        score = self.data.jaccard_index(term1, term2)
 
-def test_jaccard_index():
-    term1 = ['BAX', 'BCL2', 'MCL1', 'CASP3']
-    term2 = ['BAX', 'BCL2', 'MCL1', 'TP53']
-    score = et.jaccard_index(term1, term2)
-
-    assert score == 0.6
+        assert score == 0.6

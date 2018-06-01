@@ -10,7 +10,6 @@ def test_single_run():
               'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX', 'BAK1',
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
     df = e.run(list_2, 'GO_Biological_Process_2017')
-    print(df.head(10))
     terms = df['term_name']
     assert len(terms) == 185
 
@@ -20,10 +19,8 @@ def test_multi_sample():
     lists = [['BAX', 'BCL2', 'CASP3'],
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
-    df2 = e.run_samples(lists,
-                        ['1', '2', '3']
-                        , save_name='enrichr_test')
-    assert df2.shape == (85, 18)
+    df2 = e.run_samples(lists, ['1', '2', '3'], save_name='enrichr_test')
+    assert df2.shape == (65, 10)
 
 
 def test_multi_sample_plotting():
@@ -39,11 +36,10 @@ def test_set_of_dbs():
     lists = [['BAX', 'BCL2', 'CASP3'],
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
-    df2 = e.run_sample_set_of_dbs(lists, ['1', '2', '3'],
-                                  databases=['KEGG_2016', 'NCI-Nature_2016'],
-                                  save_name='t')
-    print(df2.shape)
-    assert df2.shape == (74, 21)
+    df2 = e.run_samples(lists, ['1', '2', '3'],
+                        database=['KEGG_2016', 'NCI-Nature_2016'],
+                        save_name='t')
+    assert df2.shape == (41, 10)
 
 
 def test_tf_names():
