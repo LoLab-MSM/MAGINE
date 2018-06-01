@@ -229,12 +229,10 @@ class EnrichmentResult(Data):
             to_keep = set()
             for i in sorted(data_copy['sample_id'].unique()):
                 tmp = data_copy[data_copy['sample_id'] == i]
-                to_keep.update(tmp._terms_to_remove(threshold, verbose))
+                to_keep.update(tmp.unique_terms(threshold, verbose))
 
-        elif level == 'dataframe':
-            to_keep = data_copy._calculate_similarity(threshold, verbose)
         else:
-            to_keep = data_copy._terms_to_remove(threshold, verbose)
+            to_keep = data_copy.unique_terms(threshold, verbose, level=level)
 
         data_copy = data_copy[(data_copy['term_name'].isin(to_keep))]
         print("Number of rows went from {} to {}".format(self.shape[0],
@@ -243,6 +241,54 @@ class EnrichmentResult(Data):
             self._update_inplace(data_copy)
         else:
             return data_copy
+
+    def unique_terms(self, threshold=0.75, verbose=False, level='dataframe'):
+        """
+
+        Parameters
+        ----------
+        threshold : float
+        verbose : bool
+        level : str, {'dataframe', 'each'}
+
+        Returns
+        -------
+
+        """
+        if level == 'dataframe':
+            names = self['term_name'].unique()
+            scores = self._get_distance_all()
+        else:
+            names = self['term_name'].values
+            scores = self._get_distance_each()
+        to_remove, to_keep = set(), set()
+
+        n_dim = len(names)
+        ind = 0
+        for i, term_1 in enumerate(names):
+            if term_1 not in to_remove:
+                to_keep.add(term_1)
+            else:
+                for j in range(n_dim):
+                    if i >= j:
+                        continue
+                    ind += 1
+                continue
+            if verbose:
+                print("Finding matches for {}".format(term_1))
+            for j, term_2 in enumerate(names):
+                if i >= j:
+                    continue
+                score = scores[ind]
+                ind += 1
+                if score > threshold:
+                    to_remove.add(term_2)
+                if verbose:
+                    print("\tScore for {} is {:.3f}".format(term_2, score))
+                    if verbose:
+                        print("\t\tRemoving {}".format(term_2))
+
+        return to_keep
 
     def dist_matrix(self, fig_size=(8, 8), level='dataframe'):
         """ Create a distance matrix of all term similarity
@@ -315,63 +361,7 @@ class EnrichmentResult(Data):
 
         return scores
 
-    def _terms_to_remove(self, threshold=0.75, verbose=False):
 
-        names = self['term_name'].values
-        scores = self._get_distance_each()
-        to_remove, to_keep = set(), set()
-
-        n_dim = len(names)
-        ind = 0
-        for i, term_1 in enumerate(names):
-
-            if term_1 in to_remove:
-                for j in range(n_dim):
-                    if i >= j:
-                        continue
-                    ind += 1
-                continue
-
-            to_keep.add(term_1)
-            if verbose:
-                print("Finding matches for {}".format(term_1))
-            for j, term_2 in enumerate(names):
-                if i >= j:
-                    continue
-                score = scores[ind]
-                ind += 1
-                if score > threshold:
-                    to_remove.add(term_2)
-                if verbose:
-                    print("\tScore for {} is {:.3f}".format(term_2, score))
-                    if verbose:
-                        print("\t\tRemoving {}".format(term_2))
-
-        return to_keep
-
-    def _calculate_similarity(self, threshold=0.75, verbose=False):
-        names = self['term_name'].unique()
-        scores = self._get_distance_all()
-        ind = 0
-        to_remove, to_keep = set(), set()
-
-        for i, term_1 in enumerate(names):
-            if term_1 not in to_remove:
-                to_keep.add(term_1)
-            if verbose:
-                print("Checking {}".format(term_1))
-            for j, term_2 in enumerate(names):
-                if i >= j:
-                    continue
-                score = scores[ind]
-                ind += 1
-                if verbose:
-                    print("\tScore for {} is {:.3f}".format(term_2, score))
-                if score > threshold:
-                    to_remove.add(term_2)
-                    if verbose:
-                        print("\t\tRemoving {}".format(term_2))
-        return to_keep
 
     @staticmethod
     def jaccard_index(first_set, second_set):
