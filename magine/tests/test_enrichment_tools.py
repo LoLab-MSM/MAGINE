@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.figure
 import pandas as pd
 
 import magine.enrichment.tools as et
@@ -45,18 +46,27 @@ class TestEnrichmentResult(object):
         all_g = self.data.all_genes_from_df()
         assert all_g == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'}
 
+    def test_filter_sim_terms(self):
+        slimmed = self.data.remove_redundant(level='all')
+        assert slimmed.shape == (3, 10)
 
-def test_filter_row():
-    terms = ['apoptotic process',
-             'regulation of mitochondrial membrane potential'],
+        sim2 = self.data.remove_redundant(level='sample')
+        assert sim2.shape == (0, 10)
 
-    # checks if single entry
-    slimmed = et.filter_rows(df, 'term_name', terms[0])
-    assert slimmed.shape[0] == 4
+        sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
+        assert sim2.shape == (19, 10)
 
-    # checks if list
-    slimmed = et.filter_rows(df, 'term_name', terms)
-    assert slimmed.shape[0] == 111
+    def test_dist(self):
+        dist = self.data.dist_matrix()
+
+        assert isinstance(dist, matplotlib.figure.Figure)
+
+        dist = self.data.dist_matrix(fig_size=(3, 3), level='each')
+        assert isinstance(dist, matplotlib.figure.Figure)
+
+    def test_find_similar_terms(self):
+        sim = self.data.find_similar_terms('apoptotic process', df)
+        print(sim)
 
 
 def test_jaccard_index():
@@ -65,35 +75,3 @@ def test_jaccard_index():
     score = et.jaccard_index(term1, term2)
 
     assert score == 0.6
-
-
-def test_filter_sim_terms():
-    slimmed = et.remove_redundant(df, level='all')
-    assert slimmed.shape == (3, 10)
-
-    sim2 = et.remove_redundant(df, level='sample')
-    assert sim2.shape == (0, 10)
-
-    sim2 = et.remove_redundant(df, level='dataframe', verbose=True)
-    assert sim2.shape == (19, 10)
-
-
-def test_genes_from_df():
-    genes = et.all_genes_from_df(df)
-    assert len(genes) == 5
-
-
-def test_find_similar_terms():
-    sim = et.find_similar_terms('apoptotic process', df)
-
-
-def test_dist():
-    import matplotlib.figure
-    dist = et.dist_matrix(df)
-    assert isinstance(dist, matplotlib.figure.Figure)
-
-
-def test_dist2():
-    import matplotlib.figure
-    dist = et.dist_matrix2(df)
-    assert isinstance(dist, matplotlib.figure.Figure)
