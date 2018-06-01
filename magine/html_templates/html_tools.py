@@ -142,8 +142,6 @@ def _format_simple_table(data):
                   'treated_control_fold_change']
 
     int_type = ['n_genes', 'rank']
-    # tmp_table['term_name'] = tmp_table['term_name'].str.replace('/', '\\')
-    # tmp_table['term_name'] = tmp_table['term_name'].str.replace("'", '\'')
     for i in data.columns:
         if i in float_type:
             tmp_table[i] = tmp_table[i].fillna(0)

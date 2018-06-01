@@ -2,14 +2,13 @@ networkx==1.11
 py2cytoscape
 jinja2
 scipy
-numpy
-pandas
+numpy>=1.9.0
+pandas>=0.23.0
 xlrd
 matplotlib
 matplotlib-venn
 bioservices
 pathos
-goatools==0.6.10
 plotly
 appdirs
 seaborn
