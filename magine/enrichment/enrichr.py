@@ -24,180 +24,113 @@ with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
 
 gene = 'gene'
 
-ontologies = [
+db_types = {
+    'histone': [
+        'Epigenomics_Roadmap_HM_ChIP-seq',
+        'ENCODE_Histone_Modifications_2015',
+        'ESCAPE',
+    ],
+    'mrna': [
+        'TargetScan_microRNA_2017',
+        'miRTarBase_2017',
+    ],
+    'kinases': [
+        'KEA_2015',
+        'LINCS_L1000_Kinase_Perturbations_down',
+        'LINCS_L1000_Kinase_Perturbations_up',
+        'Kinase_Perturbations_from_GEO_down',
+        'Kinase_Perturbations_from_GEO_up',
+        'Phosphatase_Substrates_from_DEPOD',
+        'ARCHS4_Kinases_Coexp',
+        'ARCHS4_IDG_Coexp',
+    ],
+    'transcription': [
+        'ChEA_2016',
+        'TRANSFAC_and_JASPAR_PWMs',
+        'ARCHS4_TFs_Coexp',
+        'Enrichr_Submissions_TF-Gene_Coocurrence',
+        'Genome_Browser_PWMs',
+        'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+        'ENCODE_TF_ChIP-seq_2015',
+        'TF-LOF_Expression_from_GEO',
+        'Transcription_Factor_PPIs'
+    ],
+    'pathways': [
+        'KEGG_2016',
+        'WikiPathways_2016',
+        'Reactome_2016',
+        'BioCarta_2016',
+        'NCI-Nature_2016',
+        'Panther_2016',
+        'BioPlex_2017',
+    ],
+    'complex': [
+        'NURSA_Human_Endogenous_Complexome',
+        'CORUM',
+        'PPI_Hub_Proteins',
+    ],
+    'ontologies': [
+        'GO_Cellular_Component_2017b',
+        'GO_Biological_Process_2017b',
+        'GO_Molecular_Function_2017b',
+        'MGI_Mammalian_Phenotype_2017',
+        'Jensen_COMPARTMENTS',
+    ],
+    'drug': [
+        'DrugMatrix',
+        'Drug_Perturbations_from_GEO_2014',
+        'Old_CMAP_up',
+        'Old_CMAP_down',
+        'LINCS_L1000_Chem_Pert_up',
+        'LINCS_L1000_Chem_Pert_down',
+        'LINCS_L1000_Ligand_Perturbations_up',
+        'LINCS_L1000_Ligand_Perturbations_down',
+    ],
+    'disease': [
+        'OMIM_Disease',
+        'OMIM_Expanded',
+        'Jensen_DISEASES',
+        'Human_Phenotype_Ontology'
+    ],
+    'cell_type': [
 
-    'GO_Biological_Process_2017b',
-    'GO_Molecular_Function_2017b',
-    'GO_Cellular_Component_2017b',
+        'ARCHS4_Tissues',
+        'ARCHS4_Cell-lines',
+        'Allen_Brain_Atlas_up',
+        'Allen_Brain_Atlas_down',
+        'Cancer_Cell_Line_Encyclopedia',
+        'Human_Gene_Atlas',
+        'NCI-60_Cancer_Cell_Lines',
+        'Jensen_TISSUES',
+    ],
+    'crowd': [
+        'Disease_Perturbations_from_GEO_down',
+        'Disease_Perturbations_from_GEO_up',
+        'Drug_Perturbations_from_GEO_down',
+        'Drug_Perturbations_from_GEO_up',
+        'Single_Gene_Perturbations_from_GEO_up',
+        'Single_Gene_Perturbations_from_GEO_down',
+        'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO',
+        'Aging_Perturbations_from_GEO_up',
+        'Aging_Perturbations_from_GEO_down',
+        'Ligand_Perturbations_from_GEO_up',
+        'Ligand_Perturbations_from_GEO_down',
+        'MCF7_Perturbations_from_GEO_up',
+        'MCF7_Perturbations_from_GEO_down',
+        'Microbe_Perturbations_from_GEO_up',
+        'Microbe_Perturbations_from_GEO_down',
+        'SysMyo_Muscle_Gene_Sets',
+    ]
 
-    'GO_Biological_Process_2017',
-    'GO_Molecular_Function_2017',
-    'GO_Cellular_Component_2017',
-
-    'Human_Phenotype_Ontology',
-    'MGI_Mammalian_Phenotype_2017',
-    'HMDB_Metabolites',
-    'Tissue_Protein_Expression_from_ProteomicsDB',
-]
-
-pathways = [
-    'KEGG_2016',
-    'NCI-Nature_2016',
-    'Panther_2016',
-    'WikiPathways_2016',
-    'BioCarta_2016',
-    'Humancyc_2016',
-    'Reactome_2016',
-]
-
-kinase = [
-    'KEA_2015',
-    'LINCS_L1000_Kinase_Perturbations_down',
-    'LINCS_L1000_Kinase_Perturbations_up',
-    'Kinase_Perturbations_from_GEO_down',
-    'Kinase_Perturbations_from_GEO_up',
-
-]
-transcription_factors = [
-    'ChEA_2016',  # should use RNAseq
-    'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-    'ENCODE_TF_ChIP-seq_2015',
-    'Transcription_Factor_PPIs',
-    'TRANSFAC_and_JASPAR_PWMs',
-]
-
-disease_drug = [
-    'DrugMatrix',
-    'Drug_Perturbations_from_GEO_2014',
-    'Drug_Perturbations_from_GEO_down',
-    'Drug_Perturbations_from_GEO_up',
-    'OMIM_Disease',
-    'OMIM_Expanded',
-]
-
-all_dbs = [
-    'GO_Biological_Process_2017',
-    'GO_Molecular_Function_2017',
-    'GO_Cellular_Component_2017',
-    'KEGG_2016',
-    'NCI-Nature_2016',
-    'Panther_2016',
-    'WikiPathways_2016',
-    'BioCarta_2016',
-    'Humancyc_2016',
-    'Reactome_2016',
-    'KEA_2015',
-    'ChEA_2016',
-    'DrugMatrix',
-    'Drug_Perturbations_from_GEO_2014',
-
-]
-
-
-def clean_term_names(row):
-    term_name = row['term_name']
-    if not isinstance(term_name, basestring):
-        return term_name
-
-    db = row['db']
-
-    if db in ['GO_Biological_Process_2017', 'GO_Biological_Process_2017b',
-              'GO_Molecular_Function_2017', 'GO_Molecular_Function_2017b',
-              'GO_Cellular_Component_2017', 'GO_Cellular_Component_2017b']:
-
-        if 'GO:' in term_name:
-            term_name = term_name.split('(GO:', 1)[0]
-        elif 'go:' in term_name:
-            term_name = term_name.split('(go:', 1)[0]
-    if db == 'Human_Phenotype_Ontology':
-        if 'HP:' in term_name:
-            term_name = term_name.split('(HP:', 1)[0]
-
-    if db == 'MGI_Mammalian_Phenotype_2017':
-        if term_name.startswith('MP:'):
-            term_name = term_name.split('_', 1)[1]
-
-    if db == 'DrugMatrix':
-        drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
-        direction = re.search(r'-(.{2})$', term_name).group(0)
-        term_name = drug_name + direction
-    if db in ['LINCS_L1000_Chem_Pert_up', 'LINCS_L1000_Chem_Pert_down', ]:
-        exp_id, rest = term_name.split('-', 1)
-        drug_name, _ = rest.rsplit('-', 1)
-        term_name = drug_name
-    if db in ['Old_CMAP_down', 'Old_CMAP_up', ]:
-        term_name = term_name.rsplit('-', 1)[0]
-    if db in ['Ligand_Perturbations_from_GEO_down',
-              'Ligand_Perturbations_from_GEO_up']:
-        term_name = term_name.split('_', 1)[0]
-
-    term_name = term_name.strip()
-    term_name = term_name.lower()
-    for i, j in replace_pairs:
-        if i in term_name:
-            term_name = term_name.replace(i, j)
-
-    return term_name
-
-
-def clean_tf_names(data):
-    def return_single_tf(row):
-        """
-        Gets TF name only
-        """
-        tf = row['term_name']
-        if '_' in tf:
-            tf = tf.split('_')[0]
-        return tf.upper()
-
-    tf_dbs = ['ARCHS4_TFs_Coexp',
-              'ChEA_2016',
-              'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-              'ENCODE_TF_ChIP-seq_2015',
-              'Enrichr_Submissions_TF-Gene_Coocurrence',
-              'TRANSFAC_and_JASPAR_PWMs',
-              'TF-LOF_Expression_from_GEO',
-              'Transcription_Factor_PPIs']
-    tfs = data[data['db'].isin(tf_dbs)].copy()
-    tfs['term_name'] = tfs.apply(return_single_tf, axis=1)
-    return tfs
-
-
-replace_pairs = [
-    ('mus musculus', 'mus'),
-    ('homo sapiens', 'hsa'),
-    ('rattus norvegicus', 'rat'),
-    ('oncorhynchus mykiss', 'onc_mykiss'),
-    ('macaca fascicularis', 'mfa'),
-    ('oryzias latipes', 'ola'),
-    ('sus scrofa', 'ssc'),
-    ('danio rerio', 'dre'),
-    ('bos taurus', 'bta'),
-    ('dictyostelium discoideum', 'dicty'),
-    ('myzus persicae', 'm.persicae'),
-    ('staphylococcus aureus', 's.aureus'),
-    ('escherichia coli', 'e.coli'),
-    ('pseudomonas aeruginosa', 'p.aeruginosa'),
-    ('drosophila melanogaste', 'fly'),
-    ('mycobacterium tuberculosis', 'm.tuberculosis'),
-    ('hordeum vulgare', 'h.vulgare'),
-    (' (mouse)', '_mus'),
-    (' (human)', '_hsa'),
-    ('Homo sapiens', 'hsa'),
-    ('Mus musculus', 'hsa'),
-    ('hg19', '_hsa'),
-    ('mm9', '_mus'),
-
-]
+}
 
 
 class Enrichr(object):
     query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
 
-    def __init__(self, exp_data=None, verbose=False):
+    def __init__(self, verbose=False):
         self._url = 'http://amp.pharm.mssm.edu/Enrichr'
         self._valid_libs = _valid_libs
-        self.exp_data = exp_data
         self.verbose = verbose
 
     def print_valid_libs(self):
@@ -388,9 +321,6 @@ class Enrichr(object):
 
         if create_html:
             if exp_data is None:
-                exp_data = self.exp_data
-
-            if exp_data is None:
                 print("exp_data required to make plots over samples")
                 return p_df
 
@@ -490,105 +420,101 @@ class Enrichr(object):
         return data[~data['term_name'].isin(non_sig)]
 
 
-db_types = {
-    'histone': [
-        'Epigenomics_Roadmap_HM_ChIP-seq',
-        'ENCODE_Histone_Modifications_2015',
-        'ESCAPE',
-    ],
-    'mrna': [
-        'TargetScan_microRNA_2017',
-        'miRTarBase_2017',
-    ],
-    'kinases': [
-        'KEA_2015',
-        'LINCS_L1000_Kinase_Perturbations_down',
-        'LINCS_L1000_Kinase_Perturbations_up',
-        'Kinase_Perturbations_from_GEO_down',
-        'Kinase_Perturbations_from_GEO_up',
-        'Phosphatase_Substrates_from_DEPOD',
-        'ARCHS4_Kinases_Coexp',
-        'ARCHS4_IDG_Coexp',
-    ],
-    'transcription': [
-        'ChEA_2016',
-        'TRANSFAC_and_JASPAR_PWMs',
-        'ARCHS4_TFs_Coexp',
-        'Enrichr_Submissions_TF-Gene_Coocurrence',
-        'Genome_Browser_PWMs',
-        'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
-        'ENCODE_TF_ChIP-seq_2015',
-        'TF-LOF_Expression_from_GEO',
-        'Transcription_Factor_PPIs'
-    ],
-    'pathways': [
-        'KEGG_2016',
-        'WikiPathways_2016',
-        'Reactome_2016',
-        'BioCarta_2016',
-        'NCI-Nature_2016',
-        'Panther_2016',
-        'BioPlex_2017',
-    ],
-    'complex': [
-        'NURSA_Human_Endogenous_Complexome',
-        'CORUM',
-        'PPI_Hub_Proteins',
-    ],
-    'ontologies': [
-        'GO_Cellular_Component_2017b',
-        'GO_Biological_Process_2017b',
-        'GO_Molecular_Function_2017b',
-        'MGI_Mammalian_Phenotype_2017',
-        'Jensen_COMPARTMENTS',
-    ],
-    'drug': [
-        'DrugMatrix',
-        'Drug_Perturbations_from_GEO_2014',
-        'Old_CMAP_up',
-        'Old_CMAP_down',
-        'LINCS_L1000_Chem_Pert_up',
-        'LINCS_L1000_Chem_Pert_down',
-        'LINCS_L1000_Ligand_Perturbations_up',
-        'LINCS_L1000_Ligand_Perturbations_down',
-    ],
-    'disease': [
-        'OMIM_Disease',
-        'OMIM_Expanded',
-        'Jensen_DISEASES',
-        'Human_Phenotype_Ontology'
-    ],
-    'cell_type': [
+def clean_term_names(row):
+    term_name = row['term_name']
+    if not isinstance(term_name, basestring):
+        return term_name
 
-        'ARCHS4_Tissues',
-        'ARCHS4_Cell-lines',
-        'Allen_Brain_Atlas_up',
-        'Allen_Brain_Atlas_down',
-        'Cancer_Cell_Line_Encyclopedia',
-        'Human_Gene_Atlas',
-        'NCI-60_Cancer_Cell_Lines',
-        'Jensen_TISSUES',
-    ],
-    'crowd': [
-        'Disease_Perturbations_from_GEO_down',
-        'Disease_Perturbations_from_GEO_up',
-        'Drug_Perturbations_from_GEO_down',
-        'Drug_Perturbations_from_GEO_up',
-        'Single_Gene_Perturbations_from_GEO_up',
-        'Single_Gene_Perturbations_from_GEO_down',
-        'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO',
-        'Aging_Perturbations_from_GEO_up',
-        'Aging_Perturbations_from_GEO_down',
-        'Ligand_Perturbations_from_GEO_up',
-        'Ligand_Perturbations_from_GEO_down',
-        'MCF7_Perturbations_from_GEO_up',
-        'MCF7_Perturbations_from_GEO_down',
-        'Microbe_Perturbations_from_GEO_up',
-        'Microbe_Perturbations_from_GEO_down',
-        'SysMyo_Muscle_Gene_Sets',
-    ]
+    db = row['db']
 
-}
+    if db in ['GO_Biological_Process_2017', 'GO_Biological_Process_2017b',
+              'GO_Molecular_Function_2017', 'GO_Molecular_Function_2017b',
+              'GO_Cellular_Component_2017', 'GO_Cellular_Component_2017b']:
+
+        if 'GO:' in term_name:
+            term_name = term_name.split('(GO:', 1)[0]
+        elif 'go:' in term_name:
+            term_name = term_name.split('(go:', 1)[0]
+    if db == 'Human_Phenotype_Ontology':
+        if 'HP:' in term_name:
+            term_name = term_name.split('(HP:', 1)[0]
+
+    if db == 'MGI_Mammalian_Phenotype_2017':
+        if term_name.startswith('MP:'):
+            term_name = term_name.split('_', 1)[1]
+
+    if db == 'DrugMatrix':
+        drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
+        direction = re.search(r'-(.{2})$', term_name).group(0)
+        term_name = drug_name + direction
+    if db in ['LINCS_L1000_Chem_Pert_up', 'LINCS_L1000_Chem_Pert_down', ]:
+        exp_id, rest = term_name.split('-', 1)
+        drug_name, _ = rest.rsplit('-', 1)
+        term_name = drug_name
+    if db in ['Old_CMAP_down', 'Old_CMAP_up', ]:
+        term_name = term_name.rsplit('-', 1)[0]
+    if db in ['Ligand_Perturbations_from_GEO_down',
+              'Ligand_Perturbations_from_GEO_up']:
+        term_name = term_name.split('_', 1)[0]
+
+    term_name = term_name.strip()
+    term_name = term_name.lower()
+    for i, j in replace_pairs:
+        if i in term_name:
+            term_name = term_name.replace(i, j)
+
+    return term_name
+
+
+def clean_tf_names(data):
+    def return_single_tf(row):
+        """
+        Gets TF name only
+        """
+        tf = row['term_name']
+        if '_' in tf:
+            tf = tf.split('_')[0]
+        return tf.upper()
+
+    tf_dbs = ['ARCHS4_TFs_Coexp',
+              'ChEA_2016',
+              'ENCODE_and_ChEA_Consensus_TFs_from_ChIP-X',
+              'ENCODE_TF_ChIP-seq_2015',
+              'Enrichr_Submissions_TF-Gene_Coocurrence',
+              'TRANSFAC_and_JASPAR_PWMs',
+              'TF-LOF_Expression_from_GEO',
+              'Transcription_Factor_PPIs']
+    tfs = data[data['db'].isin(tf_dbs)].copy()
+    tfs['term_name'] = tfs.apply(return_single_tf, axis=1)
+    return tfs
+
+
+replace_pairs = [
+    ('mus musculus', 'mus'),
+    ('homo sapiens', 'hsa'),
+    ('rattus norvegicus', 'rat'),
+    ('oncorhynchus mykiss', 'onc_mykiss'),
+    ('macaca fascicularis', 'mfa'),
+    ('oryzias latipes', 'ola'),
+    ('sus scrofa', 'ssc'),
+    ('danio rerio', 'dre'),
+    ('bos taurus', 'bta'),
+    ('dictyostelium discoideum', 'dicty'),
+    ('myzus persicae', 'm.persicae'),
+    ('staphylococcus aureus', 's.aureus'),
+    ('escherichia coli', 'e.coli'),
+    ('pseudomonas aeruginosa', 'p.aeruginosa'),
+    ('drosophila melanogaste', 'fly'),
+    ('mycobacterium tuberculosis', 'm.tuberculosis'),
+    ('hordeum vulgare', 'h.vulgare'),
+    (' (mouse)', '_mus'),
+    (' (human)', '_hsa'),
+    ('Homo sapiens', 'hsa'),
+    ('Mus musculus', 'hsa'),
+    ('hg19', '_hsa'),
+    ('mm9', '_mus'),
+
+]
 
 
 def run_enrichment_for_project(exp_data, project_name):

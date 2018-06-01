@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from wordcloud import STOPWORDS, WordCloud
 
+# Will be OK in Python 2
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
 import magine.enrichment.tools as et
 
 process_dbs = [
@@ -138,7 +144,7 @@ def create_wordcloud(df, save_name=None):
 
 
 def _cleanup_term_name(row):
-    if not isinstance(row['term_name'], str):
+    if not isinstance(row['term_name'], basestring):
         print(row)
     x = row['term_name'].split('_')[0].lower()
     x = ' ' + x

@@ -1,5 +1,4 @@
 networkx
-py2cytoscape
 jinja2
 scipy
 numpy
