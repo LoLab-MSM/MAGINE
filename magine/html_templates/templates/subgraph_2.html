@@ -14,12 +14,27 @@
             top: 5px;
             background: {{background}};
         }
+
+        #{{fitbutton}} {
+            width: 3em;
+            margin: 0.5em;
+            position: absolute;
+            z-index: 999;
+            top: 5px;
+            right: 0;
+        }
+
+        #{{fitbutton}} i {
+                           transform: rotate(45deg);
+                       }
+
     </style>
 
     <script>
         (function () {
             function render() {
-                $('#{{uuid}}').cytoscape({
+                var cy = window.cy = cytoscape({
+                    container: $('#{{uuid}}'),
                     elements: {
                         nodes: {{nodes}},
                         edges: {{edges}}
@@ -31,12 +46,86 @@
 
                     boxSelectionEnabled: true,
                     wheelSensitivity:.25,
-                    ready: function () {
-                        window.cy = this;
-                        cy.fit();
+                    ready: function(){
                         cy.style().fromJson({{style_json}}).update();
+                }
+
+
+                })
+                // $('#{{uuid}}').cytoscape({
+                //     elements: {
+                //         nodes: {{nodes}},
+                //         edges: {{edges}}
+                //     },
+                //
+                //     layout: {
+                //         name: '{{layout}}'
+                //     },
+                //
+                //     boxSelectionEnabled: true,
+                //     wheelSensitivity:.25,
+                //     ready: function () {
+                //         window.cy = this;
+                //         cy.fit();
+                //         cy.style().fromJson({{style_json}}).update();
+                //     }
+                // });
+
+                cy.on('tap', function(evt){
+                    var ele = evt.target;
+                    if (ele.data()['tip']['state']['visible']){
+                        ele.data()['tip'].hide();
+                    } else {
+                        ele.data()['tip'].show();
                     }
                 });
+
+                var makeTippy = function(target, text){
+                    return tippy( target.popperRef(), {
+                        html: (function(){
+                            var div = document.createElement('div');
+                            div.innerHTML = "<a href='"+text+"' target='_blank'>Google</a>";
+
+//                            document.body.appendChild(div);
+//                            console.log($('#{{uuid}}')[0]);
+                            return div;
+                        })(),
+                        trigger: 'manual',
+                        arrow: true,
+                        placement: 'top',
+                        hideOnClick: false,
+                        interactive: true,
+                        multiple: true,
+                        sticky: true
+
+                    } ).tooltips[0];
+                };
+
+                cy.nodes().forEach(function(n){
+                        n.data()['tip'] = makeTippy(n, n.data('name_web'));
+                    });
+
+                var allNodes;
+                var layoutPadding = 50;
+                var aniDur = 500;
+                var easing = 'linear';
+                allNodes = cy.nodes();
+                $('#{{fitbutton}}').on('click', function(){
+
+                    allNodes.unselect();
+                    cy.stop();
+
+                    cy.animation({
+                        fit: {
+                            eles: cy.elements(),
+                            padding: layoutPadding
+                        },
+                        duration: aniDur,
+                        easing: easing
+                    }).play();
+
+                });
+
             }
 
             var before_render = function () {
@@ -45,6 +134,8 @@
                     window.addEventListener("load_cytoscape", before_render);
                 } else {
                     console.log("Ready to render graph!");
+                    $(".tippy-popper").remove();
+
                     render();
                 }
             };
@@ -56,21 +147,37 @@
     requirejs.config({
 
         paths: {
-            'cytoscape': 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/2.7.23/cytoscape.min',
-            'cytoscape-qtip': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-qtip/2.7.0/cytoscape-qtip',
+            'popper': 'https://unpkg.com/popper.js@1.14.1/dist/umd/popper',
+            'tippy': 'https://cdnjs.cloudflare.com/ajax/libs/tippy.js/2.3.0/tippy.min',
+            'cytoscape': 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.2.10/cytoscape',
+            'cytoscape-popper': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-popper/3ad50859/cytoscape-popper',
             'jquery': 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min',
             'qtip2': 'https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/basic/jquery.qtip.min',
             'cytoscape-cose-bilkent': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.1/cytoscape-cose-bilkent'
+        },
+        shim: {
+            'cytoscape-popper': {
+                deps: ['cytoscape', 'popper']
+            }
+        },
+        map: {
+            '*': {
+                'popper.js': 'popper',
+                'webcola': 'cola'}
         }
+
     });
     window.$ = window.jQuery = require('jquery');
 
-    require(['cytoscape', 'cytoscape-qtip', 'jquery', 'cytoscape-cose-bilkent'],
-        function (cytoscape, cyqtip, jquery, regCose) {
+    require(['cytoscape', 'cytoscape-popper', 'popper',  'tippy', 'jquery', 'cytoscape-cose-bilkent'],
+        function (cytoscape, cypopper, popper, tippy, jquery, regCose) {
             console.log('Loading Cytoscape.js Module...');
-            cyqtip(cytoscape, jquery);
-            regCose(cytoscape);
+            window['popper'] = popper;
+            window['tippy'] = tippy;
             window['cytoscape'] = cytoscape;
+            cypopper(cytoscape);
+            regCose(cytoscape);
+
 
             var event = document.createEvent("HTMLEvents");
             event.initEvent("load_cytoscape", true, false);
@@ -84,6 +191,7 @@
 
 <body>
 <div id="{{ uuid }}"></div>
+<button id={{fitbutton}} class="btn btn-default"><i class="fa fa-arrows-h"></i></button>
 <!-- When only #uuid div is placed on this page,
 the height of output-box on ipynb will be 0px.
 One line below will prevent that. -->
