@@ -119,11 +119,11 @@ class EnrichmentData(Data):
         if isinstance(rank, (int, float)):
             new_data = new_data[new_data['rank'] <= rank]
         if db is not None:
-            new_data = filter_rows(new_data, 'db', db)
+            new_data = self.filter_rows('db', db)
         if sample_id is not None:
-            new_data = filter_rows(new_data, 'sample_id', sample_id)
+            new_data = self.filter_rows('sample_id', sample_id)
         if category is not None:
-            new_data = filter_rows(new_data, 'category', category)
+            new_data = self.filter_rows('category', category)
         if inplace:
             self._update_inplace(new_data)
         else:
