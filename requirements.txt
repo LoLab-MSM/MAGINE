@@ -4,6 +4,7 @@ jinja2
 scipy
 numpy>=1.9.0
 pandas>=0.23.0
+openpyxl
 xlrd
 matplotlib
 matplotlib-venn
@@ -15,3 +16,4 @@ seaborn
 IPython==5.3.0
 jupyter==1.0.0
 wordcloud
+
