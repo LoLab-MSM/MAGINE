@@ -1,0 +1,390 @@
+import itertools
+
+import numpy as np
+import pandas as pd
+
+from magine.data import Data
+from magine.plotting.heatmaps import cluster_distance_mat
+
+
+def load_enrichment_csv(file_name):
+    """ Load data into EnrichmentResult data class
+
+    Parameters
+    ----------
+    file_name : str
+
+    Returns
+    -------
+    EnrichmentResult
+
+    """
+    return EnrichmentResult(pd.read_csv(file_name))
+
+
+class EnrichmentResult(Data):
+
+    def __init__(self, *args, **kwargs):
+        super(EnrichmentResult, self).__init__(*args, **kwargs)
+        self._index = 'term_name'
+
+    @property
+    def _constructor(self):
+        return EnrichmentResult
+
+    def filter_rows(self, column, options, inplace=False):
+        """
+        Filters a pandas dataframe provides a column and filter selection.
+
+        Parameters
+        ----------
+        column : str
+        options : str, list
+            Can be a single entry or a list
+        inplace : bool
+            Filter inplace
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        new_data = self.copy()
+        valid_opts = list(new_data[column].unique())
+        if isinstance(options, str):
+            if options not in valid_opts:
+                print('{} not in {}'.format(options, valid_opts))
+            else:
+                new_data = new_data[new_data[column] == options]
+        elif isinstance(options, list):
+            for i in options:
+                if i not in valid_opts:
+                    print('{} not in {}'.format(i, valid_opts))
+            new_data = new_data[new_data[column].isin(options)]
+
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data
+
+    def filter_multi(self, p_value=None, combined_score=None, db=None,
+                     sample_id=None, category=None, rank=None, inplace=False):
+        """
+        Filters an enrichment array.
+
+        This is an aggregate function that allows ones to filter an entire
+        dataframe with a single function call.
+
+        Parameters
+        ----------
+        p_value : float
+            filters all values less than or equal
+        combined_score : float
+            filters all values greater than or equal
+        db : str, list
+        sample_id : str, list
+        category : str, list
+        rank : int
+        inplace : bool
+            Filter inplace
+
+        Returns
+        -------
+
+        """
+        new_data = self.copy()
+        if p_value is not None:
+            assert isinstance(p_value, (int, float))
+            new_data = new_data[new_data['adj_p_value'] <= p_value]
+        if combined_score is not None:
+            assert isinstance(combined_score, (int, float))
+            new_data = new_data[new_data['combined_score'] >= combined_score]
+        if isinstance(rank, (int, float)):
+            new_data = new_data[new_data['rank'] <= rank]
+        if db is not None:
+            new_data = self.filter_rows('db', db)
+        if sample_id is not None:
+            new_data = self.filter_rows('sample_id', sample_id)
+        if category is not None:
+            new_data = self.filter_rows('category', category)
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data
+
+    def term_to_genes(self, term):
+        """ Get set of genes of provides term
+
+        Parameters
+        ----------
+        term : str
+
+        Returns
+        -------
+        set
+
+        """
+        genes = self[self['term_name'] == term]['genes']
+        return set(itertools.chain.from_iterable(genes.str.split(',').values))
+
+    def filter_based_on_words(self, words, inplace=False):
+        """ Filter term_name based on key terms
+
+        Parameters
+        ----------
+        words : list, str
+            List of words to use to keep rows in dataframe
+        inplace : bool
+            Filter the dataframe in place or return filtered copy
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        """
+        if isinstance(words, str):
+            words = [words]
+        df = self.copy()
+        df = df[df['term_name'].str.lower().str.contains('|'.join(words))]
+        if inplace:
+            self._update_inplace(df)
+        else:
+            return df
+
+    def find_similar_terms(self, term):
+        """ Calculates similarity of all other terms to given term
+
+        Parameters
+        ----------
+        term : str
+
+
+        Returns
+        -------
+        pd.DataFrame
+        """
+
+        rest_of_df = self[~(self['term_name'] == term)]
+        first_genes = self.term_to_genes(term)
+        array = rest_of_df[['term_name', 'genes']].values
+        dist_m = [None] * len(array)
+        for n, index in enumerate(array):
+            dist_m[n] = [index[0],
+                         self.jaccard_index(first_genes,
+                                            set(index[1].split(',')))]
+
+        df = pd.DataFrame(dist_m, columns=['term_name', 'similarity_score'])
+        df.sort_values('similarity_score', inplace=True, ascending=False)
+        return df
+
+    def all_genes_from_df(self):
+        """ Returns all genes from gene columns in a set
+
+        Returns
+        -------
+        set
+        """
+        return set(
+            itertools.chain.from_iterable(self['genes'].str.split(',').values)
+        )
+
+    def remove_redundant(self, threshold=0.75, verbose=False, level='sample',
+                         sort_by='combined_score', inplace=False):
+        """
+        Calculate similarity between all term sets and removes redundant terms.
+
+
+        Parameters
+        ----------
+        threshold : float, default 0.75
+        verbose : bool, default False
+            Print similarity scores and removed terms.
+        level : {'sample', 'dataframe', 'overall'}, default 'sample'
+            Level to filter dataframe. 'sample' will pivot the dataframe and
+            filter each group of 'sample_id' individually. 'dataframe' will merge
+            all genes that share the same 'term_name'. 'overall' will consider each
+            term_name individually.
+        sort_by : {'combined_score', 'rank', 'adj_p_value', 'n_genes'},
+                    default 'combined_score'
+            Keyword to sort the dataframe. The scoring starts at the top term and
+            compares to all the lower terms. Options are
+        inplace : bool
+            Filter the dataframe in place or return filtered copy
+
+        Returns
+        -------
+        pandas.DataFrame
+
+        """
+
+        if sort_by in ('rank', 'adj_p_value'):
+            ascending = True
+        else:
+            ascending = False
+
+        self.sort_values(sort_by, inplace=True, ascending=ascending)
+        data_copy = self.copy()
+
+        if level == 'sample':
+            to_keep = set()
+            for i in sorted(data_copy['sample_id'].unique()):
+                tmp = data_copy[data_copy['sample_id'] == i]
+                to_keep.update(tmp.unique_terms(threshold, verbose))
+
+        else:
+            to_keep = data_copy.unique_terms(threshold, verbose, level=level)
+
+        data_copy = data_copy[(data_copy['term_name'].isin(to_keep))]
+        print("Number of rows went from {} to {}".format(self.shape[0],
+                                                         data_copy.shape[0]))
+        if inplace:
+            self._update_inplace(data_copy)
+        else:
+            return data_copy
+
+    def unique_terms(self, threshold=0.75, verbose=False, level='dataframe'):
+        """
+
+        Parameters
+        ----------
+        threshold : float
+        verbose : bool
+        level : str, {'dataframe', 'each'}
+
+        Returns
+        -------
+
+        """
+        if level == 'dataframe':
+            names = self['term_name'].unique()
+            scores = self._get_distance_all()
+        else:
+            names = self['term_name'].values
+            scores = self._get_distance_each()
+        to_remove, to_keep = set(), set()
+
+        n_dim = len(names)
+        ind = 0
+        for i, term_1 in enumerate(names):
+            if term_1 not in to_remove:
+                to_keep.add(term_1)
+            else:
+                for j in range(n_dim):
+                    if i >= j:
+                        continue
+                    ind += 1
+                continue
+            if verbose:
+                print("Finding matches for {}".format(term_1))
+            for j, term_2 in enumerate(names):
+                if i >= j:
+                    continue
+                score = scores[ind]
+                ind += 1
+                if score > threshold:
+                    to_remove.add(term_2)
+                if verbose:
+                    print("\tScore for {} is {:.3f}".format(term_2, score))
+                    if verbose:
+                        print("\t\tRemoving {}".format(term_2))
+
+        return to_keep
+
+    def dist_matrix(self, fig_size=(8, 8), level='dataframe'):
+        """ Create a distance matrix of all term similarity
+
+        Parameters
+        ----------
+        fig_size : tuple
+            Size of figure
+        level : str, {'dataframe', 'each'}
+            How to treats term_name to genes. Dataframe compresses all genes
+            from all sample_ids into same term. 'each' treats each term_name
+            individually.
+
+        Returns
+        -------
+        matplotlib.Figure
+
+        """
+        if level == 'each':
+            names = self['term_name'].values
+            scores = self._get_distance_each()
+        else:
+            names = self['term_name'].unique()
+            scores = self._get_distance_all()
+        n_dim = len(names)
+
+        mat = np.ones((n_dim, n_dim), dtype=float)
+        ind = 0
+        for i in range(n_dim):
+            for j in range(n_dim):
+                if i >= j:
+                    continue
+                mat[i, j] = scores[ind]
+                mat[j, i] = scores[ind]
+                ind += 1
+        return cluster_distance_mat(mat, names, fig_size)
+
+    def _get_distance_each(self):
+        names = self['term_name'].values
+        array = self['genes'].values
+        n_dim = len(names)
+        total_size = int(((n_dim * (n_dim - 1)) / 2))
+        scores = np.zeros(total_size, dtype=float)
+        ind = 0
+        for i, ac in enumerate(array):
+            first_genes = set(ac.split(','))
+            for j, bc in enumerate(array):
+                if i >= j:
+                    continue
+                scores[ind] = self.jaccard_index(first_genes,
+                                                 set(bc.split(',')))
+                ind += 1
+        return scores
+
+    def _get_distance_all(self):
+        names = self['term_name'].unique()
+        n_dim = len(names)
+        total_size = int(((n_dim * (n_dim - 1)) / 2))
+        scores = np.zeros(total_size, dtype=float)
+        ind = 0
+        for i, n1 in enumerate(names):
+            first_genes = self.term_to_genes(n1)
+            for j, n2 in enumerate(names):
+                if i >= j:
+                    continue
+                else:
+                    scores[ind] = self.jaccard_index(first_genes,
+                                                     self.term_to_genes(n2))
+                    ind += 1
+
+        return scores
+
+
+
+    @staticmethod
+    def jaccard_index(first_set, second_set):
+        """
+        Computes the similarity between two sets.
+            https://en.wikipedia.org/wiki/Jaccard_index
+
+        Parameters
+        ----------
+        first_set : set
+        second_set : set
+
+
+
+        Returns
+        -------
+        index : float
+
+
+        References
+        ----------
+        .. [1] `Wikipedia entry for the Jaccard index
+               <https://en.wikipedia.org/wiki/Jaccard_index>`_
+        """
+        set1 = set(first_set)
+        set2 = set(second_set)
+        return float(len(set1.intersection(set2))) / len(set1.union(set2))
