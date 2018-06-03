@@ -42,6 +42,7 @@ def load_data_csv(file_name):
     """
     df = pd.read_csv(file_name)
     df = df[df[fold_change].notnull()]
+    # Hack way to replace inf with large numbers.
     df.loc[df[fold_change] == np.inf, fold_change] = 1000
     df.loc[df[fold_change] == -np.inf, fold_change] = -1000
     return ExperimentalData(df)
@@ -86,7 +87,7 @@ class Sample(Data):
     @property
     def up_by_sample(self):
         over_time = []
-        for i in sorted(list(self[sample_id].unique())):
+        for i in sorted(set(self[sample_id].values)):
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
             over_time.append(cur_slice.up.list)
@@ -95,41 +96,41 @@ class Sample(Data):
     @property
     def down_by_sample(self):
         over_time = []
-        for i in sorted(list(self[sample_id].unique())):
+        for i in sorted(set(self[sample_id].values)):
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
             over_time.append(cur_slice.down.list)
         return over_time
 
 
-class RNA(Sample):
+class Gene(Sample):
     def __init__(self, *args, **kwargs):
-        super(Sample, self).__init__(*args, **kwargs)
+        super(Gene, self).__init__(*args, **kwargs)
         self.mol_type = 'gene'
 
     @property
     def _constructor(self):
-        return RNA
-
-
-class Protein(Sample):
-    def __init__(self, *args, **kwargs):
-        super(Sample, self).__init__(*args, **kwargs)
-        self.mol_type = 'gene'
-
-    @property
-    def _constructor(self):
-        return Protein
+        return Gene
 
 
 class Compound(Sample):
     def __init__(self, *args, **kwargs):
-        super(Sample, self).__init__(*args, **kwargs)
+        super(Compound, self).__init__(*args, **kwargs)
         self.mol_type = 'compound_id'
 
     @property
     def _constructor(self):
         return Compound
+
+
+class Species(Sample):
+    def __init__(self, *args, **kwargs):
+        super(Species, self).__init__(*args, **kwargs)
+        self.mol_type = 'name'
+
+    @property
+    def _constructor(self):
+        return Species
 
 
 class ExperimentalData(object):
@@ -162,32 +163,62 @@ class ExperimentalData(object):
         self._data = df
         self._index = 'name'
         self.__proteins = None
+        self.__genes = None
+        self.__species = None
         self.__rna = None
         self.__compounds = None
 
     @property
-    def exp_methods(self):
-        return list(self._data[exp_method].unique())
+    def genes(self):
+        """ All data tagged with gene
 
-    @property
-    def sample_ids(self):
-        return sorted(list(self._data[sample_id].unique()))
+        Includes protein and RNA.
+
+        Returns
+        -------
+
+        """
+        if self.__genes is None:
+            tmp = self._data.copy()
+            tmp = tmp.loc[tmp[species_type] == protein]
+            tmp.dropna(subset=[gene], inplace=True)
+            self.__genes = Gene(tmp)
+        return self.__genes
 
     @property
     def proteins(self):
+        """ Protein level data
+
+        Tagged with "gene" identifier that is not RNA
+
+        Returns
+        -------
+
+        """
         if self.__proteins is None:
-            tmp = self._data[self._data[species_type] == protein].copy()
+            tmp = self._data.copy()
+            tmp = tmp.loc[(self._data[species_type] == protein) &
+                          ~(tmp[exp_method] == rna)]
+
             tmp.dropna(subset=[gene], inplace=True)
-            self.__proteins = Protein(tmp)
+            self.__proteins = Gene(tmp)
         return self.__proteins
 
     @property
     def rna(self):
+        """ RNA level data
+
+        Tagged with "RNA"
+
+        Returns
+        -------
+
+        """
         if self.__rna is None:
             tmp = self._data.copy()
             tmp = tmp.loc[tmp[exp_method] == rna]
             tmp.dropna(subset=[gene], inplace=True)
-            self.__rna = RNA(tmp)
+            self.__rna = Gene(tmp)
         return self.__rna
 
     @property
@@ -196,159 +227,40 @@ class ExperimentalData(object):
             name_index = 'compound_id'
             tmp = self._data.copy()
             tmp = tmp.loc[tmp[species_type] == metabolites]
-            if 'compound_id' not in tmp.columns.values:
-                tmp['compound_id'] = tmp['compound']
-            tmp['compound_id'] = tmp['compound_id'].astype(str)
+            if name_index not in tmp.columns.values:
+                tmp[name_index] = tmp['compound']
+            tmp[name_index] = tmp[name_index].astype(str)
             tmp.dropna(subset=[name_index], inplace=True)
+
             self.__compounds = Compound(tmp)
         return self.__compounds
 
-    def _set_up_metabolites(self):
-        """
-        sets up internal attributes of metabolites
-        Returns
-        -------
+    @property
+    def species(self):
+        if self.__species is None:
+            name_index = 'compound_id'
+            tmp = self._data.copy()
+            met = tmp.loc[tmp[species_type] == metabolites].copy()
+            if name_index not in met.columns.values:
+                met[name_index] = met['compound']
+            met[name_index] = met[name_index].astype(str)
+            met.dropna(subset=[name_index], inplace=True)
+            met['name'] = met[name_index]
 
-        """
-        self.metabolites = self[self[species_type] == metabolites]
-        self.metabolites = self.metabolites.dropna(subset=['compound'])
-        self.exp_methods_metabolite = self.metabolites[exp_method].unique()
+            genes = tmp.loc[tmp[species_type] == gene].copy()
+            genes.dropna(subset=[gene], inplace=True)
+            genes['name'] = genes[gene]
+            species = pd.concat([genes, met], sort=True, ignore_index=True)
+            self.__species = Species(species)
+        return self.__species
 
-        if 'compound_id' not in self.metabolites.columns.values:
-            self.metabolites['compound_id'] = self.metabolites['compound']
-            self['compound_id'] = self['compound']
-            self['compound_id'] = self['compound_id'].astype(str)
+    @property
+    def exp_methods(self):
+        return list(self._data[exp_method].unique())
 
-        self.metabolites.loc[:, 'compound_id'] = \
-            self.metabolites['compound_id'].astype(str)
-
-        self.metabolite_sign = self.metabolites[self.metabolites[flag]]
-        self.list_metabolites = list(self.metabolites['compound_id'].unique())
-        self.list_sig_metabolites = \
-            list(self.metabolite_sign['compound_id'].astype(str).unique())
-
-        self.metabolites_time_points = \
-            np.sort(self.metabolites[sample_id].unique())
-
-    def return_proteomics(self, sample_id_name=0.0, significant=False,
-                          fold_change_value=None):
-        """
-        Returns list of proteins species according to criteria
-
-        Parameters
-        ----------
-        sample_id_name: str or float
-            The sample_id which to filter data
-        significant: bool
-            Where you want to return significant data or not
-        fold_change_value: float
-            If you want the positive or negative fold change
-
-        Returns
-        -------
-        proteins species: list
-            List of all proteins species that are of provided criteria
-
-        """
-        if sample_id_name == 0.0:
-            sample_id_name = False
-        tmp = self.proteins.dropna(subset=[gene]).copy()
-        tmp = tmp[tmp[exp_method] != rna]
-        if significant:
-            tmp = tmp[tmp[flag]]
-        if fold_change_value is not None:
-            if fold_change_value > 0.:
-                tmp = tmp[tmp[fold_change] >= fold_change_value]
-            else:
-                tmp = tmp[tmp[fold_change] <= fold_change_value]
-        if sample_id_name:
-            return list(tmp[tmp[sample_id] == sample_id_name][gene].unique())
-        else:
-            return list(tmp[gene].unique())
-
-    def return_rna(self, sample_id_name=None, significant=False,
-                   fold_change_value=None):
-        """
-        Returns list of rna species according to criteria
-
-        Parameters
-        ----------
-        sample_id_name: str or float
-            The sample_id which to filter data
-        significant: bool
-            Where you want to return significant data or not
-        fold_change_value: float
-            If you want the positive or negative fold change
-
-        Returns
-        -------
-        rna species: list
-            List of all rna species that are of provided criteria
-
-        """
-        if sample_id_name is None:
-            sample_id_name = False
-        tmp = self.rna_seq.dropna(subset=[gene]).copy()
-        if significant:
-            tmp = tmp[tmp[flag]]
-        if fold_change_value is not None:
-            if fold_change_value > 0.:
-                tmp = tmp[tmp[fold_change] >= fold_change_value]
-            else:
-                tmp = tmp[tmp[fold_change] <= fold_change_value]
-        if sample_id_name:
-            return list(tmp[tmp[sample_id] == sample_id_name][gene].unique())
-        else:
-            return list(tmp[gene].unique())
-
-    def filter(self, sample_id_name=None, significant=False,
-               fold_change_value=None, mol_type=None):
-        """
-        Returns list of proteins species according to criteria
-
-        Parameters
-        ----------
-        sample_id_name: str or float
-            The sample_id which to filter data
-        significant: bool
-            Where you want to return significant data or not
-        fold_change_value: str
-            If you want the positive or negative fold change
-        mol_type : str
-            can be 'gene', 'metabolite', or None for both
-        Returns
-        -------
-        species list : list
-            List of all gene species that match criteria
-
-        """
-
-        tmp = self.data.copy()
-
-        if sample_id_name is not None:
-            tmp = tmp[tmp[sample_id] == sample_id_name]
-
-        if significant:
-            tmp = tmp[tmp[flag]]
-
-        # separate up and down regulated
-        if fold_change_value == 'up':
-            tmp = tmp[tmp[fold_change] >= 0]
-        elif fold_change_value == 'down':
-            tmp = tmp[tmp[fold_change] <= 0]
-
-        # extract subset of species
-        if mol_type == 'genes':
-            return list(tmp[gene].unique())
-        elif mol_type == 'metabolite':
-            return list(tmp[metabolites].unique())
-        else:
-            # checks if metabolites in data
-            if 'compound_id' not in tmp.dtypes:
-                return list(tmp[gene].unique())
-            else:
-                return list(tmp[gene].unique()) + list(
-                    tmp['compound_id'].unique())
+    @property
+    def sample_ids(self):
+        return sorted(list(self._data[sample_id].unique()))
 
     def get_measured_by_datatype(self):
         """
@@ -359,7 +271,7 @@ class ExperimentalData(object):
         dict
 
         """
-        return get_measured_by_datatype(self.data)
+        return get_measured_by_datatype(self._data)
 
     def create_table_of_data(self, sig=False, unique=False, save_name=None,
                              plot=False, write_latex=False):
@@ -387,7 +299,7 @@ class ExperimentalData(object):
         pandas.DataFrame
 
         """
-        return create_table_of_data(self.data, sig=sig, unique=unique,
+        return create_table_of_data(self._data, sig=sig, unique=unique,
                                     save_name=save_name, plot=plot,
                                     write_latex=write_latex)
 
@@ -416,7 +328,7 @@ class ExperimentalData(object):
 
         """
         plot_list_of_genes(
-            self.proteins, genes=list_of_genes,
+            self.genes, genes=list_of_genes,
             save_name=save_name,
             out_dir=out_dir, title=title, plot_type=plot_type,
             image_format=image_format
@@ -446,9 +358,9 @@ class ExperimentalData(object):
         -------
 
         """
-        if not isinstance(self.metabolites, list):
+        if self.compounds is not None:
             plot_list_of_metabolites(
-                self.metabolites, list_of_metab=list_of_metabolites,
+                self.compounds, list_of_metab=list_of_metabolites,
                 save_name=save_name, out_dir=out_dir, title=title,
                 plot_type=plot_type, image_format=image_format
             )
@@ -473,7 +385,7 @@ class ExperimentalData(object):
 
         """
 
-        plot_dataframe(self.data, html_filename=html_file_name,
+        plot_dataframe(self.proteins, html_filename=html_file_name,
                        out_dir=out_dir, plot_type=plot_type,
                        type_of_species='protein',
                        run_parallel=run_parallel)
@@ -498,7 +410,7 @@ class ExperimentalData(object):
 
         """
 
-        plot_dataframe(self.data, html_filename=html_file_name,
+        plot_dataframe(self._data, html_filename=html_file_name,
                        out_dir=out_dir, plot_type=plot_type,
                        type_of_species='metabolites',
                        run_parallel=run_parallel)
@@ -564,7 +476,7 @@ class ExperimentalData(object):
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
 
-        data = self.data[self.data[exp_method] == exp_data_type].copy()
+        data = self._data[self._data[exp_method] == exp_data_type].copy()
         n_sample = np.sort(data[sample_id].unique())
 
         if len(n_sample) > 8:
@@ -638,7 +550,7 @@ class ExperimentalData(object):
 
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
-        data = self.data[self.data[exp_method] == exp_data_type].copy()
+        data = self._data[self._data[exp_method] == exp_data_type].copy()
         fig = v_plot.volcano_plot(data, save_name=save_name, out_dir=out_dir,
                                   bh_criteria=bh_critera, p_value=p_value,
                                   fold_change_cutoff=fold_change_cutoff,
@@ -669,7 +581,7 @@ class ExperimentalData(object):
 
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
-        data = self.data[self.data[exp_method] == exp_data_type]
+        data = self._data[self._data[exp_method] == exp_data_type].copy()
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])

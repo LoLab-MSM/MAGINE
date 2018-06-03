@@ -13,15 +13,15 @@ plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
 filter_template = env.get_template('filter_table.html')
 
-range_ = {'GO_id', 'ref', 'depth', 'enrichment_score', 'rank',
+range_ = { 'ref', 'depth', 'enrichment_score', 'rank',
           'p_value', 'adj_p_value', 'combined_score', 'n_genes',
           'z_score', 'pvalue', 'treated_control_fold_change',
           'p_value_group_1_and_group_2'}
 
 chosen_ = {
-    'GO_name', 'slim', 'aspect',
+    'GO_name', 'slim', 'aspect', 'time', 'data_type',
     'term_name', 'term_id', 'category', 'db',  # enrichr
-    'significant_flag', 'project_name',
+    'significant_flag', 'project_name', 'compound', 'GO_id',
     'sample_id', 'sample_index'
 }
 multi_choose = {'genes'}
@@ -70,7 +70,7 @@ def create_yadf_filters(table):
         elif i in multi_choose:
             _format_dict.append(_add_filter(n, 'multichoose'))
         else:
-            print(i)
+            print("'{}' not found in yadf".format(i))
     return _format_dict
 
 
