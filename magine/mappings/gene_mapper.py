@@ -207,9 +207,9 @@ def _dict(data, key, value):
 
     for i, j in d.values:
         if i in return_dict:
-            return_dict[i].add(j)
+            return_dict[i].append(j)
         else:
-            return_dict[i] = {j}
+            return_dict[i] = [j]
     return return_dict
 
 
