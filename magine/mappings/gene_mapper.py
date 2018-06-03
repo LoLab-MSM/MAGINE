@@ -99,6 +99,7 @@ class GeneMapper(object):
             print('Initializing Gene mapping')
             self.load()
 
+    # @profile
     def load(self):
         hgnc_name = os.path.join(id_mapping_dir, 'hgnc.gz')
         if not os.path.exists(hgnc_name):
@@ -124,27 +125,22 @@ class GeneMapper(object):
         else:
             self.uniprot = pd.read_csv(uniprot_path, low_memory=False)
         # HGNC
-        self.gene_name_to_uniprot = self.to_dict(self.hgnc, 'symbol',
-                                                 'uniprot_ids')
-        self.gene_name_to_alias_name = self.to_dict(self.hgnc, 'symbol',
-                                                    'alias_name')
-        self.gene_name_to_ensembl = self.to_dict(self.hgnc, 'symbol',
-                                                 'ensembl_gene_id')
-        self.uniprot_to_gene_name = self.to_dict(self.hgnc, 'uniprot_ids',
-                                                 'symbol')
+        self.gene_name_to_uniprot = _dict(self.hgnc, 'symbol', 'uniprot_ids')
+        self.gene_name_to_alias_name = _dict(self.hgnc, 'symbol', 'alias_name')
+        self.gene_name_to_ensembl = _dict(self.hgnc, 'symbol',
+                                          'ensembl_gene_id')
+        self.uniprot_to_gene_name = _dict(self.hgnc, 'uniprot_ids', 'symbol')
 
         # uniprot
-        self.gene_name_to_kegg = self.to_dict(self.uniprot, 'Gene_Name',
-                                              'KEGG')
-        self.uniprot_to_kegg = self.to_dict(self.uniprot, 'uniprot', 'KEGG')
-        self.kegg_to_gene_name = self.to_dict(self.uniprot, 'KEGG',
-                                              'Gene_Name')
-        self.kegg_to_uniprot = self.to_dict(self.uniprot, 'KEGG', 'uniprot')
+        self.gene_name_to_kegg = _dict(self.uniprot, 'Gene_Name', 'KEGG')
+        self.uniprot_to_kegg = _dict(self.uniprot, 'uniprot', 'KEGG')
+        self.kegg_to_gene_name = _dict(self.uniprot, 'KEGG', 'Gene_Name')
+        self.kegg_to_uniprot = _dict(self.uniprot, 'KEGG', 'uniprot')
 
         self.protein_name_to_gene_name = None
         self.protein_name_to_uniprot = None
 
-        self.ncbi_to_symbol = self.to_dict(self.ncbi, 'GeneID', 'Symbol')
+        self.ncbi_to_symbol = _dict(self.ncbi, 'GeneID', 'Symbol')
         self.save()
 
     def save(self):
@@ -188,31 +184,36 @@ class GeneMapper(object):
                 return [row[format_name]]
         matches = sorted(set(hits[format_name].values))
         return matches
-    
-    @staticmethod
-    def to_dict(data, key, value):
-        """
-        creates a dictionary with a list of values for each key
 
-        Parameters
-        ----------
-        data : pandas.DataFrame
-        key : str
-        value : str
 
-        Returns
-        -------
+def _dict(data, key, value):
+    """
+    creates a dictionary with a list of values for each key
 
-        """
-        return_dict = {}
-        for k, v in data.groupby(key)[value]:
-            return_dict[k] = list(set(v))
-            if None in return_dict[k]:
-                return_dict[k].remove(None)
-        return return_dict
+    Parameters
+    ----------
+    data : pandas.DataFrame
+    key : str
+    value : str
+
+    Returns
+    -------
+
+    """
+    return_dict = {}
+
+    d = data[[key, value]].copy()
+    d.dropna(how='any', inplace=True)
+
+    for i, j in d.values:
+        if i in return_dict:
+            return_dict[i].add(j)
+        else:
+            return_dict[i] = {j}
+    return return_dict
 
 
 if __name__ == '__main__':
     gm = GeneMapper()
-    # gm.load()
+    gm.load()
     # print(gm.ncbi_to_symbol)
