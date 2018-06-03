@@ -18,7 +18,7 @@ try:
 except ImportError:
     import pickle
 
-@profile
+
 def build_network(gene_list, species='hsa', save_name=None,
                   all_measured_list=None, metabolite_list=None,
                   use_reactome=True, use_hmdb=False, use_biogrid=True,
