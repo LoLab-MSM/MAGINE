@@ -12,6 +12,12 @@ from bioservices import HGNC, KEGG, UniChem, UniProt
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
 
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
+
 kegg = KEGG()
 uniprot = UniProt()
 hugo = HGNC()
@@ -236,7 +242,7 @@ def create_compound_dictionary(network):
                     chem_names = '|'.join(chem_names)
                     network.node[i]['chemName'] = chem_names
 
-                elif isinstance(mapping, (str, unicode)):
+                elif isinstance(mapping, basestring):
                     cpd_to_hmdb[i] = mapping
                     chem_n = cm.hmdb_to_chem_name[mapping]
                     network.node[i]['chemName'] = chem_n.encode('ascii',

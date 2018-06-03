@@ -262,8 +262,8 @@ def tidy_split(df, column, sep='|', keep=False):
 
 if __name__ == "__main__":
     cm = ChemicalMapper()
+    cm.load()
     cm._to_dict('drugbank_id', 'main_accession')
     # print(list(cm.hmdb_to_protein)[:10])
     # print(cm.hmdb_to_protein['HMDB00005'])
     print(cm.check_synonym_dict(term='dodecene', format_name='main_accession'))
-SortedSet
