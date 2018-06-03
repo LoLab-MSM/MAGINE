@@ -48,7 +48,7 @@ def get_dna_damage_drugs():
 
     terms, gene_sets = [], []
 
-    for t in data.to_dict('records'):
+    for t in data._dict('records'):
         terms.append(t['term'].split(' ')[0])
         gene_sets.append(t['gene_list'])
 
@@ -62,7 +62,7 @@ def run_gse_6907():
 
     terms, gene_sets = [], []
 
-    for t in data.to_dict('records'):
+    for t in data._dict('records'):
         terms.append(t['term'].split(' ')[0])
         gene_sets.append(t['gene_list'])
 

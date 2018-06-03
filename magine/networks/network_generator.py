@@ -241,7 +241,7 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
     start_nodes = set(graph.nodes())
     start_edges = set(graph.edges())
     metabolite_set = set(i for i in metabolite_list if i.startswith('HMDB'))
-    metabolite_set = metabolite_set.intersection(cm.hmdb_accession_to_protein)
+    metabolite_set = metabolite_set.intersection(cm.hmdb_to_protein)
     missing_metabolites = metabolite_set.difference(start_nodes)
     count_in_network, count_not_in_network = 0, 0
     missing_edge = 0
@@ -256,8 +256,8 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
             attrs['databaseSource'] = 'HMDB'
             attrs['speciesType'] = node_type
             if node_type == 'compound':
-                if node in cm.hmdb_accession_to_chemical_name:
-                    name = cm.hmdb_accession_to_chemical_name[node]
+                if node in cm.hmdb_to_chem_name:
+                    name = cm.hmdb_to_chem_name[node]
                     attrs['chemName'] = name
 
             tmp_graph.add_node(node, **attrs)
@@ -270,7 +270,7 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
                                )
 
     for i in metabolite_set:
-        tmp_list = cm.hmdb_accession_to_protein[i]
+        tmp_list = cm.hmdb_to_protein[i]
         if tmp_list is None or len(tmp_list) == 0:
             # No information to add so skip
             continue
@@ -359,8 +359,8 @@ def create_hmdb_network():
             attrs['databaseSource'] = 'HMDB'
             attrs['speciesType'] = node_type
             if node_type == 'compound':
-                if node in cm.hmdb_accession_to_chemical_name:
-                    name = cm.hmdb_accession_to_chemical_name[node]
+                if node in cm.hmdb_to_chem_name:
+                    name = cm.hmdb_to_chem_name[node]
                     attrs['chemName'] = name
 
             tmp_graph.add_node(node, **attrs)
@@ -372,7 +372,7 @@ def create_hmdb_network():
                                databaseSource='HMDB'
                                )
 
-    for compound, genes in cm.hmdb_main_accession_to_protein.items():
+    for compound, genes in cm.hmdb_main_to_protein.items():
         _add_node(compound, 'compound')
         for ge in genes:
             _add_node(ge, 'gene')

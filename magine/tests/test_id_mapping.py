@@ -24,7 +24,7 @@ class TestChemicalMapper(object):
                     'MOGAT2', 'PNPLA4', 'SLC27A1', 'DGAT2', 'MOGAT1',
                     'MOGAT3', 'PLB1', 'APOA5']
 
-        for protein in self.cm.hmdb_accession_to_protein[item]:
+        for protein in self.cm.hmdb_to_protein[item]:
             assert protein in hit_list
 
 

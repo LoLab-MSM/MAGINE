@@ -208,9 +208,9 @@ def create_compound_dictionary(network):
             network.node[i]['keggName'] = i
             if i in compound_manual:
                 loc = compound_manual[i]
-                if loc in cm.hmdb_accession_to_chemical_name:
+                if loc in cm.hmdb_to_chem_name:
 
-                    chem_names = set(cm.hmdb_accession_to_chemical_name[loc])
+                    chem_names = set(cm.hmdb_to_chem_name[loc])
                     chem_names = '|'.join(chem_names)
                     network.node[i]['chemName'] = chem_names
                     continue
@@ -223,22 +223,22 @@ def create_compound_dictionary(network):
                         network.node[i]['chemName'] = i.lstrip('cpd:')
 
             name_stripped = i.lstrip('cpd:')
-            if name_stripped in cm.kegg_to_hmdb_accession:
-                mapping = cm.kegg_to_hmdb_accession[name_stripped]
+            if name_stripped in cm.kegg_to_hmdb:
+                mapping = cm.kegg_to_hmdb[name_stripped]
                 if isinstance(mapping, list):
                     names = '|'.join(set(mapping))
                     cpd_to_hmdb[i] = names
                     network.node[i]['hmdbNames'] = names
                     chem_names = set()
                     for name in mapping:
-                        if name in cm.hmdb_accession_to_chemical_name:
-                            chem_names.update(set(cm.hmdb_accession_to_chemical_name[name]))
+                        if name in cm.hmdb_to_chem_name:
+                            chem_names.update(set(cm.hmdb_to_chem_name[name]))
                     chem_names = '|'.join(chem_names)
                     network.node[i]['chemName'] = chem_names
 
                 elif isinstance(mapping, (str, unicode)):
                     cpd_to_hmdb[i] = mapping
-                    chem_n = cm.hmdb_accession_to_chemical_name[mapping]
+                    chem_n = cm.hmdb_to_chem_name[mapping]
                     network.node[i]['chemName'] = chem_n.encode('ascii',
                                                                 'ignore')
                 else:

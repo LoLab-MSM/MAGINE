@@ -3,6 +3,7 @@ import itertools
 import os
 
 import pandas as pd
+from sortedcontainers import SortedSet, SortedDict
 
 from magine.data.storage import id_mapping_dir
 
@@ -20,11 +21,11 @@ class ChemicalMapper(object):
 
     Attributes
     ----------
-    hmdb_accession_to_chemical_name : dict
-    chemical_name_to_hmdb_accession : dict
-    hmdb_accession_to_kegg : dict
-    kegg_to_hmdb_accession : dict
-    hmdb_accession_to_protein : dict
+    hmdb_to_chem_name : dict
+    chem_name_to_hmdb : dict
+    hmdb_to_kegg : dict
+    kegg_to_hmdb : dict
+    hmdb_to_protein : dict
     synonyms_to_hmdb : dict
 
     """
@@ -40,14 +41,14 @@ class ChemicalMapper(object):
     def __init__(self):
 
         self.database = None
-        self.hmdb_accession_to_chemical_name = dict()
-        self.chemical_name_to_hmdb_accession = dict()
-        self.hmdb_accession_to_kegg = dict()
-        self.kegg_to_hmdb_accession = dict()
+        self.hmdb_to_chem_name = dict()
+        self.chem_name_to_hmdb = dict()
+        self.hmdb_to_kegg = dict()
+        self.kegg_to_hmdb = dict()
         self.synonyms_to_hmdb = dict()
         self.drugbank_to_hmdb = dict()
-        self.hmdb_accession_to_protein = dict()
-        self.hmdb_main_accession_to_protein = dict()
+        self.hmdb_to_protein = dict()
+        self.hmdb_main_to_protein = dict()
 
         self._instance_filename = os.path.join(id_mapping_dir,
                                                'hmdb_instance.p.gz')
@@ -85,19 +86,16 @@ class ChemicalMapper(object):
         new_df['accession'] = new_df['secondary_accessions']
         self.database = pd.concat([self.database, new_df])
 
-        self.hmdb_accession_to_chemical_name = self._to_dict("accession",
-                                                             "name")
-        self.chemical_name_to_hmdb_accession = self._to_dict("name",
-                                                             "main_accession")
-        self.hmdb_accession_to_kegg = self._to_dict("accession", "kegg_id")
+        self.hmdb_to_chem_name = self._to_dict("accession", "name")
+        self.chem_name_to_hmdb = self._to_dict("name", "main_accession")
+        self.hmdb_to_kegg = self._to_dict("accession", "kegg_id")
 
-        self.kegg_to_hmdb_accession = self._to_dict("kegg_id",
-                                                    "main_accession")
-        self.hmdb_accession_to_protein = self._from_list_dict("accession",
-                                                       "protein_associations")
+        self.kegg_to_hmdb = self._to_dict("kegg_id", "main_accession")
+        self.hmdb_to_protein = self._from_list_dict("accession",
+                                                    "protein_associations")
 
-        self.hmdb_main_accession_to_protein = \
-            self._from_list_dict("main_accession", "protein_associations")
+        self.hmdb_main_to_protein = self._from_list_dict(
+            "main_accession", "protein_associations")
 
         self.drugbank_to_hmdb = self._to_dict('drugbank_id', 'main_accession')
         self.synonyms_to_hmdb = None
@@ -117,7 +115,15 @@ class ChemicalMapper(object):
         dict
 
         """
-        return {k: sorted(set(list(v))) for k, v in self.database.groupby(key)[value]}
+        d = self.database[[key, value]].copy()
+        d.dropna(how='any', inplace=True)
+        return_dict = SortedDict()
+        for i, j in d.values:
+            if i in return_dict:
+                return_dict[i].add(j)
+            else:
+                return_dict[i] = SortedSet([j])
+        return return_dict
 
     def _from_list_dict(self, key, value):
         return {k: sorted(set(list(itertools.chain.from_iterable(v.tolist()))))
@@ -185,9 +191,9 @@ class ChemicalMapper(object):
         print('Number of HMDB accessions = {0}'.format(
             len(self.database['accession'].unique())))
         print('Number of unique KEGG ids = {0}'.format(
-            len(self.hmdb_accession_to_kegg.keys())))
+            len(self.hmdb_to_kegg.keys())))
         print('Number of HMDB to KEGG mappings = {0}'.format(
-            len(self.kegg_to_hmdb_accession.values())))
+            len(self.kegg_to_hmdb.values())))
 
     def save(self):
         """ save class instance
@@ -256,6 +262,8 @@ def tidy_split(df, column, sep='|', keep=False):
 
 if __name__ == "__main__":
     cm = ChemicalMapper()
-    # print(list(cm.hmdb_accession_to_protein)[:10])
-    # print(cm.hmdb_accession_to_protein['HMDB00005'])
+    cm._to_dict('drugbank_id', 'main_accession')
+    # print(list(cm.hmdb_to_protein)[:10])
+    # print(cm.hmdb_to_protein['HMDB00005'])
     print(cm.check_synonym_dict(term='dodecene', format_name='main_accession'))
+SortedSet
