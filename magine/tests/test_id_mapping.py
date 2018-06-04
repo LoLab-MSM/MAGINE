@@ -77,7 +77,7 @@ def test_kegg_to_uniprot():
     g.add_node('hsa:857')
     dic, found_all = gm.convert_kegg_nodes(g, species='hsa')
     g = nx.relabel_nodes(g, dic)
-    assert (g.node['ALDH3A2']['keggName'] == 'hsa224')
+    assert (g.node['ALDH3A2']['keggName'] == '224')
 
 
 if __name__ == '__main__':

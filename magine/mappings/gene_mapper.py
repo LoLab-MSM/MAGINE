@@ -204,7 +204,7 @@ class GeneMapper(object):
         hits = [i for i in nodes if i.startswith(species)]
         # check stores dictionaries
         for gene in hits:
-            name_stripped = gene.replace(':', '')
+            name_stripped = gene.lstrip(species + ':')
             network.node[gene]['keggName'] = name_stripped
             if gene in manual_dict:
                 kegg_to_gene_name[gene] = manual_dict[gene]
@@ -223,7 +223,7 @@ class GeneMapper(object):
                 if isinstance(new, float):
                     unknown_genes.add(gene)
                     continue
-                kegg_to_gene_name[gene] = basestring(new)
+                kegg_to_gene_name[gene] = new
             else:
                 unknown_genes.add(gene)
         if len(unknown_genes) == 0:
@@ -239,7 +239,6 @@ class GeneMapper(object):
         for i in unknown_genes:
             if i in uni_dict:
                 for n in uni_dict[i]:
-                    # print(i, uni_dict[i], n)
                     x = uniprot.search("accession:{}".format(n),
                                        columns='genes(PREFERRED),reviewed,id',
                                        limit=1)

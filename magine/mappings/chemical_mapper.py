@@ -1,5 +1,3 @@
-import gzip
-import itertools
 import os
 
 import pandas as pd
@@ -22,19 +20,9 @@ chem = UniChem()
 
 
 class ChemicalMapper(object):
-    """
-    converts chemical species ids
+    """ Convert chemical species across various ids.
+
     Database was creating using HMDB
-
-
-    Attributes
-    ----------
-    hmdb_to_chem_name : dict
-    chem_name_to_hmdb : dict
-    hmdb_to_kegg : dict
-    kegg_to_hmdb : dict
-    hmdb_to_protein : dict
-    synonyms_to_hmdb : dict
 
     """
 
@@ -49,44 +37,21 @@ class ChemicalMapper(object):
     def __init__(self):
 
         self.database = None
-        self.hmdb_to_chem_name = dict()
-        self.chem_name_to_hmdb = dict()
-        self.hmdb_to_kegg = dict()
-        self.kegg_to_hmdb = dict()
-        self.synonyms_to_hmdb = dict()
-        self.drugbank_to_hmdb = dict()
-        self.hmdb_to_protein = dict()
-        self.hmdb_main_to_protein = dict()
+        self._hmdb_to_chem_name = None
+        self._chem_name_to_hmdb = None
+        self._hmdb_to_kegg = None
+        self._kegg_to_hmdb = None
+        self.synonyms_to_hmdb = None
+        self._drugbank_to_hmdb = None
+        self._hmdb_to_protein = None
+        self._hmdb_main_to_protein = None
 
-        self._instance_filename = os.path.join(id_mapping_dir,
-                                               'hmdb_instance.p.gz')
-
-        try:
-            self.reload()
-            print('Loading class data')
-        except:
-            print('Initializing Chemical mapping')
-            self.load()
-
-    def load(self):
-
-        _filename = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
-
-        if not os.path.exists(_filename):
+        _file = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
+        if not os.path.exists(_file):
             from magine.mappings.databases.download_libraries import HMDB
             HMDB()
-        hmdb_database = pd.read_csv(
-            _filename, low_memory=False, encoding='utf-8',
-            converters={
-                "protein_associations": lambda x: x.split("|"),
-                "cellular_locations": lambda x: x.split("|"),
-                "biofunction": lambda x: x.split("|"),
-                "synonyms": lambda x: x.split("|"),
-                # "secondary_accessions": lambda x: x.split("|"),
-            }
-        )
+        hmdb_database = pd.read_csv(_file, low_memory=False, encoding='utf-8')
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
-
         self.database['main_accession'] = self.database['accession']
         sub_db = self.database[
             self.database['secondary_accessions'].str.contains('|', na=False)]
@@ -94,21 +59,52 @@ class ChemicalMapper(object):
         new_df['accession'] = new_df['secondary_accessions']
         self.database = pd.concat([self.database, new_df])
 
-        self.hmdb_to_chem_name = self._to_dict("accession", "name")
-        self.chem_name_to_hmdb = self._to_dict("name", "main_accession")
-        self.hmdb_to_kegg = self._to_dict("accession", "kegg_id")
+    @property
+    def kegg_to_hmdb(self):
+        if self._kegg_to_hmdb is None:
+            self._kegg_to_hmdb = self._to_dict("kegg_id", "main_accession")
+        return self._kegg_to_hmdb
 
-        self.kegg_to_hmdb = self._to_dict("kegg_id", "main_accession")
-        self.hmdb_to_protein = self._from_list_dict("accession",
-                                                    "protein_associations")
+    @property
+    def hmdb_to_chem_name(self):
+        if self._hmdb_to_chem_name is None:
+            self._hmdb_to_chem_name = self._to_dict("accession", "name")
+        return self._hmdb_to_chem_name
 
-        self.hmdb_main_to_protein = self._from_list_dict(
-            "main_accession", "protein_associations")
+    @property
+    def hmdb_to_kegg(self):
+        if self._hmdb_to_kegg is None:
+            self._hmdb_to_kegg = self._to_dict("accession", "kegg_id")
+        return self._hmdb_to_kegg
 
-        self.drugbank_to_hmdb = self._to_dict('drugbank_id', 'main_accession')
-        self.synonyms_to_hmdb = None
+    @property
+    def chem_name_to_hmdb(self):
+        if self._chem_name_to_hmdb is None:
+            self._chem_name_to_hmdb = self._to_dict("name", "main_accession")
+        return self._chem_name_to_hmdb
 
-        self.save()
+    @property
+    def drugbank_to_hmdb(self):
+        if self._drugbank_to_hmdb is None:
+            self._drugbank_to_hmdb = self._to_dict("drugbank_id",
+                                                   "main_accession")
+        return self._drugbank_to_hmdb
+
+    @property
+    def hmdb_to_protein(self):
+        if self._hmdb_to_protein is None:
+            self._hmdb_to_protein = self._from_list_dict(
+                "accession", "protein_associations"
+            )
+        return self._hmdb_to_protein
+
+    @property
+    def hmdb_main_to_protein(self):
+        if self._hmdb_main_to_protein is None:
+            self._hmdb_main_to_protein = self._from_list_dict(
+                "main_accession", "protein_associations"
+            )
+        return self._hmdb_main_to_protein
 
     def _to_dict(self, key, value):
         """ creates a dictionary with a list of values for each key
@@ -134,32 +130,15 @@ class ChemicalMapper(object):
         return return_dict
 
     def _from_list_dict(self, key, value):
-        return {k: sorted(set(list(itertools.chain.from_iterable(v.tolist()))))
-                for k, v in self.database.groupby(key)[value]}
-
-    def convert_to_dict_from_list(self, key, value):
-        """ creates a dictionary from hmdb with a list of values for each key
-
-        Parameters
-        ----------
-        key : str
-        value : str
-
-        Returns
-        -------
-        dict
-
-        """
-
-        tmp_dict = {}
-        for k, v in self.database.groupby(key)[value]:
-            v = v.tolist()[0]
-            if isinstance(v, list):
-                if len(v) > 0:
-                    if v[0] is not None:
-                        tmp_dict[k] = v
-
-        return tmp_dict
+        d = self.database[[key, value]].copy()
+        d.dropna(how='any', inplace=True)
+        return_dict = SortedDict()
+        for i, j in d.values:
+            if i in return_dict:
+                return_dict[i].update(j.split('|'))
+            else:
+                return_dict[i] = SortedSet(j.split('|'))
+        return return_dict
 
     def check_synonym_dict(self, term, format_name):
         """ checks hmdb database for synonyms and returns formatted name
@@ -182,7 +161,7 @@ class ChemicalMapper(object):
 
         """
         synonyms = self.database[['synonyms', format_name]].copy()
-        synonyms['synonyms'] = synonyms['synonyms'].apply(','.join)
+        synonyms.dropna(how='any', inplace=True)
         synonyms['synonyms'] = synonyms['synonyms'].str.lower()
 
         hits = synonyms[synonyms['synonyms'].str.contains(term.lower())]
@@ -202,33 +181,6 @@ class ChemicalMapper(object):
             len(self.hmdb_to_kegg.keys())))
         print('Number of HMDB to KEGG mappings = {0}'.format(
             len(self.kegg_to_hmdb.values())))
-
-    def save(self):
-        """ save class instance
-
-        Returns
-        -------
-
-        """
-        print('Saving class data')
-        with gzip.open(self._instance_filename, 'wb') as f:
-            f.write(pickle.dumps(self.__dict__, protocol=0))
-
-    def reload(self):
-        """ loads class instance
-
-        Returns
-        -------
-
-        """
-        try:
-            with gzip.open(self._instance_filename, 'rb') as f:
-                data = f.read()
-            self.__dict__ = pickle.loads(data)
-        except:
-            with gzip.open(self._instance_filename, 'rb') as f:
-                data = f.read()
-            self.__dict__ = pickle.loads(data, encoding='latin1')
 
     def convert_kegg_nodes(self, network):
         """
@@ -354,8 +306,4 @@ def tidy_split(df, column, sep='|', keep=False):
 
 if __name__ == "__main__":
     cm = ChemicalMapper()
-    cm.load()
-    cm._to_dict('drugbank_id', 'main_accession')
-    # print(list(cm.hmdb_to_protein)[:10])
-    # print(cm.hmdb_to_protein['HMDB00005'])
     print(cm.check_synonym_dict(term='dodecene', format_name='main_accession'))
