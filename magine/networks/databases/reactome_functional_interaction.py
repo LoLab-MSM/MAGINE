@@ -125,7 +125,7 @@ def download_reactome_functional_interaction():
     table.loc[rev_cols, ['source', 'target']] = \
         table.loc[rev_cols, ['target', 'source']].values
 
-    protein_graph = nx.from_pandas_dataframe(
+    protein_graph = nx.from_pandas_edgelist(
         table,
         'source',
         'target',
@@ -150,6 +150,7 @@ def download_reactome_functional_interaction():
           "".format(len(protein_graph.nodes()), len(protein_graph.edges())))
 
     nx.write_gpickle(protein_graph, _p_name)
+
 
 _reverse = {"<-", "|-"}
 _forward = {"->", "->"}

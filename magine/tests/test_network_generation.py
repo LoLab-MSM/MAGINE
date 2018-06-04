@@ -9,8 +9,8 @@ def test_expand_by_hmdb():
     new_g = ng.expand_by_hmdb(graph=g,
                               metabolite_list=['HMDB42489', 'HMDB59874']
                               )
-    assert len(new_g.nodes()) == 3
-    assert len(new_g.edges()) == 3
+    assert len(new_g.nodes) == 3
+    assert len(new_g.edges) == 3
 
 
 def test_build_network():
