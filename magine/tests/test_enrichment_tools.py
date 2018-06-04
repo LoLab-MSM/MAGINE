@@ -1,6 +1,7 @@
 import os
 
 import matplotlib.figure
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import magine.enrichment.enrichment_result as et
@@ -64,9 +65,11 @@ class TestEnrichmentResult(object):
         dist = self.data.dist_matrix()
 
         assert isinstance(dist, matplotlib.figure.Figure)
+        plt.close()
 
         dist = self.data.dist_matrix(fig_size=(3, 3), level='each')
         assert isinstance(dist, matplotlib.figure.Figure)
+        plt.close()
 
     def test_find_similar_terms(self):
         sim = self.data.find_similar_terms('apoptotic process')

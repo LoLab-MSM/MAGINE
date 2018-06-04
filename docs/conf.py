@@ -84,7 +84,7 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'scipy.sparse', 'scipy.linalg', 'seaborn',
                 'seaborn.color_palette', 'seaborn.color_palette',
 
-                'python-igraph', 'igraph', 'py2cytoscape',
+                'python-igraph', 'igraph', 'py2cytoscape', 'pydotplus',
 
                 'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
                 'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',

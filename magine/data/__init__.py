@@ -15,8 +15,8 @@ class Data(pd.DataFrame):
     def _constructor(self):
         return Data
 
-    def pivoter(self, convert_to_log, columns, values, fill_value=None,
-                min_sig=0):
+    def pivoter(self, convert_to_log, columns, values, index=None,
+                fill_value=None, min_sig=0):
         """
 
         Parameters
@@ -38,6 +38,9 @@ class Data(pd.DataFrame):
 
         """
         d_copy = self.copy()
+        if index is None:
+            index = self._index
+
         if convert_to_log:
             d_copy = log2_normalize_df(d_copy, values)
 
@@ -48,10 +51,11 @@ class Data(pd.DataFrame):
                       'please add a column of signficant terms with '
                       'a tag of "significant"')
 
-            d_copy = self.filter_by_minimum_sig_columns(columns=columns,
+            d_copy = self.filter_by_minimum_sig_columns(index=index,
+                                                        columns=columns,
                                                         min_terms=min_sig)
 
-        array = pd.pivot_table(d_copy, index=self._index,
+        array = pd.pivot_table(d_copy, index=index,
                                fill_value=fill_value, columns=columns,
                                values=values)
 
@@ -63,7 +67,9 @@ class Data(pd.DataFrame):
                               ascending=False, inplace=True)
         return array
 
-    def filter_by_minimum_sig_columns(self, columns, min_terms=3):
+    def filter_by_minimum_sig_columns(self, columns, index=None, min_terms=3):
+        if index is None:
+            index = self._index
         # create safe copy of array
         tmp_array = self.copy()
 
@@ -73,7 +79,7 @@ class Data(pd.DataFrame):
         assert 'significant_flag' in tmp_array, 'Requires significant_flag column'
         # pivot
         sig = pd.pivot_table(tmp_array,
-                             index=self._index,
+                             index=index,
                              fill_value=0,
                              values='significant_flag',
                              columns=columns
@@ -82,11 +88,11 @@ class Data(pd.DataFrame):
         # convert everything thats not 0 to 1
         sig[sig > 0] = 1
         sig = sig[sig.T.sum() >= min_terms]
-        if isinstance(self._index, list):
+        if isinstance(index, list):
             keepers = {i[0] for i in sig.index.values}
-            return tmp_array[tmp_array[self._index[0]].isin(keepers)].copy()
-        elif isinstance(self._index, str):
+            return tmp_array[tmp_array[index[0]].isin(keepers)].copy()
+        elif isinstance(index, str):
             keepers = {i for i in sig.index.values}
-            return tmp_array[tmp_array[self._index].isin(keepers)].copy()
+            return tmp_array[tmp_array[index].isin(keepers)].copy()
         else:
             print("Index is not a str or a list. What is it?")
