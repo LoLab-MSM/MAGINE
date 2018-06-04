@@ -360,8 +360,6 @@ class EnrichmentResult(Data):
 
         return scores
 
-
-
     @staticmethod
     def jaccard_index(first_set, second_set):
         """

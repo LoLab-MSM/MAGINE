@@ -196,7 +196,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
                    plot_type='plotly', type_of_species='protein',
                    run_parallel=False):
     """
-    Creates a plot of all proteins
+    Creates
 
     Parameters
     ----------
@@ -214,7 +214,6 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     -------
 
     """
-
     if not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
@@ -235,26 +234,24 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     species_to_plot = local_data[idx_key].unique()
 
     print("Plotting {} {}".format(len(species_to_plot), type_of_species))
-    figure_locations = {}
-    list_of_plots = []
+    fig_loc = {}
+    plots = []
 
     suffix = 'html' if plot_type == 'plotly' else 'pdf'
 
     for i in species_to_plot:
         save_name = re.sub('[/_.]', '', i)
-        list_of_plots.append(
-            (
-            local_data, [i], type_of_species, save_name, out_dir, i, plot_type)
-        )
-        figure_locations[i] = '<a href="{0}/{1}.{2}">{1}</a>'.format(out_dir,
-                                                                     save_name,
-                                                                     suffix)
 
-    _make_plots(list_of_plots, plot_func, run_parallel)
+        plots.append((local_data, [i], type_of_species, save_name, out_dir, i, plot_type))
+
+        n = '<a href="{0}/{1}.{2}">{1}</a>'.format(out_dir, save_name, suffix)
+        fig_loc[i] = n
+
+    _make_plots(plots, plot_func, run_parallel)
 
     # Place a link to the species for each key
-    for i in figure_locations:
-        local_data.loc[exp_data[idx_key] == i, idx_key] = figure_locations[i]
+    for key, value in fig_loc.items():
+        local_data.loc[exp_data[idx_key] == key, idx_key] = value
 
     if type_of_species == 'protein':
         cols = ['gene', 'treated_control_fold_change', 'protein',
@@ -288,7 +285,7 @@ def _make_plots(plots_to_make, plot_func, parallel=False):
 
     else:
         st1 = time.time()
-        map(plot_func, plots_to_make)
+        list(map(plot_func, plots_to_make))
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
 
@@ -390,18 +387,18 @@ def plot_list_of_metabolites(dataframe, list_of_metab=None,
         # create plotly plot
         elif plot_type == 'plotly':
             c = next(colors)[1]
-            plotly_list.append(_create_ploty_graph(x_index, y, name, name, c))
+            plotly_list.append(_ploty_graph(x_index, y, name, name, c))
             if len(s_flag) != 0:
                 index_counter += 1
                 total_counter += 1
-                plotly_list.append(_create_ploty_graph(x_index[s_flag],
-                                                       y[s_flag], name, name,
-                                                       c, marker='x-open-dot'))
+                plotly_list.append(_ploty_graph(x_index[s_flag],
+                                                y[s_flag], name, name,
+                                                c, marker='x-open-dot'))
         names_list.append([name, index_counter])
 
     if plot_type == 'matplotlib':
-        _save_matplotlib_output(ax, save_name, out_dir, image_format,
-                                x_point_dict, x_points)
+        _save_mpl_output(ax, save_name, out_dir, image_format,
+                         x_point_dict, x_points)
 
     elif plot_type == 'plotly':
 
@@ -436,7 +433,6 @@ def plot_list_of_genes(df, genes=None, save_name='test',
     -------
 
     """
-
     if genes is None:
         df, genes, species_type, save_name, out_dir, title, plot_type = df
 
@@ -473,12 +469,11 @@ def plot_list_of_genes(df, genes=None, save_name='test',
 
     colors = enumerate(color_list)
 
-    plotly_list = []
+    plotly = []
     names_list = []
     total_counter = 0
     group = ldf.groupby(gene_index)
-    for i, j in group:
-        name = i
+    for name, j in group:
         group2 = j.groupby(protein)
         index_counter = 0
         for n, m in group2:
@@ -511,28 +506,26 @@ def plot_list_of_genes(df, genes=None, save_name='test',
             # create plotly plot
             elif plot_type == 'plotly':
                 c = next(colors)[1]
-                plotly_list.append(_create_ploty_graph(x_index, y, n, n, c))
+                plotly.append(_ploty_graph(x_index, y, n, n, c))
                 if len(s_flag) != 0:
                     index_counter += 1
                     total_counter += 1
-                    plotly_list.append(_create_ploty_graph(x_index[s_flag],
-                                                           y[s_flag], n, n,
-                                                           c,
-                                                           marker='x-open-dot'))
+                    plotly.append(_ploty_graph(x_index[s_flag], y[s_flag],
+                                                    n, n, c,
+                                                    marker='x-open-dot'))
         names_list.append([name, index_counter])
 
     if plot_type == 'matplotlib':
-        _save_matplotlib_output(ax, save_name, out_dir, image_format,
-                                x_point_dict, x_points)
+        _save_mpl_output(ax, save_name, out_dir, image_format, x_point_dict,
+                         x_points)
 
     elif plot_type == 'plotly':
         _save_ploty_output(out_dir, save_name, total_counter, n_plots,
-                           names_list, x_point_dict, title, x_points,
-                           plotly_list)
+                           names_list, x_point_dict, title, x_points, plotly)
 
 
-def _save_matplotlib_output(ax, save_name, out_dir, image_format, x_point_dict,
-                            x_points, ):
+def _save_mpl_output(ax, save_name, out_dir, image_format, x_point_dict,
+                     x_points, ):
     ax.set_xlim(min(x_point_dict.values()) - 2, max(x_point_dict.values()) + 2)
     ax.set_xticks(sorted(x_point_dict.values()))
     ax.set_xticklabels(x_points, rotation=90)
@@ -603,7 +596,7 @@ def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
     ht.format_ploty(x, tmp_savename)
 
 
-def _create_ploty_graph(x, y, label, enum, color, marker='circle'):
+def _ploty_graph(x, y, label, enum, color, marker='circle'):
     """
     Creates a single scatter plot
     Parameters
