@@ -6,9 +6,9 @@ import magine.networks.utils
 from magine.networks.exporters import nx_to_igraph
 
 
-def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
-                         positions=None, cluster=False, node_size=50,
-                         bbox=None, margin=None):
+def render_igraph(mol_net, save_name=None, layout='auto', title=None,
+                  positions=None, cluster=False, node_size=50,
+                  bbox=None, margin=None):
     """
 
     Parameters
@@ -43,12 +43,14 @@ def create_igraph_figure(mol_net, save_name=None, layout='auto', title=None,
         print("No igraph, cannot use plotting function")
         return
     g = nx_to_igraph(mol_net)
+    if not isinstance(g, igraph.Graph):
+        print("Error converting to Igraph")
+        return
     if bbox is None:
         bbox = [2400, 2400]
     if margin is None:
         margin = [50, 50, 50, 50]
-    if not isinstance(g, igraph.Graph):
-        return
+
     _valid_layouts = {
         "kk", "drl", "lgl", "tree", "graphopt", "mds", "sugiyama", "auto"
     }
@@ -197,13 +199,13 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
             tmp_graph, i, 'color', color_list[n], 'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
-        result, pos = create_igraph_figure(graph2, s_name, positions=pos,
-                                           node_size=50,
-                                           bbox=[fig_width, fig_height],
-                                           margin=[100, 100, 100, 100],
-                                           cluster=cluster, title=labels[n],
-                                           layout=layout,
-                                           )
+        result, pos = render_igraph(graph2, s_name, positions=pos,
+                                    node_size=50,
+                                    bbox=[fig_width, fig_height],
+                                    margin=[100, 100, 100, 100],
+                                    cluster=cluster, title=labels[n],
+                                    layout=layout,
+                                    )
 
         # display(Image(s_name))
         string += ' ' + s_name
