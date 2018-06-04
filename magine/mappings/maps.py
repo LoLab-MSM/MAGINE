@@ -8,9 +8,9 @@ except:
     import pickle as pickle
 import networkx as nx
 from bioservices import HGNC, KEGG, UniChem, UniProt
+from sortedcontainers import SortedSet
 
-from magine.mappings.chemical_mapper import ChemicalMapper
-from magine.mappings.gene_mapper import GeneMapper
+
 
 try:
     basestring
@@ -82,7 +82,7 @@ def create_gene_dictionaries(network, species='hsa'):
     -------
 
     """
-
+    from magine.mappings.gene_mapper import GeneMapper
     gm = GeneMapper(species)
     # first we will check the pre-created dictionaries
 
@@ -205,19 +205,19 @@ def create_compound_dictionary(network):
     dict
     
     """
+    from magine.mappings.chemical_mapper import ChemicalMapper
     cm = ChemicalMapper()
     cpd_to_hmdb = {}  # he
     still_unknown = []
     nodes = set(network.nodes())
     for i in nodes:
         if i.startswith('cpd:'):
-            network.node[i]['keggName'] = i
+            name_stripped = i.lstrip('cpd:')
+            network.node[i]['keggName'] = name_stripped
             if i in compound_manual:
                 loc = compound_manual[i]
                 if loc in cm.hmdb_to_chem_name:
-
-                    chem_names = set(cm.hmdb_to_chem_name[loc])
-                    chem_names = '|'.join(chem_names)
+                    chem_names = '|'.join(set(cm.hmdb_to_chem_name[loc]))
                     network.node[i]['chemName'] = chem_names
                     continue
                 else:
@@ -226,12 +226,11 @@ def create_compound_dictionary(network):
                             i]
                     else:
                         print("Need to add common name for {}".format(i))
-                        network.node[i]['chemName'] = i.lstrip('cpd:')
+                        network.node[i]['chemName'] = name_stripped
 
-            name_stripped = i.lstrip('cpd:')
             if name_stripped in cm.kegg_to_hmdb:
                 mapping = cm.kegg_to_hmdb[name_stripped]
-                if isinstance(mapping, list):
+                if isinstance(mapping, (list, SortedSet)):
                     names = '|'.join(set(mapping))
                     cpd_to_hmdb[i] = names
                     network.node[i]['hmdbNames'] = names
@@ -239,8 +238,7 @@ def create_compound_dictionary(network):
                     for name in mapping:
                         if name in cm.hmdb_to_chem_name:
                             chem_names.update(set(cm.hmdb_to_chem_name[name]))
-                    chem_names = '|'.join(chem_names)
-                    network.node[i]['chemName'] = chem_names
+                    network.node[i]['chemName'] = '|'.join(chem_names)
 
                 elif isinstance(mapping, basestring):
                     cpd_to_hmdb[i] = mapping

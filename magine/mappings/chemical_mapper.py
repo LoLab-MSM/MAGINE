@@ -173,7 +173,7 @@ class ChemicalMapper(object):
         ['HMDB0000933', 'HMDB0059874']
 
         """
-        synonyms = self.database.copy()
+        synonyms = self.database[['synonyms', format_name]].copy()
         synonyms['synonyms'] = synonyms['synonyms'].apply(','.join)
         synonyms['synonyms'] = synonyms['synonyms'].str.lower()
 
