@@ -7,8 +7,7 @@
     :URL: http://www.hmdb.ca/
 
 """
-from .download_libraries import download_uniprot, download_hgnc, \
-    download_ncbi, HMDB
+from .download_libraries import load_hgnc, load_uniprot, \
+    load_ncbi, HMDB
 
-
-__all__ = ['download_uniprot', 'download_ncbi', 'download_hgnc', 'HMDB']
+__all__ = ['load_hgnc', 'load_ncbi', 'load_uniprot', 'HMDB']

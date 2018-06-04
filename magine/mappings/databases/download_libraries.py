@@ -10,6 +10,38 @@ import requests
 from magine.data.storage import id_mapping_dir
 
 
+def load_hgnc():
+    hgnc_name = os.path.join(id_mapping_dir, 'hgnc.gz')
+    if not os.path.exists(hgnc_name):
+        hgnc = download_hgnc()
+        assert os.path.exists(hgnc_name)
+    else:
+        hgnc = pd.read_csv(hgnc_name, low_memory=False)
+
+    return hgnc[hgnc['status'] == 'Approved']
+
+
+def load_uniprot():
+    # gather data from uniprot
+    uniprot_path = os.path.join(id_mapping_dir, 'human_uniprot.csv.gz')
+    if not os.path.exists(uniprot_path):
+        uniprot = download_uniprot()
+        assert os.path.exists(uniprot_path)
+    else:
+        uniprot = pd.read_csv(uniprot_path, low_memory=False)
+    return uniprot
+
+
+def load_ncbi():
+    ncbi_name = os.path.join(id_mapping_dir, 'ncbi.gz')
+    if not os.path.exists(ncbi_name):
+        ncbi = download_ncbi()
+        assert os.path.exists(ncbi_name)
+    else:
+        ncbi = pd.read_csv(ncbi_name, low_memory=False)
+    return ncbi
+
+
 def download_uniprot(species='hsa'):
     """
     `<https://www.uniprot.org/>`_
