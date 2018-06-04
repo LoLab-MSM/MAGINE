@@ -247,7 +247,7 @@ class ExperimentalData(object):
             met.dropna(subset=[name_index], inplace=True)
             met['name'] = met[name_index]
 
-            genes = tmp.loc[tmp[species_type] == gene].copy()
+            genes = tmp.loc[tmp[species_type] == protein].copy()
             genes.dropna(subset=[gene], inplace=True)
             genes['name'] = genes[gene]
             species = pd.concat([genes, met], sort=True, ignore_index=True)

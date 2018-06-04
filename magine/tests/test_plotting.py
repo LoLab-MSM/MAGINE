@@ -1,6 +1,7 @@
 import os
 import tempfile
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import magine.plotting.species_plotting as plotter
@@ -30,6 +31,7 @@ class TestSpeciesPlotting(object):
                                    save_name='OUT_test_plotly',
                                    plot_type='plotly',
                                    )
+        plt.close()
 
     def test_matplotlib(self):
         """
@@ -43,6 +45,7 @@ class TestSpeciesPlotting(object):
                                    out_dir=self.out_dir,
                                    save_name='OUT_test_matplotlib',
                                    plot_type='matplotlib')
+        plt.close()
 
     def test_plot_df_genes(self):
         plotter.plot_dataframe(exp_data=self.data,
@@ -50,6 +53,7 @@ class TestSpeciesPlotting(object):
                                out_dir=self.out_dir,
                                plot_type='plotly'
                                )
+        plt.close()
 
     def test_plot_df_metabolites(self):
         plotter.plot_dataframe(exp_data=self.data,
@@ -58,12 +62,14 @@ class TestSpeciesPlotting(object):
                                out_dir=self.out_dir,
                                plot_type='plotly'
                                )
+        plt.close()
         plotter.plot_dataframe(exp_data=self.data,
                                type_of_species='metabolites',
                                html_filename='OUT_test_plot_df_metabolites2',
                                out_dir=self.out_dir,
                                plot_type='matplotlib'
                                )
+        plt.close()
 
     def test_plot_list_of_metabolites(self):
         ex_list = ['HMDB1', 'HMDB2']
@@ -73,13 +79,16 @@ class TestSpeciesPlotting(object):
                                          out_dir=self.out_dir,
                                          save_name='metabolites'
                                          )
+        plt.close()
 
     def test_volcano(self):
         volcano_plot(data=self.data, save_name='volcano_test',
                      out_dir=self.out_dir)
+        plt.close()
         volcano_plot(data=self.data, save_name='volcano_test',
                      out_dir=self.out_dir, bh_criteria=True, y_range=[0, 5],
                      x_range=[-10, 10])
+        plt.close()
 
 
 class TestVennDiagram(object):
@@ -91,6 +100,8 @@ class TestVennDiagram(object):
 
     def test_venn_2(self):
         create_venn2(self.x, self.y, 'X', 'Y', 'test_1')
+        plt.close()
 
     def test_venn_3(self):
         create_venn3(self.x, self.y, self.z, 'X', 'Y', 'z', 'test_1')
+        plt.close()
