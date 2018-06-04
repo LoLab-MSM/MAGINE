@@ -3,6 +3,7 @@ import itertools
 import os
 
 import pandas as pd
+from bioservices import UniChem
 from sortedcontainers import SortedSet, SortedDict
 
 from magine.data.storage import id_mapping_dir
@@ -11,6 +12,13 @@ try:
     import cPickle as pickle
 except:  # python3 doesnt have cPickle
     import pickle
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
+
+chem = UniChem()
 
 
 class ChemicalMapper(object):
@@ -221,6 +229,90 @@ class ChemicalMapper(object):
             with gzip.open(self._instance_filename, 'rb') as f:
                 data = f.read()
             self.__dict__ = pickle.loads(data, encoding='latin1')
+
+    def convert_kegg_nodes(self, network):
+        """
+        Maps network from kegg to gene names
+
+        Parameters
+        ----------
+        network : networkx.DiGraph
+
+        Returns
+        -------
+        dict
+
+        """
+        cpd_to_hmdb = {}  # he
+        still_unknown = []
+        nodes = set(network.nodes())
+
+        hits = [i for i in nodes if i.startswith('cpd:')]
+
+        for i in hits:
+
+            name_stripped = i.lstrip('cpd:')
+            network.node[i]['keggName'] = name_stripped
+
+            if name_stripped in self.kegg_to_hmdb:
+                mapping = self.kegg_to_hmdb[name_stripped]
+                if isinstance(mapping, (list, SortedSet)):
+                    names = '|'.join(set(mapping))
+                    cpd_to_hmdb[i] = names
+                    network.node[i]['hmdbNames'] = names
+                    chem_names = set()
+                    for name in mapping:
+                        if name in self.hmdb_to_chem_name:
+                            chem_names.update(
+                                set(self.hmdb_to_chem_name[name]))
+                    network.node[i]['chemName'] = '|'.join(chem_names)
+
+                elif isinstance(mapping, basestring):
+                    cpd_to_hmdb[i] = mapping
+                    chem_n = self.hmdb_to_chem_name[mapping]
+                    network.node[i]['chemName'] = chem_n.encode('ascii',
+                                                                'ignore')
+                else:
+                    print('Returned something else...', mapping)
+
+            elif i in compound_manual:
+                loc = compound_manual[i]
+                if loc in self.hmdb_to_chem_name:
+                    chem_names = '|'.join(set(self.hmdb_to_chem_name[loc]))
+                    network.node[i]['chemName'] = chem_names
+                    continue
+                else:
+                    if i in common_names_not_in_hmdb:
+                        network.node[i]['chemName'] = common_names_not_in_hmdb[
+                            i]
+                    else:
+                        print("Need to add common name for {}".format(i))
+                        network.node[i]['chemName'] = name_stripped
+            else:
+                still_unknown.append(i)
+        if len(still_unknown) == 0:
+            return cpd_to_hmdb
+        kegg_hmdb = chem.get_mapping("kegg_ligand", "hmdb")
+        for i in still_unknown:
+            if i.lstrip('cpd') in kegg_hmdb:
+                cpd_to_hmdb[i] = kegg_hmdb[i.lstrip('cpd:')][0]
+            # else:
+            #     print("Cannot find a HMDB mapping for %s " % i)
+        return cpd_to_hmdb
+
+
+compound_manual = {'cpd:C07909': 'HMDB15015',
+                   'cpd:C16844': 'HMDB01039',
+                   'cpd:C00076': 'HMDB00464',
+                   'cpd:C00154': 'HMDB01338',
+                   'cpd:C01561': 'HMDB03550',
+                   'cpd:C04043': 'HMDB03791',
+                   'cpd:C01165': 'HMDB02104',
+                   'cpd:C00025': 'HMDB00148',
+                   'cpd:C00696': 'HMDB01403',
+                   'cpd:C00124': 'HMDB00143',
+                   }
+common_names_not_in_hmdb = {'cpd:C00124': 'D-Galactose'}
 
 
 def tidy_split(df, column, sep='|', keep=False):

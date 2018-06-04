@@ -2,15 +2,24 @@ try:
     import cPickle as pickle
 except ImportError:  # python3 doesnt have cPickle
     import pickle
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
 import gzip
 import os
 
 import pandas as pd
+from bioservices import HGNC, KEGG, UniProt
 
 from magine.data.storage import id_mapping_dir
 from magine.mappings.databases import download_hgnc, download_ncbi, \
     download_uniprot
 
+kegg = KEGG()
+uniprot = UniProt()
+hugo = HGNC()
 pd.set_option('display.width', 20000)
 
 
@@ -185,6 +194,69 @@ class GeneMapper(object):
         matches = sorted(set(hits[format_name].values))
         return matches
 
+    def convert_kegg_nodes(self, network, species='hsa'):
+        # Create the dictionary to store all conversions to be returned
+        kegg_to_gene_name = {}
+        # List to store things not in the initial dictionary
+        unknown_genes = set()
+        still_missing = set()
+        nodes = set(network.nodes())
+        hits = [i for i in nodes if i.startswith(species)]
+        # check stores dictionaries
+        for gene in hits:
+            name_stripped = gene.replace(':', '')
+            network.node[gene]['keggName'] = name_stripped
+            if gene in manual_dict:
+                kegg_to_gene_name[gene] = manual_dict[gene]
+
+            elif gene in self.kegg_to_gene_name:
+                gn = self.kegg_to_gene_name[gene]
+                if len(gn) == 1:
+                    kegg_to_gene_name[gene] = gn[0]
+                else:
+                    for g in gn:
+                        if g in self.gene_name_to_uniprot:
+                            kegg_to_gene_name[gene] = g
+
+            elif int(name_stripped) in self.ncbi_to_symbol:
+                new = self.ncbi_to_symbol[int(name_stripped)][0]
+                if isinstance(new, float):
+                    unknown_genes.add(gene)
+                    continue
+                kegg_to_gene_name[gene] = basestring(new)
+            else:
+                unknown_genes.add(gene)
+        if len(unknown_genes) == 0:
+            return kegg_to_gene_name, 1
+        # create string to call uniprot for mapping
+        search_string = '\t'.join(unknown_genes)
+
+        # This is where it gets tricky. Checking to see if there is a uniprot
+        # mapping for the species, if not, trying from KEGG side. Sometimes
+        # kegg  links to a different uniprot, or uniprot links to a diff kegg.
+        uni_dict = dict(uniprot.mapping("KEGG_ID", "ACC", query=search_string))
+
+        for i in unknown_genes:
+            if i in uni_dict:
+                for n in uni_dict[i]:
+                    # print(i, uni_dict[i], n)
+                    x = uniprot.search("accession:{}".format(n),
+                                       columns='genes(PREFERRED),reviewed,id',
+                                       limit=1)
+                    header, data = x.rstrip('\n').split('\n')
+                    name, review, entry = data.split('\t')
+                    if n != entry:
+                        print(i, n, entry, x, "dont match")
+                    elif review == 'reviewed':
+                        kegg_to_gene_name[i] = name
+
+            else:
+                still_missing.add(i)
+        print("{} mappings not found from kegg to"
+              " gene name".format(len(still_missing)))
+        print(still_missing)
+        return kegg_to_gene_name, 0
+
 
 def _dict(data, key, value):
     """
@@ -212,6 +284,29 @@ def _dict(data, key, value):
             return_dict[i] = [j]
     return return_dict
 
+
+manual_dict = {'hsa:857': 'CAV1',
+               'hsa:2250': 'FGF5',
+               'hsa:5337': 'PLD1',
+               'hsa:4312': 'MMP1',
+               'hsa:102723407': 'IGHV4OR15-8',
+               'hsa:100132074': 'FOXO6',
+               'hsa:728635': 'DHRS4L1',
+               'hsa:10411': 'RAPGEF3',
+               'hsa:100101267': 'POM121C',
+               'hsa:2768': 'GNA12',
+               'hsa:2044': 'EPHA5',
+               'hsa:100533467': 'BIVM-ERCC5',
+               'hsa:7403': 'KDM6A',
+               'hsa:1981': 'EIF4G1',
+               'hsa:2906': 'GRIN2D',
+               'hsa:4088': 'SMAD3',
+               'hsa:6776': 'STAT5A',
+               'hsa:182': 'JAG1',
+               'hsa:3708': 'ITPR1',
+               'hsa:1293': 'COL6A3',
+               'hsa:93034': 'NT5C1B',
+               }
 
 if __name__ == '__main__':
     gm = GeneMapper()

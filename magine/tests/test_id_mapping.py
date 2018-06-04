@@ -2,8 +2,6 @@ import networkx as nx
 
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.mappings.maps import create_compound_dictionary, \
-    create_gene_dictionaries
 
 cm = ChemicalMapper()
 gm = GeneMapper()
@@ -58,12 +56,11 @@ def test_kegg_to_hmdb():
     g.add_edge('cpd:C00197', 'cpd:C00197')
     g.add_edge('cpd:C15972', 'cpd:C00197')
     g.add_edge('cpd:C15972', 'cpd:C00469')
-    dic = create_compound_dictionary(g)
+    dic = cm.convert_kegg_nodes(g)
     g = nx.relabel_nodes(g, dic)
 
     answer = '(2R)-2-Hydroxy-3-(phosphonatooxy)propanoate'
     assert (g.node['HMDB0060180']['chemName'] == answer)
-    print(g.node['HMDB0060180']['keggName'])
     assert (g.node['HMDB0060180']['keggName'] == 'C00197')
 
 
@@ -78,7 +75,7 @@ def test_kegg_to_uniprot():
     g.add_edge('hsa:501', 'hsa:219')
     g.add_edge('hsa:224', 'hsa:219')
     g.add_node('hsa:857')
-    dic, found_all = create_gene_dictionaries(g, species='hsa')
+    dic, found_all = gm.convert_kegg_nodes(g, species='hsa')
     g = nx.relabel_nodes(g, dic)
     assert (g.node['ALDH3A2']['keggName'] == 'hsa224')
 
