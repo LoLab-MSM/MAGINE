@@ -95,7 +95,7 @@ def kgml_to_nx(xmlfile, species='hsa'):
             # orthologs are from other species
             # groups is just a trick for KGML to layout species together
             # maps point to other dbs
-            if node_type not in ('map', 'ortholog', 'group'):
+            if node_type not in ('map', 'ortholog', 'brite', 'group'):
                 print("Not a gene or compound!!!")
                 print(node_type, node_id)
             connecting_maps.append(node_id)

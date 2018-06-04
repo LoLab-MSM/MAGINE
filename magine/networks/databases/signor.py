@@ -67,7 +67,7 @@ def download():
     table['source'] = table['ENTITYA']
     table['target'] = table['ENTITYB']
 
-    protein_graph = nx.from_pandas_dataframe(
+    protein_graph = nx.from_pandas_edgelist(
         table,
         'source',
         'target',

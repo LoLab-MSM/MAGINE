@@ -1,5 +1,6 @@
-networkx==1.11
+networkx=>2.1
 py2cytoscape
+pydotplus
 jinja2
 scipy
 numpy>=1.9.0

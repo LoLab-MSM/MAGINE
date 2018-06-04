@@ -75,7 +75,7 @@ def add_attribute_to_network(graph, list_to_add_attribute, attribute,
 
     """
     tmp_g = graph.copy()
-    nodes = set(tmp_g.nodes())
+    nodes = set(tmp_g.nodes)
     set_of_positive = set(list_to_add_attribute)
     for i in nodes:
         if i in set_of_positive:
@@ -116,7 +116,7 @@ def add_color_graphviz_fmt(graph, list_to_paint, color):
 
     """
     tmp_g = graph.copy()
-    nodes1 = set(tmp_g.nodes())
+    nodes1 = set(tmp_g.nodes)
     for i in list_to_paint:
         if i in nodes1:
             tmp_g.node[i]['measured'] = True
@@ -314,8 +314,8 @@ def remove_isolated_nodes(net):
 
 
 def _add_nodes(old_network, new_network):
-    new_nodes = set(new_network.nodes())
-    for i, data in old_network.nodes_iter(data=True):
+    new_nodes = set(new_network.nodes)
+    for i, data in old_network.nodes(data=True):
         if i not in new_nodes:
             new_network.add_node(i, **data)
         else:
@@ -334,12 +334,12 @@ def _add_nodes(old_network, new_network):
 
 
 def _add_edges(current_network, new_network):
-    edges = set(new_network.edges())
-    for i, j, data in current_network.edges_iter(data=True):
+    edges = set(new_network.edges)
+    for i, j, data in current_network.edges(data=True):
         if (i, j) not in edges:
             new_network.add_edge(i, j, **data)
         else:
-            existing_info = new_network.edge[i][j]
+            existing_info = new_network.get_edge_data(i, j)
             for n, d in data.items():
                 if n not in existing_info:
                     new_network[i][j][n] = d
@@ -417,7 +417,7 @@ _maps = {
 
 def standardize_edge_types(network):
     to_remove = set()
-    for source, target, data in network.edges_iter(data=True):
+    for source, target, data in network.edges(data=True):
         if 'interactionType' in data:
             edge_type = data['interactionType']
             edge_type = set(i for i in edge_type.split('|'))

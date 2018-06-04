@@ -104,7 +104,7 @@ class BioGridDownload(object):
         df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1).astype(str)
 
         # create network
-        chem_g = nx.from_pandas_dataframe(
+        chem_g = nx.from_pandas_edgelist(
             df,
             'gene',
             'target',
@@ -188,7 +188,7 @@ class BioGridDownload(object):
                      inplace=True)
 
         # create graph
-        protein_graph = nx.from_pandas_dataframe(
+        protein_graph = nx.from_pandas_edgelist(
             table,
             'source',
             'target',
