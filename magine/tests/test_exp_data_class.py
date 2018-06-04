@@ -106,3 +106,9 @@ class TestExpData(object):
                                                     y_range=[0, 100],
                                                     out_dir=self.out_dir)
         plt.close()
+
+    def test_table(self):
+        self.exp_data._data['compound_id'] = self.exp_data._data['compound']
+        self.exp_data.create_table_of_data()
+        self.exp_data.create_table_of_data(sig=True)
+        self.exp_data.create_table_of_data(sig=True, unique=True)
