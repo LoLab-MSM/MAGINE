@@ -63,9 +63,9 @@ class BioGridDownload(object):
                 if id_chem_source in self._cm.drugbank_to_hmdb:
                     new_name = self._cm.drugbank_to_hmdb[id_chem_source][0]
                     return new_name
-                elif c_name in self._cm.chemical_name_to_hmdb_accession:
+                elif c_name in self._cm.chem_name_to_hmdb:
                     new_name = \
-                        self._cm.chemical_name_to_hmdb_accession[c_name][0]
+                        self._cm.chem_name_to_hmdb[c_name][0]
                     return new_name
             return c_name
 
@@ -77,8 +77,8 @@ class BioGridDownload(object):
                 if id_chem_source in self._cm.drugbank_to_hmdb:
                     name = self._cm.drugbank_to_hmdb[id_chem_source][0]
                     return name
-                elif c_name in self._cm.chemical_name_to_hmdb_accession:
-                    name = self._cm.chemical_name_to_hmdb_accession[c_name][0]
+                elif c_name in self._cm.chem_name_to_hmdb:
+                    name = self._cm.chem_name_to_hmdb[c_name][0]
                     return name
             return None
 

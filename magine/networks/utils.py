@@ -27,8 +27,8 @@ def delete_disconnected_network(full_graph):
     >>> g.add_nodes_from(['a', 'b', 'c'])
     >>> g.add_edge('a', 'b')
     >>> large_g_connected = delete_disconnected_network(g)
-    >>> large_g_connected.nodes()
-    ['b', 'a']
+    >>> sorted(large_g_connected.nodes())
+    ['a', 'b']
     >>> large_g_connected.edges()
     [('a', 'b')]
     """
