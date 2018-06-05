@@ -11,8 +11,9 @@ MAGINE
 .. image:: https://codecov.io/gh/LoLab-VU/MAGINE/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/LoLab-VU/MAGINE
 
-.. image:: https://readthedocs.org/projects/MAGINE/badge/?version=latest
-    :target: http://magine.readthedocs.io/en/latest/?badge=latest
+.. image:: https://readthedocs.org/projects/magine/badge/?version=latest
+   :target: https://magine.readthedocs.io/en/latest/?badge=latest
+   :alt: Documentation Status
 
 .. image:: https://mybinder.org/badge.svg 
     :target: https://mybinder.org/v2/gh/LoLab-VU/MAGINE/master
