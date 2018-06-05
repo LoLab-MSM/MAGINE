@@ -5,9 +5,6 @@ MAGINE
    :alt: Codacy Badge
    :target: https://app.codacy.com/app/james.c.pino/MAGINE?utm_source=github.com&utm_medium=referral&utm_content=LoLab-VU/MAGINE&utm_campaign=badger
 
-.. image:: https://coveralls.io/repos/github/LoLab-VU/MAGINE/badge.svg?branch=master
-    :target: https://coveralls.io/github/LoLab-VU/MAGINE?branch=master
-
 .. image:: https://travis-ci.org/LoLab-VU/MAGINE.svg?branch=master
     :target: https://travis-ci.org/LoLab-VU/MAGINE
 
