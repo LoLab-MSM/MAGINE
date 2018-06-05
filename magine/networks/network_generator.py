@@ -65,7 +65,6 @@ def build_network(gene_list, species='hsa', save_name=None,
     to_remove = gene_list.difference(gm.gene_name_to_kegg)
     genes_in_kegg = gene_list.intersection(gm.gene_name_to_kegg)
     pathway_list = set()
-    print(node_to_path)
     for gene in genes_in_kegg:
         if gene in node_to_path:
             for j in node_to_path[gene]:
@@ -80,8 +79,6 @@ def build_network(gene_list, species='hsa', save_name=None,
         if len(tmp.edges) == 0:
             continue
         graph_list.append(tmp)
-
-    print(pathway_list)
 
     end_network = nt.compose_all(graph_list)
     # end_network = mapper.convert_all(end_network, species=species)
