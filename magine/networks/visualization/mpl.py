@@ -3,28 +3,15 @@ import networkx as nx
 import numpy as np
 
 
-def render2(network):
-    for (n, d) in network.nodes(data=True):
-        if 'keggName' in d:
-            del d["keggName"]
-    node_colors = [n['color'] for _, n in network.nodes(data=True)]
-
-    pos = nx.nx_pydot.graphviz_layout(network, prog='fdp')
-
-    nx.draw_networkx(network, pos=pos,
-                     with_labels=False,
-                     node_color=node_colors,
-                     node_size=500,
-                     alpha=.4,
-                     )
-    label_pos = {}
-    for n, p in pos.items():  # raise text positions
-        label_pos[n] = [p[0], p[1] + 10]
-
-    nx.draw_networkx_labels(network, label_pos, font_size=16)
-
-
 def render_mpl(network, layout='dot'):
+    """ Draw network using networkx and matplotlib
+
+    Parameters
+    ----------
+    network : nx.DiGraph
+    layout : str
+
+    """
     for (n, d) in network.nodes(data=True):
         if 'keggName' in d:
             del d["keggName"]
@@ -35,8 +22,18 @@ def render_mpl(network, layout='dot'):
         assert layout in ['circular_layout', 'random_layout', 'shell_layout',
                           'spring_layout', 'spectral_layout',
                           'fruchterman_reingold_layout']
-
-        pos = nx.drawing.layout.spring_layout(network)
+        if layout == 'spring_layout':
+            pos = nx.drawing.layout.spring_layout(network)
+        elif layout == 'random_layout':
+            pos = nx.drawing.layout.random_layout(network)
+        elif layout == 'shell_layout':
+            pos = nx.drawing.layout.shell_layout(network)
+        elif layout == 'spectral_layout':
+            pos = nx.drawing.layout.spectral_layout(network)
+        elif layout == 'fruchterman_reingold_layout':
+            pos = nx.drawing.layout.fruchterman_reingold_layout(network)
+        elif layout == 'circular_layout':
+            pos = nx.drawing.layout.circular_layout(network)
 
     # some layout algorithms (graphviz ones) can provide large position values
     # normalize the positions to be from 0 to 1

@@ -4,7 +4,7 @@ import networkx as nx
 from magine.networks.visualization import render_igraph, render_mpl
 
 
-def te_igraph():
+def test_igraph():
     g = nx.DiGraph()
     g.add_node('A', termName='one')
     g.add_node('B', termName='one')
@@ -15,9 +15,8 @@ def te_igraph():
     g.add_edge('C', 'D')
 
     plot, pos = render_igraph(g, )
-    plot.show()
     plot, pos = render_igraph(g, cluster=True)
-    plot.show()
+    plot, pos = render_igraph(g, cluster=True, positions=pos)
 
 
 def test_mpl():
@@ -29,10 +28,12 @@ def test_mpl():
     g.add_edge('A', 'B')
     g.add_edge('C', 'B')
     g.add_edge('C', 'D')
-
-    render_mpl(g, )
-    plt.show()
+    for i in ['circular_layout', 'random_layout', 'shell_layout',
+              'spring_layout', 'spectral_layout', 'dot', 'neato', 'fdp',
+              'fruchterman_reingold_layout']:
+        render_mpl(g, i)
+    plt.close()
 
 
 if __name__ == '__main__':
-    test_mpl()
+    test_igraph()
