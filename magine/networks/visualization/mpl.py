@@ -1,6 +1,45 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
+import pydot
+
+from magine.networks.exporters import nx_to_dot
+
+
+def pydot_layout(G, prog='neato'):
+    """Create node positions using :mod:`pydot` and Graphviz.
+
+    Parameters
+    --------
+    G : Graph
+        NetworkX graph to be laid out.
+    prog : optional[str]
+        Basename of the GraphViz command with which to layout this graph.
+        Defaults to `neato`, the default GraphViz command for undirected graphs.
+
+    Returns
+    --------
+    dict
+        Dictionary of positions keyed by node.
+
+    """
+
+    net = nx_to_dot(G)
+    dot_file = pydot.graph_from_dot_data(net.create(prog=prog, format='dot'))
+    net = dot_file[0]
+    node_pos = {}
+    for n in G.nodes():
+        pydot_node = pydot.Node(n).get_name()
+        node = net.get_node(pydot_node)
+
+        if isinstance(node, list):
+            node = node[0]
+        pos = node.get_pos()[1:-1]  # strip leading and trailing double quotes
+        if pos is not None:
+            xx, yy = pos.split(",")
+            node_pos[n] = (float(xx), float(yy))
+
+    return node_pos
 
 
 def render_mpl(network, layout='dot'):
@@ -17,7 +56,7 @@ def render_mpl(network, layout='dot'):
             del d["keggName"]
 
     if layout in ['dot', 'neato', 'fdp']:
-        pos = nx.nx_pydot.graphviz_layout(network, prog=layout, )
+        pos = pydot_layout(network, prog=layout, )
     else:
         assert layout in ['circular_layout', 'random_layout', 'shell_layout',
                           'spring_layout', 'spectral_layout',
@@ -69,3 +108,9 @@ def render_mpl(network, layout='dot'):
     plt.xticks([])
     plt.yticks([])
     plt.tight_layout()
+
+
+if __name__ == '__main__':
+    x = nx.DiGraph()
+    x.add_edge('A', 'B')
+    x = pydot_layout(x)
