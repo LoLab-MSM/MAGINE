@@ -5,6 +5,7 @@ except ImportError:  # python3 doesnt have cPickle
 
 import pandas as pd
 from bioservices import HGNC, KEGG, UniProt
+from sortedcontainers import SortedSet, SortedDict
 
 from magine.mappings.databases import load_hgnc, load_uniprot, load_ncbi
 
@@ -152,13 +153,24 @@ class GeneMapper(object):
         return matches
 
     def convert_kegg_nodes(self, network, species='hsa'):
+        """ Convert kegg ids to HGNC gene symbol.
+
+        Parameters
+        ----------
+        network : nx.DiGraph
+        species : str {'hsa'}
+            Main support for humans only.
+
+        Returns
+        -------
+        kegg_to_gene_name, converted_all : dict, bool
+        """
         # Create the dictionary to store all conversions to be returned
         kegg_to_gene_name = {}
         # List to store things not in the initial dictionary
         unknown_genes = set()
         still_missing = set()
-        nodes = set(network.nodes())
-        hits = [i for i in nodes if i.startswith(species)]
+        hits = {i for i in set(network.nodes) if i.startswith(species)}
         # check stores dictionaries
         for gene in hits:
             name_stripped = gene.lstrip(species + ':')
@@ -228,16 +240,16 @@ def _dict(data, key, value):
     -------
 
     """
-    return_dict = {}
+    return_dict = SortedDict()
 
     d = data[[key, value]].copy()
     d.dropna(how='any', inplace=True)
 
     for i, j in d.values:
         if i in return_dict:
-            return_dict[i].append(j)
+            return_dict[i].add(j)
         else:
-            return_dict[i] = [j]
+            return_dict[i] = SortedSet([j])
     return return_dict
 
 
@@ -266,5 +278,3 @@ manual_dict = {'hsa:857': 'CAV1',
 
 if __name__ == '__main__':
     gm = GeneMapper()
-    gm.load()
-    # print(gm.ncbi_to_symbol)

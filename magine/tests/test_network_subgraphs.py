@@ -9,9 +9,6 @@ _path = os.path.join(os.path.dirname(__file__), 'Network_files',
                      'sample_network.gml')
 
 
-# def test():
-#     return
-
 class TestSubgraphs(object):
     def __init__(self):
         self.network = nx.read_gml(_path)
@@ -22,13 +19,13 @@ class TestSubgraphs(object):
         down_nodes = {'MTMR14', 'GABARAPL1', 'HMDB03850', 'GABARAPL2', 'EEA1',
                       'ATG16L1', 'ATG16L2', 'WIPI1', 'GABARAP', 'WIPI2',
                       'ATG12', 'ATG5', 'ZFYVE1'}
-        for i in self.net_sub.downstream_of_node('MTMR14').nodes():
+        for i in self.net_sub.downstream_of_node('MTMR14').nodes:
             assert i in down_nodes
 
     def test_upstream_nodes(self):
         """Test finding upstream nodes."""
         up_nodes = {'MTMR4', 'MTMR14', 'MTMR3', 'ZFYVE1', 'HMDB03850'}
-        for i in self.net_sub.upstream_of_node('ZFYVE1').nodes():
+        for i in self.net_sub.upstream_of_node('ZFYVE1').nodes:
             assert i in up_nodes
 
     def test_path_between_two_does_not_exist(self):
@@ -86,7 +83,7 @@ class TestSubgraphs(object):
                                             save_name='smaller_list')
         nodes = {'TP53', 'CASP3', 'CDKN1A', 'MAP3K1', 'BAX', 'MAPK10', 'MAPK8',
                  'MAPK9', 'BCL2'}
-        assert set(g.nodes()) == nodes
+        assert set(g.nodes) == nodes
 
     def test_neighbor(self):
         gene = 'BAX'
@@ -94,7 +91,7 @@ class TestSubgraphs(object):
         layer_1_up = {'BAX', 'BCL2', 'BCL2L1', 'BCL2L11', 'BID', 'MAPK10',
                       'MAPK11', 'MAPK12', 'MAPK13', 'MAPK14', 'MAPK8',
                       'MAPK9', 'PRNP', 'SIRT1', 'TP53'}
-        assert set(g.nodes()) == layer_1_up
+        assert set(g.nodes) == layer_1_up
 
         g = self.net_sub.neighbors(gene, True, False, 2)
         layer_2_up = {'BCL2L1', 'HSPA2', 'PMAIP1', 'HSPA6', 'MIR32', 'MIR30D',
@@ -133,11 +130,17 @@ class TestSubgraphs(object):
                       'MIR125B2', 'CASP8', 'PPP2R5A', 'PPP2R2A', 'MAP3K11',
                       'DUSP7', 'BRAF', 'CREB3L4', 'ATF4', 'ATF6B', 'ATF2',
                       'BCL2'}
-        assert set(g.nodes()) == layer_2_up
+        print(set(g.nodes))
+        new_nodes = set(g.nodes)
+        for i in sorted(layer_2_up):
+            if i not in new_nodes:
+                print(i)
+
+        assert set(g.nodes) == layer_2_up
 
         g = self.net_sub.neighbors(gene, False, True, 1)
         layer_1_down = {'CASP3', 'CYCS', 'BAX', 'CAPN2', 'CAPN1', 'BCL2'}
-        assert set(g.nodes()) == layer_1_down
+        assert set(g.nodes) == layer_1_down
 
         g = self.net_sub.neighbors(gene, False, True, 2)
         layer_2_down = {'ACTG1', 'SPTAN1', 'CYCS', 'SPTA1', 'CASP12',
@@ -147,7 +150,7 @@ class TestSubgraphs(object):
                         'BAX', 'PARP3', 'CASP7', 'TP53', 'CASP3', 'BAD',
                         'BAK1', 'ACTB', 'PAK1', 'PAK2', 'BCL2'}
 
-        assert set(g.nodes()) == layer_2_down
+        assert set(g.nodes) == layer_2_down
 
     def test_expand(self):
         g = nx.DiGraph()
@@ -161,8 +164,8 @@ class TestSubgraphs(object):
             'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14', 'CYCS',
             'CAPN1', 'BCL2'
         }
-        print(set(ng.nodes()))
-        assert trues == set(ng.nodes())
+
+        assert trues == set(ng.nodes)
 
         includes = ['CASP3', 'CAPN2']
 
@@ -172,7 +175,7 @@ class TestSubgraphs(object):
         trues = {
             'BCL2L1', 'CASP3', 'CAPN2', 'BAX', 'MAPK14',
         }
-        assert trues == set(ng.nodes())
+        assert trues == set(ng.nodes)
 
 
 if __name__ == '__main__':

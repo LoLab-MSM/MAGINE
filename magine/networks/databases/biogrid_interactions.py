@@ -104,7 +104,7 @@ class BioGridDownload(object):
         df['hmdbID'] = df.apply(convert_to_hmdb_only, axis=1).astype(str)
 
         # create network
-        chem_g = nx.from_pandas_dataframe(
+        chem_g = nx.from_pandas_edgelist(
             df,
             'gene',
             'target',
@@ -188,7 +188,7 @@ class BioGridDownload(object):
                      inplace=True)
 
         # create graph
-        protein_graph = nx.from_pandas_dataframe(
+        protein_graph = nx.from_pandas_edgelist(
             table,
             'source',
             'target',
@@ -219,11 +219,15 @@ class BioGridDownload(object):
         return final_graph
 
 
-def create_biogrid_network():
-    if os.path.exists(p_name):
-        g = nx.read_gpickle(p_name)
-    else:
-        g = BioGridDownload().parse_network()
+def download_biogrid():
+    BioGridDownload().parse_network()
+
+
+def load_biogrid_network():
+    if not os.path.exists(p_name):
+        download_biogrid()
+
+    g = nx.read_gpickle(p_name)
     nn, ne = len(g.nodes()), len(g.edges())
     print("BIOGRID network has {} nodes and {} edges".format(nn, ne))
     return g
@@ -232,4 +236,4 @@ def create_biogrid_network():
 if __name__ == '__main__':
     bgn = BioGridDownload()
     bgn.parse_network()
-    # create_biogrid_network()
+    # load_biogrid_network()

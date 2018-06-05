@@ -1,7 +1,10 @@
-from magine.networks.databases.biogrid_interactions import BioGridDownload
-from magine.networks.databases.kegg_kgml import download_all_of_kegg
-from magine.networks.databases.reactome_functional_interaction import \
-    download_reactome_functional_interaction, load_reactome_fi
+from .biogrid_interactions import load_biogrid_network, download_biogrid
+from .kegg_kgml import download_kegg
+from .reactome_functional_interaction import load_reactome_fi, \
+    download_reactome_fi
+from .signor import load_signor, download_signor
 
-__all__ = ['download_reactome_functional_interaction', 'BioGridDownload',
-           'load_reactome_fi', 'download_all_of_kegg']
+__all__ = ['download_reactome_fi', 'load_reactome_fi',
+           'load_biogrid_network', 'download_biogrid',
+           'download_kegg',
+           'load_signor', 'download_signor']

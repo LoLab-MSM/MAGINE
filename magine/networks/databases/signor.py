@@ -9,7 +9,7 @@ from magine.networks.standards import edge_standards
 _p_name = os.path.join(network_data_dir, 'signor.p.gz')
 
 
-def download():
+def download_signor():
     col_names = [
         'ENTITYA', 'TYPEA', 'IDA', 'DATABASEA', 'ENTITYB', 'TYPEB', 'IDB',
         'DATABASEB', 'EFFECT', 'MECHANISM', 'RESIDUE', 'SEQUENCE', 'TAX_ID',
@@ -67,7 +67,7 @@ def download():
     table['source'] = table['ENTITYA']
     table['target'] = table['ENTITYB']
 
-    protein_graph = nx.from_pandas_dataframe(
+    protein_graph = nx.from_pandas_edgelist(
         table,
         'source',
         'target',
@@ -99,10 +99,9 @@ def load_signor():
     -------
 
     """
-
     if not os.path.exists(_p_name):
-        print("Downloading Reactome Functional interaction network!")
-        download()
+        print("Downloading Signor network!")
+        download_signor()
         assert os.path.exists(_p_name), "Error downloading reactome FI. "
     tmp_graph = nx.read_gpickle(_p_name)
     print("SIGNOR network has {} nodes and {} edges".format(
@@ -112,4 +111,4 @@ def load_signor():
 
 
 if __name__ == '__main__':
-    download()
+    download_signor()

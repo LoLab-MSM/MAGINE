@@ -200,7 +200,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
     Parameters
     ----------
-    exp_data : pandas.DataFrame
+    exp_data : magine.Data.
     html_filename : str
     out_dir: str, path
         Directory that will contain all proteins
