@@ -25,7 +25,7 @@ def load_reactome_fi():
 
     if not os.path.exists(_p_name):
         print("Downloading Reactome Functional interaction network!")
-        download_reactome_functional_interaction()
+        download_reactome_fi()
         assert os.path.exists(_p_name), "Error downloading reactome FI. "
     tmp_graph = nx.read_gpickle(_p_name)
     n_n, n_e = len(tmp_graph.nodes()), len(tmp_graph.edges())
@@ -90,7 +90,7 @@ def standardize_edge_types(row):
     return name
 
 
-def download_reactome_functional_interaction():
+def download_reactome_fi():
     """
     Downloads reactome functional interaction network
 
@@ -158,4 +158,4 @@ _both = {'<->', '<-|', '|->', '|-|'}
 
 
 if __name__ == '__main__':
-    download_reactome_functional_interaction()
+    download_reactome_fi()

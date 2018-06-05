@@ -9,7 +9,7 @@ from magine.data.storage import network_data_dir
 from magine.mappings.gene_mapper import GeneMapper
 from magine.networks.databases import load_reactome_fi
 from magine.networks.databases.biogrid_interactions import \
-    create_biogrid_network
+    load_biogrid_network
 from magine.networks.databases.kegg_kgml import load_kegg
 from magine.networks.databases.signor import load_signor
 
@@ -65,15 +65,11 @@ def build_network(gene_list, species='hsa', save_name=None,
     to_remove = gene_list.difference(gm.gene_name_to_kegg)
     genes_in_kegg = gene_list.intersection(gm.gene_name_to_kegg)
     pathway_list = set()
-
+    print(node_to_path)
     for gene in genes_in_kegg:
-        tmp_list = gm.gene_name_to_kegg[gene]
-        if len(tmp_list) == 0:
-            to_remove.add(gene)
-        for n in tmp_list:
-            if n in node_to_path:
-                for j in node_to_path[n]:
-                    pathway_list.add(j)
+        if gene in node_to_path:
+            for j in node_to_path[gene]:
+                pathway_list.add(j)
 
     if len(to_remove) != 0:
         print("{} species not found in KEGG".format(len(to_remove)))
@@ -81,12 +77,14 @@ def build_network(gene_list, species='hsa', save_name=None,
     graph_list = []
     for each in pathway_list:
         tmp = path_to_graph[each]
-        if len(tmp.edges()) == 0:
+        if len(tmp.edges) == 0:
             continue
         graph_list.append(tmp)
 
+    print(pathway_list)
+
     end_network = nt.compose_all(graph_list)
-    end_network = mapper.convert_all(end_network, species=species)
+    # end_network = mapper.convert_all(end_network, species=species)
 
     if all_measured_list is None:
         all_measured_list = gene_list
@@ -152,7 +150,7 @@ def expand_by_db(network, measured_list, db='reactome'):
         db_name = 'ReactomeFI'
 
     elif db == 'biogrid':
-        network_to_add = create_biogrid_network()
+        network_to_add = load_biogrid_network()
         db_name = 'BioGrid'
     elif db == 'signor':
         network_to_add = load_signor()
@@ -397,14 +395,14 @@ def create_background_network(save_name='background_network'):
     """
 
     from magine.networks.databases.biogrid_interactions import \
-        create_biogrid_network
+        load_biogrid_network
     from magine.networks.databases.kegg_kgml import create_all_of_kegg
     from magine.networks.databases.signor import load_signor
 
     reactome_network = load_reactome_fi()
     kegg_network = create_all_of_kegg()
     hmdb_network = create_hmdb_network()
-    biogrid_network = create_biogrid_network()
+    biogrid_network = load_biogrid_network()
     signor_network = load_signor()
 
     def find_overlap(n1, n2):

@@ -142,12 +142,13 @@ def kgml_to_nx(xmlfile, species='hsa'):
     return pathway_local, pathway_name
 
 
-def download_all_of_kegg(species='hsa', verbose=False):
+def download_kegg(species='hsa', verbose=False):
     """
     Downloads every KEGG pathway to provided directory
 
     """
-
+    if species == 'hsa':
+        from magine.mappings.maps import convert_all
     kegg.organism = species
     list_of_kegg_pathways = [i[5:] for i in kegg.pathwayIds]
     if verbose:
@@ -164,17 +165,18 @@ def download_all_of_kegg(species='hsa', verbose=False):
             continue
 
         graph, pathway_name = kgml_to_nx(pathway, species=species)
-
+        if species == 'hsa':
+            graph = convert_all(graph, species)
         kegg_dict[pathway_id] = graph
         if verbose:
             print('{} has {} nodes and {} edges'.format(pathway_name,
-                                                        len(graph.nodes()),
-                                                        len(graph.edges())))
+                                                        len(graph.nodes),
+                                                        len(graph.edges)))
 
     # create a dictionary mapping species to pathways
     node_to_path = dict()
     for i in kegg_dict:
-        for node in kegg_dict[i].nodes():
+        for node in kegg_dict[i].nodes:
             if node in node_to_path:
                 node_to_path[node].add(i)
             else:
@@ -231,8 +233,8 @@ def create_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
         nx.write_gpickle(all_of_kegg, p_name)
 
     if verbose:
-        n_n = len(all_of_kegg.nodes())
-        n_e = len(all_of_kegg.edges())
+        n_n = len(all_of_kegg.nodes)
+        n_e = len(all_of_kegg.edges)
         print("KEGG network {} nodes and {} edges".format(n_n, n_e))
     return all_of_kegg
 
@@ -241,7 +243,7 @@ def load_kegg(species, verbose=False):
     n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
     save_path_id_to_graph = os.path.join(network_data_dir, n)
     if not os.path.exists(save_path_id_to_graph):
-        download_all_of_kegg(species=species, verbose=verbose)
+        download_kegg(species=species, verbose=verbose)
 
     n = '{}_kegg_node_to_pathway.p.gz'.format(species)
     save_node_to_path = os.path.join(network_data_dir, n)
@@ -265,5 +267,5 @@ def load_gz_p(file_name):
 
 
 if __name__ == '__main__':
-    # download_all_of_kegg('hsa')
-    create_all_of_kegg('hsa')
+    download_kegg('hsa')
+    # create_all_of_kegg('hsa')

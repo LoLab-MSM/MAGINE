@@ -255,6 +255,20 @@ def compose(g, g_1):
     g_1 : nx.DiGraph
        A NetworkX graph
 
+    Examples
+    --------
+    >>> from magine.networks.utils import compose
+    >>> from networkx import DiGraph
+    >>> g = DiGraph()
+    >>> g.add_edge('A', 'B')
+    >>> h = DiGraph()
+    >>> g.add_edge('A', 'C')
+    >>> new_g = compose(g, h)
+    >>> print(sorted(new_g.nodes))
+    ['A', 'B', 'C']
+    >>> print(sorted(new_g.edges))
+    [('A', 'B'), ('A', 'C')]
+
     Returns
     -------
     C: A new graph  with the same type as G
@@ -285,14 +299,15 @@ def compose_all(graphs):
 
     Returns
     -------
-    C : A graph with the same type as the first graph in list
+    new_g : A graph with the same type as the first graph in list
 
     """
-    graphs = iter(graphs)
-    g = next(graphs)
-    for h in graphs:
-        g = compose(g, h)
-    return g
+    for n, g in enumerate(graphs):
+        if n != 0:
+            new_g = nx.compose(new_g, g)
+        else:
+            new_g = g
+    return new_g
 
 
 def remove_isolated_nodes(net):
