@@ -11,8 +11,9 @@ def download_id_mapping():
 
 
 def download_network_dbs():
-    nd.download_reactome_functional_interaction()
-    nd.download_all_of_kegg()
+    nd.load_reactome_fi()
+    nd.download_signor()
+    nd.load_biogrid_network()
     dl.HMDB()
 
 
@@ -20,7 +21,7 @@ if __name__ == '__main__':
     import time
 
     st = time.time()
-    download_id_mapping()
+    # download_id_mapping()
     download_network_dbs()
     et = time.time()
     print(et - st)

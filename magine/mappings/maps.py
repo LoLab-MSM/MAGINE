@@ -2,24 +2,64 @@
 """
 Mapping between data identifiers
 """
-try:
-    import cPickle as pickle
-except:
-    import pickle as pickle
+
 import networkx as nx
 from bioservices import HGNC, KEGG, UniChem, UniProt
 
+from magine.mappings.chemical_mapper import ChemicalMapper
+from magine.mappings.gene_mapper import GeneMapper
 
 try:
-    basestring
-# Allows isinstance(foo, basestring) to work in Python 3
-except:
-    basestring = str
+    import cPickle as pickle
+except ImportError:
+    import pickle as pickle
 
 kegg = KEGG()
 uniprot = UniProt()
 hugo = HGNC()
 chem = UniChem()
+gm = GeneMapper()
+cm = ChemicalMapper()
+
+
+def convert_all(network, species='hsa', verbose=False):
+    """
+    Maps gene names to HGNC and kegg compound to HMDB
+
+    Parameters
+    ----------
+    network : networkx.DiGraph
+        network to convert mappings
+    species : str
+        species of network (hsa, mmu)
+    verbose : str
+
+    Returns
+    -------
+
+    """
+
+    change_dict = dict()
+    renamed_network = network.copy()
+    if verbose:
+        print('Started converting kegg compounds to HMDB')
+    dict1 = cm.convert_kegg_nodes(renamed_network)
+    change_dict.update(dict1)
+    if verbose:
+        print('Started converting kegg genes to HGNC')
+    dict2, found_all = gm.convert_kegg_nodes(renamed_network, species=species)
+    change_dict.update(dict2)
+
+    if not found_all:
+        if verbose:
+            print('Started to check for miRNAs')
+        dict3 = hugo_mapper(renamed_network, species=species)
+        change_dict.update(dict3)
+    change_dict = _check_dict_for_int(change_dict)
+
+    renamed_network = nx.relabel_nodes(renamed_network, change_dict)
+    renamed_network = drug_nodes(renamed_network)
+    return renamed_network
 
 
 def hugo_mapper(network, species='hsa'):
@@ -36,7 +76,7 @@ def hugo_mapper(network, species='hsa'):
     dict
     """
     prefix = species+':'
-    nodes = set(network.nodes())
+    nodes = set(network.nodes)
     hugo_dict = {}
     not_found = set()
     for i in nodes:
@@ -79,48 +119,6 @@ def drug_nodes(network):
             network.remove_node(i)
     end_network = nx.relabel_nodes(network, drug_dict)
     return end_network
-
-
-def convert_all(network, species='hsa'):
-    """ 
-    Maps gene names to HGNC and kegg compound to HMDB
-    
-    Parameters
-    ----------
-    network : networkx.DiGraph
-        network to convert mappings
-    species : str   
-        species of network (hsa, mmu)
-
-    Returns
-    -------
-
-    """
-    from magine.mappings.chemical_mapper import ChemicalMapper
-    from magine.mappings.gene_mapper import GeneMapper
-    gm = GeneMapper(species)
-    cm = ChemicalMapper()
-
-    change_dict = dict()
-    renamed_network = network.copy()
-
-    print('Started converting kegg compounds to HMDB')
-    dict1 = cm.convert_kegg_nodes(renamed_network)
-    change_dict.update(dict1)
-
-    print('Started converting kegg genes to HGNC')
-    dict2, found_all = gm.convert_kegg_nodes(renamed_network, species=species)
-    change_dict.update(dict2)
-
-    if not found_all:
-        print('Started to check for miRNAs')
-        dict3 = hugo_mapper(renamed_network, species=species)
-        change_dict.update(dict3)
-    change_dict = _check_dict_for_int(change_dict)
-
-    renamed_network = nx.relabel_nodes(renamed_network, change_dict)
-    renamed_network = drug_nodes(renamed_network)
-    return renamed_network
 
 
 def _check_dict_for_int(dic):
