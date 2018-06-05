@@ -1,22 +1,23 @@
-Subpackages
------------
+Data management
+---------------
+Tools to process data.
+
+magine\.data module
+-------------------
+
+.. automodule:: magine.data
+:members:
+       :undoc-members:
+       :show-inheritance:
 
 magine\.data\.datatypes module
 ------------------------------
 
-.. automodule:: magine.data.datatypes
+.. automodule:: magine.data.experimental_data
    :members:
    :undoc-members:
    :show-inheritance:
 
 
-magine\.data\.tools module
-------------------------------
 
-Tools to process data.
-
-.. automodule:: magine.data.tools
-   :members:
-   :undoc-members:
-   :show-inheritance:
 

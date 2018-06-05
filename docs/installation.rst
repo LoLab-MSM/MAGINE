@@ -19,7 +19,6 @@ Installation
            64-bit installer, press the Windows Start button, search for “About
            your PC”, and under “System type” it will specify 32-bit operating
            system or 64-bit operating system
-
 2. **Open a terminal**
 
     We will install most packages with conda::
@@ -36,11 +35,13 @@ Installation
    following in a terminal::
 
       $ git clone https://github.com/LoLab-VU/magine
+      $ cd magine
       $ pip install -r requirements.txt
       $ export PYTHONPATH=`pwd`:$PYTHONPATH
 
      **Mac users:** To open a terminal on a Mac, open Spotlight search
             (press command key and space), type ``terminal`` and press enter.
+
 
 
 4. **Start Python and MAGINE**

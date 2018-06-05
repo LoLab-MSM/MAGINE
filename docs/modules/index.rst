@@ -2,7 +2,7 @@ MAGINE Modules Reference
 ========================
 
 .. toctree::
-   :maxdepth: 3
+:maxdepth: 1
 
    data/index.rst
    html_templates/index.rst
