@@ -29,7 +29,7 @@ def test_mpl():
     g.add_edge('C', 'B')
     g.add_edge('C', 'D')
     for i in ['circular_layout', 'random_layout', 'shell_layout',
-              'spring_layout', 'spectral_layout', 'dot', 'neato', 'fdp',
+              'spring_layout', 'spectral_layout',  # 'dot', 'neato', 'fdp',
               'fruchterman_reingold_layout']:
         render_mpl(g, i)
     plt.close()
