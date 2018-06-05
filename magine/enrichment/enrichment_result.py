@@ -7,7 +7,7 @@ from magine.data import Data
 from magine.plotting.heatmaps import cluster_distance_mat
 
 
-def load_enrichment_csv(file_name):
+def load_enrichment_csv(file_name, **args):
     """ Load data into EnrichmentResult data class
 
     Parameters
@@ -19,7 +19,7 @@ def load_enrichment_csv(file_name):
     EnrichmentResult
 
     """
-    return EnrichmentResult(pd.read_csv(file_name))
+    return EnrichmentResult(pd.read_csv(file_name, **args))
 
 
 class EnrichmentResult(Data):
@@ -101,11 +101,11 @@ class EnrichmentResult(Data):
         if isinstance(rank, (int, float)):
             new_data = new_data[new_data['rank'] <= rank]
         if db is not None:
-            new_data = self.filter_rows('db', db)
+            new_data.filter_rows('db', db, inplace=True)
         if sample_id is not None:
-            new_data = self.filter_rows('sample_id', sample_id)
+            new_data.filter_rows('sample_id', sample_id, inplace=True)
         if category is not None:
-            new_data = self.filter_rows('category', category)
+            new_data.filter_rows('category', category, inplace=True)
         if inplace:
             self._update_inplace(new_data)
         else:
@@ -228,7 +228,9 @@ class EnrichmentResult(Data):
             to_keep = set()
             for i in sorted(data_copy['sample_id'].unique()):
                 tmp = data_copy[data_copy['sample_id'] == i]
-                to_keep.update(tmp.unique_terms(threshold, verbose))
+                to_keep.update(
+                    tmp.unique_terms(threshold, verbose, level=level)
+                )
 
         else:
             to_keep = data_copy.unique_terms(threshold, verbose, level=level)

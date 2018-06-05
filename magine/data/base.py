@@ -66,18 +66,19 @@ class Data(pd.DataFrame):
                               ascending=False, inplace=True)
         return array
 
-    def filter_by_minimum_sig_columns(self, columns, index=None, min_terms=3):
+    def filter_by_minimum_sig_columns(self, columns, index=None, min_terms=3,
+                                      inplace=False):
         if index is None:
             index = self._index
         # create safe copy of array
-        tmp_array = self.copy()
+        new_data = self.copy()
 
         # get list of columns
-        cols_to_check = list(tmp_array[columns].unique())
+        cols_to_check = list(new_data[columns].unique())
 
-        assert 'significant_flag' in tmp_array, 'Requires significant_flag column'
+        assert 'significant_flag' in new_data.columns, 'Requires significant_flag column'
         # pivot
-        sig = pd.pivot_table(tmp_array,
+        sig = pd.pivot_table(new_data,
                              index=index,
                              fill_value=0,
                              values='significant_flag',
@@ -89,12 +90,17 @@ class Data(pd.DataFrame):
         sig = sig[sig.T.sum() >= min_terms]
         if isinstance(index, list):
             keepers = {i[0] for i in sig.index.values}
-            return tmp_array[tmp_array[index[0]].isin(keepers)].copy()
+            new_data = new_data[new_data[index[0]].isin(keepers)]
         elif isinstance(index, str):
             keepers = {i for i in sig.index.values}
-            return tmp_array[tmp_array[index].isin(keepers)].copy()
+            new_data = new_data.loc[new_data[index].isin(keepers)]
         else:
             print("Index is not a str or a list. What is it?")
+
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data
 
 
 def log2_normalize_df(df, column):

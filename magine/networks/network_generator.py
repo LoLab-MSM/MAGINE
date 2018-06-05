@@ -183,10 +183,8 @@ def expand_by_db(network, measured_list, db='reactome'):
 
     print("{} database".format(db_name))
     print("\t\tbefore\tafter")
-    print(
-        "\tNodes\t{}\t{}".format(len(network.nodes()), len(new_graph.nodes())))
-    print(
-        "\tEdges\t{}\t{}".format(len(network.edges()), len(new_graph.edges())))
+    print("\tNodes\t{}\t{}".format(len(network.nodes), len(new_graph.nodes)))
+    print("\tEdges\t{}\t{}".format(len(network.edges), len(new_graph.edges)))
 
     return new_graph
 
@@ -233,8 +231,8 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
     cm = ChemicalMapper()
 
     tmp_graph = nx.DiGraph()
-    start_nodes = set(graph.nodes())
-    start_edges = set(graph.edges())
+    start_nodes = set(graph.nodes)
+    start_edges = set(graph.edges)
     metabolite_set = set(i for i in metabolite_list if i.startswith('HMDB'))
     metabolite_set = metabolite_set.intersection(cm.hmdb_to_protein)
     missing_metabolites = metabolite_set.difference(start_nodes)
@@ -252,7 +250,7 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
             attrs['speciesType'] = node_type
             if node_type == 'compound':
                 if node in cm.hmdb_to_chem_name:
-                    name = cm.hmdb_to_chem_name[node]
+                    name = cm.hmdb_to_chem_name[node][0]
                     attrs['chemName'] = name
 
             tmp_graph.add_node(node, **attrs)
@@ -299,8 +297,8 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
                     missing_proteins.add(each)
 
     final_graph = nt.compose(graph, tmp_graph)
-    end_nodes = set(final_graph.nodes())
-    end_edges = set(final_graph.edges())
+    end_nodes = set(final_graph.nodes)
+    end_edges = set(final_graph.edges)
     new_nodes = end_nodes.intersection(start_nodes)
     new_edges = end_edges.intersection(start_edges)
     metabolites_added = missing_metabolites.intersection(end_nodes)
@@ -335,11 +333,17 @@ def expand_by_hmdb(graph, metabolite_list, verbose=False):
 
 
 def create_hmdb_network():
+    """ Create HMDB network containing all metabolite-protein interactions
+
+    Returns
+    -------
+    nx.DiGraph
+    """
     out_name = os.path.join(network_data_dir, 'hmdb_graph.p.gz')
     if os.path.exists(out_name):
         tmp_graph = nx.read_gpickle(out_name)
         print("HMDB network {} nodes and {} edges"
-              "".format(len(tmp_graph.nodes()), len(tmp_graph.edges()))
+              "".format(len(tmp_graph.nodes), len(tmp_graph.edges))
               )
         return tmp_graph
     from magine.mappings.chemical_mapper import ChemicalMapper
@@ -355,7 +359,7 @@ def create_hmdb_network():
             attrs['speciesType'] = node_type
             if node_type == 'compound':
                 if node in cm.hmdb_to_chem_name:
-                    name = cm.hmdb_to_chem_name[node]
+                    name = cm.hmdb_to_chem_name[node][0]
                     attrs['chemName'] = name
 
             tmp_graph.add_node(node, **attrs)
@@ -373,7 +377,7 @@ def create_hmdb_network():
             _add_node(ge, 'gene')
             _add_edge(compound, ge)
     print("HMDB network {} nodes and {} edges"
-          "".format(len(tmp_graph.nodes()), len(tmp_graph.edges()))
+          "".format(len(tmp_graph.nodes), len(tmp_graph.edges))
           )
     nx.write_gpickle(tmp_graph, out_name)
     return tmp_graph
@@ -429,4 +433,5 @@ def create_background_network(save_name='background_network'):
 
 
 if __name__ == '__main__':
-    create_background_network()
+    # create_background_network()
+    create_hmdb_network()

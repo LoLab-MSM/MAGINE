@@ -75,11 +75,9 @@ class BioGridDownload(object):
             c_name = row['chemName']
             if db == 'DRUGBANK':
                 if id_chem_source in self._cm.drugbank_to_hmdb:
-                    name = self._cm.drugbank_to_hmdb[id_chem_source][0]
-                    return name
+                    return self._cm.drugbank_to_hmdb[id_chem_source][0]
                 elif c_name in self._cm.chem_name_to_hmdb:
-                    name = self._cm.chem_name_to_hmdb[c_name][0]
-                    return name
+                    return self._cm.chem_name_to_hmdb[c_name][0]
             return None
 
         df['databaseSource'] = self._db_name
@@ -196,18 +194,15 @@ class BioGridDownload(object):
             create_using=nx.DiGraph()
         )
 
-        table = table[['source', 'target']].values
-
         added_genes = set()
 
         def _add_node(node):
-            protein_graph.add_node(node,
-                                   databaseSource=self._db_name,
+            protein_graph.add_node(node, databaseSource=self._db_name,
                                    speciesType='gene')
             added_genes.add(node)
 
         # add names to graph
-        for r in table:
+        for r in table[['source', 'target']].values:
             if r[0] not in added_genes:
                 _add_node(r[0])
             if r[1] not in added_genes:
@@ -234,6 +229,5 @@ def load_biogrid_network():
 
 
 if __name__ == '__main__':
-    bgn = BioGridDownload()
-    bgn.parse_network()
-    # load_biogrid_network()
+    BioGridDownload().parse_network()
+

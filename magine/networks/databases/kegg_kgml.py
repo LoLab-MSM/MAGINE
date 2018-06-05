@@ -5,7 +5,7 @@ import xml.etree.cElementTree as element_tree
 import networkx as nx
 from bioservices import KEGG
 
-import magine.networks.utils
+import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
 
 try:
@@ -222,7 +222,7 @@ def create_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
         path_to_graph, _ = load_kegg(species, verbose)
 
         # merge into single networks
-        all_of_kegg = magine.networks.utils.compose_all(path_to_graph.values())
+        all_of_kegg = utils.compose_all(path_to_graph.values())
 
         # relabel notes
         if species == 'hsa':
@@ -267,5 +267,5 @@ def load_gz_p(file_name):
 
 
 if __name__ == '__main__':
-    download_kegg('hsa')
-    # create_all_of_kegg('hsa')
+    # download_kegg('hsa')
+    create_all_of_kegg('hsa')

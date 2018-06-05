@@ -304,7 +304,7 @@ def compose_all(graphs):
     """
     for n, g in enumerate(graphs):
         if n != 0:
-            new_g = nx.compose(new_g, g)
+            new_g = compose(new_g, g)
         else:
             new_g = g
     return new_g

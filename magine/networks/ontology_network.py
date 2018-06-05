@@ -325,7 +325,6 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     -------
 
     """
-    from magine.networks.visualization.cytoscape_view import RenderModel
     if terms is not None:
         df_copy = df[df['term_name'].isin(terms)].copy()
     else:
@@ -372,7 +371,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         for n, time in enumerate(labels):
             term_g.node[i][time] = float(values[time])
     if not create_only:
-
+        from magine.networks.visualization.cytoscape_view import RenderModel
         rm = RenderModel(term_g, layout='force-directed')
         rm.visualize_by_list_of_time(labels,
                                      prefix=save_name,

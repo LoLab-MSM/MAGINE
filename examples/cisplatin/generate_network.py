@@ -2,13 +2,11 @@ import os
 
 import networkx as nx
 
-import magine.networks.dev_tools as nt
-import magine.networks.utils
+import magine.networks.utils as utils
 from exp_data import exp_data
 from magine.networks.network_generator import build_network
 
 if __name__ == '__main__':
-
 
     network = build_network(
         gene_list=exp_data.list_sig_proteins,  # genes seed species
@@ -29,33 +27,27 @@ if __name__ == '__main__':
     measured = set(exp_data.list_species)
     sig_measured = set(exp_data.list_sig_species)
 
-    network = magine.networks.utils.add_attribute_to_network(network,
-                                                             sig_measured,
-                                                             'sigMeasured',
-                                          'red', 'blue')
-    network = magine.networks.utils.add_attribute_to_network(network, measured,
-                                                             'measured', 'red',
-                                          'blue')
+    network = utils.add_attribute_to_network(network, sig_measured,
+                                             'sigMeasured', 'red', 'blue')
+    network = utils.add_attribute_to_network(network, measured, 'measured',
+                                             'red', 'blue')
     # add labels for if node is measured in any of our data_types
     m, sig_m = exp_data.get_measured_by_datatype()
 
     for exp_type, spec in m.items():
         attr_name = exp_type.replace('_', '')
         attr_name = attr_name.replace('-', '')
-        network = magine.networks.utils.add_attribute_to_network(network, spec,
-                                                                 attr_name,
-                                                                 'red',
-                                              'blue')
+        network = utils.add_attribute_to_network(network, spec, attr_name,
+                                                 'red', 'blue')
     # add labels for if node is measured in any of our time points
     for time, spec in exp_data.sig_species_over_time.items():
         time = 'timepoint{}'.format(time)
-        network = magine.networks.utils.add_attribute_to_network(network, spec,
-                                                                 time, 'red',
-                                                                 'blue')
+        network = utils.add_attribute_to_network(network, spec, time, 'red', 'blue')
 
     print("Saving network")
     # write to GML for cytoscape or other program
     nx.write_gml(
+
         network,
         os.path.join(os.path.dirname(__file__), 'Data',
                      'cisplatin_network_w_attributes.gml')
