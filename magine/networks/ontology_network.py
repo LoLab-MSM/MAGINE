@@ -8,7 +8,7 @@ import pandas as pd
 
 import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
-from magine.networks.visualization.igraph_tools import create_igraph_figure
+from magine.networks.visualization.igraph_tools import render_igraph
 from magine.plotting.heatmaps import heatmap_from_array
 
 
@@ -223,7 +223,7 @@ class OntologyNetworkGenerator(object):
 
             if draw:
                 export_to_dot(go_graph, save_name)
-                create_igraph_figure(mol_net, save_name + '_subgraph_igraph')
+                render_igraph(mol_net, save_name + '_subgraph_igraph')
 
         return go_graph, mol_net
 
