@@ -3,7 +3,6 @@ import os
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import pandas as pd
-
 import magine.enrichment.enrichment_result as et
 
 data_dir = os.path.dirname(__file__)
@@ -59,6 +58,9 @@ class TestEnrichmentResult(object):
 
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
         assert sim2.shape == (29, 10)
+        copy_data = self.data.copy()
+        copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
+        assert copy_data.shape == (18, 10)
 
     def test_dist(self):
 

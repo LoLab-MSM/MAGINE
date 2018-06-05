@@ -298,7 +298,7 @@ def visualize_go_network(go_network, data, save_name,
 
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
-                      threshold=0, remove_isolated=False, create_only=False,
+                      threshold=0, remove_isolated=False, create_only=True,
                       merge=False, out_dir=None):
     """
 
@@ -327,9 +327,10 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     """
     if terms is not None:
         df_copy = df[df['term_name'].isin(terms)].copy()
+        terms = set(terms)
     else:
         df_copy = df.copy()
-        terms = list(df['term_name'].unique())
+        terms = set(df['term_name'].unique().values)
 
     # normalize enriched scores
     df_copy['combined_score'] = np.abs(df_copy['combined_score'])
@@ -339,8 +340,8 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     labels = df_copy['sample_id'].unique()
     # create dictionary of values
     label_dict, term_dict = dict(), dict()
-    for i in set(terms):
-        genes = set(df.term_to_genes(i))
+    for i in terms:
+        genes = set(df_copy.term_to_genes(i))
         term_dict[i] = genes
         label_dict[i] = i
 
