@@ -6,9 +6,9 @@ magine\.data module
 -------------------
 
 .. automodule:: magine.data
-:members:
-       :undoc-members:
-       :show-inheritance:
+   :members:
+   :undoc-members:
+   :show-inheritance:
 
 magine\.data\.datatypes module
 ------------------------------
