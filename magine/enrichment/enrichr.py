@@ -289,7 +289,8 @@ class Enrichr(object):
         EnrichmentResult
         """
         assert isinstance(sample_lists, list), "List required"
-        assert isinstance(sample_lists[0], list), "List of lists required"
+        assert isinstance(sample_lists[0],
+                          (list, set)), "List of lists required"
 
         for count, (i, j) in enumerate(zip(sample_lists, sample_ids)):
             df = self.run(i, database)

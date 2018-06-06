@@ -75,13 +75,18 @@ class Data(pd.DataFrame):
 
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
-
-        assert 'significant_flag' in new_data.columns, 'Requires significant_flag column'
+        if 'significant' in new_data.columns:
+            flag = 'significant'
+        elif 'significant_flag' in new_data.columns:
+            flag = 'significant_flag'
+        else:
+            flag = None
+        assert flag in new_data.columns, 'Requires significant_flag column'
         # pivot
         sig = pd.pivot_table(new_data,
                              index=index,
                              fill_value=0,
-                             values='significant_flag',
+                             values=flag,
                              columns=columns
                              )[cols_to_check]
 

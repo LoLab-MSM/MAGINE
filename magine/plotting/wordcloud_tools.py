@@ -115,16 +115,18 @@ def create_wordcloud(df, save_name=None):
     wordcloud = wc.generate(text)
     word_dict = wc.process_text(text)
 
-    def plot(self, save_name, figsize=(8, 5)):
-        plt.figure(figsize=figsize)
-        plt.imshow(self, interpolation='bilinear')
+    def plot(self, save_name=None, figsize=(8, 5)):
+        fig = plt.figure(figsize=figsize)
+        ax = fig.add_subplot(111)
+        ax.imshow(self, interpolation='bilinear')
         plt.xticks([])
         plt.yticks([])
         plt.axis("off")
-        plt.savefig('{}.png'.format(save_name), bbox_inches='tight', dpi=150)
-        plt.title(save_name)
-        plt.show()
-        plt.close()
+        if save_name is not None:
+            plt.savefig('{}.png'.format(save_name), bbox_inches='tight',
+                        dpi=150)
+            plt.title(save_name)
+        return fig
 
     wordcloud.plot = types.MethodType(plot, wordcloud)
 

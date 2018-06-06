@@ -1,5 +1,6 @@
 import os
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import magine.plotting.wordcloud_tools as wt
@@ -18,11 +19,10 @@ def test_filter():
 
     x = wt.create_wordcloud(df)
 
-    x.plot('test_wc')
-
-    wt.word_cloud_from_array(df,
-                             sample_ids=[1, 2]
-                             )
+    x.plot(save_name='test_wc')
+    plt.close()
+    wt.word_cloud_from_array(df, sample_ids=[1, 2])
+    plt.close()
 
 
 if __name__ == '__main__':

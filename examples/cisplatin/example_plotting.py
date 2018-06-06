@@ -1,28 +1,19 @@
-import pandas as pd
-
-from magine.data.datatypes import ExperimentalData
+from exp_data import exp_data
 from magine.data.formatter import pivot_tables_for_export
 from magine.plotting.heatmaps import heatmap_from_array
-from magine.plotting.species_plotting import plot_list_of_genes
-
-data = pd.read_csv('Data/norris_et_al_2017_cisplatin_data.csv.gz',
-                   low_memory=False)
-
-exp_data = ExperimentalData(data)
-
 
 # create a plotly interactive plot
-plot_list_of_genes(data, ['BAX', 'BID'],
-                     save_name='cisplatin_example',
-                     out_dir='plots',
-                     plot_type='plotly')
+exp_data.plot_species(['BAX', 'BID'],
+                      save_name='cisplatin_example',
+                      out_dir='plots',
+                      plot_type='plotly')
 
 # create a matplotlib plot
-plot_list_of_genes(data, ['BAX', 'BID'],
-                     save_name='cisplatin_example',
-                     out_dir='plots',
-                     plot_type='matplotlib',
-                     image_format='png')
+exp_data.plot_species(['BAX', 'BID'],
+                      save_name='cisplatin_example',
+                      out_dir='plots',
+                      plot_type='matplotlib',
+                      image_format='png')
 
 # create a volcano plot
 
