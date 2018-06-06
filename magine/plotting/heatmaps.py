@@ -2,8 +2,6 @@ import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 
-from magine.data.tools import pivot_table
-
 
 def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                        cluster_row=False, cluster_col=False,
@@ -17,7 +15,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     ----------
 
 
-    data : pandas.DataFrame
+    data : magine.data.experimental_data.ExpreimentalData
     convert_to_log : bool
     y_tick_labels : list_like
     columns : str
@@ -46,8 +44,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     -------
 
     """
-    array = pivot_table(data, convert_to_log, columns=columns, index=index,
-                        fill_value=0.0, values=values)
+    array = data.pivoter(convert_to_log, columns=columns, index=index,
+                         fill_value=0.0, values=values)
     labels = None
     fmt = None
 
@@ -57,9 +55,9 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     if annotate_sig:
         # Have to rank by column for this to work
         if 'significant_flag' in data.columns:
-            tmp2 = pivot_table(data, False, columns=columns,
-                               index=index, fill_value=False,
-                               values='significant_flag', min_sig=False)
+            tmp2 = data.pivoter(False, columns=columns, index=index,
+                                fill_value=False, values='significant_flag',
+                                min_sig=False)
 
             tmp2 = tmp2.reindex(array.index)
             tmp2[tmp2 > 0] = True
@@ -111,8 +109,8 @@ def heatmap_by_terms(data, terms, color_labels, colors=None,
                      values='combined_score', div_colors=False, num_colors=7,
                      fig_size=(6, 4), annotate_sig=False):
     # pivot datatable
-    array = pivot_table(data, convert_to_log, columns=columns, index=index,
-                        fill_value=0.0, values=values)
+    array = data.pivoter(convert_to_log, columns=columns, index=index,
+                         fill_value=0.0, values=values)
 
     if colors is None:
         colors = sns.color_palette("Dark2", len(terms))
@@ -141,9 +139,9 @@ def heatmap_by_terms(data, terms, color_labels, colors=None,
     if annotate_sig:
         # Have to rank by column for this to work
         if 'significant_flag' in data.columns:
-            tmp2 = pivot_table(data.copy(), False, columns=columns,
-                               index=index, fill_value=False,
-                               values='significant_flag', min_sig=False)
+            tmp2 = data.pivoter(False, columns=columns, index=index,
+                                fill_value=False, min_sig=False,
+                                values='significant_flag')
 
             tmp2 = tmp2.reindex(array.index)
             tmp2[tmp2 > 0] = True
