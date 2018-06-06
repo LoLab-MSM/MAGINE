@@ -73,7 +73,7 @@ class Data(pd.DataFrame):
         ----------
         columns : str
             Columns to consider
-        index : str
+        index : str, list
             The column with which to filter by counts
         min_terms : int
             Number of terms required to not be filtered
