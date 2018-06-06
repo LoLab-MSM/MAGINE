@@ -3,12 +3,10 @@ import pandas as pd
 
 
 class Data(pd.DataFrame):
-    _metadata = ['added_property']
-    _index = False
+    _index = None
 
     def __init__(self, *args, **kwargs):
         super(Data, self).__init__(*args, **kwargs)
-        # self._index = None
 
     @property
     def _constructor(self):
@@ -16,7 +14,7 @@ class Data(pd.DataFrame):
 
     def pivoter(self, convert_to_log, columns, values, index=None,
                 fill_value=None, min_sig=0):
-        """
+        """ Pivot data on provided axis.
 
         Parameters
         ----------
@@ -32,6 +30,7 @@ class Data(pd.DataFrame):
             Fill pivot table nans with
         min_sig : int
             Required number of significant terms to keep in a row, default 0
+
         Returns
         -------
 
@@ -41,7 +40,7 @@ class Data(pd.DataFrame):
             index = self._index
 
         if convert_to_log:
-            d_copy = log2_normalize_df(d_copy, values)
+            self.log2_normalize_df(values, inplace=True)
 
         if min_sig:
             assert isinstance(min_sig, int)
@@ -68,6 +67,23 @@ class Data(pd.DataFrame):
 
     def filter_by_minimum_sig_columns(self, columns, index=None, min_terms=3,
                                       inplace=False):
+        """ Filter index to have at least "min_terms" significant species.
+
+        Parameters
+        ----------
+        columns : str
+            Columns to consider
+        index : str
+            The column with which to filter by counts
+        min_terms : int
+            Number of terms required to not be filtered
+        inplace : bool
+            Filter in place or return a copy of the filtered data
+
+        Returns
+        -------
+        new_data : Data
+        """
         if index is None:
             index = self._index
         # create safe copy of array
@@ -107,24 +123,29 @@ class Data(pd.DataFrame):
         else:
             return new_data
 
+    def log2_normalize_df(self, column='fold_change', inplace=False):
+        """ Convert "fold_change" column to log2.
 
-def log2_normalize_df(df, column):
-    """
+        Does so by taking log2 of all positive values and -log2 of all negative
+        values.
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        dataframe of fold changes
-    column : str
-        column that contains fold change values
+        Parameters
+        ----------
+        column : str
+            Column to convert
+        inplace : bool
+            Where to apply log2 in place or return new dataframe
 
-    Returns
-    -------
+        Returns
+        -------
 
-    """
-    tmp_df = df.copy()
-    greater_than = tmp_df[column] > 0
-    less_than = tmp_df[column] < 0
-    tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
-    tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
-    return tmp_df
+        """
+        new_data = self.copy()
+        greater = new_data[column] > 0
+        less = new_data[column] < 0
+        new_data.loc[greater, column] = np.log2(new_data[greater][column])
+        new_data.loc[less, column] = -np.log2(-new_data[less][column])
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data

@@ -115,3 +115,24 @@ class TestExpData(object):
         self.exp_data.create_table_of_data(write_latex=True, save_name='latex')
         self.exp_data.create_table_of_data(sig=True)
         self.exp_data.create_table_of_data(sig=True, unique=True)
+
+    def test_log2(self):
+        x = self.exp_data.rna.log2_normalize_df('fold_change')
+        assert x.to_dict() == \
+               {'sample_id': {8: 'Time_3', 9: 'Time_3', 10: 'Time_3'},
+                'source': {8: 'rna_seq', 9: 'rna_seq', 10: 'rna_seq'},
+                'significant': {8: True, 9: True, 10: False},
+                'fold_change': {8: -0.5849625007211562,
+                                9: -1.8073549220576042,
+                                10: -0.2630344058337938},
+                'p_value': {8: 0.01, 9: 0.06, 10: 0.22},
+                'identifier': {8: 'AIF1', 9: 'AKT1', 10: 'AKT2'},
+                'species_type': {8: 'protein', 9: 'protein', 10: 'protein'},
+                'label': {8: 'AIF1', 9: 'AKT1', 10: 'AKT2'}}
+
+    def test_pivotor(self):
+        x = self.exp_data.rna.pivoter(True, columns='sample_id',
+                                      values='fold_change', fill_value='-',
+                                      min_sig=1)
+        assert x.to_dict('index') == {'fold_change':
+                                          {'Time_3': -0.8851172762041847}}
