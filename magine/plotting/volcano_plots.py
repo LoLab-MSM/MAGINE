@@ -5,16 +5,16 @@ import numpy as np
 
 from magine.data.formatter import log2_normalize_df
 
-fold_change = 'treated_control_fold_change'
-flag = 'significant_flag'
-exp_method = 'data_type'
-p_val = 'p_value_group_1_and_group_2'
+fold_change = 'fold_change'
+flag = 'significant'
+exp_method = 'source'
+p_val = 'p_value'
 rna = 'rna_seq'
 gene = 'gene'
 protein = 'protein'
 metabolites = 'metabolites'
 species_type = 'species_type'
-sample_id = 'time'
+sample_id = 'sample_id'
 
 
 def create_mask(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):

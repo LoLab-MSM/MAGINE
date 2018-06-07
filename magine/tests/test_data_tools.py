@@ -1,7 +1,6 @@
 import pandas as pd
 from nose.tools import raises
 
-import magine.data.tools as tools
 from magine.data import Data
 
 
@@ -49,8 +48,8 @@ def test_min_raises():
         {values: -4, index: 'b', columns: '2'},
     ]
 
-    d = pd.DataFrame(x)
-    tools.filter_by_minimum_sig_columns(d, index=index, columns=columns)
+    d = ConcentrationData(x)
+    d.filter_by_minimum_sig_columns(index=index, columns=columns)
 
 
 def test_filter_min():
@@ -95,7 +94,7 @@ def test_log_normal():
          ['d', 16]]
 
     df = ConcentrationData(x, columns=['name', 'value'])
-    new_df = tools.log2_normalize_df(df, 'value')
+    new_df = df.log2_normalize_df('value')
 
     assert new_df[new_df['name'] == 'a']['value'].values == [1.]
     assert new_df[new_df['name'] == 'c']['value'].values == [-4.]

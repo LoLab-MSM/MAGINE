@@ -9,53 +9,49 @@ from pandas.plotting import table
 import magine.plotting.volcano_plots as v_plot
 from magine.data import Data
 from magine.data.formatter import log2_normalize_df
-from magine.plotting.species_plotting import plot_dataframe, \
-    plot_list_of_genes, \
-    plot_list_of_metabolites
+from magine.plotting.species_plotting import plot_dataframe, plot_species
 
 # pandas.set_option('display.max_colwidth', -1)
 # column definitions
-fold_change = 'treated_control_fold_change'
-flag = 'significant_flag'
-exp_method = 'data_type'
-p_val = 'p_value_group_1_and_group_2'
+
+fold_change = 'fold_change'
+flag = 'significant'
+exp_method = 'source'
+p_val = 'p_value'
 rna = 'rna_seq'
 gene = 'gene'
 protein = 'protein'
 metabolites = 'metabolites'
 species_type = 'species_type'
-sample_id = 'time'
-valid_cols = [fold_change, flag, p_val, protein, gene, species_type, sample_id]
+sample_id = 'sample_id'
+identifier = 'identifier'
+label = 'label'
+valid_cols = [fold_change, flag, p_val, species_type, sample_id]
 
 
-def load_data_csv(file_name):
+def load_data_csv(file_name, **kwargs):
     """ Load data into EnrichmentResult data class
 
     Parameters
     ----------
     file_name : str
-
+    kwargs :
+        Flags to pass to pandas.
     Returns
     -------
     EnrichmentResult
 
     """
-    df = pd.read_csv(file_name)
+    df = pd.read_csv(file_name, **kwargs)
     df = df[df[fold_change].notnull()]
-    # Hack way to replace inf with large numbers.
-    df.loc[df[fold_change] == np.inf, fold_change] = 1000
-    df.loc[df[fold_change] == -np.inf, fold_change] = -1000
     return ExperimentalData(df)
 
 
 class Sample(Data):
     def __init__(self, *args, **kwargs):
-        mol_type = kwargs.pop('mol_type', gene)
-        assert mol_type in {'gene', 'compound_id'}, \
-            'please provide molecule type'
         super(Sample, self).__init__(*args, **kwargs)
-
-        self.mol_type = mol_type
+        self._identifier = identifier
+        self._label = label
         self._up = None
         self._down = None
         self._sig = None
@@ -76,13 +72,15 @@ class Sample(Data):
 
     @property
     def sig(self):
-        # return as list
-
         return self.loc[self[flag]]
 
     @property
-    def list(self):
-        return set(self[self.mol_type].values)
+    def id_list(self):
+        return set(self[self._identifier].values)
+
+    @property
+    def label_list(self):
+        return set(self[self._label].values)
 
     @property
     def up_by_sample(self):
@@ -90,7 +88,7 @@ class Sample(Data):
         for i in sorted(set(self[sample_id].values)):
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
-            over_time.append(cur_slice.up.list)
+            over_time.append(cur_slice.up.id_list)
         return over_time
 
     @property
@@ -99,38 +97,42 @@ class Sample(Data):
         for i in sorted(set(self[sample_id].values)):
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
-            over_time.append(cur_slice.down.list)
+            over_time.append(cur_slice.down.id_list)
         return over_time
 
+    def volcano_plot(self, save_name, out_dir=None, bh_critera=False,
+                     p_value=0.1, fold_change_cutoff=1.5, x_range=None,
+                     y_range=None):
+        """ Create a volcano plot of data
+        Creates a volcano plot of data type provided
 
-class Gene(Sample):
-    def __init__(self, *args, **kwargs):
-        super(Gene, self).__init__(*args, **kwargs)
-        self.mol_type = 'gene'
+        Parameters
+        ----------
+        save_name: str
+            name to save figure
+        out_dir: str, directory
+            Location to save figure
+        bh_critera: bool, optional
+            If to use significant flags of data
+        p_value: float, optional
+            Criteria for significant
+        fold_change_cutoff: float, optional
+            Criteria for significant
+        y_range: array_like
+            upper and lower bounds of plot in y direction
+        x_range: array_like
+            upper and lower bounds of plot in x direction
 
-    @property
-    def _constructor(self):
-        return Gene
+        Returns
+        -------
 
 
-class Compound(Sample):
-    def __init__(self, *args, **kwargs):
-        super(Compound, self).__init__(*args, **kwargs)
-        self.mol_type = 'compound_id'
-
-    @property
-    def _constructor(self):
-        return Compound
-
-
-class Species(Sample):
-    def __init__(self, *args, **kwargs):
-        super(Species, self).__init__(*args, **kwargs)
-        self.mol_type = 'name'
-
-    @property
-    def _constructor(self):
-        return Species
+        """
+        fig = v_plot.volcano_plot(self, save_name=save_name, out_dir=out_dir,
+                                  bh_criteria=bh_critera, p_value=p_value,
+                                  fold_change_cutoff=fold_change_cutoff,
+                                  x_range=x_range, y_range=y_range)
+        return fig
 
 
 class ExperimentalData(object):
@@ -156,17 +158,24 @@ class ExperimentalData(object):
             df = pd.read_csv(data_file, parse_dates=False, low_memory=False)
         for i in valid_cols:
             if i not in df.dtypes:
-                print("{} not in columns.")
-        df = df[df[fold_change].notnull()]
-        df.loc[df[fold_change] == np.inf, fold_change] = 1000
-        df.loc[df[fold_change] == -np.inf, fold_change] = -1000
-        self._data = df
-        self._index = 'name'
+                print("{} not in columns.".format(i))
+
+        self.data = Data(df)
+        self._index = 'identifier'
         self.__proteins = None
         self.__genes = None
         self.__species = None
         self.__rna = None
         self.__compounds = None
+        for i in self.exp_methods:
+            self.__setattr__(i, Sample(
+                self.data.loc[self.data[exp_method] == i]))
+
+    def __setattr__(self, name, value):
+        super(ExperimentalData, self).__setattr__(name, value)
+
+    def __getitem__(self, name):
+        return super(ExperimentalData, self).__getattribute__(name)
 
     @property
     def genes(self):
@@ -179,10 +188,10 @@ class ExperimentalData(object):
 
         """
         if self.__genes is None:
-            tmp = self._data.copy()
+            tmp = self.data.copy()
             tmp = tmp.loc[tmp[species_type] == protein]
-            tmp.dropna(subset=[gene], inplace=True)
-            self.__genes = Gene(tmp)
+
+            self.__genes = Sample(tmp)
         return self.__genes
 
     @property
@@ -196,12 +205,10 @@ class ExperimentalData(object):
 
         """
         if self.__proteins is None:
-            tmp = self._data.copy()
-            tmp = tmp.loc[(self._data[species_type] == protein) &
+            tmp = self.data.copy()
+            tmp = tmp.loc[(self.data[species_type] == protein) &
                           ~(tmp[exp_method] == rna)]
-
-            tmp.dropna(subset=[gene], inplace=True)
-            self.__proteins = Gene(tmp)
+            self.__proteins = Sample(tmp)
         return self.__proteins
 
     @property
@@ -215,52 +222,32 @@ class ExperimentalData(object):
 
         """
         if self.__rna is None:
-            tmp = self._data.copy()
+            tmp = self.data.copy()
             tmp = tmp.loc[tmp[exp_method] == rna]
-            tmp.dropna(subset=[gene], inplace=True)
-            self.__rna = Gene(tmp)
+            self.__rna = Sample(tmp)
         return self.__rna
 
     @property
     def compounds(self):
         if self.__compounds is None:
-            name_index = 'compound_id'
-            tmp = self._data.copy()
+            tmp = self.data.copy()
             tmp = tmp.loc[tmp[species_type] == metabolites]
-            if name_index not in tmp.columns.values:
-                tmp[name_index] = tmp['compound']
-            tmp[name_index] = tmp[name_index].astype(str)
-            tmp.dropna(subset=[name_index], inplace=True)
-
-            self.__compounds = Compound(tmp)
+            self.__compounds = Sample(tmp)
         return self.__compounds
 
     @property
     def species(self):
         if self.__species is None:
-            name_index = 'compound_id'
-            tmp = self._data.copy()
-            met = tmp.loc[tmp[species_type] == metabolites].copy()
-            if name_index not in met.columns.values:
-                met[name_index] = met['compound']
-            met[name_index] = met[name_index].astype(str)
-            met.dropna(subset=[name_index], inplace=True)
-            met['name'] = met[name_index]
-
-            genes = tmp.loc[tmp[species_type] == protein].copy()
-            genes.dropna(subset=[gene], inplace=True)
-            genes['name'] = genes[gene]
-            species = pd.concat([genes, met], sort=True, ignore_index=True)
-            self.__species = Species(species)
+            self.__species = Sample(self.data.copy())
         return self.__species
 
     @property
     def exp_methods(self):
-        return list(self._data[exp_method].unique())
+        return list(self.data[exp_method].unique())
 
     @property
     def sample_ids(self):
-        return sorted(list(self._data[sample_id].unique()))
+        return sorted(list(self.data[sample_id].unique()))
 
     def get_measured_by_datatype(self):
         """
@@ -271,7 +258,7 @@ class ExperimentalData(object):
         dict
 
         """
-        return get_measured_by_datatype(self._data)
+        return get_measured_by_datatype(self.data)
 
     def create_table_of_data(self, sig=False, unique=False, save_name=None,
                              plot=False, write_latex=False):
@@ -299,50 +286,18 @@ class ExperimentalData(object):
         pandas.DataFrame
 
         """
-        return create_table_of_data(self._data, sig=sig, unique=unique,
+        return create_table_of_data(self, sig=sig, unique=unique,
                                     save_name=save_name, plot=plot,
                                     write_latex=write_latex)
 
-    def plot_list_of_genes(self, list_of_genes, save_name, out_dir=None,
-                           title=None, plot_type='plotly', image_format='png'):
-        """
-        Creates an HTML table of plots provided a list gene names
-        Parameters
-        ----------
-    
-        list_of_genes: list
-            List of genes to be plotter
-        save_name: str
-            Filename to be saved as
-        out_dir: str
-            Path for output to be saved
-        title: str
-            Title of plot, useful when list of genes corresponds to a GO term
-        plot_type : str
-            Use plotly to generate html output or matplotlib to generate pdf
-        image_format : str
-            pdf or png, only used if plot_type="matplotlib"
-
-        Returns
-        -------
-
-        """
-        plot_list_of_genes(
-            self.genes, genes=list_of_genes,
-            save_name=save_name,
-            out_dir=out_dir, title=title, plot_type=plot_type,
-            image_format=image_format
-        )
-
-    def plot_list_of_metabolites(self, list_of_metabolites, save_name,
-                                 out_dir=None, title=None, plot_type='plotly',
-                                 image_format='png'):
+    def plot_species(self, species_list, save_name, out_dir=None, title=None,
+                     plot_type='plotly', image_format='png'):
         """
         Creates an HTML table of plots provided a list metabolites
-        
+
         Parameters
         ----------
-        list_of_metabolites : list
+        species_list : list
             list of compounds 
         save_name : str
             Name of html output file
@@ -358,12 +313,12 @@ class ExperimentalData(object):
         -------
 
         """
-        if self.compounds is not None:
-            plot_list_of_metabolites(
-                self.compounds, list_of_metab=list_of_metabolites,
-                save_name=save_name, out_dir=out_dir, title=title,
-                plot_type=plot_type, image_format=image_format
-            )
+
+        return plot_species(
+            self.species, species_list=species_list,
+            save_name=save_name, out_dir=out_dir, title=title,
+            plot_type=plot_type, image_format=image_format
+        )
 
     def plot_all_proteins(self, html_file_name, out_dir='proteins',
                           plot_type='plotly', run_parallel=False):
@@ -385,7 +340,7 @@ class ExperimentalData(object):
 
         """
 
-        plot_dataframe(self.proteins, html_filename=html_file_name,
+        plot_dataframe(self.genes, html_filename=html_file_name,
                        out_dir=out_dir, plot_type=plot_type,
                        type_of_species='protein',
                        run_parallel=run_parallel)
@@ -410,7 +365,7 @@ class ExperimentalData(object):
 
         """
 
-        plot_dataframe(self._data, html_filename=html_file_name,
+        plot_dataframe(self.compounds, html_filename=html_file_name,
                        out_dir=out_dir, plot_type=plot_type,
                        type_of_species='metabolites',
                        run_parallel=run_parallel)
@@ -476,7 +431,7 @@ class ExperimentalData(object):
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
 
-        data = self._data[self._data[exp_method] == exp_data_type].copy()
+        data = self.data[self.data[exp_method] == exp_data_type].copy()
         n_sample = np.sort(data[sample_id].unique())
 
         if len(n_sample) > 8:
@@ -550,7 +505,7 @@ class ExperimentalData(object):
 
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
-        data = self._data[self._data[exp_method] == exp_data_type].copy()
+        data = self.data[self.data[exp_method] == exp_data_type].copy()
         fig = v_plot.volcano_plot(data, save_name=save_name, out_dir=out_dir,
                                   bh_criteria=bh_critera, p_value=p_value,
                                   fold_change_cutoff=fold_change_cutoff,
@@ -581,7 +536,7 @@ class ExperimentalData(object):
 
         if not self._check_experiment_type_existence(exp_type=exp_data_type):
             return
-        data = self._data[self._data[exp_method] == exp_data_type].copy()
+        data = self.data[self.data[exp_method] == exp_data_type].copy()
         data = data.dropna(subset=[p_val])
         data = data[np.isfinite(data[fold_change])]
         data = data.dropna(subset=[fold_change])
@@ -652,7 +607,7 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
 
     Parameters
     ----------
-    data : pandas.DataFrame
+    data : ExperimentalData
     sig: bool
         Flag to summarize significant species only
     save_name: None, str
@@ -671,60 +626,36 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
     pandas.DataFrame
 
     """
-    tmp_data = data.copy()
 
     if sig:
-        tmp_data = tmp_data[tmp_data[flag]]
-    meta_d = tmp_data[tmp_data[species_type] == metabolites].copy()
-    exp_methods_metabolite = meta_d[exp_method].unique()
-    do_metab = True
-    if len(meta_d) == 0:
-        do_metab = False
-
-    gene_d = tmp_data[tmp_data[species_type] == protein].copy()
-
-    def _calculate_table(d, value, index):
-        """
-
-        Parameters
-        ----------
-        d : pandas.DataFrame
-        value
-        index
-
-        Returns
-        -------
-
-        """
-        d_return = d.pivot_table(values=value, index=index, columns='time',
-                                 fill_value='-',
-                                 aggfunc=lambda x: int(x.dropna().nunique()))
-        return d_return
+        data_copy = data.species.sig.copy()
+    else:
+        data_copy = data.species.copy()
 
     if unique:
-        gene_index = 'gene'
-        compound_index = 'compound'
+        index = identifier
     else:
-        gene_index = 'protein'
-        compound_index = 'compound_id'
+        index = label
 
-    count_table = _calculate_table(gene_d, gene_index, exp_method)
-    if do_metab:
-        tmp_data1 = _calculate_table(meta_d, compound_index, exp_method)
-        count_table = pd.concat([tmp_data1, count_table]).fillna('-')
+    count_table = data_copy.pivot_table(values=index, index=exp_method,
+                                        columns=sample_id, fill_value='-',
+                                        aggfunc=lambda x: x.dropna().nunique())
 
     unique_col = {}
-    for i in count_table.index:
-        loc = tmp_data[tmp_data[exp_method] == i]
-        if i in exp_methods_metabolite:
-            n = len(loc[compound_index].dropna().unique())
+    for i in data.exp_methods:
+        if unique:
+            if sig:
+                unique_col[i] = len(set(data[i].sig.label_list))
+            else:
+                unique_col[i] = len(set(data[i].label_list))
         else:
-            n = len(loc[gene_index].dropna().unique())
-        unique_col[i] = int(n)
+            if sig:
+                unique_col[i] = len(set(data[i].sig.id_list))
+            else:
+                unique_col[i] = len(set(data[i].id_list))
 
     count_table['Total Unique Across'] = pd.Series(unique_col,
                                                    index=count_table.index)
-
     if plot:
         ax = plt.subplot(111, frame_on=False)
 

@@ -1,11 +1,8 @@
 import os
 
-import pandas as pd
+from magine import load_data_csv
 
-from magine.data.datatypes import ExperimentalData
+file_path = os.path.join(os.path.dirname(__file__), 'Data',
+                         'norris_et_al_2017_cisplatin_data.csv.gz')
 
-_file = os.path.join(os.path.dirname(__file__), 'Data',
-                     'norris_et_al_2017_cisplatin_exp_data.csv.gz')
-df = pd.read_csv(_file, low_memory=False)
-
-exp_data = ExperimentalData(df)
+exp_data = load_data_csv(file_path, low_memory=False)

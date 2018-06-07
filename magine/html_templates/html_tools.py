@@ -13,42 +13,41 @@ plotly_template = env.get_template('plotly_template.html')
 single_template = env.get_template('single_table_view.html')
 filter_template = env.get_template('filter_table.html')
 
-range_ = { 'ref', 'depth', 'enrichment_score', 'rank',
+range_ = {'ref', 'depth', 'enrichment_score', 'rank', 'fold_change',
           'p_value', 'adj_p_value', 'combined_score', 'n_genes',
           'z_score', 'pvalue', 'treated_control_fold_change',
           'p_value_group_1_and_group_2'}
 
 chosen_ = {
-    'GO_name', 'slim', 'aspect', 'time', 'data_type',
+    'GO_name', 'slim', 'aspect', 'time', 'data_type', 'identifier', 'label',
     'term_name', 'term_id', 'category', 'db',  # enrichr
     'significant_flag', 'project_name', 'compound', 'GO_id',
     'sample_id', 'sample_index'
 }
-multi_choose = {'genes'}
-auto_complete_ = {'protein', 'gene'}
+multi_choose = {'genes', 'source', 'significant'}
+
+auto_complete_ = {'protein', 'gene', 'identifier', 'label', }
 
 
 def _add_filter(column_num, f_type):
     _default = {'column_number': column_num}
     if f_type == 'range':
         _default.update({'filter_type': 'range_number'})
-    if f_type == 'select':
+    elif f_type == 'select':
         _default.update({
             'select_type_options': {'width': "150px"},
             'filter_type': 'multi_select',
             'select_type': 'select2'
         })
-    if f_type == 'chosen':
-        _default.update({  # 'column_data_type': 'html',
-            # 'filter_type': "','",
-                         'select_type': "multi_select",
-            'select_type_options': {'width': "150px"},
-            'text_data_delimiter': "chosen"},
+    elif f_type == 'chosen':
+        _default.update({'select_type': "multi_select",
+                         'select_type_options': {'width': "150px"},
+                         'text_data_delimiter': "chosen"},
                         )
-    if f_type == 'auto_complete':
+    elif f_type == 'auto_complete':
         _default.update({'filter_type': "auto_complete",
                          'text_data_delimiter': ","})
-    if f_type == 'multichoose':
+    elif f_type == 'multichoose':
         _default.update({
             'filter_type': "multi_select",
             'select_type': "select2",
