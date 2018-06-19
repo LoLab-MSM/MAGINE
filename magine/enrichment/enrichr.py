@@ -447,6 +447,17 @@ replace_pairs = [
 
 
 def run_enrichment_for_project(exp_data, project_name):
+    """
+
+    Parameters
+    ----------
+    exp_data : magine.data.experimental_data.ExprerimentalData
+    project_name : str
+
+    Returns
+    -------
+
+    """
 
     local_dbs = []
     for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
@@ -481,17 +492,21 @@ def run_enrichment_for_project(exp_data, project_name):
             df['category'] = category
             all_df.append(df)
 
-    pt = exp.proteomics_sample_ids
-    rt = exp.rna_sample_ids
+    pt = exp.proteins.sample_ids
+    rt = exp.rna.sample_ids
+
     if len(pt) != 0:
-        _run_new(exp.proteomics_by_sample_id, pt, 'proteomics_both')
-        _run_new(exp.proteomics_up_by_sample_id, pt, 'proteomics_up')
-        _run_new(exp.proteomics_down_by_sample_id, pt, 'proteomics_down')
+        _run_new(exp.proteins.sig.by_sample, pt, 'proteomics_both')
+        _run_new(exp.proteins.sig.up_by_sample, pt, 'proteomics_up')
+        _run_new(exp.proteins.sig.down_by_sample, pt, 'proteomics_down')
+
     if len(rt) != 0:
-        _run_new(exp.rna_down_over_time, rt, 'rna_down')
-        _run_new(exp.rna_up_over_time, rt, 'rna_up')
-        _run_new(exp.rna_over_time, rt, 'rna_both')
+        _run_new(exp.rna.by_sample, rt, 'rna_both')
+        _run_new(exp.rna.sig.down_by_sample, rt, 'rna_down')
+        _run_new(exp.rna.up.up_by_sample, rt, 'rna_up')
+
     final_df = pd.concat(all_df, ignore_index=True)
+
     final_df = final_df[
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']

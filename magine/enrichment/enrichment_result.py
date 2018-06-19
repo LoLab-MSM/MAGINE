@@ -19,7 +19,10 @@ def load_enrichment_csv(file_name, **args):
     EnrichmentResult
 
     """
-    return EnrichmentResult(pd.read_csv(file_name, **args))
+    d = pd.read_csv(file_name, **args)
+    d['significant_flag'] = False
+    d.loc[d['adj_p_value'] <= 0.05, 'significant_flag'] = True
+    return EnrichmentResult(d)
 
 
 class EnrichmentResult(Data):
@@ -49,7 +52,7 @@ class EnrichmentResult(Data):
         """
 
         new_data = self.copy()
-        valid_opts = list(new_data[column].unique())
+        valid_opts = sorted(new_data[column].unique())
         if isinstance(options, str):
             if options not in valid_opts:
                 print('{} not in {}'.format(options, valid_opts))

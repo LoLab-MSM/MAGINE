@@ -61,6 +61,10 @@ class Sample(Data):
         return Sample
 
     @property
+    def sample_ids(self):
+        return sorted(set(self[sample_id].values))
+
+    @property
     def up(self):
         # return up regulated species
         return self.loc[self[flag] & (self[fold_change] > 0)]
@@ -85,7 +89,7 @@ class Sample(Data):
     @property
     def up_by_sample(self):
         over_time = []
-        for i in sorted(set(self[sample_id].values)):
+        for i in self.sample_ids:
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
             over_time.append(cur_slice.up.id_list)
@@ -94,7 +98,16 @@ class Sample(Data):
     @property
     def down_by_sample(self):
         over_time = []
-        for i in sorted(set(self[sample_id].values)):
+        for i in self.sample_ids:
+            cur_slice = self.copy()
+            cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
+            over_time.append(cur_slice.down.id_list)
+        return over_time
+
+    @property
+    def by_sample(self):
+        over_time = []
+        for i in self.sample_ids:
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
             over_time.append(cur_slice.down.id_list)

@@ -181,7 +181,8 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     # from IPython.display import Image, display
     labels = []
     measured_list = []
-    for i, j in sorted(exp_data.sig_species_over_time.items()):
+    for i, j in zip(exp_data.species.sig.sample_ids,
+                    exp_data.species.sig.by_sample):
         measured_list.append(j)
         labels.append(i)
     if isinstance(color_list, str):
