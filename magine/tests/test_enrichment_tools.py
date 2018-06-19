@@ -3,6 +3,7 @@ import os
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import pandas as pd
+
 import magine.enrichment.enrichment_result as et
 
 data_dir = os.path.dirname(__file__)
@@ -29,7 +30,7 @@ class TestEnrichmentResult(object):
 
     def test_filter_multi(self):
         slimmed = self.data.filter_multi(p_value=0.05, combined_score=20)
-        assert slimmed.shape == (20, 10)
+        assert slimmed.shape == (20, 11)
 
     def test_term_to_gene(self):
         genes = self.data.term_to_genes('apoptotic process')
@@ -37,10 +38,10 @@ class TestEnrichmentResult(object):
 
     def test_filter_based_on_word(self):
         slimmed = self.data.filter_based_on_words('apoptotic')
-        assert slimmed.shape == (40, 10)
+        assert slimmed.shape == (40, 11)
 
         slimmed = self.data.filter_based_on_words('mitochondrial')
-        assert slimmed.shape == (9, 10)
+        assert slimmed.shape == (9, 11)
 
     def test_all_genes(self):
         all_g = self.data.all_genes_from_df()
@@ -48,19 +49,19 @@ class TestEnrichmentResult(object):
 
     def test_filter_sim_terms(self):
         sim2 = self.data.remove_redundant(level='sample', sort_by='rank')
-        assert sim2.shape == (18, 10)
+        assert sim2.shape == (18, 11)
 
         sim2 = self.data.remove_redundant(level='sample')
-        assert sim2.shape == (18, 10)
+        assert sim2.shape == (18, 11)
 
         slimmed = self.data.remove_redundant(level='all')
-        assert slimmed.shape == (18, 10)
+        assert slimmed.shape == (18, 11)
 
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
-        assert sim2.shape == (29, 10)
+        assert sim2.shape == (29, 11)
         copy_data = self.data.copy()
         copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
-        assert copy_data.shape == (18, 10)
+        assert copy_data.shape == (18, 11)
 
     def test_dist(self):
 
