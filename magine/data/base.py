@@ -40,7 +40,7 @@ class Data(pd.DataFrame):
             index = self._index
 
         if convert_to_log:
-            self.log2_normalize_df(values, inplace=True)
+            d_copy.log2_normalize_df(values, inplace=True)
 
         if min_sig:
             assert isinstance(min_sig, int)
@@ -49,9 +49,9 @@ class Data(pd.DataFrame):
                       'please add a column of signficant terms with '
                       'a tag of "significant"')
 
-            d_copy = self.filter_by_minimum_sig_columns(index=index,
-                                                        columns=columns,
-                                                        min_terms=min_sig)
+            d_copy.filter_by_minimum_sig_columns(index=index, columns=columns,
+                                                 min_terms=min_sig,
+                                                 inplace=True)
 
         array = pd.pivot_table(d_copy, index=index,
                                fill_value=fill_value, columns=columns,
