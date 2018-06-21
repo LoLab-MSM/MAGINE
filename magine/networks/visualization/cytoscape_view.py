@@ -8,17 +8,25 @@ import numpy as np
 import pandas as pd
 import requests
 from py2cytoscape.data.cyrest_client import CyRestClient
-from py2cytoscape.data.style import StyleUtil
 from py2cytoscape.data.util_network import NetworkUtil as util
 
 IP = 'localhost'
 PORT = 1234
 VERSION = 'v1'
-BASE_URL = 'http://' + IP + ':' + str(PORT) + '/' + VERSION + '/'
-HEADERS = {'Content-Type': 'application/json'}
 
 SUID_LIST = 'suid'
-url = 'http://' + IP + ':' + str(PORT) + '/' + VERSION + '/'
+url = 'http://{}:{}/{}/'.format(IP, PORT, VERSION)
+
+
+def create_point(value, lesser, equal, greater):
+    return [{'value': str(value), 'lesser': lesser,
+             'equal': equal, 'greater': greater}]
+
+
+def create_slope(min_val=0, max_val=10, values=(1, 10)):
+    point_1 = create_point(min_val, values[0], values[0], values[0])
+    point_2 = create_point(max_val, values[1], values[1], values[1])
+    return point_1 + point_2
 
 
 class LayoutClient(object):
@@ -42,12 +50,12 @@ class LayoutClient(object):
 
     def apply(self, name='force-directed', network=None, params=None):
         self._check_net(network)
-        _url = '{}/{}/{}'.format(self.__url, name, str(network.get_id()))
+        _url = '{}/{}/{}'.format(self.__url, name, network.get_id())
         requests.get(_url, params)
 
     def bundle_edge(self, network=None):
         self._check_net(network)
-        _url = '{}/edgebundling/{}'.format(self.__url, str(network.get_id()))
+        _url = '{}/edgebundling/{}'.format(self.__url, network.get_id())
         requests.get(_url)
 
     def _check_net(self, network):
@@ -88,6 +96,7 @@ class RenderModel(object):
             'EDGE_TRANSPARENCY': '150',
             # 'NETWORK_HEIGHT'           : '2800',
             # 'NETWORK_WIDTH'            : '2800',
+            'NODE_LABEL_COLOR': 'black',
             'NODE_FILL_COLOR': 'red',
             'NETWORK_BACKGROUND_PAINT': '#00FFFFFF',
             'NODE_SIZE': 80,
@@ -156,7 +165,8 @@ class RenderModel(object):
 
         node_label_values = {self.node_name2id[i]: d['label'] for i, d in
                              self.graph.nodes(data=True)}
-
+        node_label_colors = {self.node_name2id[i]: 'black' for i in
+                             self.graph.nodes}
         node_color_values = {self.node_name2id[i]: d['color'] for i, d in
                              self.graph.nodes(data=True)}
 
@@ -168,7 +178,7 @@ class RenderModel(object):
             edge_width[self.edge_name2id['{},{}'.format(i, j)]] = d['weight']
 
         _min, _max = min(edge_width.values()), max(edge_width.values())
-        slope = StyleUtil.create_slope(min=_min, max=_max, values=(3, 10))
+        slope = create_slope(min_val=_min, max_val=_max, values=(3, 10))
 
         self.style.create_continuous_mapping(column='weight',
                                              col_type='Double',
@@ -185,16 +195,17 @@ class RenderModel(object):
 
         all_node_size = []
         for ind, j in enumerate(list_of_time):
-            size = np.array(
-                [self.graph.node[n][j] for n in self.graph.nodes()])
+            size = np.array([self.graph.node[n]['sample{}'.format(j)]
+                             for n in self.graph.nodes])
             all_node_size.append(size)
         size = np.array(all_node_size).flatten()
-        simple_slope = StyleUtil.create_slope(min=size.min(), max=size.max(),
-                                              values=(10, 50))
+        simple_slope = create_slope(min_val=size.min(), max_val=size.max(),
+                                    values=(10, 50))
 
         for j in list_of_time:
 
-            self.style.create_continuous_mapping(column=j, col_type='Double',
+            self.style.create_continuous_mapping(column='sample{}'.format(j),
+                                                 col_type='Double',
                                                  vp='NODE_SIZE',
                                                  points=simple_slope)
             self.cy.style.apply(style=self.style, network=self.g_cy)
@@ -205,7 +216,7 @@ class RenderModel(object):
                 visual_property='NETWORK_BACKGROUND_PAINT',
                 value='rgba(0, 0, 0, 0)', )
             self.view1.update_node_views(visual_property='NODE_LABEL_COLOR',
-                                         values=node_label_values)
+                                         values=node_label_colors)
             self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
                                          values=node_color_values)
             self.view1.update_node_views(visual_property='NODE_BORDER_PAINT',

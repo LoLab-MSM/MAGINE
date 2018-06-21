@@ -6,6 +6,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import scipy.stats as stats
+from statsmodels.stats.multitest import fdrcorrection
 
 import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
@@ -49,9 +50,8 @@ class OntologyNetworkGenerator(object):
 
     def create_network_from_list(self, list_of_ontology_terms,
                                  ont_to_species_dict, ont_to_label_dict,
-                                 save_name=None,
-                                 draw=False, threshold=0, out_dir=None,
-                                 merge_edges=False):
+                                 save_name=None, draw=False, out_dir=None,
+                                 use_threshold=True):
         """
         Creates a GO level network from list of GO terms
 
@@ -69,17 +69,19 @@ class OntologyNetworkGenerator(object):
             name to save network
         draw : bool
             create a go_graph of network
-        threshold : int
-            integer threshold of number of neighbors between two GO terms
-            default = 0
+        use_threshold : bool
+            Use binomial test to check for edge significance
+            Uses bh correction for multiple hypothesis testing
         out_dir : str
             output directory
-        merge_edges : bool
-            merge the edges between GO nodes
+
 
         Returns
         -------
-        networkx.DiGraph
+        go_graph : networkx.DiGraph
+            Ontology level network
+        mol_net : networkx.DiGraph
+            Sub-network made my molecular level species
 
         """
         if out_dir is not None:
@@ -94,87 +96,91 @@ class OntologyNetworkGenerator(object):
         if self.network is None:
             print("Must provide a network! Returning None")
             return None
-        go_graph = nx.DiGraph()
-        mol_net = nx.DiGraph()
-        all_genes = set()
-        list_of_go_terms = set(list_of_ontology_terms)
-        sp_to_term = dict()
-        sp_to_label = dict()
 
-        def _add(gene_name, term_name, all_term, label):
-            if gene_name in all_term:
-                if gene_name in sp_to_term:
-                    sp_to_term[gene_name].add(term_name)
-                    sp_to_label[gene_name].add(label)
-                else:
-                    sp_to_term[gene_name] = {term_name}
-                    sp_to_label[gene_name] = {label}
+        list_of_go_terms = set(list_of_ontology_terms)
 
         n_edges = float(len(self.edges))
         p_values = []
+        # create dictionaries that add the label and terms as node attributes
+        gene_to_term, gene_to_label = dict(), dict()
+
+        def add_to_dict(genes, term):
+
+            for gene in genes:
+                if gene in gene_to_term:
+                    gene_to_term[gene].add(term)
+                    gene_to_label[gene].add(ont_to_label_dict[term])
+                else:
+                    gene_to_term[gene] = {term}
+                    gene_to_label[gene] = {ont_to_label_dict[term]}
+
+        def get_edges(set1, set2, background):
+            non_overlap = set2.difference(set1)
+            possible_edges = set(itertools.product(set1, non_overlap))
+            edge_hits = possible_edges.intersection(background)
+            n_hits = len(edge_hits)
+            return edge_hits, n_hits
+
         for term1, term2 in itertools.combinations(list_of_go_terms, 2):
             term_1 = set(ont_to_species_dict[term1]).intersection(self.nodes)
             term_2 = set(ont_to_species_dict[term2]).intersection(self.nodes)
+            add_to_dict(term_1, term1)
+            add_to_dict(term_2, term2)
+
+            # calculate how many possible edge combinations there are
             total = 0
             for i in term_1:
                 for j in term_2:
+                    # need to not count an edge if one of the species
+                    # is in both
+                    # g1 = (a, b)
+                    # g3 = (b, d)
+                    # we count a-d, and b-d, not a-b.
                     if i != j:
                         total += 1
-            # total_poss = len(list(itertools.product(term_1, term_2)))
-            edges_1_to_2 = set(itertools.product(
-                term_1, term_2.difference(term_1))
-            ).intersection(self.edges)
-            edges_2_to_1 = set(itertools.product(
-                term_2, term_1.difference(term_2))
-            ).intersection(self.edges)
 
+            edges_1_to_2, a_to_b = get_edges(term_1, term_2, self.edges)
+            edges_2_to_1, b_to_a = get_edges(term_2, term_1, self.edges)
+
+            odds_to_find = float(total) / n_edges
+            p_values.append([term1, term2, edges_1_to_2, a_to_b,
+                             stats.binom_test(a_to_b, total, odds_to_find)])
+
+            p_values.append([term2, term1, edges_2_to_1, b_to_a,
+                             stats.binom_test(b_to_a, total, odds_to_find)])
+
+        cols = ['term1', 'term2', 'edges', 'n_edges', 'p_values']
+
+        df = pd.DataFrame(p_values, columns=cols)
+        # FDR correction
+        _, df['adj_p_values'] = fdrcorrection(df['p_values'])
+
+        if use_threshold:
+            df = df.loc[df['adj_p_values'] < .05]
+
+        # create empty networks
+        go_graph = nx.DiGraph()
+        mol_net = nx.DiGraph()
+        for term1, term2, edge, n_edges, p_value in df[cols].values:
             label_1 = ont_to_label_dict[term1]
             label_2 = ont_to_label_dict[term2]
-
-            a_to_b = len(edges_1_to_2)
-            b_to_a = len(edges_2_to_1)
-
-            p_values.append([term1, term2, edges_1_to_2, a_to_b,
-                             stats.binom_test(a_to_b, total, total / n_edges)])
-            p_values.append([term2, term1, edges_2_to_1, b_to_a,
-                             stats.binom_test(b_to_a, total, total / n_edges)])
-
-            # add to graph if at least one edge found between terms
-            if a_to_b or b_to_a:
-                x = self.network.edge_subgraph(edges_1_to_2).copy()
-                mol_net.add_edges_from(list(x.edges(data=True)))
-                for gene in x.nodes:
-                    _add(gene, term1, term_1, label_1)
-                    _add(gene, term2, term_2, label_2)
-                all_genes.update(x.nodes)
-            # else:
-            #     print('No edges between {} and {}'.format(label_1, label_2))
             go_graph.add_node(label_1, term=term1, label=label_1)
             go_graph.add_node(label_2, term=term2, label=label_2)
+            go_graph.add_edge(label_1, label_2, label=str(n_edges),
+                              weight=n_edges, pvalue=p_value)
 
-            if merge_edges:
-                if a_to_b > threshold or b_to_a > threshold:
-                    if a_to_b > b_to_a:
-                        go_graph.add_edge(label_2, label_1,
-                                          label=str(a_to_b + b_to_a),
-                                          weight=a_to_b + b_to_a, dir='both',
-                                          weightAtoB=b_to_a, weightBtoA=a_to_b)
-                    else:
-                        go_graph.add_edge(label_1, label_2,
-                                          label=str(a_to_b + b_to_a),
-                                          weight=a_to_b + b_to_a, dir='both',
-                                          weightAtoB=a_to_b, weightBtoA=b_to_a)
-            else:
-                if a_to_b > threshold:
-                    go_graph.add_edge(label_1, label_2, label=str(a_to_b),
-                                      weight=a_to_b)
+            nodes = list(itertools.chain(*edge))
 
-                if b_to_a > threshold:
-                    go_graph.add_edge(label_2, label_1, label=str(b_to_a),
-                                      weight=b_to_a)
-        for i in sp_to_term:
-            labels = sp_to_label[i]
-            terms = sp_to_term[i]
+            nodes += ont_to_species_dict[term1]
+            nodes += ont_to_species_dict[term2]
+
+            x = self.network.subgraph(nodes).copy()
+
+            mol_net.add_edges_from(list(x.edges(data=True)))
+
+        for i in mol_net.nodes:
+            labels = gene_to_label[i]
+            terms = gene_to_term[i]
             assert len(labels) == len(terms), \
                 'len(labels) should equal len(terms)'
             mol_net.node[i]['termName'] = ','.join(sorted(labels))
@@ -191,27 +197,6 @@ class OntologyNetworkGenerator(object):
             if draw:
                 export_to_dot(go_graph, save_name)
                 render_igraph(mol_net, save_name + '_subgraph_igraph')
-        cols = ['term1', 'term2', 'edges', 'n_edges', 'p_values']
-        df = pd.DataFrame(p_values, columns=cols)
-        df['sig'], df['adj_p_values'] = fdrcorrection(df['p_values'])
-        new_df = df[df['adj_p_values'] < .05]
-        pd.set_option('display.max_colwidth', -1)
-        print(new_df)
-        go_graph = nx.DiGraph()
-
-        for term1, term2, edge, n_edges, p_value in new_df[cols].values:
-            label_1 = ont_to_label_dict[term1]
-            label_2 = ont_to_label_dict[term2]
-            go_graph.add_node(label_1, term=term1, label=label_1)
-            go_graph.add_node(label_2, term=term2, label=label_2)
-            if n_edges > threshold:
-                go_graph.add_edge(label_1, label_2, label=str(n_edges),
-                                  weight=n_edges, pvalue=p_value)
-        print(go_graph.nodes)
-        print(go_graph.edges)
-        print(df[['term1', 'term2']].values)
-        print(new_df[['term1', 'term2']].values)
-
         return go_graph, mol_net
 
 
@@ -285,8 +270,8 @@ def visualize_go_network(go_network, data, save_name,
 
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
-                      threshold=0, remove_isolated=False, create_only=True,
-                      merge=False, out_dir=None):
+                      remove_isolated=False, create_only=True, merge=False,
+                      out_dir=None):
     """
 
     Parameters
@@ -298,8 +283,6 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         List of terms to use in ont network. Default is all terms
     save_name : str
     draw_png : bool
-    threshold : float, int
-        Threshold for number of edges between two terms to consider in graph
     remove_isolated : bool
         Remove nodes that are not connected in the final graphs
     create_only : bool
@@ -337,16 +320,17 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     print("Creating ontology network")
     term_g, molecular_g = ong.create_network_from_list(
         terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
-        threshold=threshold
+        use_threshold=True
     )
 
     if remove_isolated:
         nt.remove_isolated_nodes(term_g)
         nt.remove_isolated_nodes(molecular_g)
 
-    heatmap_from_array(df_copy, cluster_row=False, convert_to_log=True,
-                       index='term_name', values='combined_score',
-                       columns='sample_id', div_colors=False)
+    fig = heatmap_from_array(df_copy, cluster_row=False, convert_to_log=True,
+                             index='term_name', values='combined_score',
+                             columns='sample_id', div_colors=False)
+    fig.savefig('{}.png'.format(save_name), bbox_inches='tight')
 
     score_array = pd.pivot_table(df_copy, index=['term_name'],
                                  columns='sample_id')
@@ -371,42 +355,23 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
             os.system(_s.format(save_name))
     return term_g, molecular_g
 
-
-def fdrcorrection(p_vals, alpha=0.05):
-    """ Benjamini/Hochberg false discovery rate correction
-
-    Parameters
-    ----------
-    p_vals : array_like
-        set of p-values of the individual tests.
-    alpha : float
-        error rate
-
-    Returns
-    -------
-    rejected : np.array
-        True if a hypothesis is rejected, False if not
-    adj_p_values : np.array
-
-    """
-    p_vals = np.asarray(p_vals)
-    original_sort = np.argsort(p_vals)
-    p_vals_sorted = np.take(p_vals, original_sort)
-    n_samples = len(p_vals)
-    ecdf_factor = np.arange(1, n_samples + 1) / float(n_samples)
-
-    reject = p_vals_sorted <= ecdf_factor * alpha
-    if reject.any():
-        rejectmax = max(np.nonzero(reject)[0])
-        reject[:rejectmax] = True
-
-    corrected_p_vals = p_vals_sorted / ecdf_factor
-    pvals_corrected = np.minimum.accumulate(corrected_p_vals[::-1])[::-1]
-
-    pvals_corrected[pvals_corrected > 1] = 1
-    pvals_corrected_ = np.empty_like(pvals_corrected)
-    pvals_corrected_[original_sort] = pvals_corrected
-
-    reject_ = np.empty_like(reject)
-    reject_[original_sort] = reject
-    return reject_, pvals_corrected_
+# def fdrcorrection(p_vals):
+#     """ Benjamini/Hochberg false discovery rate correction
+#
+#     Parameters
+#     ----------
+#     p_vals : array_like
+#         set of p-values of the individual tests.
+#
+#     Returns
+#     -------
+#     adj_p_values : np.array
+#
+#     """
+#     p_vals = np.asarray(p_vals)
+#     n_samples = len(p_vals)
+#     ecdf_factor = np.arange(1, n_samples + 1) / float(n_samples)
+#     corrected_p_vals = p_vals / ecdf_factor
+#     pvals_corrected = np.minimum.accumulate(corrected_p_vals[::-1])[::-1]
+#     pvals_corrected[pvals_corrected > 1] = 1
+#     return pvals_corrected
