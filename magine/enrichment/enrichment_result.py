@@ -92,7 +92,7 @@ class EnrichmentResult(Data):
 
         Returns
         -------
-
+        new_data : EnrichmentResult
         """
         new_data = self.copy()
         if p_value is not None:
