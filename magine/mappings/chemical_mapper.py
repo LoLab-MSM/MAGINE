@@ -45,7 +45,7 @@ class ChemicalMapper(object):
         self._drugbank_to_hmdb = None
         self._hmdb_to_protein = None
         self._hmdb_main_to_protein = None
-
+        self._hmdb_accession_to_main = None
         _file = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
         if not os.path.exists(_file):
             from magine.mappings.databases.download_libraries import HMDB
@@ -106,6 +106,14 @@ class ChemicalMapper(object):
             )
         return self._hmdb_main_to_protein
 
+    @property
+    def hmdb_accession_to_main(self):
+        if self._hmdb_accession_to_main is None:
+            self._hmdb_accession_to_main = self._from_list_dict(
+                "accession", "main_accession"
+            )
+        return self._hmdb_accession_to_main
+
     def _to_dict(self, key, value):
         """ creates a dictionary with a list of values for each key
 
@@ -123,6 +131,7 @@ class ChemicalMapper(object):
         d.dropna(how='any', inplace=True)
         return_dict = SortedDict()
         for i, j in d.values:
+            i = i.strip()
             if i in return_dict:
                 return_dict[i].add(j)
             else:
@@ -188,7 +197,7 @@ class ChemicalMapper(object):
 
         Parameters
         ----------
-        network : networkx.DiGraph
+        network : nx.DiGraph
 
         Returns
         -------
@@ -253,7 +262,7 @@ class ChemicalMapper(object):
         return cpd_to_hmdb
 
 
-compound_manual = {'cpd:C07909': 'HMDB15015',
+compound_manual = {'cpd:C07909': 'HMDB0015015',
                    'cpd:C16844': 'HMDB01039',
                    'cpd:C00076': 'HMDB00464',
                    'cpd:C00154': 'HMDB01338',
@@ -307,3 +316,6 @@ def tidy_split(df, column, sep='|', keep=False):
 if __name__ == "__main__":
     cm = ChemicalMapper()
     print(cm.check_synonym_dict(term='dodecene', format_name='main_accession'))
+    print(cm.hmdb_accession_to_main['HMDB15015'])
+    print(cm.kegg_to_hmdb.keys())
+    print(cm.kegg_to_hmdb['C07909'])

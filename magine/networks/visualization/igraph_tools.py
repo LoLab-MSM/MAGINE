@@ -8,7 +8,7 @@ from magine.networks.exporters import nx_to_igraph
 
 def render_igraph(mol_net, save_name=None, layout='auto', title=None,
                   positions=None, cluster=False, node_size=50,
-                  bbox=None, margin=None):
+                  bbox=None, margin=None, inline=False):
     """
 
     Parameters
@@ -145,12 +145,15 @@ def render_igraph(mol_net, save_name=None, layout='auto', title=None,
     # Save the plot
     if save_name is not None:
         plot.save()
+    if inline:
+        return plot
+
     return plot, positions
 
 
 def paint_network_overtime(graph, exp_data, color_list, save_name,
                            compile_images=False, cluster=False, fig_width=1500,
-                           fig_height=1500, layout='auto'):
+                           fig_height=1500, layout='auto', inline=False):
     """
     Adds color attribute to network over time.
 

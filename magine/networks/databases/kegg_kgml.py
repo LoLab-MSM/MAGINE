@@ -41,12 +41,12 @@ def pathway_id_to_network(pathway_id, species='hsa'):
     return graph
 
 
-def kgml_to_nx(xmlfile, species='hsa'):
+def kgml_to_nx(xml_file, species='hsa'):
     """ Converts a kgml to nx.DiGraph
 
     Parameters
     ----------
-    xmlfile : str
+    xml_file : str
     species : str
 
     Returns
@@ -54,9 +54,9 @@ def kgml_to_nx(xmlfile, species='hsa'):
 
     """
     try:
-        tree = element_tree.ElementTree(element_tree.fromstring(xmlfile))
+        tree = element_tree.ElementTree(element_tree.fromstring(xml_file))
     except TypeError:
-        print("This file (%s)is messed up! Investigate" % str(xmlfile))
+        print("This file ({})is messed up! Investigate".format(xml_file))
         return nx.DiGraph(), []
     pathway_local = nx.DiGraph()
     connecting_maps = []
@@ -84,8 +84,8 @@ def kgml_to_nx(xmlfile, species='hsa'):
         # get node id
         node_id = entry.get('id')
         node_type = entry.get('type')
-        name = entry.get('name')
         if node_type in ('gene', 'compound'):
+            name = entry.get('name')
             names = name.split()
             name_label_dict[node_id] = names
             for i in names:
@@ -113,7 +113,8 @@ def kgml_to_nx(xmlfile, species='hsa'):
             int_type = '|'.join(int_type)
         except TypeError:
             continue
-
+        if 'indirect' in int_type:
+            continue
         one, two = name_label_dict[e1], name_label_dict[e2]
         for i in one:
             for j in two:
@@ -177,11 +178,9 @@ def download_kegg(species='hsa', verbose=False):
     node_to_path = dict()
     for i in kegg_dict:
         for node in kegg_dict[i].nodes:
-            if node in node_to_path:
-                node_to_path[node].add(i)
-            else:
+            if node not in node_to_path:
                 node_to_path[node] = set()
-                node_to_path[node].add(i)
+            node_to_path[node].add(i)
 
     # save kegg pathway its to networks
     n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
@@ -194,7 +193,7 @@ def download_kegg(species='hsa', verbose=False):
     save_gzip_pickle(save_node_to_path, node_to_path)
 
 
-def create_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
+def load_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
     """
     Combines all KEGG pathways into a single network
 
@@ -219,7 +218,7 @@ def create_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
         all_of_kegg = nx.read_gpickle(p_name)
     else:
         # create the network
-        path_to_graph, _ = load_kegg(species, verbose)
+        path_to_graph, _ = load_kegg_mappings(species, verbose)
 
         # merge into single networks
         all_of_kegg = utils.compose_all(path_to_graph.values())
@@ -231,17 +230,16 @@ def create_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
 
         # save network
         nx.write_gpickle(all_of_kegg, p_name)
-
-    if verbose:
-        n_n = len(all_of_kegg.nodes)
-        n_e = len(all_of_kegg.edges)
-        print("KEGG network {} nodes and {} edges".format(n_n, n_e))
+    print("KEGG network {} nodes and {} edges".format(len(all_of_kegg.nodes),
+                                                      len(all_of_kegg.edges)))
     return all_of_kegg
 
 
-def load_kegg(species, verbose=False):
+def load_kegg_mappings(species, verbose=False):
     n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
+
     save_path_id_to_graph = os.path.join(network_data_dir, n)
+
     if not os.path.exists(save_path_id_to_graph):
         download_kegg(species=species, verbose=verbose)
 
@@ -268,4 +266,4 @@ def load_gz_p(file_name):
 
 if __name__ == '__main__':
     # download_kegg('hsa')
-    create_all_of_kegg('hsa')
+    download_kegg('hsa')

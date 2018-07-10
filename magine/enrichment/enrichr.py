@@ -154,8 +154,11 @@ class Enrichr(object):
         gene_set_lib : str or list
             Name of gene set library
             To print options use Enrichr.print_valid_libs
+
         Returns
         -------
+        df : EnrichmentResult
+            Results from enrichR
 
         """
         assert isinstance(list_of_genes, (list, set))

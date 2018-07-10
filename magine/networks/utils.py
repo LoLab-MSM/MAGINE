@@ -93,7 +93,6 @@ def add_color_graphviz_fmt(graph, list_to_paint, color):
     ----------
     graph: networkx.DiGraph
     list_to_paint : list_like
-
     color : str
 
 
@@ -113,6 +112,7 @@ def add_color_graphviz_fmt(graph, list_to_paint, color):
 
     Returns
     -------
+    tmp_g : networkx.DiGraph
 
     """
     tmp_g = graph.copy()
@@ -131,7 +131,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
                                    color_up='red', color_down='blue',
                                    labels=None, create_gif=False):
     """
-    Adds color attribute to network over time.
+    Adds color attribute to network over time and creates figure.
 
     Parameters
     ----------
@@ -152,8 +152,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
         list of labels to add to graph per sample
     create_gif : bool
         Create a gif from series of images
-    Returns
-    -------
+
 
     """
 
@@ -168,27 +167,25 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
     tmp_graph = graph.copy()
 
     for n, (up, down) in enumerate(zip(list_up, list_down)):
-        graph2 = add_color_graphviz_fmt(tmp_graph, up, color_up)
-        graph2 = add_color_graphviz_fmt(graph2, down, color_down)
+        tmp_graph = add_color_graphviz_fmt(tmp_graph, up, color_up)
+        tmp_graph = add_color_graphviz_fmt(tmp_graph, down, color_down)
         both = set(up).intersection(set(down))
-        graph2 = add_color_graphviz_fmt(graph2, both, 'yellow')
+        tmp_graph = add_color_graphviz_fmt(tmp_graph, both, 'yellow')
 
         if labels is not None:
-            graph2.graph['label'] = labels[n]
-            graph2.graph['fontsize'] = 13
+            tmp_graph.graph['label'] = labels[n]
+            tmp_graph.graph['fontsize'] = 13
 
         s_name = '%s_%04i.png' % (save_name, n)
 
-        exporters.export_to_dot(graph2, s_name, 'png', 'dot')
+        exporters.export_to_dot(tmp_graph, s_name, 'png', 'dot')
         string += s_name + ' '
         if IPYTHON and run_from_ipython():
             display(Image(s_name))
 
-    string1 = string + '  %s.gif' % save_name
-    string2 = string + '  %s.pdf' % save_name
     if create_gif:
-        os.system(string1)
-        os.system(string2)
+        os.system('{}  {}.gif'.format(string, save_name))
+        os.system('{}  {}.pdf'.format(string, save_name))
 
 
 def paint_network_overtime(graph, list_of_lists, color_list, save_name,
@@ -322,7 +319,7 @@ def remove_isolated_nodes(net):
 
     """
     to_remove = set()
-    for i in net.nodes():
+    for i in net.nodes:
         if len(net.predecessors(i)) == 0 and len(net.successors(i)) == 0:
             to_remove.add(i)
         net.remove_nodes_from(to_remove)
@@ -508,7 +505,8 @@ def append_attribute_to_network(graph, list_to_add_attribute, attribute,
     return tmp_g
 
 
-def trim_sink_source_nodes(network, list_of_nodes, remove_self_edge=False):
+def trim_sink_source_nodes(network, list_of_nodes=None,
+                           remove_self_edge=False):
     """
     Trim graph by removing nodes that are not in provided list if source/sink
 
@@ -541,26 +539,28 @@ def remove_self_edges(network):
     return tmp_network
 
 
-def _trim(network, list_of_nodes):
-    list_of_nodes = set(list_of_nodes)
+def _trim(network, list_of_nodes=None):
+    if list_of_nodes is not None:
+        list_of_nodes = set(list_of_nodes)
     found, not_found = 0., 0.
     nodes = set(network.nodes())
     in_dict = network.in_degree(nbunch=nodes)
     out_dict = network.out_degree(nbunch=nodes)
     for i in nodes:
-        if i in list_of_nodes:
-            found += 1
+        if list_of_nodes is not None:
+            if i in list_of_nodes:
+                found += 1
+                continue
+        if in_dict[i] == 1 and out_dict[i] == 0:
+            network.remove_node(i)
+        elif in_dict[i] == 0 and out_dict[i] == 1:
+            network.remove_node(i)
         else:
-            if in_dict[i] == 1 and out_dict[i] == 0:
-                network.remove_node(i)
-            elif in_dict[i] == 0 and out_dict[i] == 1:
-                network.remove_node(i)
-            else:
-                not_found += 1
+            not_found += 1
 
     len_nodes = len(network.nodes())
-    print("{} found, {} not found".format(found, not_found))
-    print("{}% of {} nodes".format(found / len_nodes * 100, len_nodes))
+    # print("{} found, {} not found".format(found, not_found))
+    # print("{}% of {} nodes".format(found / len_nodes * 100, len_nodes))
     return len_nodes
 
 
@@ -571,6 +571,7 @@ def subtract_network_from_network(net1, net2):
     Parameters
     ----------
     net1 : networkx.DiGraph
+        Base network, from which to subtract nodes from second network
     net2 : networkx.DiGraph
 
     Returns
@@ -579,10 +580,12 @@ def subtract_network_from_network(net1, net2):
 
     """
     copy_graph1 = net1.copy()
-    nodes1 = set(net1.nodes())
-    nodes2 = set(net2.nodes())
-    overlap = nodes2.intersection(nodes1)
-    copy_graph1.remove_edges_from(overlap)
+    nodes1 = set(net1.nodes)
+    nodes2 = set(net2.nodes)
+    # we want to remove all nodes2 from the network.
+    # Using intersection between two nodes prevents failure if a node
+    # in nodes2 is not in the current network.
+    copy_graph1.remove_nodes_from(nodes2.intersection(nodes1))
 
     return copy_graph1
 

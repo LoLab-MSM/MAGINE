@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pydot
+from networkx.drawing.layout import rescale_layout
 
 from magine.networks.exporters import nx_to_dot
 
@@ -42,7 +43,7 @@ def pydot_layout(G, prog='neato'):
     return node_pos
 
 
-def render_mpl(network, layout='dot'):
+def render_mpl(network, layout='dot', scale=1):
     """ Draw network using networkx and matplotlib
 
     Parameters
@@ -55,12 +56,12 @@ def render_mpl(network, layout='dot'):
         if 'keggName' in d:
             del d["keggName"]
 
-    if layout in ['dot', 'neato', 'fdp']:
+    if layout in ['dot', 'neato', 'fdp', 'twopi', 'circo']:
         pos = pydot_layout(network, prog=layout, )
     else:
         assert layout in ['circular_layout', 'random_layout', 'shell_layout',
                           'spring_layout', 'spectral_layout',
-                          'fruchterman_reingold_layout']
+                          'kamada_kawai_layout', 'fruchterman_reingold_layout']
         if layout == 'spring_layout':
             pos = nx.drawing.layout.spring_layout(network)
         elif layout == 'random_layout':
@@ -73,19 +74,23 @@ def render_mpl(network, layout='dot'):
             pos = nx.drawing.layout.fruchterman_reingold_layout(network)
         elif layout == 'circular_layout':
             pos = nx.drawing.layout.circular_layout(network)
+        elif layout == 'kamada_kawai_layout':
+            pos = nx.drawing.layout.kamada_kawai_layout(network)
 
     # some layout algorithms (graphviz ones) can provide large position values
     # normalize the positions to be from 0 to 1
     # this allows us to add space between pode and label
     positions = np.array([p for _, p in pos.items()])
-    x_min = positions[:, 0].min()
-    x_max = positions[:, 0].max()
-    y_min = positions[:, 0].min()
-    y_max = positions[:, 0].max()
 
-    positions[:, 0] = (positions[:, 0] - x_min) / (x_max - x_min)
-    positions[:, 1] = (positions[:, 1] - y_min) / (y_max - y_min)
+    # x_min = positions[0, :].min()
+    # x_max = positions[0, :].max()
+    # y_min = positions[1, :].min()
+    # y_max = positions[1, :].max()
+    #
+    # positions[:, 0] = (positions[:, 0] - x_min) / (x_max - x_min)
+    # positions[:, 1] = (positions[:, 1] - y_min) / (y_max - y_min)
 
+    positions = rescale_layout(positions, scale=1)
     new_pos, label_pos = {}, {}
     for num, n in enumerate(pos):
         x, y = positions[num]
@@ -96,21 +101,31 @@ def render_mpl(network, layout='dot'):
         node_colors = [n['color'] for _, n in network.nodes(data=True)]
     except:
         node_colors = ['red' for _ in network.nodes()]
-
+    fig = plt.figure(figsize=(4 * scale, 4 * scale))
+    ax = fig.add_subplot()
     nx.draw_networkx(network, pos=new_pos,
                      with_labels=False,
                      node_color=node_colors,
                      node_size=500,
-                     alpha=.4,
+                     alpha=.4, ax=ax
                      )
-    nx.draw_networkx_labels(network, label_pos, font_size=16)
-    plt.axis('equal')
-    plt.xticks([])
-    plt.yticks([])
-    plt.tight_layout()
+    nx.draw_networkx_labels(network, label_pos, font_size=16, ax=ax)
+    # plt.axis('equal')
+    plt.axis('off')
+    # plt.xticks([])
+    # plt.yticks([])
+    # plt.tight_layout()
+    return fig
 
 
 if __name__ == '__main__':
     x = nx.DiGraph()
     x.add_edge('A', 'B')
-    x = pydot_layout(x)
+    x.add_edge('A', 'C')
+    x.add_edge('C', 'D')
+    x.add_edge('C', 'E')
+    x.add_edge('E', 'A')
+    # x = pydot_layout(x)
+    render_mpl(x, 'circo', scale=1)
+    render_mpl(x, 'circo', scale=2)
+    plt.show()

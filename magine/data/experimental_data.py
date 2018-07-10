@@ -37,9 +37,10 @@ def load_data_csv(file_name, **kwargs):
     file_name : str
     kwargs :
         Flags to pass to pandas.
+
     Returns
     -------
-    EnrichmentResult
+    df : EnrichmentResult
 
     """
     df = pd.read_csv(file_name, **kwargs)
@@ -138,7 +139,7 @@ class Sample(Data):
 
         Returns
         -------
-
+        matplotlib.Figure
 
         """
         fig = v_plot.volcano_plot(self, save_name=save_name, out_dir=out_dir,

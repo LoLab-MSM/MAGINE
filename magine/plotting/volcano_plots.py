@@ -2,8 +2,8 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
+from magine.data.tools import log2_normalize_df
 
-from magine.data.formatter import log2_normalize_df
 
 fold_change = 'fold_change'
 flag = 'significant'

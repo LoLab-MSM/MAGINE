@@ -94,6 +94,67 @@ class Subgraph(object):
 
         return graph
 
+    def paths_between_two_lists(self, list_1, list_2, single_path=False,
+                                draw=False, save_name=None, max_length=None,
+                                image_format='png'):
+        """
+        Generates a graph based on all shortest paths between two species.
+
+
+        Parameters
+        ----------
+        list_1 : list
+            name of first species
+        list_2 : list
+            name of second species
+        single_path : bool
+            If you only want a single shortest path
+        draw : bool
+            create an image of returned network
+        image_format : str, optional
+            If draw=True you can pass an image format. (pdf, png, svg).
+            default=png
+
+        Returns
+        -------
+        graph : networkx.DiGraph
+
+        Examples
+        --------
+        >>> from networkx import DiGraph
+        >>> from magine.networks.subgraphs import Subgraph
+        >>> g = DiGraph()
+        >>> g.add_path(['a', 'b', 'c', 'd'])
+        >>> g.add_path(['g', 'h', 'c', 'i'])
+        >>> net_sub = Subgraph(g)
+        >>> path_a_d = net_sub.paths_between_two_lists(['a','g'], ['c', 'i'], max_length=3)
+        >>> path_a_d.edges
+        OutEdgeView([('b', 'c'), ('a', 'b'), ('h', 'c'), ('g', 'h')])
+
+        """
+
+        paths = list()
+        for i in list_1:
+            if i not in self.nodes:
+                continue
+            for j in list_2:
+                if j not in self.nodes:
+                    continue
+                if i == j:
+                    continue
+                paths.append(_nx_find_path(self.network, i, j,
+                                           single_path=single_path))
+        if max_length is not None:
+            paths = self._max_distance(paths, max_length)
+        graph = self._list_paths_to_graph(paths)
+        if draw:
+            if save_name is None:
+                print("please provide save name")
+                save_name = 'tmp'
+            self._save_or_draw(graph, save_name, draw, image_format)
+
+        return graph
+
     def paths_between_list(self, species_list, save_name=None,
                            single_path=False, draw=False, pool=None,
                            image_format='png', max_length=None,
@@ -132,10 +193,14 @@ class Subgraph(object):
         >>> from magine.networks.subgraphs import Subgraph
         >>> g = DiGraph()
         >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> g.add_path(['g', 'h', 'c', 'i', 'j', 'k'])
         >>> net_sub = Subgraph(g)
         >>> path_a_d = net_sub.paths_between_list(['a','c','d'])
-        >>> path_a_d.edges()
-        [('a', 'b'), ('a', 'd'), ('c', 'd'), ('b', 'c')]
+        >>> path_a_d.edges
+        OutEdgeView([('c', 'd'), ('b', 'c'), ('a', 'b'), ('a', 'd')])
+        >>> path_a_f = net_sub.paths_between_list(['g','h','j'], max_length=4)
+        >>> path_a_f.edges
+        OutEdgeView([('c', 'i'), ('i', 'j'), ('h', 'c'), ('g', 'h')])
         """
 
         tmp_species_list = list(self._check_node(species_list))
@@ -155,21 +220,26 @@ class Subgraph(object):
                         itertools.combinations(tmp_species_list, 2))
 
         if max_length is not None:
-            new_paths = []
-            for p in paths:
-                local_p = []
-                for i in p:
-                    if len(i) <= max_length:
-                        local_p.append(i)
-                new_paths.append(local_p)
-            paths = new_paths[:]
+            paths = self._max_distance(paths, max_length)
 
         graph = self._list_paths_to_graph(paths)
+
         if include_only is not None:
             graph = self._include_only(graph, include_only)
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
+
+    def _max_distance(self, path_list, max_dist):
+
+        new_paths = []
+        for p in path_list:
+            local_p = []
+            for i in p:
+                if len(i) <= max_dist:
+                    local_p.append(i)
+            new_paths.append(local_p)
+        return new_paths
 
     def neighbors(self, node, upstream=True, downstream=True, max_dist=1,
                   include_only=None, start_network=None):
