@@ -99,7 +99,6 @@ def download_reactome_fi():
 
     """
     url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2016/FIsInGene_022717_with_annotations.txt.zip'
-
     table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
                         delimiter='\t', error_bad_lines=False, encoding='utf-8'
                         )
@@ -107,9 +106,8 @@ def download_reactome_fi():
     table = table[~table['Annotation'].str.contains('indirect effect')]
     table = table[~table['Annotation'].str.contains('predicted')]
     table = table[~table['Annotation'].str.contains('compound')]
-    x = set(table['Gene1'])
-    y = set(table['Gene2'])
-    genes = x.union(y)
+    genes = set(table['Gene1'])
+    genes.update(set(table['Gene2']))
     from magine.mappings.gene_mapper import GeneMapper
     gm = GeneMapper()
     missing_uniprot = set(i for i in genes if i not in gm.gene_name_to_uniprot)
@@ -119,12 +117,12 @@ def download_reactome_fi():
     table['source'] = table['Gene1']
     table['target'] = table['Gene2']
     table['databaseSource'] = 'ReactomeFI'
-    table['interactionType'] = table.apply(standardize_edge_types, axis=1)
-
     rev_cols = table['Direction'].isin(_reverse)
+
     table.loc[rev_cols, ['source', 'target']] = \
         table.loc[rev_cols, ['target', 'source']].values
 
+    table['interactionType'] = table.apply(standardize_edge_types, axis=1)
     protein_graph = nx.from_pandas_edgelist(
         table,
         'source',
