@@ -2,8 +2,8 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-from magine.data.tools import log2_normalize_df
 
+from magine.data.tools import log2_normalize_df
 
 fold_change = 'fold_change'
 flag = 'significant'
@@ -53,7 +53,7 @@ def create_mask(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
     tmp[p_val] = np.log10(data[p_val]) * -1
 
     # convert to log2 space
-    tmp = log2_normalize_df(tmp, fold_change=fold_change)
+    tmp = log2_normalize_df(tmp, column=fold_change)
 
     if use_sig:
         sec_0 = tmp[tmp[flag]]
