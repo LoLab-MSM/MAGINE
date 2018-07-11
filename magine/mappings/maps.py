@@ -32,7 +32,7 @@ def convert_all(network, species='hsa', verbose=False):
         network to convert mappings
     species : str
         species of network (hsa, mmu)
-    verbose : str
+    verbose : bool
 
     Returns
     -------
