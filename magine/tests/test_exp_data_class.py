@@ -88,7 +88,7 @@ class TestExpData(object):
     def test_time_series_volcano(self):
         self.exp_data.time_series_volcano('label_free', 'test_label_free',
                                           out_dir=self.out_dir,
-                                          bh_critera=True)
+                                          sig_column=True)
         plt.close()
 
     def test_plot_all_metabolites(self):

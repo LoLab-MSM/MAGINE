@@ -94,7 +94,7 @@ def add_volcano_plot(fig_axis, section_0, section_1, section_2):
     fig_axis.set_xlabel('log$_2$ Fold Change', fontsize=16)
 
 
-def volcano_plot(data, save_name=None, out_dir=None, bh_criteria=False,
+def volcano_plot(data, save_name=None, out_dir=None, sig_column=False,
                  p_value=0.1, fold_change_cutoff=1.5, x_range=None,
                  y_range=None):
     """ Create a volcano plot of data
@@ -109,7 +109,7 @@ def volcano_plot(data, save_name=None, out_dir=None, bh_criteria=False,
         name to save figure
     out_dir: str, directory
         Location to save figure
-    bh_criteria: bool, optional
+    sig_column: bool, optional
         If to use significant flags of data
     p_value: float, optional
         Criteria for significant
@@ -128,14 +128,14 @@ def volcano_plot(data, save_name=None, out_dir=None, bh_criteria=False,
 
     data = data.dropna(subset=[p_val])
     data = data[np.isfinite(data[fold_change])]
-    filtered_data = create_mask(data, bh_criteria, p_value,
+    filtered_data = create_mask(data, sig_column, p_value,
                                 fold_change_cutoff)
     sec_0, sec_1, sec_2 = filtered_data
     fig = plt.figure()
     ax = fig.add_subplot(111)
     add_volcano_plot(ax, sec_0, sec_1, sec_2)
 
-    if not bh_criteria:
+    if not sig_column:
         fc = np.log2(fold_change_cutoff)
         log_p_val = -1 * np.log10(p_value)
         ax.axvline(x=fc, linestyle='--')

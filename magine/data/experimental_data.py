@@ -49,6 +49,9 @@ def load_data_csv(file_name, **kwargs):
 
 
 class Sample(Data):
+    """ Provides tools for subsets of data types
+
+    """
     def __init__(self, *args, **kwargs):
         super(Sample, self).__init__(*args, **kwargs)
         self._identifier = identifier
@@ -63,32 +66,37 @@ class Sample(Data):
 
     @property
     def sample_ids(self):
+        """ List of sample_ids in data"""
         return sorted(set(self[sample_id].values))
 
     @property
     def up(self):
-        # return up regulated species
+        """return up regulated species"""
         return self.loc[self[flag] & (self[fold_change] > 0)]
 
     @property
     def down(self):
-        # return down regulated species
+        """return down regulated species"""
         return self.loc[self[flag] & (self[fold_change] < 0)]
 
     @property
     def sig(self):
+        """ species with significant flag """
         return self.loc[self[flag]]
 
     @property
     def id_list(self):
+        """ Set of species identifiers """
         return set(self[self._identifier].values)
 
     @property
     def label_list(self):
+        """ Set of species labels """
         return set(self[self._label].values)
 
     @property
     def up_by_sample(self):
+        """List of up regulated species by sample"""
         over_time = []
         for i in self.sample_ids:
             cur_slice = self.copy()
@@ -98,6 +106,7 @@ class Sample(Data):
 
     @property
     def down_by_sample(self):
+        """List of down regulated species by sample"""
         over_time = []
         for i in self.sample_ids:
             cur_slice = self.copy()
@@ -107,6 +116,7 @@ class Sample(Data):
 
     @property
     def by_sample(self):
+        """List of significantly flagged species by sample"""
         over_time = []
         for i in self.sample_ids:
             cur_slice = self.copy()
@@ -114,11 +124,11 @@ class Sample(Data):
             over_time.append(cur_slice.down.id_list)
         return over_time
 
-    def volcano_plot(self, save_name, out_dir=None, bh_critera=False,
+    def volcano_plot(self, save_name, out_dir=None, sig_column=False,
                      p_value=0.1, fold_change_cutoff=1.5, x_range=None,
                      y_range=None):
         """ Create a volcano plot of data
-        Creates a volcano plot of data type provided
+
 
         Parameters
         ----------
@@ -126,7 +136,7 @@ class Sample(Data):
             name to save figure
         out_dir: str, directory
             Location to save figure
-        bh_critera: bool, optional
+        sig_column: bool, optional
             If to use significant flags of data
         p_value: float, optional
             Criteria for significant
@@ -143,7 +153,7 @@ class Sample(Data):
 
         """
         fig = v_plot.volcano_plot(self, save_name=save_name, out_dir=out_dir,
-                                  bh_criteria=bh_critera, p_value=p_value,
+                                  sig_column=sig_column, p_value=p_value,
                                   fold_change_cutoff=fold_change_cutoff,
                                   x_range=x_range, y_range=y_range)
         return fig
@@ -243,6 +253,13 @@ class ExperimentalData(object):
 
     @property
     def compounds(self):
+        """ Only compounds in data
+
+        Returns
+        -------
+        Sample
+
+        """
         if self.__compounds is None:
             tmp = self.data.copy()
             tmp = tmp.loc[tmp[species_type] == metabolites]
@@ -251,16 +268,25 @@ class ExperimentalData(object):
 
     @property
     def species(self):
+        """ Returns data in Sample format
+
+        Returns
+        -------
+        Sample
+
+        """
         if self.__species is None:
             self.__species = Sample(self.data.copy())
         return self.__species
 
     @property
     def exp_methods(self):
+        """ List of source columns """
         return list(self.data[exp_method].unique())
 
     @property
     def sample_ids(self):
+        """ List of sample_ids """
         return sorted(list(self.data[sample_id].unique()))
 
     def get_measured_by_datatype(self):
@@ -409,13 +435,13 @@ class ExperimentalData(object):
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
         for i in self.exp_methods:
-            self.volcano_plot(i, i, out_dir=out_dir, bh_critera=use_sig_flag,
+            self.volcano_plot(i, i, out_dir=out_dir, sig_column=use_sig_flag,
                               p_value=p_value,
                               fold_change_cutoff=fold_change_cutoff)
 
     def time_series_volcano(self, exp_data_type, save_name, p_value=0.1,
                             out_dir=None, fold_change_cutoff=1.5,
-                            y_range=None, x_range=None, bh_critera=False):
+                            y_range=None, x_range=None, sig_column=False):
         """
         Creates a figure of subplots of provided experimental method
 
@@ -427,7 +453,7 @@ class ExperimentalData(object):
             name to save figure
         out_dir: str, directory
             Location to save figure
-        bh_critera: bool, optional
+        sig_column: bool, optional
             If to use significant flags of data
         p_value: float, optional
             Criteria for significant
@@ -466,14 +492,14 @@ class ExperimentalData(object):
             sample = sample.dropna(subset=[p_val])
             sample = sample[np.isfinite(sample[fold_change])]
             sample = sample.dropna(subset=[fold_change])
-            sec_0, sec_1, sec_2 = v_plot.create_mask(sample, bh_critera,
+            sec_0, sec_1, sec_2 = v_plot.create_mask(sample, sig_column,
                                                      p_value,
                                                      fold_change_cutoff)
 
             ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
             v_plot.add_volcano_plot(ax, sec_0, sec_1, sec_2)
-            if not bh_critera:
+            if not sig_column:
                 fc = np.log2(fold_change_cutoff)
                 log_p_val = -1 * np.log10(p_value)
                 ax.axvline(x=fc, linestyle='--')
@@ -487,9 +513,10 @@ class ExperimentalData(object):
         v_plot.save_plot(fig, save_name=save_name, out_dir=out_dir)
 
     def volcano_plot(self, exp_data_type, save_name, out_dir=None,
-                     bh_critera=False, p_value=0.1, fold_change_cutoff=1.5,
+                     sig_column=False, p_value=0.1, fold_change_cutoff=1.5,
                      x_range=None, y_range=None):
         """ Create a volcano plot of data
+
         Creates a volcano plot of data type provided
 
         Parameters
@@ -500,7 +527,7 @@ class ExperimentalData(object):
             name to save figure
         out_dir: str, directory
             Location to save figure
-        bh_critera: bool, optional
+        sig_column: bool, optional
             If to use significant flags of data
         p_value: float, optional
             Criteria for significant
@@ -521,7 +548,7 @@ class ExperimentalData(object):
             return
         data = self.data[self.data[exp_method] == exp_data_type].copy()
         fig = v_plot.volcano_plot(data, save_name=save_name, out_dir=out_dir,
-                                  bh_criteria=bh_critera, p_value=p_value,
+                                  sig_column=sig_column, p_value=p_value,
                                   fold_change_cutoff=fold_change_cutoff,
                                   x_range=x_range, y_range=y_range)
         return fig
@@ -596,20 +623,24 @@ template = r'''
 
 
 def get_measured_by_datatype(data):
-    d = data.copy()
+    """ Get unique list of species for each 'source' label in data.
+
+    Parameters
+    ----------
+    data : ExperimentalData
+
+    Returns
+    -------
+    measured, sig_measured : dict, dict
+        Dictionaries where keys are 'source' and values are sets of ids.
+
+    """
+
     measured = dict()
     sig_measured = dict()
-    for i, r in d.groupby('data_type'):
-        if i in ['HILIC', 'C18']:
-            key = 'compound_id'
-            if key not in r:
-                key = 'compound'
-        else:
-            key = 'gene'
-        r = r.dropna(subset=[key])
-        measured[i] = set(r[key].unique())
-        sig_measured[i] = set(r[r['significant_flag']][key].unique())
-
+    for i in data.exp_methods:
+        sig_measured[i] = set(data[i].sig.id_list)
+        measured[i] = set(data[i].id_list)
     return measured, sig_measured
 
 
