@@ -63,8 +63,8 @@ def create_mask(data, use_sig=True, p_value=0.1, fold_change_cutoff=1.5):
         fc = np.log2(fold_change_cutoff)
         p_value = -1 * np.log10(p_value)
         criteria_1 = tmp[p_val] >= p_value
-        sec_0 = tmp[criteria_1 & (np.abs(tmp['log2fc']) >= fc)]
-        sec_1 = tmp[criteria_1 & (np.abs(tmp['log2fc']) < fc)]
+        sec_0 = tmp[criteria_1 & (np.abs(tmp[fold_change]) >= fc)]
+        sec_1 = tmp[criteria_1 & (np.abs(tmp[fold_change]) < fc)]
         sec_2 = tmp[(tmp[p_val] < p_value)]
     return sec_0, sec_1, sec_2
 
@@ -83,12 +83,12 @@ def add_volcano_plot(fig_axis, section_0, section_1, section_2):
     -------
 
     """
-    fig_axis.scatter(section_0['log2fc'], section_0[p_val], marker='.',
+    fig_axis.scatter(section_0[fold_change], section_0[p_val], marker='.',
                      color='blue')
     if section_1 is not None:
-        fig_axis.scatter(section_1['log2fc'], section_1[p_val],
+        fig_axis.scatter(section_1[fold_change], section_1[p_val],
                          marker='.', color='red')
-    fig_axis.scatter(section_2['log2fc'], section_2[p_val], s=1,
+    fig_axis.scatter(section_2[fold_change], section_2[p_val], s=1,
                      marker=',', color='gray')
     fig_axis.set_ylabel('-log$_{10}$ p-value', fontsize=16)
     fig_axis.set_xlabel('log$_2$ Fold Change', fontsize=16)

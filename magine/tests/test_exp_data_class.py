@@ -25,29 +25,28 @@ class TestExpData(object):
 
     def test_protein(self):
         assert self.exp_data.proteins.id_list == {'AHR', 'PARP4', 'ADORA1',
-                                                  'BAX',
-                                               'TP53', 'PARP1', 'ADRA1A',
-                                               'ADORA2A', 'CASP3', 'AGTR2'}
+                                                  'BAX', 'TP53', 'PARP1',
+                                                  'ADRA1A', 'ADORA2A', 'CASP3',
+                                                  'AGTR2'}
+
         assert self.exp_data.proteins.sig.id_list == {'ADRA1A', 'BAX', 'TP53',
-                                                   'AGTR2', 'PARP4', 'PARP1',
-                                                   'CASP3'}
+                                                      'AGTR2', 'PARP4',
+                                                      'PARP1', 'CASP3'}
 
         assert self.exp_data.proteins.up.id_list == {'PARP4', 'BAX', 'PARP1',
-                                                  'CASP3', 'TP53', 'ADRA1A'}
+                                                     'CASP3', 'TP53', 'ADRA1A'}
 
         assert self.exp_data.proteins.down.id_list == {'AGTR2', 'BAX'}
 
     def test_gene(self):
         assert self.exp_data.genes.id_list == {'ADORA1', 'PARP4', 'AKT1',
-                                               'CASP3',
-                                            'ADRA1A', 'AIF1', 'PARP1', 'AGTR2',
-                                            'BAX', 'AKT2', 'ADORA2A', 'TP53',
-                                            'AHR'}
+                                               'CASP3', 'ADRA1A', 'AIF1',
+                                               'PARP1', 'AGTR2', 'BAX', 'AKT2',
+                                               'ADORA2A', 'TP53', 'AHR'}
 
         assert self.exp_data.genes.sig.id_list == {'TP53', 'AIF1', 'AKT1',
-                                                   'BAX',
-                                                'CASP3', 'PARP4', 'PARP1',
-                                                'AGTR2', 'ADRA1A'}
+                                                   'BAX', 'CASP3', 'PARP4',
+                                                   'PARP1', 'AGTR2', 'ADRA1A'}
 
     def test_rna(self):
         assert self.exp_data.rna.id_list == {'AIF1', 'AKT1', 'AKT2'}
@@ -62,10 +61,9 @@ class TestExpData(object):
         assert self.exp_data.species.id_list == {'BID', 'TP53', 'PARP4',
                                                  'HMDB0009901', 'BAX', 'AKT1',
                                                  'AKT2', 'PARP1', 'AGTR2',
-                                                 'AHR',
-                                                 'AIF1', 'ADORA1', 'CASP3',
-                                                 'HMDB0000001', 'ADORA2A',
-                                                 'ADRA1A'}
+                                                 'AHR', 'AIF1', 'ADORA1',
+                                                 'CASP3', 'HMDB0000001',
+                                                 'ADORA2A', 'ADRA1A'}
 
         assert self.exp_data.species.sig.id_list == {'BID', 'PARP4', 'BAX',
                                                      'AKT1', 'PARP1', 'AGTR2',
@@ -89,7 +87,8 @@ class TestExpData(object):
 
     def test_time_series_volcano(self):
         self.exp_data.time_series_volcano('label_free', 'test_label_free',
-                                          out_dir=self.out_dir, bh_critera=True)
+                                          out_dir=self.out_dir,
+                                          bh_critera=True)
         plt.close()
 
     def test_plot_all_metabolites(self):

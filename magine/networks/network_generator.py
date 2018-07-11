@@ -87,9 +87,10 @@ def build_network(seed_species, species='hsa', save_name=None,
 
     if all_measured_list is None:
         all_measured_list = set(i.upper() for i in end_network.nodes)
-        all_measured_list.update(seed_species)
     else:
         all_measured_list = set(str(x).upper() for x in all_measured_list)
+
+    all_measured_list.update(seed_species)
 
     networks_to_expand = []
 
@@ -186,7 +187,7 @@ def load_hmdb_network(create_new=False):
     """
     out_name = os.path.join(network_data_dir, 'hmdb_graph.p.gz')
 
-    if os.path.exists(out_name) and not create_new:
+    if not create_new and os.path.exists(out_name):
         tmp_graph = nx.read_gpickle(out_name)
     else:
         from magine.mappings.chemical_mapper import ChemicalMapper
@@ -279,5 +280,6 @@ def create_background_network(save_name='background_network'):
 
 
 if __name__ == '__main__':
-    create_background_network()
+    # create_background_network()
     # load_hmdb_network(create_new=True)
+    load_hmdb_network(False)
