@@ -5,13 +5,12 @@ from textwrap import wrap
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
 import pathos.multiprocessing as mp
 import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
 
 import magine.html_templates.html_tools as ht
-from magine.data.formatter import pivot_table_for_export, log2_normalize_df
+from magine.data.formatter import log2_normalize_df
 
 fold_change = 'fold_change'
 flag = 'significant'
@@ -33,13 +32,11 @@ def write_table_to_html(data, save_name='index', out_dir=None,
                         run_parallel=False, exp_data=None,
                         plot_type='matplotlib'):
     """
-    Creates a table of all the plots of all genes for each GO term.
-
-    Uses last calculated enrichment array.
+    Creates a html table  of plots of genes for each ontology term.
 
     Parameters
     ----------
-    data : pandas.DataFrame
+    data : magine.enrichment.enrichment_result.EnrichmentResult
     save_name : str
         name of html output file
     out_dir : str, optional
@@ -47,8 +44,8 @@ def write_table_to_html(data, save_name='index', out_dir=None,
     run_parallel : bool
         Create plots in parallel
     exp_data : magine.data.ExperimentalData
-    Returns
-    -------
+
+    plot_type : str {'matplotlib', 'plotly'}
 
     """
 
@@ -119,7 +116,7 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
     assert plot_type in {'plotly', 'matplotlib'}
     # filter data by significance and number of references
     if len(list_of_terms) == 0:
-        print("No significant GO terms!!!")
+        print("No significant ontology terms!!!")
         return figure_locations, to_remove
     # here we are going to iterate through all sig GO terms and create
     # a list of plots to create. For the HTML side, we need to point to
@@ -169,35 +166,6 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
     _make_plots(plots_to_create, plot_species, run_parallel)
 
     return figure_locations, to_remove
-
-
-def write_table_to_html_with_figures(data, exp_data, save_name='index',
-                                     out_dir=None, run_parallel=True):
-    # create plots of everything
-    if isinstance(data, str):
-        data = pd.read_csv(data)
-
-    fig_dict, to_remove = plot_genes_by_ont(
-        data, save_name, out_dir, exp_data, run_parallel=run_parallel
-    )
-
-    for i in fig_dict:
-        data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
-
-    data = data[~data['GO_id'].isin(to_remove)]
-
-    tmp = pivot_table_for_export(data)
-
-    html_out = save_name
-    if out_dir is not None:
-        html_out = os.path.join(out_dir, html_out)
-    print("Saving to : {}".format(html_out))
-
-    html_out = save_name + '_filter'
-    if out_dir is not None:
-        html_out = os.path.join(out_dir, html_out)
-
-    ht.write_filter_table(tmp, html_out)
 
 
 def plot_dataframe(exp_data, html_filename, out_dir='proteins',

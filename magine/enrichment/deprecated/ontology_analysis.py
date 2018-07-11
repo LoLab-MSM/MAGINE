@@ -6,13 +6,15 @@ import os
 
 import numpy as np
 import pandas as pd
-from magine.enrichment.databases.gene_ontology import download_and_process_go
+from magine.enrichment.deprecated.databases.gene_ontology import \
+    download_and_process_go
 from statsmodels.stats.multitest import fdrcorrection
 from statsmodels.stats.proportion import binom_test
 
 from magine.data.storage import network_data_dir
-from magine.plotting.species_plotting import write_table_to_html_with_figures
-
+from magine.plotting.species_plotting import plot_genes_by_ont
+from magine.data.formatter import pivot_table_for_export
+from magine.html_templates.html_tools import write_filter_table
 try:
     import cPickle as pickle
 except:  # python3 doesnt have cPickle
@@ -21,6 +23,35 @@ except:  # python3 doesnt have cPickle
 pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
+
+
+def write_table_to_html_with_figures(data, exp_data, save_name='index',
+                                     out_dir=None, run_parallel=True):
+    # create plots of everything
+    if isinstance(data, str):
+        data = pd.read_csv(data)
+
+    fig_dict, to_remove = plot_genes_by_ont(
+        data, save_name, out_dir, exp_data, run_parallel=run_parallel
+    )
+
+    for i in fig_dict:
+        data.loc[data['GO_id'] == i, 'GO_name'] = fig_dict[i]
+
+    data = data[~data['GO_id'].isin(to_remove)]
+
+    tmp = pivot_table_for_export(data)
+
+    html_out = save_name
+    if out_dir is not None:
+        html_out = os.path.join(out_dir, html_out)
+    print("Saving to : {}".format(html_out))
+
+    html_out = save_name + '_filter'
+    if out_dir is not None:
+        html_out = os.path.join(out_dir, html_out)
+
+    write_filter_table(tmp, html_out)
 
 
 class GoAnalysis(object):
