@@ -1,3 +1,4 @@
+
 try:
     import cPickle as pickle
 except ImportError:  # python3 doesnt have cPickle
@@ -112,6 +113,7 @@ class GeneMapper(object):
     def kegg_to_gene_name(self):
         if self._kegg_to_gene_name is None:
             self._kegg_to_gene_name = _dict(self.uniprot, 'KEGG', 'Gene_Name')
+            self._kegg_to_gene_name.update(manual_dict)
         return self._kegg_to_gene_name
 
     @property
@@ -163,67 +165,119 @@ class GeneMapper(object):
 
         Returns
         -------
-        kegg_to_gene_name, converted_all : dict, bool
+        kegg_to_gene_name, kegg_short : dict, dict
         """
         # Create the dictionary to store all conversions to be returned
-        kegg_to_gene_name = {}
-        # List to store things not in the initial dictionary
         unknown_genes = set()
-        still_missing = set()
         hits = {i for i in set(network.nodes) if i.startswith(species)}
+        prefix = species + ':'
+        kegg_short = {i: i.lstrip(prefix) for i in hits}
+
+        kegg_to_gene_name = {i: self.kegg_to_gene_name[i]
+                             for i in hits if i in self.kegg_to_gene_name}
+        for gene, gn in kegg_to_gene_name.items():
+            if len(gn) == 1:
+                kegg_to_gene_name[gene] = gn[0]
+            else:
+                for g in gn:
+                    if g in self.gene_name_to_uniprot:
+                        kegg_to_gene_name[gene] = g
+        missing = hits.difference(kegg_to_gene_name)
         # check stores dictionaries
-        for gene in hits:
-            name_stripped = gene.lstrip(species + ':')
-            network.node[gene]['keggName'] = name_stripped
-            if gene in manual_dict:
-                kegg_to_gene_name[gene] = manual_dict[gene]
-
-            elif gene in self.kegg_to_gene_name:
-                gn = self.kegg_to_gene_name[gene]
-                if len(gn) == 1:
-                    kegg_to_gene_name[gene] = gn[0]
-                else:
-                    for g in gn:
-                        if g in self.gene_name_to_uniprot:
-                            kegg_to_gene_name[gene] = g
-
-            elif int(name_stripped) in self.ncbi_to_symbol:
+        for gene in missing:
+            name_stripped = gene.lstrip(prefix)
+            if int(name_stripped) in self.ncbi_to_symbol:
                 new = self.ncbi_to_symbol[int(name_stripped)][0]
-                if isinstance(new, float):
+                if not isinstance(new, float):
+                    kegg_to_gene_name[gene] = new
+                else:
                     unknown_genes.add(gene)
-                    continue
-                kegg_to_gene_name[gene] = new
             else:
                 unknown_genes.add(gene)
-        if len(unknown_genes) == 0:
-            return kegg_to_gene_name, 1
-        # create string to call uniprot for mapping
-        search_string = '\t'.join(unknown_genes)
 
-        # This is where it gets tricky. Checking to see if there is a uniprot
-        # mapping for the species, if not, trying from KEGG side. Sometimes
-        # kegg  links to a different uniprot, or uniprot links to a diff kegg.
-        uni_dict = dict(uniprot.mapping("KEGG_ID", "ACC", query=search_string))
+        if len(unknown_genes) > 0:
+            add_dict, missed = kegg_to_symbol_through_uniprot(unknown_genes)
+            kegg_to_gene_name.update(add_dict)
 
-        for i in unknown_genes:
-            if i in uni_dict:
-                for n in uni_dict[i]:
-                    x = uniprot.search("accession:{}".format(n),
-                                       columns='genes(PREFERRED),reviewed,id',
-                                       limit=1)
-                    header, data = x.rstrip('\n').split('\n')
-                    name, review, entry = data.split('\t')
-                    if n != entry:
-                        print(i, n, entry, x, "dont match")
-                    elif review == 'reviewed':
-                        kegg_to_gene_name[i] = name
+            add_dict, final_missed = kegg_to_hugo(missed, species)
+            kegg_to_gene_name.update(add_dict)
 
-            else:
-                still_missing.add(i)
-        print("{} mappings not found from kegg to"
-              " gene name".format(len(still_missing)))
-        print(still_missing)
-        return kegg_to_gene_name, 0
+            print("{} mappings not found from kegg to"
+                  " gene name".format(len(final_missed)))
+            print(final_missed)
+
+        return kegg_to_gene_name, kegg_short
+
+
+def kegg_to_symbol_through_uniprot(unknown_genes):
+    # create string to call uniprot for mapping
+    search_string = '\t'.join(unknown_genes)
+    kegg_to_gene_name = dict()
+    missing = set()
+    # This is where it gets tricky. Checking to see if there is a uniprot
+    # mapping for the species, if not, trying from KEGG side. Sometimes
+    # kegg  links to a different uniprot, or uniprot links to a diff kegg.
+    uni_dict = dict(uniprot.mapping("KEGG_ID", "ACC", query=search_string))
+    for i in unknown_genes:
+        if i in uni_dict:
+            for n in uni_dict[i]:
+                x = uniprot.search("accession:{}".format(n),
+                                   columns='genes(PREFERRED),reviewed,id',
+                                   limit=1)
+                header, data = x.rstrip('\n').split('\n')
+                name, review, entry = data.split('\t')
+                if n != entry:
+                    print(i, n, entry, x, "dont match")
+                elif review == 'reviewed':
+                    kegg_to_gene_name[i] = name
+
+        else:
+            missing.add(i)
+    print("{} mappings not found from kegg to"
+          " gene name".format(len(missing)))
+    print(missing)
+    return kegg_to_gene_name
+
+
+def kegg_to_hugo(genes, species='hsa'):
+    """
+    Converts all KEGG names to HGNC
+
+    Parameters
+    ----------
+    genes : list
+    species : str
+
+    Returns
+    -------
+    dict
+    """
+    prefix = species + ':'
+
+    hugo_dict = {}
+    not_found = set()
+    for i in genes:
+        tmp_name = i.lstrip(prefix)
+        mapping = hugo.search(tmp_name)
+        if 'response' in mapping:
+            response = mapping['response']
+            if 'numFound' in response:
+                if response['numFound'] == 0:
+                    not_found.add(i)
+                    continue
+                elif response['numFound'] == 1:
+                    docs = response['docs'][0]
+                    hugo_dict[i] = docs['symbol']
+                    continue
+                else:
+                    if 'symbol' in response['docs'][0]:
+                        hugo_dict[i] = response['docs'][0]['symbol']
+        else:
+            not_found.add(i)
+    if not_found != 0:
+        print("{} not found after HGNC mapping".format(len(not_found)))
+        print("{} ".format(not_found))
+    return hugo_dict, not_found
 
 
 def _dict(data, key, value):
@@ -274,7 +328,9 @@ manual_dict = {'hsa:857': 'CAV1',
                'hsa:3708': 'ITPR1',
                'hsa:1293': 'COL6A3',
                'hsa:93034': 'NT5C1B',
+               'hsa:574537': 'UGT2A2'
                }
 
 if __name__ == '__main__':
     gm = GeneMapper()
+

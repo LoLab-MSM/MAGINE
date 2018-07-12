@@ -25,7 +25,7 @@ def build_network(seed_species, species='hsa', save_name=None,
 
     seed_species : list
         list of genes to construct network
-    save_name : str
+    save_name : str, optional
         output name to save network. Will save one before and after ID
         conversion
     species : str
