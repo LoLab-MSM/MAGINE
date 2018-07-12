@@ -86,21 +86,26 @@ def download_signor():
     nx.write_gpickle(protein_graph, _p_name)
 
 
-def load_signor():
+def load_signor(verbose=False):
     """
     Load reactome functional interaction network
+
+    Parameters
+    ----------
+    verbose : bool
+
     Returns
     -------
-
+    nx.DiGraph
     """
     if not os.path.exists(_p_name):
         print("Downloading Signor network!")
         download_signor()
         assert os.path.exists(_p_name), "Error downloading reactome FI. "
     tmp_graph = nx.read_gpickle(_p_name)
-    print("SIGNOR network has {} nodes and {} edges".format(
-        len(tmp_graph.nodes()), len(tmp_graph.edges()))
-    )
+    if verbose:
+        print("SIGNOR : {} nodes and {} edges".format(len(tmp_graph.nodes),
+                                                      len(tmp_graph.edges)))
     return tmp_graph
 
 

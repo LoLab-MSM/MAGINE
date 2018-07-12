@@ -298,7 +298,7 @@ class ExperimentalData(object):
         dict
 
         """
-        return get_measured_by_datatype(self.data)
+        return get_measured_by_datatype(self)
 
     def create_table_of_data(self, sig=False, unique=False, save_name=None,
                              plot=False, write_latex=False):

@@ -6,6 +6,7 @@ from magine.data.storage import network_data_dir
 from magine.networks.databases import *
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
+from magine.networks.databases.hmdb import load_hmdb_network
 
 try:
     import cPickle as pickle
@@ -18,7 +19,7 @@ cm = ChemicalMapper()
 def build_network(seed_species, species='hsa', save_name=None,
                   all_measured_list=None, trim_source_sink=False,
                   use_reactome=True, use_hmdb=False,
-                  use_biogrid=True, use_signor=True):
+                  use_biogrid=True, use_signor=True, verbose=False):
     """
     Construct a network from a list of gene names.
 
@@ -45,6 +46,7 @@ def build_network(seed_species, species='hsa', save_name=None,
         Add SIGNOR reaction to network
     trim_source_sink : bool, optional
         Remove source and sink nodes if they are not measured in network
+    verbose : bool
 
     Returns
     -------
@@ -65,16 +67,11 @@ def build_network(seed_species, species='hsa', save_name=None,
     seed_species.difference_update(old_accession)
     seed_species.update(updated_accession)
 
-    to_remove = seed_species.difference(node_to_path)
     seeds_in_kegg = seed_species.intersection(node_to_path)
 
     pathway_list = set()
     for seed in seeds_in_kegg:
         pathway_list.update(node_to_path[seed])
-
-    if len(to_remove) != 0:
-        print(to_remove)
-        print("{} species not found in KEGG".format(len(to_remove)))
 
     graph_list = []
     for each in pathway_list:
@@ -86,30 +83,36 @@ def build_network(seed_species, species='hsa', save_name=None,
     end_network = nt.compose_all(graph_list)
 
     if all_measured_list is None:
-        all_measured_list = set(i.upper() for i in end_network.nodes)
+        all_measured_set = set(i.upper() for i in end_network.nodes)
     else:
-        all_measured_list = set(str(x).upper() for x in all_measured_list)
+        all_measured_set = set(str(x).upper() for x in all_measured_list)
 
-    all_measured_list.update(seed_species)
-
+    all_measured_set.update(seed_species)
+    hmdb_ids = set(i for i in all_measured_set if i.startswith('HMDB'))
+    updated_accession = set()
+    old_accession = set()
+    for i in hmdb_ids:
+        if i in cm.hmdb_accession_to_main:
+            all_measured_set.remove(i)
+            all_measured_set.add(cm.hmdb_accession_to_main[i][0])
     networks_to_expand = []
 
     if use_hmdb:
-        networks_to_expand.append(load_hmdb_network())
+        networks_to_expand.append(load_hmdb_network(verbose))
 
     if use_reactome:
-        networks_to_expand.append(load_reactome_fi())
+        networks_to_expand.append(load_reactome_fi(verbose))
 
     if use_biogrid:
-        networks_to_expand.append(load_biogrid_network())
+        networks_to_expand.append(load_biogrid_network(verbose))
 
     if use_signor:
-        networks_to_expand.append(load_signor())
+        networks_to_expand.append(load_signor(verbose))
 
     if len(networks_to_expand) != 0:
         entire_expansion_network = nt.compose_all(networks_to_expand)
         end_network = expand_by_db(end_network, entire_expansion_network,
-                                   all_measured_list)
+                                   all_measured_set)
 
     print("Trimming network")
     # makes all similar edge names the same
@@ -120,23 +123,35 @@ def build_network(seed_species, species='hsa', save_name=None,
     if trim_source_sink:
         end_network = nt.trim_sink_source_nodes(end_network, all_measured_list,
                                                 remove_self_edge=True)
-    print('Network has {} nodes and {} edges'
-          ''.format(len(end_network.nodes()), len(end_network.edges())))
+    if save_name is not None:
+        nx.write_gml(end_network, '{}.gml'.format(save_name))
+        nx.write_gpickle(end_network, '{}.p'.format(save_name))
 
-    nx.write_gml(end_network, '{}.gml'.format(save_name))
-    nx.write_gpickle(end_network, '{}.p'.format(save_name))
+    final_nodes = set(end_network.nodes)
+    n_hits = len(seed_species.intersection(final_nodes))
+    n_measured_hits = len(set(all_measured_list).intersection(final_nodes))
+
+    print('Network has {} nodes and {} edges'.format(len(final_nodes),
+                                                     len(end_network.edges)))
+
+    print("Found {} of {} seed species in network"
+          "".format(n_hits, len(seed_species)))
+    print("Found {} of {} background species in network"
+          "".format(n_measured_hits, len(all_measured_list)))
 
     return end_network
 
 
-def expand_by_db(starting_network, expansion_source, measured_list):
+def expand_by_db(starting_network, expansion_source, measured_list,
+                 verbose=False):
     """ add reference network to main network
 
     Parameters
     ----------
     starting_network : nx.DiGraph
     expansion_source : nx.DiGraph
-    measured_list : list
+    measured_list : list_like
+    verbose : bool
 
     Returns
     -------
@@ -167,58 +182,15 @@ def expand_by_db(starting_network, expansion_source, measured_list):
         new_graph.add_node(node, **expansion_source.node[node])
 
     new_graph = nt.compose(starting_network, new_graph)
+    if verbose:
+        print("\t\t\tbefore\tafter")
+        print("\tNodes\t{}\t{}".format(len(starting_network.nodes),
+                                       len(new_graph.nodes)))
 
-    print("\t\t\tbefore\tafter")
-    print("\tNodes\t{}\t{}".format(len(starting_network.nodes),
-                                   len(new_graph.nodes)))
-
-    print("\tEdges\t{}\t{}".format(len(starting_network.edges),
-                                   len(new_graph.edges)))
+        print("\tEdges\t{}\t{}".format(len(starting_network.edges),
+                                       len(new_graph.edges)))
 
     return new_graph
-
-
-def load_hmdb_network(create_new=False):
-    """ Create HMDB network containing all metabolite-protein interactions
-
-    Returns
-    -------
-    nx.DiGraph
-    """
-    out_name = os.path.join(network_data_dir, 'hmdb_graph.p.gz')
-
-    if not create_new and os.path.exists(out_name):
-        tmp_graph = nx.read_gpickle(out_name)
-    else:
-        from magine.mappings.chemical_mapper import ChemicalMapper
-
-        cm = ChemicalMapper()
-
-        tmp_graph = nx.DiGraph()
-
-        def _add_node(node, node_type):
-            attrs = {'databaseSource': 'HMDB', 'speciesType': node_type}
-            if node_type == 'compound':
-                if node in cm.hmdb_to_chem_name:
-                    attrs['chemName'] = cm.hmdb_to_chem_name[node][0]
-            tmp_graph.add_node(node, **attrs)
-
-        for source, genes in cm.hmdb_main_to_protein.items():
-            if source == '':
-                continue
-            _add_node(source, 'compound')
-            for target in genes:
-                if target == '':
-                    continue
-                _add_node(target, 'gene')
-                tmp_graph.add_edge(source, target, interactionType='chemical',
-                                   databaseSource='HMDB')
-        nx.write_gpickle(tmp_graph, out_name)
-
-    print("HMDB network {} nodes and {} edges".format(len(tmp_graph.nodes),
-                                                      len(tmp_graph.edges)))
-
-    return tmp_graph
 
 
 def create_background_network(save_name='background_network'):

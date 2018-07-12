@@ -15,7 +15,7 @@ else:
 _p_name = os.path.join(network_data_dir, 'reactome_fi.p.gz')
 
 
-def load_reactome_fi():
+def load_reactome_fi(verbose=False):
     """
     Load reactome functional interaction network
     Returns
@@ -28,8 +28,9 @@ def load_reactome_fi():
         download_reactome_fi()
         assert os.path.exists(_p_name), "Error downloading reactome FI. "
     tmp_graph = nx.read_gpickle(_p_name)
-    n_n, n_e = len(tmp_graph.nodes()), len(tmp_graph.edges())
-    print("Reactome network has {} nodes and {} edges".format(n_n, n_e))
+    if verbose:
+        n_n, n_e = len(tmp_graph.nodes()), len(tmp_graph.edges())
+        print("Reactome : {} nodes and {} edges".format(n_n, n_e))
     return tmp_graph
 
 

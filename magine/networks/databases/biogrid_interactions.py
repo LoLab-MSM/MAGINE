@@ -218,13 +218,14 @@ def download_biogrid():
     BioGridDownload().parse_network()
 
 
-def load_biogrid_network():
+def load_biogrid_network(verbose=False):
     if not os.path.exists(p_name):
         download_biogrid()
 
     g = nx.read_gpickle(p_name)
-    nn, ne = len(g.nodes()), len(g.edges())
-    print("BIOGRID network has {} nodes and {} edges".format(nn, ne))
+    if verbose:
+        nn, ne = len(g.nodes()), len(g.edges())
+        print("BIOGRID network has {} nodes and {} edges".format(nn, ne))
     return g
 
 
