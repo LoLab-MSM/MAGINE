@@ -56,7 +56,6 @@ def test_kegg_to_hmdb():
     g.add_edge('cpd:C00197', 'cpd:C00197')
     g.add_edge('cpd:C15972', 'cpd:C00197')
     g.add_edge('cpd:C15972', 'cpd:C00469')
-    dic = cm.convert_kegg_nodes(g)
 
     change_dict, kegg_short, chem_names = cm.convert_kegg_nodes(g)
     nx.set_node_attributes(g, kegg_short, 'keggName')
