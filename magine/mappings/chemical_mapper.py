@@ -68,7 +68,7 @@ class ChemicalMapper(object):
     @property
     def hmdb_to_chem_name(self):
         if self._hmdb_to_chem_name is None:
-            self._hmdb_to_chem_name = self._to_dict("accession", "name")
+            self._hmdb_to_chem_name = self._to_dict("main_accession", "name")
         return self._hmdb_to_chem_name
 
     @property
@@ -132,10 +132,9 @@ class ChemicalMapper(object):
         return_dict = SortedDict()
         for i, j in d.values:
             i = i.strip()
-            if i in return_dict:
-                return_dict[i].add(j)
-            else:
-                return_dict[i] = SortedSet([j])
+            if i not in return_dict:
+                return_dict[i] = set()
+            return_dict[i].add(j)
         return return_dict
 
     def _from_list_dict(self, key, value):
@@ -217,16 +216,16 @@ class ChemicalMapper(object):
 
             if name_stripped in self.kegg_to_hmdb:
                 mapping = self.kegg_to_hmdb[name_stripped]
-                if isinstance(mapping, (list, SortedSet)):
+                if isinstance(mapping, (list, set, SortedSet)):
                     names = '|'.join(set(mapping))
                     chem_names = set()
                     for name in mapping:
-                        if name in self.hmdb_to_chem_name:
-                            chem_names.update(
-                                set(self.hmdb_to_chem_name[name])
-                            )
+                        try:
+                            chem_names.update(self.hmdb_to_chem_name[name])
+                        except:
+                            continue
                     net_cpd_to_hmdb[i] = names
-                    net_chem_names[i] = '|'.join(chem_names)
+                    net_chem_names[i] = order_merge(chem_names)
 
                 elif isinstance(mapping, basestring):
 
@@ -242,12 +241,10 @@ class ChemicalMapper(object):
                 net_cpd_to_hmdb[i] = loc
                 if loc in self.hmdb_to_chem_name:
                     net_chem_names[i] = '|'.join(
-                        set(self.hmdb_to_chem_name[loc]))
-
+                        sorted(self.hmdb_to_chem_name[loc]))
             else:
                 still_unknown.append(i)
         if len(still_unknown):
-
             kegg_hmdb = chem.get_mapping("kegg_ligand", "hmdb")
             for i in still_unknown:
                 name_stripped = i.lstrip('cpd:')
@@ -269,6 +266,12 @@ compound_manual = {'cpd:C07909': 'HMDB0015015',
                    'cpd:C00696': 'HMDB0001403',
                    'cpd:C00124': 'HMDB0000143',
                    }
+
+
+def order_merge(species_set):
+    '|'.join(species_set)
+    corrected = set(i.encode('ascii', 'ignore') for i in species_set)
+    return '|'.join(sorted(corrected))
 
 
 def tidy_split(df, column, sep='|', keep=False):
