@@ -1,12 +1,9 @@
 import os
 import networkx as nx
-import magine.mappings.maps as mapper
 import magine.networks.utils as nt
-from magine.data.storage import network_data_dir
 from magine.networks.databases import *
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
-from magine.networks.databases.hmdb import load_hmdb_network
 
 try:
     import cPickle as pickle
