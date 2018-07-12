@@ -57,8 +57,16 @@ def test_kegg_to_hmdb():
     g.add_edge('cpd:C15972', 'cpd:C00197')
     g.add_edge('cpd:C15972', 'cpd:C00469')
     dic = cm.convert_kegg_nodes(g)
-    g = nx.relabel_nodes(g, dic)
 
+    change_dict, kegg_short, chem_names = cm.convert_kegg_nodes(g)
+    nx.set_node_attributes(g, kegg_short, 'keggName')
+    nx.set_node_attributes(g, chem_names, 'chemName')
+    nx.set_node_attributes(g, change_dict, 'hmdbNames')
+
+    dict2, kegg_short = gm.convert_kegg_nodes(g)
+    nx.set_node_attributes(g, kegg_short, 'keggName')
+    change_dict.update(dict2)
+    g = nx.relabel_nodes(g, change_dict)
     answer = '(2R)-2-Hydroxy-3-(phosphonatooxy)propanoate'
     assert (g.node['HMDB0060180']['chemName'] == answer)
     assert (g.node['HMDB0060180']['keggName'] == 'C00197')
@@ -75,7 +83,8 @@ def test_kegg_to_uniprot():
     g.add_edge('hsa:501', 'hsa:219')
     g.add_edge('hsa:224', 'hsa:219')
     g.add_node('hsa:857')
-    dic, found_all = gm.convert_kegg_nodes(g, species='hsa')
+    dic, kegg_short = gm.convert_kegg_nodes(g, species='hsa')
+    nx.set_node_attributes(g, kegg_short, 'keggName')
     g = nx.relabel_nodes(g, dic)
     assert (g.node['ALDH3A2']['keggName'] == '224')
 
