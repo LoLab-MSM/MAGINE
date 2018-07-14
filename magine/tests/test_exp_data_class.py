@@ -72,12 +72,12 @@ class TestExpData(object):
                                                      'HMDB0009901'}
 
     def test_plot_list(self):
-        self.exp_data.plot_species(self.exp_data.rna.sig.id_list,
+        self.exp_data.rna.plot_species(self.exp_data.rna.sig.id_list,
                                    'del_test', self.out_dir)
         plt.close()
 
     def test_html_output(self):
-        self.exp_data.plot_all_proteins(html_file_name='del',
+        self.exp_data.proteins.plot_all(html_file_name='del',
                                         out_dir=self.out_dir)
         plt.close()
 
@@ -92,14 +92,15 @@ class TestExpData(object):
         plt.close()
 
     def test_plot_all_metabolites(self):
-        self.exp_data.plot_all_metabolites('metab', out_dir=self.out_dir,
-                                           plot_type='matplotlib')
+        self.exp_data.compounds.plot_all('metab', out_dir=self.out_dir,
+                                         plot_type='matplotlib')
         plt.close()
 
     def test_list_metabolites(self):
         l = ['HMDB0000001', 'HMDB0009901']
-        self.exp_data.plot_species(l, save_name='metab', out_dir=self.out_dir,
-                                   plot_type='plotly')
+        self.exp_data.compounds.plot_species(l, save_name='metab',
+                                             out_dir=self.out_dir,
+                                             plot_type='plotly')
         plt.close()
 
     def test_histogram(self):

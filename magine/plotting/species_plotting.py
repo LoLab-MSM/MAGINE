@@ -169,8 +169,7 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
 
 
 def plot_dataframe(exp_data, html_filename, out_dir='proteins',
-                   plot_type='plotly', type_of_species='protein',
-                   run_parallel=False):
+                   plot_type='plotly', run_parallel=False):
     """
     Creates
 
@@ -182,8 +181,6 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
         Directory that will contain all proteins
     plot_type : str
         plotly or matplotlib output
-    type_of_species : str
-        proteins or metabolites
     run_parallel : bool
         create plots in parallel
     Returns
@@ -195,7 +192,6 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     local_data = exp_data.copy()
     species_to_plot = local_data[identifier].unique()
 
-    print("Plotting {} {}".format(len(species_to_plot), type_of_species))
     fig_loc = {}
     plots = []
 
