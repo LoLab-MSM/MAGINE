@@ -158,6 +158,60 @@ class Sample(Data):
                                   x_range=x_range, y_range=y_range)
         return fig
 
+    def plot_species(self, species_list, save_name, out_dir=None, title=None,
+                     plot_type='plotly', image_format='png'):
+        """
+        Creates an HTML table of plots provided a list metabolites
+
+        Parameters
+        ----------
+        species_list : list
+            list of compounds
+        save_name : str
+            Name of html output file
+        out_dir : str
+            Location to place plots
+        title : str
+            Title for HTML page
+        plot_type : str
+            Type of plot outputs, can be "plotly" or "matplotlib"
+        image_format : str
+            pdf or png, only used if plot_type="matplotlib"
+        Returns
+        -------
+
+        """
+
+        return plot_species(
+            self, species_list=species_list,
+            save_name=save_name, out_dir=out_dir, title=title,
+            plot_type=plot_type, image_format=image_format
+        )
+
+    def plot_all(self, html_file_name, out_dir='out',
+                 plot_type='plotly', run_parallel=False):
+        """
+        Creates a plot of all metabolites
+
+        Parameters
+        ----------
+        html_file_name : str
+            filename to save html of all plots
+        out_dir: str, path
+            Directory that will contain all proteins
+        plot_type : str
+            plotly or matplotlib output
+        run_parallel : bool
+            Create the plots in parallel
+        Returns
+        -------
+
+        """
+
+        plot_dataframe(self, html_filename=html_file_name,
+                       out_dir=out_dir, plot_type=plot_type,
+                       run_parallel=run_parallel)
+
 
 class ExperimentalData(object):
     """
@@ -329,86 +383,6 @@ class ExperimentalData(object):
         return create_table_of_data(self, sig=sig, unique=unique,
                                     save_name=save_name, plot=plot,
                                     write_latex=write_latex)
-
-    def plot_species(self, species_list, save_name, out_dir=None, title=None,
-                     plot_type='plotly', image_format='png'):
-        """
-        Creates an HTML table of plots provided a list metabolites
-
-        Parameters
-        ----------
-        species_list : list
-            list of compounds 
-        save_name : str
-            Name of html output file
-        out_dir : str
-            Location to place plots
-        title : str
-            Title for HTML page
-        plot_type : str
-            Type of plot outputs, can be "plotly" or "matplotlib"
-        image_format : str
-            pdf or png, only used if plot_type="matplotlib"
-        Returns
-        -------
-
-        """
-
-        return plot_species(
-            self.species, species_list=species_list,
-            save_name=save_name, out_dir=out_dir, title=title,
-            plot_type=plot_type, image_format=image_format
-        )
-
-    def plot_all_proteins(self, html_file_name, out_dir='proteins',
-                          plot_type='plotly', run_parallel=False):
-        """
-        Creates a plot of all proteins
-
-        Parameters
-        ----------
-        html_file_name : str
-            filename to save html of all plots
-        out_dir: str, path
-            Directory that will contain all proteins
-        plot_type : str
-            plotly or matplotlib output
-        run_parallel : bool
-            Create the plots in parallel
-        Returns
-        -------
-
-        """
-
-        plot_dataframe(self.genes, html_filename=html_file_name,
-                       out_dir=out_dir, plot_type=plot_type,
-                       type_of_species='protein',
-                       run_parallel=run_parallel)
-
-    def plot_all_metabolites(self, html_file_name, out_dir='metabolites',
-                             plot_type='plotly', run_parallel=False):
-        """
-        Creates a plot of all metabolites
-
-        Parameters
-        ----------
-        html_file_name : str
-            filename to save html of all plots
-        out_dir: str, path
-            Directory that will contain all proteins
-        plot_type : str
-            plotly or matplotlib output
-        run_parallel : bool
-            Create the plots in parallel
-        Returns
-        -------
-
-        """
-
-        plot_dataframe(self.compounds, html_filename=html_file_name,
-                       out_dir=out_dir, plot_type=plot_type,
-                       type_of_species='metabolites',
-                       run_parallel=run_parallel)
 
     def volcano_analysis(self, out_dir, use_sig_flag=True,
                          p_value=0.1, fold_change_cutoff=1.5):
