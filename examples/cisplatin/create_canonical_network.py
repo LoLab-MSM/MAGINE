@@ -1,7 +1,9 @@
 import networkx as nx
 
+from exp_data import exp_data
 from magine.networks.network_generator import build_network
 from magine.networks.subgraphs import Subgraph
+from magine.networks.utils import add_data_to_graph, add_attribute_to_network
 
 genes = [
 
@@ -17,14 +19,17 @@ genes = [
 
 
 def shortest_paths(network, save_name):
+    network = add_attribute_to_network(network, genes, 'seed', 'true')
+    network = add_data_to_graph(network, exp_data)
     sg = Subgraph(network)
     shortest = sg.paths_between_list(genes)
     print("{} has {} nodes, {} edges".format(save_name,
                                              len(shortest.nodes),
                                              len(shortest.edges)))
 
-    nx.write_gml(network, '{}.gml'.format(save_name))
-    nx.write_gml(shortest, '{}_trimmed.gml'.format(save_name))
+    nx.write_gml(network, 'Networks/{}.gml'.format(save_name))
+    nx.write_gml(shortest, 'Networks/{}_trimmed.gml'.format(save_name))
+    del network
 
 
 def iterative_build(seed_list, background_list, save_name):
@@ -82,8 +87,7 @@ def iterative_build(seed_list, background_list, save_name):
         use_signor=True
     )
 
-    shortest_paths(kegg_hmdb_biogrid_reactome_signor_canonical,
-                   save_name + '_kegg_hmdb_biogrid_reactome_signor')
+    shortest_paths(kegg_hmdb_biogrid_reactome_signor_canonical, 'ecn')
 
 
 if __name__ == '__main__':

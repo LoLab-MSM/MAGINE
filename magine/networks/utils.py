@@ -590,6 +590,47 @@ def subtract_network_from_network(net1, net2):
     return copy_graph1
 
 
+def add_data_to_graph(network, exp_data):
+    """ Add standard attributes to graph from data
+
+    Parameters
+    ----------
+    network : nx.DiGraph
+    exp_data : magine.data.experimental_data.ExperimentalData
+
+    Returns
+    -------
+
+    """
+    n_copy = network.copy()
+    measured = set(exp_data.species.id_list)
+    sig_measured = set(exp_data.species.sig.id_list)
+    # seed species
+    n_copy = add_attribute_to_network(n_copy, sig_measured,
+                                      'sigMeasured', 'red', 'blue')
+
+    # background
+    n_copy = add_attribute_to_network(n_copy, measured,
+                                      'measured', 'red', 'blue')
+    # This retrieves a dictionary of where the keys are from the 'source'
+    # of the data and values are lists of species
+    m, sig_m = exp_data.get_measured_by_datatype()
+
+    # add attribute if node is measured per 'source' of data
+    for exp_type, spec in m.items():
+        # this just cleans up non alpha-numeric characters
+        attr_name = exp_type.replace('_', '')
+        attr_name = attr_name.replace('-', '')
+        network = add_attribute_to_network(network, spec, attr_name,
+                                           'red', 'blue')
+    # add labels for if node is measured in any of our samples
+    for time, spec in zip(exp_data.species.sig.sample_ids,
+                          exp_data.species.sig.by_sample):
+        time = 'sample{}'.format(time)
+        network = add_attribute_to_network(network, spec, time, 'red', 'blue')
+    return n_copy
+
+
 def run_from_ipython():
     try:
         __IPYTHON__
