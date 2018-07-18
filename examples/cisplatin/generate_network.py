@@ -9,23 +9,27 @@ from magine.networks.network_generator import build_network
 if __name__ == '__main__':
 
     network = build_network(
-        gene_list=exp_data.list_sig_proteins,  # genes seed species
-        metabolite_list=exp_data.list_metabolites,  # metabolites seed species
-        all_measured_list=exp_data.list_species,  # all data measured
+        seed_species=exp_data.species.sig.id_list,  # genes seed species
+        all_measured_list=exp_data.species.id_list,  # all data measured
         use_biogrid=True,  # expand with biogrid
         use_hmdb=True,  # expand with hmdb
         use_reactome=True,  # expand with reactome
+        use_signor=True,  # expand with signor
         trim_source_sink=True,  # remove all source and sink nodes not measured
-        save_name='Data/cisplatin_based_network'
+        save_name='Data/cisplatin_based_network_new'
     )
 
     # Load the network, note that it is returned above but for future use
     # we will use load in
     network = nx.read_gpickle('Data/cisplatin_based_network.p')
 
+    # print(len(network.nodes))
+    # print(len(network.edges))
+    # quit()
+
     # label all nodes that are measure and significantly changed in the data
-    measured = set(exp_data.list_species)
-    sig_measured = set(exp_data.list_sig_species)
+    measured = set(exp_data.species.id_list)
+    sig_measured = set(exp_data.species.sig.id_list)
 
     network = utils.add_attribute_to_network(network, sig_measured,
                                              'sigMeasured', 'red', 'blue')
@@ -33,7 +37,7 @@ if __name__ == '__main__':
                                              'red', 'blue')
     # add labels for if node is measured in any of our data_types
     m, sig_m = exp_data.get_measured_by_datatype()
-
+    quit()
     for exp_type, spec in m.items():
         attr_name = exp_type.replace('_', '')
         attr_name = attr_name.replace('-', '')

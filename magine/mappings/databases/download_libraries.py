@@ -62,7 +62,7 @@ def download_uniprot(species='hsa'):
     if species == 'hsa':
         url = _url_h.format('HUMAN_9606_idmapping.dat.gz')
     else:
-        ValueError("Currently only implemented human uniprot. "
+        raise ValueError("Currently only implemented human uniprot. "
                    "Please contain us for additional databases")
 
     columns = ['uniprot', 'mapping_type', 'mapping']
@@ -323,8 +323,8 @@ class HMDB(object):
 
 if __name__ == '__main__':
     # download_hgnc()
-    # download_uniprot()
-    hm = HMDB()
+    download_uniprot('acibt')
+    # hm = HMDB()
 
     # end = time.time()
     # st = time.time()

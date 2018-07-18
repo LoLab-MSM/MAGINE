@@ -201,11 +201,10 @@ class EnrichmentResult(Data):
         threshold : float, default 0.75
         verbose : bool, default False
             Print similarity scores and removed terms.
-        level : {'sample', 'dataframe', 'overall'}, default 'sample'
+        level : {'sample', 'dataframe'}, default 'sample'
             Level to filter dataframe. 'sample' will pivot the dataframe and
-            filter each group of 'sample_id' individually. 'dataframe' will merge
-            all genes that share the same 'term_name'. 'overall' will consider each
-            term_name individually.
+            filter each group of 'sample_id' individually. 'dataframe' will
+            merge all genes that share the same 'term_name'.
         sort_by : {'combined_score', 'rank', 'adj_p_value', 'n_genes'},
                     default 'combined_score'
             Keyword to sort the dataframe. The scoring starts at the top term and
@@ -226,17 +225,15 @@ class EnrichmentResult(Data):
 
         self.sort_values(sort_by, inplace=True, ascending=ascending)
         data_copy = self.copy()
-
-        if level == 'sample':
+        if 'sample_id' not in data_copy.columns or level == 'dataframe':
+            to_keep = data_copy.unique_terms(threshold, verbose, level=level)
+        else:
             to_keep = set()
             for i in sorted(data_copy['sample_id'].unique()):
                 tmp = data_copy[data_copy['sample_id'] == i]
                 to_keep.update(
                     tmp.unique_terms(threshold, verbose, level=level)
                 )
-
-        else:
-            to_keep = data_copy.unique_terms(threshold, verbose, level=level)
 
         data_copy = data_copy[(data_copy['term_name'].isin(to_keep))]
         print("Number of rows went from {} to {}".format(self.shape[0],

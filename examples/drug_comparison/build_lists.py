@@ -34,6 +34,10 @@ def download_database():
 df = pd.read_csv('drug_pertubations_from_geo_up.csv', index_col=0,
                  converters={"gene_list": lambda x: ast.literal_eval(x)})
 
+print(df.head(10))
+
+print(df[df.term.str.contains('cisplatin')].shape)
+quit()
 
 def get_dna_damage_drugs():
     terms = [
@@ -52,7 +56,7 @@ def get_dna_damage_drugs():
         terms.append(t['term'].split(' ')[0])
         gene_sets.append(t['gene_list'])
 
-    enrichment = e.run_sample_set_of_dbs(gene_sets, terms, pivot=False)
+    enrichment = e.run_samples(gene_sets, terms, pivot=False)
 
     enrichment.to_csv('compare_drug_dbs.csv', encoding='utf8')
 
@@ -66,7 +70,7 @@ def run_gse_6907():
         terms.append(t['term'].split(' ')[0])
         gene_sets.append(t['gene_list'])
 
-    enrichment = e.run_sample_set_of_dbs(gene_sets, terms, pivot=False)
+    enrichment = e.run_samples(gene_sets, terms, pivot=False)
     enrichment.to_csv('gse6907_enrichment.csv', encoding='utf8')
 
 
@@ -76,13 +80,3 @@ for i, g in df.groupby(['gse']):
     if n_drugs > 2:
         print("{} : {}".format(i, ','.join(drugs)))
     # print(i, n_drugs)
-quit()
-
-
-def print_containing():
-    def p(row):
-        if 'cisplatin' in row['term']:
-            print(row['term'])
-
-
-df.apply(p, axis=1)

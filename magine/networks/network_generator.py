@@ -1,7 +1,8 @@
 import os
 import networkx as nx
 import magine.networks.utils as nt
-from magine.networks.databases import *
+from magine.networks.databases import load_hmdb_network, load_biogrid_network, \
+    load_signor, load_reactome_fi, load_kegg_mappings
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
 
@@ -76,7 +77,6 @@ def build_network(seed_species, species='hsa', save_name=None,
         if len(tmp.edges) == 0:
             continue
         graph_list.append(tmp)
-
     end_network = nt.compose_all(graph_list)
 
     if all_measured_list is None:
@@ -115,7 +115,7 @@ def build_network(seed_species, species='hsa', save_name=None,
     # makes all similar edge names the same
     nt.standardize_edge_types(end_network)
     # removes everything not connected to the largest graph
-    nt.delete_disconnected_network(end_network)
+    end_network = nt.delete_disconnected_network(end_network)
 
     if trim_source_sink:
         end_network = nt.trim_sink_source_nodes(end_network, all_measured_list,
@@ -126,15 +126,16 @@ def build_network(seed_species, species='hsa', save_name=None,
 
     final_nodes = set(end_network.nodes)
     n_hits = len(seed_species.intersection(final_nodes))
-    n_measured_hits = len(set(all_measured_list).intersection(final_nodes))
 
     print('Network has {} nodes and {} edges'.format(len(final_nodes),
                                                      len(end_network.edges)))
 
     print("Found {} of {} seed species in network"
           "".format(n_hits, len(seed_species)))
-    print("Found {} of {} background species in network"
-          "".format(n_measured_hits, len(all_measured_list)))
+    if all_measured_list is not None:
+        n_measured_hits = len(set(all_measured_list).intersection(final_nodes))
+        print("Found {} of {} background species in network"
+              "".format(n_measured_hits, len(all_measured_list)))
 
     return end_network
 
