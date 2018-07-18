@@ -174,6 +174,9 @@ class Enrichr(object):
             df = self._run_list_of_dbs(user_list_id, gene_set_lib)
 
         init_size = len(df)
+        if init_size == 0:
+            print("No terms returned")
+            return df
         df['term_name'] = df.apply(clean_term_names, axis=1)
         after_size = len(df)
         assert init_size == after_size, 'not the same shape {}'.format(
@@ -255,7 +258,8 @@ class Enrichr(object):
             if count == 0:
                 data = self._run_id(gene_list_id, i)
             else:
-                data.append(self._run_id(gene_list_id, i))
+                data = data.append(self._run_id(gene_list_id, i),
+                                   ignore_index=True)
             if self.verbose:
                 print('\t\t{}/{} databases'.format(count, len(databases)))
         return data
@@ -294,16 +298,16 @@ class Enrichr(object):
         assert isinstance(sample_lists, list), "List required"
         assert isinstance(sample_lists[0],
                           (list, set)), "List of lists required"
-
+        df_final = None
         for count, (i, j) in enumerate(zip(sample_lists, sample_ids)):
             df = self.run(i, database)
             df['sample_id'] = j
-            if count == 0:
-                df_all = df
+            if df_final is None:
+                df_final = df
             else:
-                df_all.append(df)
+                df_final = df_final.append(df, ignore_index=True)
 
-        df_all = self._filter_sig_across_term(df_all)
+        df_final = self._filter_sig_across_term(df_final)
 
         if save_name:
             s_name = '{}_enrichr'.format(save_name)
@@ -312,24 +316,25 @@ class Enrichr(object):
                 index = ['term_name', 'db']
 
                 p_df = pd.pivot_table(
-                    df_all, index=index, columns='sample_id', aggfunc='first',
+                    df_final, index=index, columns='sample_id',
+                    aggfunc='first',
                     fill_value=np.nan,
                     values=['term_name', 'rank', 'p_value', 'z_score',
                             'combined_score', 'adj_p_value', 'genes'],
                 )
                 # save files
                 p_df.to_excel('{}.xlsx'.format(s_name), merge_cells=True)
-            df_all.to_csv('{}.csv'.format(s_name), index=False)
+            df_final.to_csv('{}.csv'.format(s_name), index=False)
 
         if create_html:
             if exp_data is None:
                 print("exp_data required to make plots over samples")
-                return df_all
+                return df_final
 
-            write_table_to_html(data=df_all, save_name=save_name,
+            write_table_to_html(data=df_final, save_name=save_name,
                                 out_dir=out_dir, run_parallel=run_parallel,
                                 exp_data=exp_data)
-        return df_all
+        return df_final
 
     @staticmethod
     def _filter_sig_across_term(data, p_value_thresh=0.05):
@@ -448,6 +453,11 @@ replace_pairs = [
 
 ]
 
+standard_dbs = []
+for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
+          'kinases', 'histone', 'cell_type']:
+    standard_dbs += db_types[i]
+
 
 def run_enrichment_for_project(exp_data, project_name):
     """
@@ -461,11 +471,6 @@ def run_enrichment_for_project(exp_data, project_name):
     -------
 
     """
-
-    local_dbs = []
-    for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
-              'kinases', 'histone', 'cell_type']:
-        local_dbs += db_types[i]
     e = Enrichr(verbose=True)
     exp = exp_data
     all_df = []
@@ -473,7 +478,7 @@ def run_enrichment_for_project(exp_data, project_name):
     if not os.path.exists(_dir):
         os.mkdir(_dir)
 
-    print("Running {} databases, might take some time".format(len(local_dbs)))
+    print("Running {} databases".format(len(standard_dbs)))
 
     def _run_new(samples, timepoints, category):
         print("Running {}".format(category))
@@ -486,7 +491,7 @@ def run_enrichment_for_project(exp_data, project_name):
             try:
                 df = pd.read_csv(name, index_col=None, encoding='utf-8')
             except:
-                df = e.run(genes, local_dbs)
+                df = e.run(genes, standard_dbs)
                 df['sample_id'] = sample_id
                 df['category'] = category
                 df.to_csv(name, index=False, encoding='utf-8',
