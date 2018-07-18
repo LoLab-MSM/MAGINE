@@ -2,7 +2,7 @@ import os
 import networkx as nx
 import magine.networks.utils as nt
 from magine.networks.databases import load_hmdb_network, load_biogrid_network, \
-    load_signor, load_reactome_fi, load_kegg_mappings
+    load_signor, load_reactome_fi, load_kegg_mappings, load_all_of_kegg
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
 
