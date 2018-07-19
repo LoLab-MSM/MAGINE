@@ -20,7 +20,7 @@ def test_multi_sample():
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'], save_name='enrichr_test')
-    assert df2.shape == (65, 10)
+    assert df2.shape == (111, 10)
 
 
 def test_multi_sample_plotting():
@@ -39,7 +39,7 @@ def test_set_of_dbs():
     df2 = e.run_samples(lists, ['1', '2', '3'],
                         database=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
-    assert df2.shape == (41, 10)
+    assert df2.shape == (128, 10)
 
 
 def test_tf_names():
