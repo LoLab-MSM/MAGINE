@@ -5,8 +5,14 @@ import networkx as nx
 from magine.data.storage import network_data_dir
 
 
-def load_hmdb_network(create_new=False, verbose=False):
+def load_hmdb_network(fresh_download=False, verbose=False):
     """ Create HMDB network containing all metabolite-protein interactions
+
+    Parameters
+    ----------
+    fresh_download : bool
+        Download fresh copy from HMDB
+    verbose : bool
 
     Returns
     -------
@@ -14,7 +20,7 @@ def load_hmdb_network(create_new=False, verbose=False):
     """
     out_name = os.path.join(network_data_dir, 'hmdb_graph.p.gz')
 
-    if not create_new and os.path.exists(out_name):
+    if not fresh_download and os.path.exists(out_name):
         tmp_graph = nx.read_gpickle(out_name)
     else:
         from magine.mappings.chemical_mapper import ChemicalMapper

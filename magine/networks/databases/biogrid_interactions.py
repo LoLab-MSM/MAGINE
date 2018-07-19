@@ -218,8 +218,21 @@ def download_biogrid():
     BioGridDownload().parse_network()
 
 
-def load_biogrid_network(verbose=False):
-    if not os.path.exists(p_name):
+def load_biogrid_network(fresh_download=False, verbose=False):
+    """
+
+    Parameters
+    ----------
+    fresh_download : bool
+        Download a fresh copy from biogrid
+    verbose : bool
+
+
+    Returns
+    -------
+    nx.DiGraph
+    """
+    if not os.path.exists(p_name) or fresh_download:
         download_biogrid()
 
     g = nx.read_gpickle(p_name)

@@ -235,12 +235,27 @@ def load_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
     return all_of_kegg
 
 
-def load_kegg_mappings(species, verbose=False):
+def load_kegg_mappings(species, fresh_download=False, verbose=False):
+    """
+
+    Parameters
+    ----------
+    species : str
+        Species type, currently 'hsa' is the only species with automatic name
+        conversion
+    fresh_download : bool
+        Download KEGG fresh
+    verbose : bool
+
+    Returns
+    -------
+    dict, dict
+    """
     n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
 
     save_path_id_to_graph = os.path.join(network_data_dir, n)
 
-    if not os.path.exists(save_path_id_to_graph):
+    if not os.path.exists(save_path_id_to_graph) or fresh_download:
         download_kegg(species=species, verbose=verbose)
 
     n = '{}_kegg_node_to_pathway.p.gz'.format(species)
@@ -266,4 +281,4 @@ def load_gz_p(file_name):
 
 if __name__ == '__main__':
     # download_kegg('hsa')
-    download_kegg('hsa')
+    load_all_of_kegg('acb')

@@ -34,7 +34,15 @@ class ChemicalMapper(object):
                      'secondary_accessions'
                      ]
 
-    def __init__(self):
+    def __init__(self, fresh_download=False):
+        """
+
+        Parameters
+        ----------
+        fresh_download: bool
+            download new copy of database
+
+        """
 
         self.database = None
         self._hmdb_to_chem_name = None
@@ -47,7 +55,7 @@ class ChemicalMapper(object):
         self._hmdb_main_to_protein = None
         self._hmdb_accession_to_main = None
         _file = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
-        if not os.path.exists(_file):
+        if not os.path.exists(_file) or fresh_download:
             from magine.mappings.databases.download_libraries import HMDB
             HMDB()
         hmdb_database = pd.read_csv(_file, low_memory=False, encoding='utf-8')
