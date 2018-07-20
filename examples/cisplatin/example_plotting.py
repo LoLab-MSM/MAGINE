@@ -1,5 +1,5 @@
 from exp_data import exp_data
-from magine.data.formatter import pivot_tables_for_export
+
 from magine.plotting.heatmaps import heatmap_from_array
 
 # create a plotly interactive plot
@@ -26,7 +26,6 @@ exp_data.time_series_volcano(exp_data_type='LF',
 
 # create clustered heatmap of significantly changed proteins only.
 sig_data = exp_data.data[exp_data.data['significant_flag']]
-prot, met = pivot_tables_for_export(sig_data)
 
 heatmap_from_array(sig_data, cluster_row=False, convert_to_log=True,
                    index='protein', values='treated_control_fold_change',

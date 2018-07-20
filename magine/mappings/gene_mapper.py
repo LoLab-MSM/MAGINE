@@ -5,14 +5,11 @@ except ImportError:  # python3 doesnt have cPickle
     import pickle
 
 import pandas as pd
-from bioservices import HGNC, KEGG, UniProt
+from bioservices import HGNC, UniProt
 from sortedcontainers import SortedSet, SortedDict
 
 from magine.mappings.databases import load_hgnc, load_uniprot, load_ncbi
 
-kegg = KEGG()
-uniprot = UniProt()
-hugo = HGNC()
 pd.set_option('display.width', 20000)
 
 
@@ -20,15 +17,14 @@ class GeneMapper(object):
     """
     Mapping class between common gene ids
 
-    Database was creating by pulling down everything from NCBI, UNIPROT, HGNC
+    Database was creating by pulling down from NCBI, UNIPROT, HGNC
 
     """
     ncbi_valid_categories = ['GeneID', 'Symbol', 'description']
 
     hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id',
-                             'name',
-                             'location', 'entrez_id', 'ucsc_id', 'vega_id',
-                             'alias_name', 'alias_symbol', 'status',
+                             'name', 'location', 'entrez_id', 'ucsc_id',
+                             'vega_id', 'alias_name', 'alias_symbol', 'status',
                              'gene_family', 'gene_family_id', 'ena', 'iuphar',
                              'cd', 'refseq_accession', 'ccds_id', 'pubmed_id',
                              'mgd_id', 'rgd_id', 'lsdb', 'bioparadigms_slc',
@@ -214,6 +210,7 @@ def kegg_to_symbol_through_uniprot(unknown_genes):
     search_string = '\t'.join(unknown_genes)
     kegg_to_gene_name = dict()
     missing = set()
+    uniprot = UniProt(verbose=True)
     # This is where it gets tricky. Checking to see if there is a uniprot
     # mapping for the species, if not, trying from KEGG side. Sometimes
     # kegg  links to a different uniprot, or uniprot links to a diff kegg.
@@ -253,7 +250,7 @@ def kegg_to_hugo(genes, species='hsa'):
     dict
     """
     prefix = species + ':'
-
+    hugo = HGNC(verbose=True)
     hugo_dict = {}
     not_found = set()
     for i in genes:

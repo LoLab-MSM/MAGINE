@@ -16,8 +16,6 @@ try:
 except:
     basestring = str
 
-chem = UniChem()
-
 
 class ChemicalMapper(object):
     """ Convert chemical species across various ids.
@@ -211,6 +209,8 @@ class ChemicalMapper(object):
         dict
 
         """
+
+        chem = UniChem()
 
         still_unknown = []
         hits = [i for i in set(network.nodes) if i.startswith('cpd:')]

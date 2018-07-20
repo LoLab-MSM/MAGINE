@@ -8,7 +8,7 @@ from pandas.plotting import table
 
 import magine.plotting.volcano_plots as v_plot
 from magine.data import Data
-from magine.data.formatter import log2_normalize_df
+from magine.data.tools import log2_normalize_df
 from magine.plotting.species_plotting import plot_dataframe, plot_species
 
 # pandas.set_option('display.max_colwidth', -1)
@@ -246,6 +246,7 @@ class ExperimentalData(object):
         self.__rna = None
         self.__compounds = None
         for i in self.exp_methods:
+            print(i)
             self.__setattr__(i, Sample(
                 self.data.loc[self.data[exp_method] == i]))
 

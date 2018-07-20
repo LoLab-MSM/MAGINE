@@ -472,7 +472,6 @@ def run_enrichment_for_project(exp_data, project_name):
 
     """
     e = Enrichr(verbose=True)
-    exp = exp_data
     all_df = []
     _dir = 'enrichment_output'
     if not os.path.exists(_dir):
@@ -500,18 +499,18 @@ def run_enrichment_for_project(exp_data, project_name):
             df['category'] = category
             all_df.append(df)
 
-    pt = exp.proteins.sample_ids
-    rt = exp.rna.sample_ids
+    pt = exp_data.proteins.sample_ids
+    rt = exp_data.rna.sample_ids
 
     if len(pt) != 0:
-        _run_new(exp.proteins.sig.by_sample, pt, 'proteomics_both')
-        _run_new(exp.proteins.sig.up_by_sample, pt, 'proteomics_up')
-        _run_new(exp.proteins.sig.down_by_sample, pt, 'proteomics_down')
+        _run_new(exp_data.proteins.sig.by_sample, pt, 'proteomics_both')
+        _run_new(exp_data.proteins.sig.up_by_sample, pt, 'proteomics_up')
+        _run_new(exp_data.proteins.sig.down_by_sample, pt, 'proteomics_down')
 
     if len(rt) != 0:
-        _run_new(exp.rna.by_sample, rt, 'rna_both')
-        _run_new(exp.rna.sig.down_by_sample, rt, 'rna_down')
-        _run_new(exp.rna.up.up_by_sample, rt, 'rna_up')
+        _run_new(exp_data.rna.by_sample, rt, 'rna_both')
+        _run_new(exp_data.rna.sig.down_by_sample, rt, 'rna_down')
+        _run_new(exp_data.rna.up.up_by_sample, rt, 'rna_up')
 
     final_df = pd.concat(all_df, ignore_index=True)
 

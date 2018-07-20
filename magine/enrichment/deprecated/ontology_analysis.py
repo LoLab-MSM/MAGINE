@@ -6,15 +6,15 @@ import os
 
 import numpy as np
 import pandas as pd
-from magine.enrichment.deprecated.databases.gene_ontology import \
-    download_and_process_go
 from statsmodels.stats.multitest import fdrcorrection
 from statsmodels.stats.proportion import binom_test
 
 from magine.data.storage import network_data_dir
-from magine.plotting.species_plotting import plot_genes_by_ont
-from magine.data.formatter import pivot_table_for_export
+from magine.enrichment.deprecated.databases.gene_ontology import \
+    download_and_process_go
 from magine.html_templates.html_tools import write_filter_table
+from magine.plotting.species_plotting import plot_genes_by_ont
+
 try:
     import cPickle as pickle
 except:  # python3 doesnt have cPickle
@@ -23,6 +23,32 @@ except:  # python3 doesnt have cPickle
 pd.set_option('display.max_colwidth', -1)
 
 evidence_codes = ['EXP', 'IDA', 'IPI', 'IMP', 'IGI', 'IEP', 'TAS', 'IC', 'IEA']
+
+
+def pivot_table_for_export(data, save_name=None):
+    """
+    creates a pivot table of combined data that is in MAGINE format
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+        output from magine analysis
+    save_name : str
+        save name for excel merged format
+
+    Returns
+    -------
+
+    """
+    index = ['GO_id', 'GO_name', 'depth', 'ref', 'aspect']
+    tmp = pd.pivot_table(data, index=index, columns='sample_index',
+                         aggfunc='first'
+                         )
+    tmp = tmp[['pvalue', 'enrichment_score', 'genes', 'n_genes', ]]
+    if save_name:
+        tmp.to_excel('{}.xlsx'.format(save_name),
+                     merge_cells=True)
+    return tmp
 
 
 def write_table_to_html_with_figures(data, exp_data, save_name='index',

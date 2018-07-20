@@ -34,7 +34,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         Size of figure, passed to matplotlib/seaborn
     rank_index : bool
         Order by index.
-    num_colors : int
+num_colors : int
         Number of colors for color bar
     annotate_sig : bool
         Add '*' annotation to plot for significant changed terms

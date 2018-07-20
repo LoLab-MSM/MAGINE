@@ -10,7 +10,7 @@ import plotly.graph_objs as plotly_graph
 from plotly.offline import plot
 
 import magine.html_templates.html_tools as ht
-from magine.data.formatter import log2_normalize_df
+from magine.data.tools import log2_normalize_df
 
 fold_change = 'fold_change'
 flag = 'significant'
@@ -285,7 +285,7 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
                         in enumerate(x_points)}
 
     ldf = ldf[ldf[identifier].isin(species_list)].copy()
-    ldf = log2_normalize_df(ldf, fold_change=fold_change)
+    ldf = log2_normalize_df(ldf, column=fold_change)
 
     n_plots = len(ldf[identifier].unique())
     num_colors = len(ldf[label_col].unique())
@@ -308,7 +308,7 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
             x = np.array(m[sample_id])
             if len(x) < 1:
                 continue
-            y = np.array(m['log2fc'])
+            y = np.array(m['fold_change'])
             sig_flag = np.array(m[flag])
             index = np.argsort(x)
             x = x[index]
