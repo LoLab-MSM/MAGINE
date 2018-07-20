@@ -16,8 +16,7 @@ Currently supported options
     drugbank_id, chemical_formula, smiles, metlin_id, average_molecular_weight
 
 """
-#
-# from magine.mappings.chemical_mapper import ChemicalMapper
-# from magine.mappings.gene_mapper import GeneMapper
-#
-# __all__ = ['ChemicalMapper', 'GeneMapper']
+from magine.mappings.chemical_mapper import ChemicalMapper
+from magine.mappings.gene_mapper import GeneMapper
+
+__all__ = ['ChemicalMapper', 'GeneMapper']
