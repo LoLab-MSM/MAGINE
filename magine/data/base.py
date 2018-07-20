@@ -44,7 +44,7 @@ class Data(pd.DataFrame):
 
         if min_sig:
             assert isinstance(min_sig, int)
-            if 'significant_flag' not in d_copy.columns:
+            if 'significant' not in d_copy.columns:
                 print('In order to filter based on minimum sig figs, '
                       'please add a column of signficant terms with '
                       'a tag of "significant"')
@@ -53,9 +53,8 @@ class Data(pd.DataFrame):
                                                  min_terms=min_sig,
                                                  inplace=True)
 
-        array = pd.pivot_table(d_copy, index=index,
-                               fill_value=fill_value, columns=columns,
-                               values=values)
+        array = pd.pivot_table(d_copy, index=index, fill_value=fill_value,
+                               columns=columns, values=values)
 
         if isinstance(columns, list):
             x = sorted(tuple(map(tuple, d_copy[columns].values)))

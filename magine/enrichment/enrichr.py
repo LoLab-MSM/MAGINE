@@ -518,7 +518,7 @@ def run_enrichment_for_project(exp_data, project_name):
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
-    final_df = final_df[~final_df['term_name'].isnull()]
+    final_df = final_df[~final_df['term_name'].isnull()].copy()
     final_df.to_csv('{}.csv.gz'.format(project_name), encoding='utf-8',
                     compression='gzip')
     print("Done with enrichment")

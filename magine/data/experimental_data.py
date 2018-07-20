@@ -54,6 +54,7 @@ class Sample(Data):
     """
     def __init__(self, *args, **kwargs):
         super(Sample, self).__init__(*args, **kwargs)
+        self._index = identifier
         self._identifier = identifier
         self._label = label
         self._up = None
@@ -246,7 +247,6 @@ class ExperimentalData(object):
         self.__rna = None
         self.__compounds = None
         for i in self.exp_methods:
-            print(i)
             self.__setattr__(i, Sample(
                 self.data.loc[self.data[exp_method] == i]))
 

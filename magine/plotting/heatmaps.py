@@ -34,7 +34,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         Size of figure, passed to matplotlib/seaborn
     rank_index : bool
         Order by index.
-num_colors : int
+    num_colors : int
         Number of colors for color bar
     annotate_sig : bool
         Add '*' annotation to plot for significant changed terms
@@ -54,11 +54,10 @@ num_colors : int
 
     if annotate_sig:
         # Have to rank by column for this to work
-        if 'significant_flag' in data.columns:
+        if 'significant' in data.columns:
             tmp2 = data.pivoter(False, columns=columns, index=index,
-                                fill_value=False, values='significant_flag',
+                                values='significant', fill_value=0,
                                 min_sig=False)
-
             tmp2 = tmp2.reindex(array.index)
             tmp2[tmp2 > 0] = True
             tmp2 = tmp2.replace(False, '')
@@ -138,10 +137,10 @@ def heatmap_by_terms(data, terms, color_labels, colors=None,
 
     if annotate_sig:
         # Have to rank by column for this to work
-        if 'significant_flag' in data.columns:
+        if 'significant' in data.columns:
             tmp2 = data.pivoter(False, columns=columns, index=index,
-                                fill_value=False, min_sig=False,
-                                values='significant_flag')
+                                fill_value=0, min_sig=False,
+                                values='significant')
 
             tmp2 = tmp2.reindex(array.index)
             tmp2[tmp2 > 0] = True
