@@ -134,5 +134,5 @@ class TestExpData(object):
         x = self.exp_data.rna.pivoter(True, columns='sample_id',
                                       values='fold_change', fill_value='-',
                                       min_sig=1)
-        assert x.to_dict('index') == {'fold_change':
-                                          {'Time_3': -0.8851172762041847}}
+        assert x.to_dict('index') == {'AKT1': {'Time_3': -1.8073549220576042},
+                                      'AIF1': {'Time_3': -0.5849625007211562}}
