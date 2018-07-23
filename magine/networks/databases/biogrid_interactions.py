@@ -61,12 +61,9 @@ class BioGridDownload(object):
             c_name = row['chemName']
             if db == 'DRUGBANK':
                 if id_chem_source in self._cm.drugbank_to_hmdb:
-                    new_name = self._cm.drugbank_to_hmdb[id_chem_source][0]
-                    return new_name
+                    return sorted(self._cm.drugbank_to_hmdb[id_chem_source])[0]
                 elif c_name in self._cm.chem_name_to_hmdb:
-                    new_name = \
-                        self._cm.chem_name_to_hmdb[c_name][0]
-                    return new_name
+                    return sorted(self._cm.chem_name_to_hmdb[c_name])[0]
             return c_name
 
         def convert_to_hmdb_only(row):
@@ -75,18 +72,18 @@ class BioGridDownload(object):
             c_name = row['chemName']
             if db == 'DRUGBANK':
                 if id_chem_source in self._cm.drugbank_to_hmdb:
-                    return self._cm.drugbank_to_hmdb[id_chem_source][0]
+                    return sorted(self._cm.drugbank_to_hmdb[id_chem_source])[0]
                 elif c_name in self._cm.chem_name_to_hmdb:
-                    return self._cm.chem_name_to_hmdb[c_name][0]
+                    return sorted(self._cm.chem_name_to_hmdb[c_name])[0]
             return None
 
         df['databaseSource'] = self._db_name
         df['pubmedId'] = df['Pubmed ID'].astype(str)
 
         # cleanup names
-        df.rename(columns={'Chemical Type': 'chemType',
+        df.rename(columns={'Chemical Type'  : 'chemType',
                            'Official Symbol': 'gene',
-                           'Action': 'interactionType'},
+                           'Action'         : 'interactionType'},
                   inplace=True)
 
         # keep the same info as other databases (store as compound)
@@ -182,7 +179,7 @@ class BioGridDownload(object):
         # cleanup names
         table.rename(columns={'Official Symbol Interactor A': 'source',
                               'Official Symbol Interactor B': 'target',
-                              'Source Database': 'databaseSource'},
+                              'Source Database'             : 'databaseSource'},
                      inplace=True)
 
         # create graph
@@ -244,4 +241,3 @@ def load_biogrid_network(fresh_download=False, verbose=False):
 
 if __name__ == '__main__':
     BioGridDownload().parse_network()
-

@@ -191,7 +191,8 @@ def expand_by_db(starting_network, expansion_source, measured_list,
     return new_graph
 
 
-def create_background_network(save_name='background_network'):
+def create_background_network(save_name='background_network',
+                              fresh_download=False):
     """
 
     Parameters
@@ -203,11 +204,11 @@ def create_background_network(save_name='background_network'):
 
     """
 
+    kegg_network = load_all_of_kegg(fresh_download=fresh_download)
+    hmdb_network = load_hmdb_network(fresh_download=fresh_download)
+    biogrid_network = load_biogrid_network(fresh_download=fresh_download)
+    signor_network = load_signor(fresh_download=fresh_download)
     reactome_network = load_reactome_fi()
-    kegg_network = load_all_of_kegg(fresh_download=True)
-    hmdb_network = load_hmdb_network(fresh_download=True)
-    biogrid_network = load_biogrid_network(fresh_download=True)
-    signor_network = load_signor(fresh_download=True)
 
     def find_overlap(n1, n2):
         nodes1 = set(n1.nodes())
@@ -250,6 +251,6 @@ def create_background_network(save_name='background_network'):
 
 
 if __name__ == '__main__':
-    create_background_network()
+    create_background_network(fresh_download=False)
     # load_hmdb_network(create_new=True)
     # load_hmdb_network(False)

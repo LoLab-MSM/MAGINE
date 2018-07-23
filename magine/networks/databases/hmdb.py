@@ -33,7 +33,7 @@ def load_hmdb_network(fresh_download=False, verbose=False):
             attrs = {'databaseSource': 'HMDB', 'speciesType': node_type}
             if node_type == 'compound':
                 if node in cm.hmdb_to_chem_name:
-                    attrs['chemName'] = cm.hmdb_to_chem_name[node][0]
+                    attrs['chemName'] = sorted(cm.hmdb_to_chem_name[node])[0]
             tmp_graph.add_node(node, **attrs)
 
         for source, genes in cm.hmdb_main_to_protein.items():

@@ -257,7 +257,7 @@ class ChemicalMapper(object):
             for i in still_unknown:
                 name_stripped = i.lstrip('cpd:')
                 if name_stripped in kegg_hmdb:
-                    net_cpd_to_hmdb[i] = kegg_hmdb[name_stripped][0]
+                    net_cpd_to_hmdb[i] = kegg_hmdb[name_stripped]
                 # else:
                 #     print("Cannot find a HMDB mapping for %s " % i)
         return net_cpd_to_hmdb, net_kegg_names, net_chem_names

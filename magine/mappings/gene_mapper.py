@@ -164,6 +164,7 @@ class GeneMapper(object):
         kegg_to_gene_name, kegg_short : dict, dict
         """
         # Create the dictionary to store all conversions to be returned
+        missing = set()
         unknown_genes = set()
         hits = {i for i in set(network.nodes) if i.startswith(species)}
         prefix = species + ':'
@@ -172,13 +173,23 @@ class GeneMapper(object):
         kegg_to_gene_name = {i: self.kegg_to_gene_name[i]
                              for i in hits if i in self.kegg_to_gene_name}
         for gene, gn in kegg_to_gene_name.items():
-            if len(gn) == 1:
+            if isinstance(gn, basestring):
+                kegg_to_gene_name[gene] = gn
+            elif len(gn) == 1:
                 kegg_to_gene_name[gene] = gn[0]
             else:
+                found = False
                 for g in gn:
                     if g in self.gene_name_to_uniprot:
                         kegg_to_gene_name[gene] = g
-        missing = hits.difference(kegg_to_gene_name)
+                        found = True
+                if not found:
+                    print("Found species that cannot be mapped to HGNC.")
+                    print(gene, gn)
+                    # kegg_to_gene_name[gene] = gn[0]
+                    missing.add(gene)
+        missing.update(hits.difference(kegg_to_gene_name))
+
         # check stores dictionaries
         for gene in missing:
             name_stripped = gene.lstrip(prefix)
@@ -311,21 +322,23 @@ manual_dict = {'hsa:857': 'CAV1',
                'hsa:102723407': 'IGHV4OR15-8',
                'hsa:100132074': 'FOXO6',
                'hsa:728635': 'DHRS4L1',
-               'hsa:10411': 'RAPGEF3',
+               'hsa:10411'    : 'RAPGEF3',
                'hsa:100101267': 'POM121C',
-               'hsa:2768': 'GNA12',
-               'hsa:2044': 'EPHA5',
+               'hsa:2768'     : 'GNA12',
+               'hsa:2044'     : 'EPHA5',
                'hsa:100533467': 'BIVM-ERCC5',
-               'hsa:7403': 'KDM6A',
-               'hsa:1981': 'EIF4G1',
-               'hsa:2906': 'GRIN2D',
-               'hsa:4088': 'SMAD3',
-               'hsa:6776': 'STAT5A',
-               'hsa:182': 'JAG1',
-               'hsa:3708': 'ITPR1',
-               'hsa:1293': 'COL6A3',
-               'hsa:93034': 'NT5C1B',
-               'hsa:574537': 'UGT2A2'
+               'hsa:7403'     : 'KDM6A',
+               'hsa:1981'     : 'EIF4G1',
+               'hsa:2906'     : 'GRIN2D',
+               'hsa:4088'     : 'SMAD3',
+               'hsa:6776'     : 'STAT5A',
+               'hsa:182'      : 'JAG1',
+               'hsa:3708'     : 'ITPR1',
+               'hsa:1293'     : 'COL6A3',
+               'hsa:93034'    : 'NT5C1B',
+               'hsa:574537'   : 'UGT2A2',
+               'hsa:11044'    : 'PAPD7',
+               'hsa:57292'    : 'KIR2DL5A'
                }
 
 if __name__ == '__main__':
