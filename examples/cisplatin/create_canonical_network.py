@@ -39,7 +39,8 @@ def iterative_build(seed_list, background_list, save_name):
         use_hmdb=False,
         use_biogrid=False,
         use_reactome=False,
-        use_signor=False
+        use_signor=False,
+        trim_source_sink=True
     )
     shortest_paths(kegg_only_canonical, save_name + '_kegg_only')
 
@@ -49,7 +50,8 @@ def iterative_build(seed_list, background_list, save_name):
         use_hmdb=True,
         use_biogrid=False,
         use_reactome=False,
-        use_signor=False
+        use_signor=False,
+        trim_source_sink=True
     )
 
     shortest_paths(kegg_hmdb_canonical, save_name + '_kegg_hmdb')
@@ -60,7 +62,8 @@ def iterative_build(seed_list, background_list, save_name):
         use_hmdb=True,
         use_biogrid=True,
         use_reactome=False,
-        use_signor=False
+        use_signor=False,
+        trim_source_sink=True
     )
 
     shortest_paths(kegg_hmdb_biogrid_canonical,
@@ -72,7 +75,8 @@ def iterative_build(seed_list, background_list, save_name):
         use_hmdb=True,
         use_biogrid=True,
         use_reactome=True,
-        use_signor=False
+        use_signor=False,
+        trim_source_sink=True
     )
 
     shortest_paths(kegg_hmdb_biogrid_reactome_canonical,
@@ -84,7 +88,9 @@ def iterative_build(seed_list, background_list, save_name):
         use_hmdb=True,
         use_biogrid=True,
         use_reactome=True,
-        use_signor=True
+        use_signor=True,
+        trim_source_sink=True
+
     )
 
     shortest_paths(kegg_hmdb_biogrid_reactome_signor_canonical, 'ecn')
