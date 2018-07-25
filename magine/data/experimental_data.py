@@ -122,7 +122,7 @@ class Sample(Data):
         for i in self.sample_ids:
             cur_slice = self.copy()
             cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
-            over_time.append(cur_slice.down.id_list)
+            over_time.append(cur_slice.id_list)
         return over_time
 
     def volcano_plot(self, save_name, out_dir=None, sig_column=False,
