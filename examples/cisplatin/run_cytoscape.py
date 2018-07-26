@@ -5,7 +5,6 @@ import networkx as nx
 from exp_data import exp_data
 from magine.enrichment import load_enrichment_csv
 from magine.networks.ontology_network import create_subnetwork
-from magine.networks.subgraphs import Subgraph
 from magine.networks.utils import trim_sink_source_nodes
 from magine.networks.visualization.igraph_tools import paint_network_overtime, \
     render_igraph
@@ -16,7 +15,7 @@ if __name__ == '__main__':
 
     reactome_only = e_array.filter_multi(
         p_value=0.05,  # only sig pvalues
-        combined_score=0.0,  # score threshold of positive values
+        combined_score=1.0,  # score threshold of positive values
         db='Reactome_2016',  # Only reactome db
         category='proteomics_up',  # from this category
         rank=100
@@ -24,76 +23,77 @@ if __name__ == '__main__':
 
     reactome_only['term_name'] = reactome_only['term_name'].str.split(
         '_').str.get(0)
-    """
-    reactome_only.filter_by_minimum_sig_columns(columns='sample_id', min_terms=2,
-                                                inplace=True)
-    reactome_only.remove_redundant(level='sample', threshold=.5, inplace=True)
-    reactome_only.remove_redundant(level='dataframe', threshold=.5, inplace=True)
-    # reactome_only.dist_matrix()
-    # plt.show()
-    
-    not_useful = ['metabolism', 'gene expression', 'developmental biology',
-                  'influenza infection', 'hiv infection',
-                  'late phase of hiv life cycle',
-                  'metabolism of proteins', 'disease',
-                  'infectious disease', 'immune system',
-                  'metabolism of amino acids and derivatives',
-                  'major pathway of rrna processing in the nucleolus',
-                  'influenza life cycle',
-                  'processing of capped intron-containing pre-mrna',
-                  'mrna splicing - major pathway',
-                  'mrna splicing - minor pathway',
-                  'innate immune system', 'cell-cell communication',
-                  'diseases of signal transduction', 'mrna splicing'
-                  ]
-    
-    reactome_only = reactome_only[~reactome_only['term_name'].isin(not_useful)]
-    
+
+    # not_useful = ['metabolism', 'gene expression', 'developmental biology',
+    #               'influenza infection', 'hiv infection',
+    #               'late phase of hiv life cycle',
+    #               'metabolism of proteins', 'disease',
+    #               'infectious disease', 'immune system',
+    #               'metabolism of amino acids and derivatives',
+    #               'major pathway of rrna processing in the nucleolus',
+    #               'influenza life cycle',
+    #               'processing of capped intron-containing pre-mrna',
+    #               'mrna splicing - major pathway',
+    #               'mrna splicing - minor pathway',
+    #               'innate immune system', 'cell-cell communication',
+    #               'diseases of signal transduction', 'mrna splicing'
+    #               ]
+    #
+    # reactome_only = reactome_only[~reactome_only['term_name'].isin(not_useful)]
+    #
+    # reactome_only.filter_by_minimum_sig_columns(columns='sample_id',
+    #                                             min_terms=2,
+    #                                             inplace=True)
+    #
+    # reactome_only.remove_redundant(level='sample', threshold=.5, inplace=True)
+    # reactome_only.remove_redundant(level='dataframe', threshold=.5,
+    #                                inplace=True)
     hits = [
-        'cell cycle',
+        #     'cell cycle',
         'dna repair',
         'apoptosis',
-        'interleukin-2 signaling',
-        # 'apoptotic cleavage of cellular proteins',
-        # 'transcriptional regulation by tp53',
-        'vxpx cargo-targeting to cilium',
+        'transcriptional regulation by tp53',
+        'g2/m checkpoints',
+        'm phase'
     ]
-    
-    """
+
     explore = ['apoptosis', 'cell cycle']
     # ASAP1,EXOC4,GBF1,RAB11FIP3
-    subset_2_hits = reactome_only[
-        reactome_only['term_name'].isin(explore)].copy()
+    subset_2_hits = reactome_only.loc[reactome_only['term_name'].isin(hits)]
+    # print(subset_2_hits.shape)
+    # print(subset_2_hits)
+    # quit()
+    network = nx.read_gpickle('Networks/cisplatin_network_w_attributes.p')
 
-    network = nx.read_gpickle('Data/cisplatin_based_network.p')
-
-    sg = Subgraph(network=network)
-
-    new_g = sg.paths_between_two_lists(
-        subset_2_hits.term_to_genes('cell cycle'),
-        subset_2_hits.term_to_genes('apoptosis'),
-        max_length=4  # allows two nodes to be inbetween
-    )
-
-    print(len(new_g.nodes))
-    print(len(new_g.edges))
-
-    nx.write_gml(new_g, 'expaned_subgraph2.gml')
-    quit()
-
-    to_remove = set()
-    for i, j, d in network.edges(data=True):
-        if d['databaseSource'] == 'ReactomeFI':
-            to_remove.add((i, j))
-
-    network.remove_edges_from(to_remove)
+    # sg = Subgraph(network=network)
+    #
+    # new_g = sg.paths_between_two_lists(
+    #     subset_2_hits.term_to_genes('cell cycle'),
+    #     subset_2_hits.term_to_genes('apoptosis'),
+    #     max_length=4  # allows two nodes to be inbetween
+    # )
+    #
+    # print(len(new_g.nodes))
+    # print(len(new_g.edges))
+    #
+    # nx.write_gml(new_g, 'expaned_subgraph2.gml')
+    #
+    # to_remove = set()
+    # for i, j, d in network.edges(data=True):
+    #     if d['databaseSource'] == 'ReactomeFI':
+    #         to_remove.add((i, j))
+    #
+    # network.remove_edges_from(to_remove)
 
     ont_network, mol_net = create_subnetwork(subset_2_hits, network,
                                              save_name='ont_network_testing',
                                              merge=True,
-                                             create_only=True)
+                                             create_only=False,
+                                             use_threshold=False
+                                             )
 
     mol_net_trim = trim_sink_source_nodes(mol_net, [])
+    quit()
     pool = multiprocessing.Pool(4)
 
     new_g = sg.paths_between_list(mol_net_trim.nodes, max_length=2, pool=pool)

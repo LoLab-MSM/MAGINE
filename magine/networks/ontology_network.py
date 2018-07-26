@@ -149,25 +149,27 @@ class OntologyNetworkGenerator(object):
             p_values.append([term2, term1, edges_2_to_1, b_to_a,
                              stats.binom_test(b_to_a, total, odds_to_find)])
 
-        cols = ['term1', 'term2', 'edges', 'n_edges', 'p_values']
+        cols = ['term1', 'term2', 'edges', 'n_edges', 'p_values', ]
 
         df = pd.DataFrame(p_values, columns=cols)
         # FDR correction
         _, df['adj_p_values'] = fdrcorrection(df['p_values'])
+        df = df.loc[df['n_edges'] > 0]
 
         if use_threshold:
-            df = df.loc[df['adj_p_values'] < .05]
+            df = df.loc[df['adj_p_values'] <= .05]
 
+        cols += ['adj_p_values']
         # create empty networks
         go_graph = nx.DiGraph()
         mol_net = nx.DiGraph()
-        for term1, term2, edge, n_edges, p_value in df[cols].values:
+        for term1, term2, edge, n_edges, p_value, adj_pval in df[cols].values:
             label_1 = ont_to_label_dict[term1]
             label_2 = ont_to_label_dict[term2]
             go_graph.add_node(label_1, term=term1, label=label_1)
             go_graph.add_node(label_2, term=term2, label=label_2)
             go_graph.add_edge(label_1, label_2, label=str(n_edges),
-                              weight=n_edges, pvalue=p_value)
+                              weight=n_edges, pvalue=p_value, adjPval=adj_pval)
 
             nodes = list(itertools.chain(*edge))
 
@@ -241,6 +243,7 @@ def visualize_go_network(go_network, data, save_name,
                        columns='sample_id', div_colors=False)
 
     plt.savefig('{}_heatplot.png'.format(save_name), bbox_inches='tight')
+    plt.close()
 
     x = score_array['combined_score'].fillna(0)
 
@@ -271,7 +274,7 @@ def visualize_go_network(go_network, data, save_name,
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
                       remove_isolated=False, create_only=True, merge=False,
-                      out_dir=None):
+                      out_dir=None, use_threshold=False):
     """
 
     Parameters
@@ -320,7 +323,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     print("Creating ontology network")
     term_g, molecular_g = ong.create_network_from_list(
         terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
-        use_threshold=True
+        use_threshold=use_threshold
     )
 
     if remove_isolated:
@@ -330,7 +333,8 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     fig = heatmap_from_array(df_copy, cluster_row=False, convert_to_log=True,
                              index='term_name', values='combined_score',
                              columns='sample_id', div_colors=False)
-    fig.savefig('{}.png'.format(save_name), bbox_inches='tight')
+    fig.savefig('{}_heatmap.png'.format(save_name), bbox_inches='tight')
+    plt.close()
 
     score_array = pd.pivot_table(df_copy, index=['term_name'],
                                  columns='sample_id')
@@ -342,6 +346,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         term_g.node[i]['label'] = i
         for n, time in enumerate(labels):
             term_g.node[i]['sample{}'.format(time)] = float(values[time])
+
     if not create_only:
         from magine.networks.visualization.cytoscape_view import RenderModel
         rm = RenderModel(term_g, layout='force-directed')
@@ -355,23 +360,3 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
             os.system(_s.format(save_name))
     return term_g, molecular_g
 
-# def fdrcorrection(p_vals):
-#     """ Benjamini/Hochberg false discovery rate correction
-#
-#     Parameters
-#     ----------
-#     p_vals : array_like
-#         set of p-values of the individual tests.
-#
-#     Returns
-#     -------
-#     adj_p_values : np.array
-#
-#     """
-#     p_vals = np.asarray(p_vals)
-#     n_samples = len(p_vals)
-#     ecdf_factor = np.arange(1, n_samples + 1) / float(n_samples)
-#     corrected_p_vals = p_vals / ecdf_factor
-#     pvals_corrected = np.minimum.accumulate(corrected_p_vals[::-1])[::-1]
-#     pvals_corrected[pvals_corrected > 1] = 1
-#     return pvals_corrected
