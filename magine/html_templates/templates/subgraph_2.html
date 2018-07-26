@@ -84,7 +84,7 @@
                     return tippy( target.popperRef(), {
                         html: (function(){
                             var div = document.createElement('div');
-                            div.innerHTML = "<a href='"+text+"' target='_blank'>Google</a>";
+                            div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene="+text+"' target='_blank'>Gene Card</a>";
 
 //                            document.body.appendChild(div);
 //                            console.log($('#{{uuid}}')[0]);
@@ -102,7 +102,7 @@
                 };
 
                 cy.nodes().forEach(function(n){
-                        n.data()['tip'] = makeTippy(n, n.data('name_web'));
+                        n.data()['tip'] = makeTippy(n, n.data('id'));
                     });
 
                 var allNodes;
