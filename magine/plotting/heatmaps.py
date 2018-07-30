@@ -88,8 +88,9 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         if (cluster_col or cluster_row) and annotate_sig:
             plt.close()
             fig = sns.clustermap(array, yticklabels=y_tick_labels,
-                                 figsize=fig_size, col_cluster=cluster_col,
-                                 row_cluster=cluster_row, center=center,
+                                 linewidths=linewidths, figsize=fig_size,
+                                 center=center, col_cluster=cluster_col,
+                                 row_cluster=cluster_row,
                                  cmap=pal, annot=labels, fmt=fmt)
 
     else:
