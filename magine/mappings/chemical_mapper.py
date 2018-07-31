@@ -248,8 +248,8 @@ class ChemicalMapper(object):
                 loc = compound_manual[i]
                 net_cpd_to_hmdb[i] = loc
                 if loc in self.hmdb_to_chem_name:
-                    net_chem_names[i] = '|'.join(
-                        sorted(self.hmdb_to_chem_name[loc]))
+                    net_chem_names[i] = order_merge(
+                        self.hmdb_to_chem_name[loc])
             else:
                 still_unknown.append(i)
         if len(still_unknown):
@@ -277,9 +277,7 @@ compound_manual = {'cpd:C07909': 'HMDB0015015',
 
 
 def order_merge(species_set):
-    '|'.join(species_set)
-    corrected = set(i.encode('ascii', 'ignore') for i in species_set)
-    return '|'.join(sorted(corrected))
+    return '|'.join(sorted(species_set))
 
 
 def tidy_split(df, column, sep='|', keep=False):

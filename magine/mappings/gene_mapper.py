@@ -3,6 +3,11 @@ try:
     import cPickle as pickle
 except ImportError:  # python3 doesnt have cPickle
     import pickle
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
 
 import pandas as pd
 from bioservices import HGNC, UniProt
