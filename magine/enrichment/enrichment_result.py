@@ -2,7 +2,7 @@ import itertools
 
 import numpy as np
 import pandas as pd
-
+from itertools import combinations
 from magine.data import Data
 from magine.plotting.heatmaps import cluster_distance_mat
 
@@ -308,6 +308,10 @@ class EnrichmentResult(Data):
         matplotlib.Figure
 
         """
+        mat, names = self.calc_dist(level)
+        return cluster_distance_mat(mat, names, fig_size)
+
+    def calc_dist(self, level='datafame'):
         if level == 'each':
             names = self['term_name'].values
             scores = self._get_distance_each()
@@ -325,66 +329,44 @@ class EnrichmentResult(Data):
                 mat[i, j] = scores[ind]
                 mat[j, i] = scores[ind]
                 ind += 1
-        return cluster_distance_mat(mat, names, fig_size)
+        return mat, names
 
     def _get_distance_each(self):
-        names = self['term_name'].values
-        array = self['genes'].values
-        n_dim = len(names)
-        total_size = int(((n_dim * (n_dim - 1)) / 2))
-        scores = np.zeros(total_size, dtype=float)
-        ind = 0
-        for i, ac in enumerate(array):
-            first_genes = set(ac.split(','))
-            for j, bc in enumerate(array):
-                if i >= j:
-                    continue
-                scores[ind] = self.jaccard_index(first_genes,
-                                                 set(bc.split(',')))
-                ind += 1
-        return scores
+        vals = [set(i.split(',')) for i in self['genes'].values]
+        return np.array(map(_score, combinations(vals, 2)))
 
     def _get_distance_all(self):
-        names = self['term_name'].unique()
-        n_dim = len(names)
-        total_size = int(((n_dim * (n_dim - 1)) / 2))
-        scores = np.zeros(total_size, dtype=float)
-        ind = 0
-        for i, n1 in enumerate(names):
-            first_genes = self.term_to_genes(n1)
-            for j, n2 in enumerate(names):
-                if i >= j:
-                    continue
-                else:
-                    scores[ind] = self.jaccard_index(first_genes,
-                                                     self.term_to_genes(n2))
-                    ind += 1
+        vals = [self.term_to_genes(i) for i in self['term_name'].unique()]
+        return np.array(map(_score, combinations(vals, 2)))
 
-        return scores
 
-    @staticmethod
-    def jaccard_index(first_set, second_set):
-        """
-        Computes the similarity between two sets.
-            https://en.wikipedia.org/wiki/Jaccard_index
+def _score(vals):
+    return jaccard_index(vals[0], vals[1])
 
-        Parameters
-        ----------
-        first_set : set
-        second_set : set
+
+def jaccard_index(first_set, second_set):
+    """
+    Computes the similarity between two sets.
+        https://en.wikipedia.org/wiki/Jaccard_index
+
+    Parameters
+    ----------
+    first_set : set
+    second_set : set
 
 
 
-        Returns
-        -------
-        index : float
+    Returns
+    -------
+    index : float
 
 
-        References
-        ----------
-        .. [1] `Wikipedia entry for the Jaccard index
-               <https://en.wikipedia.org/wiki/Jaccard_index>`_
-        """
-        set1 = set(first_set)
-        set2 = set(second_set)
-        return float(len(set1.intersection(set2))) / len(set1.union(set2))
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Jaccard index
+           <https://en.wikipedia.org/wiki/Jaccard_index>`_
+    """
+    set1 = set(first_set)
+    set2 = set(second_set)
+    return float(len(set1.intersection(set2))) / len(set1.union(set2))
+

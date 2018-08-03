@@ -3,6 +3,7 @@ import os
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import pandas as pd
+from magine.plotting.heatmaps import heatmap_from_array
 
 import magine.enrichment.enrichment_result as et
 
@@ -50,24 +51,28 @@ class TestEnrichmentResult(object):
     def test_filter_sim_terms(self):
         sim2 = self.data.remove_redundant(level='sample', sort_by='rank')
         assert sim2.shape == (18, 11)
-
         sim2 = self.data.remove_redundant(level='sample')
         assert sim2.shape == (18, 11)
 
-        slimmed = self.data.remove_redundant(level='all')
-        assert slimmed.shape == (18, 11)
-
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
         assert sim2.shape == (29, 11)
+
         copy_data = self.data.copy()
         copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
         assert copy_data.shape == (18, 11)
 
     def test_dist(self):
 
-        dist = self.data.dist_matrix()
+        # dist = self.data.dist_matrix()
+        # assert isinstance(dist, matplotlib.figure.Figure)
+        copy_data = self.data.copy()
+        copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
+        copy_data.dist_matrix()
 
-        assert isinstance(dist, matplotlib.figure.Figure)
+        heatmap_from_array(copy_data, convert_to_log=True, index='term_name',
+                           columns='sample_id',
+                           fig_size=(6, 14), annotate_sig=True, linewidths=.01,
+                           cluster_row=True)
         plt.close()
 
         dist = self.data.dist_matrix(fig_size=(3, 3), level='each')
