@@ -126,6 +126,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     else:
         fig = plt.figure(figsize=fig_size)
         ax = fig.add_subplot(111)
+        if annotate_sig:
+            annotate_sig, annotations, fmt = get_sig_annotations(array, data)
         sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
                     center=center, annot=annotations, fmt=fmt,
                     linewidths=linewidths)
