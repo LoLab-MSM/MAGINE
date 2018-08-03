@@ -3,9 +3,9 @@ import os
 import matplotlib.figure
 import matplotlib.pyplot as plt
 import pandas as pd
-from magine.plotting.heatmaps import heatmap_from_array
 
 import magine.enrichment.enrichment_result as et
+from magine.plotting.heatmaps import heatmap_from_array
 
 data_dir = os.path.dirname(__file__)
 
@@ -66,7 +66,7 @@ class TestEnrichmentResult(object):
         # dist = self.data.dist_matrix()
         # assert isinstance(dist, matplotlib.figure.Figure)
         copy_data = self.data.copy()
-        copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
+        copy_data.remove_redundant(level='sample', verbose=False, inplace=True)
         copy_data.dist_matrix()
 
         heatmap_from_array(copy_data, convert_to_log=True, index='term_name',
@@ -86,6 +86,6 @@ class TestEnrichmentResult(object):
     def test_jaccard_index(self):
         term1 = ['BAX', 'BCL2', 'MCL1', 'CASP3']
         term2 = ['BAX', 'BCL2', 'MCL1', 'TP53']
-        score = self.data.jaccard_index(term1, term2)
+        score = et.jaccard_index(term1, term2)
 
         assert score == 0.6

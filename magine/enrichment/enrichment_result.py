@@ -1,8 +1,9 @@
 import itertools
+from itertools import combinations
 
 import numpy as np
 import pandas as pd
-from itertools import combinations
+
 from magine.data import Data
 from magine.plotting.heatmaps import cluster_distance_mat
 
@@ -171,9 +172,8 @@ class EnrichmentResult(Data):
         array = rest_of_df[['term_name', 'genes']].values
         dist_m = [None] * len(array)
         for n, index in enumerate(array):
-            dist_m[n] = [index[0],
-                         self.jaccard_index(first_genes,
-                                            set(index[1].split(',')))]
+            dist_m[n] = [index[0], jaccard_index(first_genes,
+                                                 set(index[1].split(',')))]
 
         df = pd.DataFrame(dist_m, columns=['term_name', 'similarity_score'])
         df.sort_values('similarity_score', inplace=True, ascending=False)
