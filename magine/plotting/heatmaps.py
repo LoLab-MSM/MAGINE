@@ -49,13 +49,13 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     """
     array = data.pivoter(convert_to_log, columns=columns, index=index,
                          fill_value=0.0, values=values)
-    labels = None
+    annotations = None
     fmt = None
 
     if rank_index:
         array.sort_index(ascending=True, inplace=True)
 
-    def get_labels(arr, dat):
+    def get_sig_annotations(arr, dat):
         # Have to rank by column for this to work
         if 'significant' in data.columns:
             tmp2 = dat.pivoter(False, columns=columns, index=index,
@@ -78,25 +78,17 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         center = None
 
     linkage = None
-    cluster_approved = False
+
     if cluster_by_set and "genes" in data.columns:
+        # generate structure of graph based on jaccard index
         dist_mat, names = data.calc_dist(level='sample')
-        array = array.reindex(names)
         linkage = sch.linkage(dist_mat, method='average')
+
+        # Add row cluster flag in case user didn't set
         cluster_row = True
-        cluster_col = False
-        cluster_approved = True
+        array = array.reindex(names)
 
-    elif cluster_col or cluster_row:
-        cluster_approved = True
-
-    else:
-        fig = plt.figure(figsize=fig_size)
-        ax = fig.add_subplot(111)
-        sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
-                    center=center, annot=labels, fmt=fmt,
-                    linewidths=linewidths)
-    if cluster_approved:
+    if cluster_row or cluster_col:
         fig = sns.clustermap(array,
                              yticklabels=y_tick_labels,
                              row_linkage=linkage,
@@ -109,11 +101,13 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                              cmap=pal
                              )
         if annotate_sig:
-            annotate_sig, labels, fmt = get_labels(array, data)
+            annotate_sig, annotations, fmt = get_sig_annotations(array, data)
+            if not annotate_sig:
+                return fig
             if cluster_by_set or cluster_row:
-                labels = labels[fig.dendrogram_row.reordered_ind]
+                annotations = annotations[fig.dendrogram_row.reordered_ind]
             if cluster_col:
-                labels = labels[:, fig.dendrogram_col.reordered_ind]
+                annotations = annotations[:, fig.dendrogram_col.reordered_ind]
             plt.close()
             fig = sns.clustermap(array,
                                  yticklabels=y_tick_labels,
@@ -125,9 +119,16 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                                  figsize=fig_size,
                                  center=center,
                                  cmap=pal,
-                                 annot=labels,
+                                 annot=annotations,
                                  fmt=fmt
                                  )
+
+    else:
+        fig = plt.figure(figsize=fig_size)
+        ax = fig.add_subplot(111)
+        sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
+                    center=center, annot=annotations, fmt=fmt,
+                    linewidths=linewidths)
     return fig
 
 

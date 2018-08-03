@@ -333,11 +333,11 @@ class EnrichmentResult(Data):
 
     def _get_distance_each(self):
         vals = [set(i.split(',')) for i in self['genes'].values]
-        return np.array(map(_score, combinations(vals, 2)))
+        return list(map(_score, combinations(vals, 2)))
 
     def _get_distance_all(self):
         vals = [self.term_to_genes(i) for i in self['term_name'].unique()]
-        return np.array(map(_score, combinations(vals, 2)))
+        return list(map(_score, combinations(vals, 2)))
 
 
 def _score(vals):
