@@ -2,14 +2,11 @@ import os
 
 import matplotlib.figure
 import matplotlib.pyplot as plt
-import pandas as pd
 
 import magine.enrichment.enrichment_result as et
 from magine.plotting.heatmaps import heatmap_from_array
 
 data_dir = os.path.dirname(__file__)
-
-df = pd.read_csv(os.path.join(data_dir, 'Data', 'enrichr_test_enrichr.csv'))
 
 
 class TestEnrichmentResult(object):

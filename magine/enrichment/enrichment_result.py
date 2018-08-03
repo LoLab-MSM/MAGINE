@@ -344,16 +344,15 @@ def _score(vals):
     return jaccard_index(vals[0], vals[1])
 
 
-def jaccard_index(first_set, second_set):
+def jaccard_index(set1, set2):
     """
     Computes the similarity between two sets.
         https://en.wikipedia.org/wiki/Jaccard_index
 
     Parameters
     ----------
-    first_set : set
-    second_set : set
-
+    set1 : set
+    set2 : set
 
 
     Returns
@@ -366,7 +365,7 @@ def jaccard_index(first_set, second_set):
     .. [1] `Wikipedia entry for the Jaccard index
            <https://en.wikipedia.org/wiki/Jaccard_index>`_
     """
-    set1 = set(first_set)
-    set2 = set(second_set)
-    return float(len(set1.intersection(set2))) / len(set1.union(set2))
-
+    union = len(set1.union(set2))
+    if union == len(set1) or union == len(set2):
+        return 1
+    return float(len(set1.intersection(set2))) / union

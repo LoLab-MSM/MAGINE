@@ -1,7 +1,7 @@
 import itertools
 import os
+from itertools import combinations, product
 
-import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
@@ -11,7 +11,6 @@ from statsmodels.stats.multitest import fdrcorrection
 import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
 from magine.networks.visualization.igraph_tools import render_igraph
-from magine.plotting.heatmaps import heatmap_from_array
 
 
 class OntologyNetworkGenerator(object):
@@ -51,7 +50,7 @@ class OntologyNetworkGenerator(object):
     def create_network_from_list(self, list_of_ontology_terms,
                                  ont_to_species_dict, ont_to_label_dict,
                                  save_name=None, draw=False, out_dir=None,
-                                 use_threshold=True):
+                                 use_threshold=True, use_fdr=False):
         """
         Creates a GO level network from list of GO terms
 
@@ -74,7 +73,8 @@ class OntologyNetworkGenerator(object):
             Uses bh correction for multiple hypothesis testing
         out_dir : str
             output directory
-
+        use_fdr : bool
+            Use FDR correction for edge
 
         Returns
         -------
@@ -114,51 +114,39 @@ class OntologyNetworkGenerator(object):
                     gene_to_term[gene] = {term}
                     gene_to_label[gene] = {ont_to_label_dict[term]}
 
-        def get_edges(set1, set2, background):
-            non_overlap = set2.difference(set1)
-            possible_edges = set(itertools.product(set1, non_overlap))
-            edge_hits = possible_edges.intersection(background)
-            n_hits = len(edge_hits)
-            return edge_hits, n_hits
+        def get_edges(set1, set2):
+            possible_edges = set(product(set1, set2.difference(set1)))
 
-        for term1, term2 in itertools.combinations(list_of_go_terms, 2):
+            n_possible = len(possible_edges)
+            edge_hits = possible_edges.intersection(self.edges)
+            n_hits = len(edge_hits)
+            odds_to_find = float(n_possible) / n_edges
+            p_val = stats.binom_test(n_hits, n_possible, odds_to_find)
+            return [edge_hits, n_hits, p_val]
+
+        for term1, term2 in combinations(list_of_go_terms, 2):
             term_1 = set(ont_to_species_dict[term1]).intersection(self.nodes)
             term_2 = set(ont_to_species_dict[term2]).intersection(self.nodes)
+
             add_to_dict(term_1, term1)
             add_to_dict(term_2, term2)
 
-            # calculate how many possible edge combinations there are
-            total = 0
-            for i in term_1:
-                for j in term_2:
-                    # need to not count an edge if one of the species
-                    # is in both
-                    # g1 = (a, b)
-                    # g3 = (b, d)
-                    # we count a-d, and b-d, not a-b.
-                    if i != j:
-                        total += 1
-
-            edges_1_to_2, a_to_b = get_edges(term_1, term_2, self.edges)
-            edges_2_to_1, b_to_a = get_edges(term_2, term_1, self.edges)
-
-            odds_to_find = float(total) / n_edges
-            p_values.append([term1, term2, edges_1_to_2, a_to_b,
-                             stats.binom_test(a_to_b, total, odds_to_find)])
-
-            p_values.append([term2, term1, edges_2_to_1, b_to_a,
-                             stats.binom_test(b_to_a, total, odds_to_find)])
+            p_values.append([term1, term2] + get_edges(term_1, term_2))
+            p_values.append([term2, term1] + get_edges(term_2, term_1))
 
         cols = ['term1', 'term2', 'edges', 'n_edges', 'p_values', ]
 
         df = pd.DataFrame(p_values, columns=cols)
+
         # FDR correction
         _, df['adj_p_values'] = fdrcorrection(df['p_values'])
         df = df.loc[df['n_edges'] > 0]
 
         if use_threshold:
-            df = df.loc[df['adj_p_values'] <= .05]
-
+            if use_fdr:
+                df = df.loc[df['adj_p_values'] <= .05]
+            else:
+                df = df.loc[df['p_values'] <= .05]
         cols += ['adj_p_values']
         # create empty networks
         go_graph = nx.DiGraph()
@@ -179,6 +167,7 @@ class OntologyNetworkGenerator(object):
             x = self.network.subgraph(nodes).copy()
 
             mol_net.add_edges_from(list(x.edges(data=True)))
+        exp_net = self.network.subgraph(mol_net.nodes)
 
         for i in mol_net.nodes:
             labels = gene_to_label[i]
@@ -187,6 +176,8 @@ class OntologyNetworkGenerator(object):
                 'len(labels) should equal len(terms)'
             mol_net.node[i]['termName'] = ','.join(sorted(labels))
             mol_net.node[i]['terms'] = ','.join(sorted(terms))
+            exp_net.node[i]['termName'] = ','.join(sorted(labels))
+            exp_net.node[i]['terms'] = ','.join(sorted(terms))
 
         self.molecular_network = mol_net
         if save_name is not None:
@@ -199,82 +190,12 @@ class OntologyNetworkGenerator(object):
             if draw:
                 export_to_dot(go_graph, save_name)
                 render_igraph(mol_net, save_name + '_subgraph_igraph')
-        return go_graph, mol_net
-
-
-def visualize_go_network(go_network, data, save_name,
-                         format_only=False, out_dir=None, merge=False):
-    """ Renders GO network with py2cytoscape
-
-    Parameters
-    ----------
-    go_network : networkx.DiGraph
-        GO network created with GoNetworkGenerator
-    data : pd.Dataframe
-        enrichment data from GOAnalysis.calculate_enrichment
-    save_name: str
-        prefix to save images of GO network
-    format_only: boolean
-        option to return formatted network and labels for rendering
-    out_dir: str
-        If you want to files to be output into directory
-    merge: bool
-        merge images into gif
-
-    Returns
-    -------
-
-    """
-
-    from magine.networks.visualization.cytoscape_view import RenderModel
-    from magine.plotting.heatmaps import heatmap_from_array
-
-    if len(go_network.nodes()) == 0:
-        print('No nodes')
-        quit()
-
-    labels = data['sample_id'].unique()
-
-    score_array = pd.pivot_table(data, index=['term_name'],
-                                 columns='sample_id')
-
-    heatmap_from_array(data, cluster_row=False, convert_to_log=True,
-                       index='term_name', values='combined_score',
-                       columns='sample_id', div_colors=False)
-
-    plt.savefig('{}_heatplot.png'.format(save_name), bbox_inches='tight')
-    plt.close()
-
-    x = score_array['combined_score'].fillna(0)
-
-    for i in go_network.nodes():
-        values = x.loc[i]
-        go_network.node[i]['color'] = 'red'
-        go_network.node[i]['label'] = i
-        for n, time in enumerate(labels):
-            go_network.node[i][time] = float(values[time])
-
-    if format_only:
-        return go_network, data
-
-    savename = os.path.join('{}_all_colored.graphml'.format(save_name))
-
-    nx.write_graphml(go_network, savename)
-    # size_of_data = len(labels)
-    rm = RenderModel(go_network, layout='force-directed')
-    rm.visualize_by_list_of_time(labels,
-                                 prefix=save_name,
-                                 out_dir=out_dir,
-                                 )
-    _s = "convert -delay 100 -dispose previous -loop 0 " \
-         "ont_network_*_formatted.png {}.gif"
-    if merge:
-        os.system(_s.format(save_name))
+        return go_graph, exp_net
 
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
                       remove_isolated=False, create_only=True, merge=False,
-                      out_dir=None, use_threshold=False):
+                      out_dir=None, use_threshold=False, use_fdr=False):
     """
 
     Parameters
@@ -294,6 +215,12 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         Create gif of cytoscape session
     out_dir : str
         Output directory of images
+    use_threshold : bool
+        Use binomial test to calculate edge relevance between terms
+    use_fdr : bool
+        Use BH correction on binomial test
+
+
     Returns
     -------
 
@@ -323,18 +250,12 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     print("Creating ontology network")
     term_g, molecular_g = ong.create_network_from_list(
         terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
-        use_threshold=use_threshold
+        use_threshold=use_threshold, use_fdr=use_fdr
     )
 
     if remove_isolated:
         nt.remove_isolated_nodes(term_g)
         nt.remove_isolated_nodes(molecular_g)
-
-    fig = heatmap_from_array(df_copy, cluster_row=False, convert_to_log=True,
-                             index='term_name', values='combined_score',
-                             columns='sample_id', div_colors=False)
-    fig.savefig('{}_heatmap.png'.format(save_name), bbox_inches='tight')
-    plt.close()
 
     score_array = pd.pivot_table(df_copy, index=['term_name'],
                                  columns='sample_id')
@@ -359,4 +280,3 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         if merge:
             os.system(_s.format(save_name))
     return term_g, molecular_g
-
