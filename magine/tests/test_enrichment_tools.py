@@ -47,16 +47,18 @@ class TestEnrichmentResult(object):
 
     def test_filter_sim_terms(self):
         sim2 = self.data.remove_redundant(level='sample', sort_by='rank')
-        assert sim2.shape == (18, 11)
+
+        assert sim2.shape == (8, 11)
         sim2 = self.data.remove_redundant(level='sample')
-        assert sim2.shape == (18, 11)
+
+        assert sim2.shape == (8, 11)
 
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
-        assert sim2.shape == (29, 11)
+        assert sim2.shape == (3, 11)
 
         copy_data = self.data.copy()
         copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
-        assert copy_data.shape == (18, 11)
+        assert copy_data.shape == (8, 11)
 
     def test_dist(self):
 
@@ -81,8 +83,8 @@ class TestEnrichmentResult(object):
         print(sim)
 
     def test_jaccard_index(self):
-        term1 = ['BAX', 'BCL2', 'MCL1', 'CASP3']
-        term2 = ['BAX', 'BCL2', 'MCL1', 'TP53']
+        term1 = {'BAX', 'BCL2', 'MCL1', 'CASP3'}
+        term2 = {'BAX', 'BCL2', 'MCL1', 'TP53'}
         score = et.jaccard_index(term1, term2)
 
         assert score == 0.6
