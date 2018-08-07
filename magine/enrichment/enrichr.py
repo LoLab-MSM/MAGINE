@@ -508,9 +508,9 @@ def run_enrichment_for_project(exp_data, project_name):
         _run_new(exp_data.proteins.sig.down_by_sample, pt, 'proteomics_down')
 
     if len(rt) != 0:
-        _run_new(exp_data.rna.by_sample, rt, 'rna_both')
+        _run_new(exp_data.rna.sig.by_sample, rt, 'rna_both')
         _run_new(exp_data.rna.sig.down_by_sample, rt, 'rna_down')
-        _run_new(exp_data.rna.up.up_by_sample, rt, 'rna_up')
+        _run_new(exp_data.rna.sig.up_by_sample, rt, 'rna_up')
 
     final_df = pd.concat(all_df, ignore_index=True)
 
