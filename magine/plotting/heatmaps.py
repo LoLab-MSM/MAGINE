@@ -159,32 +159,39 @@ def heatmap_by_category(data,
         cluster_row = True
         array = array.reindex(names)
 
-    if annotate_sig:
-        annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                             columns,
-                                                             index)
+    if cluster_row or cluster_by_set:
+
         fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
-                             yticklabels='auto', col_colors=row_colors,
-                             col_cluster=False, row_cluster=True,
+                             yticklabels='auto',
+                             col_colors=row_colors,
+                             col_cluster=False, row_cluster=cluster_row,
                              figsize=figsize, linewidths=linewidths,
                              annot=annotations, fmt=fmt)
-        if cluster_by_set:
-            annotations = annotations[fig.dendrogram_row.reordered_ind]
-            plt.close()
-            fig = sns.clustermap(array, cmap=pal, center=center,
-                                 row_linkage=linkage, yticklabels='auto',
-                                 col_colors=row_colors,
-                                 col_cluster=False, row_cluster=cluster_row,
-                                 figsize=figsize, linewidths=linewidths,
-                                 annot=annotations, fmt=fmt)
+
+        if annotate_sig:
+            annotate_sig, annotations, fmt = get_sig_annotations(array, data,
+                                                                 columns,
+                                                                 index)
+            # makes sure it is possible
+            if annotate_sig:
+                annotations = annotations[fig.dendrogram_row.reordered_ind]
+                plt.close()
+                fig = sns.clustermap(array, cmap=pal, center=center,
+                                     row_linkage=linkage,
+                                     yticklabels='auto',
+                                     col_colors=row_colors,
+                                     col_cluster=False, row_cluster=cluster_row,
+                                     figsize=figsize, linewidths=linewidths,
+                                     annot=annotations, fmt=fmt)
     else:
         fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
                              yticklabels='auto', col_colors=row_colors,
-                             col_cluster=False, row_cluster=True,
+                             col_cluster=False, row_cluster=cluster_row,
                              figsize=figsize, linewidths=linewidths,
                              annot=annotations, fmt=fmt)
+
     for color, label in zip(colors, color_labels):
         fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
     plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
@@ -197,8 +204,8 @@ def heatmap_by_category(data,
         prev += n_samples
         v_line_list.append(prev)
 
-    fig.fig.axes[2].vlines(v_line_list, *fig.fig.axes[2].get_ylim());
-    fig.fig.axes[3].vlines(v_line_list, *fig.fig.axes[3].get_ylim());
+    fig.fig.axes[2].vlines(v_line_list, *fig.fig.axes[2].get_ylim())
+    fig.fig.axes[3].vlines(v_line_list, *fig.fig.axes[3].get_ylim())
     return fig
 
 
