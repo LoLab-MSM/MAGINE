@@ -25,7 +25,7 @@ with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
         _valid_libs.add(n)
 
 gene = 'gene'
-
+z
 db_types = {
     'histone'      : [
         'Epigenomics_Roadmap_HM_ChIP-seq',
@@ -64,12 +64,12 @@ db_types = {
         'BioCarta_2016',
         'NCI-Nature_2016',
         'Panther_2016',
-        'BioPlex_2017',
     ],
     'complex'      : [
         'NURSA_Human_Endogenous_Complexome',
         'CORUM',
         'PPI_Hub_Proteins',
+        'BioPlex_2017',
     ],
     'ontologies'   : [
         'GO_Cellular_Component_2017b',
