@@ -218,7 +218,9 @@ def load_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
         all_of_kegg = nx.read_gpickle(p_name)
     else:
         # create the network
-        path_to_graph, _ = load_kegg_mappings(species, verbose)
+        path_to_graph, _ = load_kegg_mappings(species,
+                                              verbose=verbose,
+                                              fresh_download=fresh_download)
 
         # merge into single networks
         all_of_kegg = utils.compose_all(path_to_graph.values())

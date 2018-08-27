@@ -3,6 +3,7 @@ import os
 import networkx as nx
 
 import magine.networks.exporters as exporters
+from magine.networks.standards import edge_standards
 
 try:
     from IPython.display import Image, display
@@ -361,72 +362,6 @@ def _add_edges(current_network, new_network):
                     new_network[i][j][n] = '|'.join(sorted(additions))
 
 
-_maps = {
-    'activation': 'activate',
-    'activator': 'activate',
-    'potentiator': 'activate',
-
-    'inducer': 'expression',
-    'stimulator': 'expression',
-    'suppressor': 'repression',
-
-    'blocker': 'inhibit',
-    'inhibitor': 'inhibit',
-    'inhibition': 'inhibit',
-    'inhibitor, competitive': 'inhibit',
-
-    'proteolytic processing': 'cleavage',
-
-    # binding
-    'binding/association': 'binding',
-    'binder': 'binding',
-    'complex': 'binding',
-    'dissociation': 'binding',
-
-    # indirect/missing
-    'indirect effect': 'indirect',
-    'missing interaction': 'indirect',
-
-    'state change': 'stateChange',
-
-    'ubiquitination': 'ubiquitinate',
-    'methylation': 'methylate',
-    'glycosylation': 'glycosylate',
-    'sumoylation': 'sumoylate',
-    'ribosylation': 'ribosylate',
-    'neddylation': 'neddylate',
-    'desumoylation': 'desumoylate',
-    'deneddylation': 'deneddylate',
-    'demethylation': 'demethylate',
-    'deacetylation': 'deacetylate',
-    'desensitize the target': 'inhibit',
-    'deubiquitination': 'deubiquitinate',
-    'nedd(rub1)ylation': 'neddy(rub1)late',
-
-    'dephosphorylation': 'dephosphorylate',
-    'phosphorylation': 'phosphorylate',
-
-    'negative modulator': 'inhibit',
-    'inhibitory allosteric modulator': 'allosteric|inhibit',
-    'allosteric modulator': 'allosteric|modulate',
-    'positive allosteric modulator': 'activate|allosteric',
-    'positive modulator': 'activate',
-    'partial agonist': 'activate|chemical',
-    'inverse agonist': 'activate|chemical',
-    'agonist': 'activate|chemical',
-
-    'antagonist': 'inhibit|chemical',
-    'partial antagonist': 'inhibit|chemical',
-
-    # chemical related
-    'compound': 'chemical',
-    'product of': 'chemical',
-    'ligand': 'chemical',
-    'cofactor': 'chemical',
-    'multitarget': 'chemical',
-}
-
-
 def standardize_edge_types(network):
     to_remove = set()
     for source, target, data in network.edges(data=True):
@@ -434,7 +369,7 @@ def standardize_edge_types(network):
             edge_type = data['interactionType']
             edge_type = set(i for i in edge_type.split('|'))
 
-            for k, v in _maps.items():
+            for k, v in edge_standards.items():
                 if k in edge_type:
                     edge_type.remove(k)
                     edge_type.add(v)
@@ -445,11 +380,10 @@ def standardize_edge_types(network):
             if 'reaction' in edge_type:
                 if len(edge_type) != 1:
                     edge_type.remove('reaction')
-            if 'catalyze' in edge_type:
-                if len(edge_type) != 1:
-                    edge_type.remove('catalyze')
+
             edge_type = '|'.join(sorted(edge_type))
-            if edge_type == '':
+
+            if edge_type in ('', 'binding', 'indirect'):
                 # network.remove_edge(source, target)
                 to_remove.add((source, target))
             else:
@@ -637,26 +571,3 @@ def run_from_ipython():
         return True
     except NameError:
         return False
-
-
-if __name__ == '__main__':
-    g = nx.DiGraph()
-    g.add_edge('A', 'B')
-    g.add_edge('B', 'C')
-    g.add_edge('B', 'E')
-    g.add_edge('C', 'D')
-    # test_g = remove_unmeasured_nodes(g, ['A', 'D', 'E'])
-    # export_to_dot(test_g, 'merged_node')
-    # new_g = remove_unmeasured_nodes(g, ['A', 'C', 'D'])
-    # export_to_dot(new_g, 'merged_node2')
-    g = nx.DiGraph()
-    g.add_node('A', color='red', intType='ugly')
-    g.add_edge('A', 'B', iType='no')
-    gg = nx.DiGraph()
-    gg.add_node('A', color='green', intType='ugly')
-    gg.add_edge('A', 'B', iType='yes')
-    fg = compose(g, gg)
-    for i in fg.nodes(data=True):
-        print(i)
-    for i in fg.edges(data=True):
-        print(i)

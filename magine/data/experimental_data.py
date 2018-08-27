@@ -665,14 +665,14 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
     for i in data.exp_methods:
         if unique:
             if sig:
-                unique_col[i] = len(set(data[i].sig.label_list))
-            else:
-                unique_col[i] = len(set(data[i].label_list))
-        else:
-            if sig:
                 unique_col[i] = len(set(data[i].sig.id_list))
             else:
                 unique_col[i] = len(set(data[i].id_list))
+        else:
+            if sig:
+                unique_col[i] = len(set(data[i].sig.label_list))
+            else:
+                unique_col[i] = len(set(data[i].label_list))
 
     count_table['Total Unique Across'] = pd.Series(unique_col,
                                                    index=count_table.index)

@@ -192,7 +192,7 @@ def expand_by_db(starting_network, expansion_source, measured_list,
 
 
 def create_background_network(save_name='background_network',
-                              fresh_download=False):
+                              fresh_download=False, verbose=True):
     """
 
     Parameters
@@ -204,11 +204,15 @@ def create_background_network(save_name='background_network',
 
     """
 
-    kegg_network = load_all_of_kegg(fresh_download=fresh_download)
-    hmdb_network = load_hmdb_network(fresh_download=fresh_download)
-    biogrid_network = load_biogrid_network(fresh_download=fresh_download)
-    signor_network = load_signor(fresh_download=fresh_download)
-    reactome_network = load_reactome_fi()
+    kegg_network = load_all_of_kegg(fresh_download=fresh_download,
+                                    verbose=verbose)
+    hmdb_network = load_hmdb_network(fresh_download=fresh_download,
+                                     verbose=verbose)
+    biogrid_network = load_biogrid_network(fresh_download=fresh_download,
+                                           verbose=verbose)
+    signor_network = load_signor(fresh_download=fresh_download,
+                                 verbose=verbose)
+    reactome_network = load_reactome_fi(verbose=verbose)
 
     def find_overlap(n1, n2):
         nodes1 = set(n1.nodes())
@@ -217,11 +221,11 @@ def create_background_network(save_name='background_network',
         e2 = set(n2.edges())
         print("\tnode overlap = {}".format(len(nodes1.intersection(nodes2))))
         print("\tnode difference = {} | {}".format(
-            len(nodes1.intersection(nodes2)),
-            len(nodes2.intersection(nodes1)))
+            len(nodes1.difference(nodes2)),
+            len(nodes2.difference(nodes1)))
         )
         print("\tedge overlap = {}".format(len(e2.intersection(e1))))
-        print("\tedge difference = {} | {}".format(len(e2.difference(e1)),
+        print("\tedge difference = {} | {}".format(len(e1.difference(e2)),
                                                    len(e2.difference(e1))))
 
     network_list = [hmdb_network, kegg_network, biogrid_network,
@@ -251,6 +255,6 @@ def create_background_network(save_name='background_network',
 
 
 if __name__ == '__main__':
-    create_background_network(fresh_download=False)
+    create_background_network(fresh_download=True, verbose=True)
     # load_hmdb_network(create_new=True)
     # load_hmdb_network(False)

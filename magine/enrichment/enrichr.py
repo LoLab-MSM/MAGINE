@@ -2,6 +2,7 @@ import json
 import os
 import re
 import time
+
 # Will be OK in Python 2
 try:
     basestring
@@ -26,16 +27,16 @@ with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
 gene = 'gene'
 
 db_types = {
-    'histone': [
+    'histone'      : [
         'Epigenomics_Roadmap_HM_ChIP-seq',
         'ENCODE_Histone_Modifications_2015',
         'ESCAPE',
     ],
-    'mrna': [
+    'mrna'         : [
         'TargetScan_microRNA_2017',
         'miRTarBase_2017',
     ],
-    'kinases': [
+    'kinases'      : [
         'KEA_2015',
         'LINCS_L1000_Kinase_Perturbations_down',
         'LINCS_L1000_Kinase_Perturbations_up',
@@ -56,7 +57,7 @@ db_types = {
         'TF-LOF_Expression_from_GEO',
         'Transcription_Factor_PPIs'
     ],
-    'pathways': [
+    'pathways'     : [
         'KEGG_2016',
         'WikiPathways_2016',
         'Reactome_2016',
@@ -65,19 +66,19 @@ db_types = {
         'Panther_2016',
         'BioPlex_2017',
     ],
-    'complex': [
+    'complex'      : [
         'NURSA_Human_Endogenous_Complexome',
         'CORUM',
         'PPI_Hub_Proteins',
     ],
-    'ontologies': [
+    'ontologies'   : [
         'GO_Cellular_Component_2017b',
         'GO_Biological_Process_2017b',
         'GO_Molecular_Function_2017b',
         'MGI_Mammalian_Phenotype_2017',
         'Jensen_COMPARTMENTS',
     ],
-    'drug': [
+    'drug'         : [
         'DrugMatrix',
         'Drug_Perturbations_from_GEO_2014',
         'Old_CMAP_up',
@@ -87,13 +88,13 @@ db_types = {
         'LINCS_L1000_Ligand_Perturbations_up',
         'LINCS_L1000_Ligand_Perturbations_down',
     ],
-    'disease': [
+    'disease'      : [
         'OMIM_Disease',
         'OMIM_Expanded',
         'Jensen_DISEASES',
         'Human_Phenotype_Ontology'
     ],
-    'cell_type': [
+    'cell_type'    : [
 
         'ARCHS4_Tissues',
         'ARCHS4_Cell-lines',
@@ -104,7 +105,7 @@ db_types = {
         'NCI-60_Cancer_Cell_Lines',
         'Jensen_TISSUES',
     ],
-    'crowd': [
+    'crowd'        : [
         'Disease_Perturbations_from_GEO_down',
         'Disease_Perturbations_from_GEO_up',
         'Drug_Perturbations_from_GEO_down',
@@ -242,7 +243,7 @@ class Enrichr(object):
         genes_str = '\n'.join(gene_list)
 
         payload = {
-            'list': (None, genes_str),
+            'list'       : (None, genes_str),
             'description': (None, 'MAGINE analysis')
         }
 
@@ -499,18 +500,29 @@ def run_enrichment_for_project(exp_data, project_name):
             df['category'] = category
             all_df.append(df)
 
-    pt = exp_data.proteins.sample_ids
-    rt = exp_data.rna.sample_ids
+    if len(exp_data.proteins.sample_ids) != 0:
+        sample = exp_data.proteins.sig
+        _run_new(sample.by_sample, sample.sample_ids, 'proteomics_both')
+        _run_new(sample.up_by_sample, sample.sample_ids, 'proteomics_up')
+        _run_new(sample.down_by_sample, sample.sample_ids, 'proteomics_down')
 
-    if len(pt) != 0:
-        _run_new(exp_data.proteins.sig.by_sample, pt, 'proteomics_both')
-        _run_new(exp_data.proteins.sig.up_by_sample, pt, 'proteomics_up')
-        _run_new(exp_data.proteins.sig.down_by_sample, pt, 'proteomics_down')
+    if len(exp_data.rna.sample_ids) != 0:
+        sample = exp_data.rna.sig
+        _run_new(sample.by_sample, sample.sample_ids, 'rna_both')
+        _run_new(sample.down_by_sample, sample.sample_ids, 'rna_down')
+        _run_new(sample.up_by_sample, sample.sample_ids, 'rna_up')
 
-    if len(rt) != 0:
-        _run_new(exp_data.rna.sig.by_sample, rt, 'rna_both')
-        _run_new(exp_data.rna.sig.down_by_sample, rt, 'rna_down')
-        _run_new(exp_data.rna.sig.up_by_sample, rt, 'rna_up')
+    for source in exp_data.exp_methods:
+        df = exp_data[source].sig
+        assert len(df['species_type'].unique()) == 1, \
+            "More one species type from source. " \
+            "Cannot run enrichment on multiple species type"
+
+        if df['species_type'].unique()[0] == 'protein':
+            _run_new(df.by_sample, df.sample_ids, '{}_both'.format(source))
+            _run_new(df.up_by_sample, df.sample_ids, '{}_up'.format(source))
+            _run_new(df.down_by_sample, df.sample_ids,
+                     '{}_down'.format(source))
 
     final_df = pd.concat(all_df, ignore_index=True)
 
@@ -518,6 +530,9 @@ def run_enrichment_for_project(exp_data, project_name):
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
+    final_df['significant'] = False
+    final_df.loc[final_df['adj_p_value'] <= 0.05, 'significant'] = True
+
     final_df = final_df[~final_df['term_name'].isnull()].copy()
     final_df.to_csv('{}.csv.gz'.format(project_name), encoding='utf-8',
                     compression='gzip')
