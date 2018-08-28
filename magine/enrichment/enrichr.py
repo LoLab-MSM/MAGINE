@@ -25,7 +25,7 @@ with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
         _valid_libs.add(n)
 
 gene = 'gene'
-z
+
 db_types = {
     'histone'      : [
         'Epigenomics_Roadmap_HM_ChIP-seq',
@@ -365,9 +365,11 @@ def clean_term_names(row):
 
     db = row['db']
 
-    if db in ['GO_Biological_Process_2017', 'GO_Biological_Process_2017b',
-              'GO_Molecular_Function_2017', 'GO_Molecular_Function_2017b',
-              'GO_Cellular_Component_2017', 'GO_Cellular_Component_2017b']:
+    if db in [
+        'GO_Biological_Process_2018', 'GO_Molecular_Function_2018', 'GO_Cellular_Component_2018',
+        'GO_Biological_Process_2017', 'GO_Molecular_Function_2017', 'GO_Cellular_Component_2017',
+        'GO_Biological_Process_2017b', 'GO_Molecular_Function_2017b', 'GO_Cellular_Component_2017b',
+    ]:
 
         if 'GO:' in term_name:
             term_name = term_name.split('(GO:', 1)[0]
