@@ -85,8 +85,7 @@ def nx_to_dot(graph):
 
     for u, v, data in graph.edges(data=True):
         str_data = dict((k, make_str(v)) for k, v in data.items())
-        edge = pydotplus.Edge(make_str(u), make_str(v), **str_data)
-        new_g.add_edge(edge)
+        new_g.add_edge(pydotplus.Edge(make_str(u), make_str(v), **str_data))
     return new_g
 
 
@@ -158,9 +157,7 @@ def format_to_directions(network):
     return network
 
 
-PY2 = sys.version_info[0] == 2
-
-if PY2:
+if sys.version_info[0] == 2:
     def make_str(x):
         """Return the string representation of t."""
         if isinstance(x, unicode):

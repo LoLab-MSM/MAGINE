@@ -196,7 +196,7 @@ def heatmap_by_category(data,
         fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
     plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
              fontsize=16)
-    fig.ax_col_dendrogram.legend(loc="center", ncol=2, fontsize=12)
+    fig.ax_col_dendrogram.legend(loc="center", ncol=3, fontsize=12)
     v_line_list = []
     prev = 0
     for i in color_labels:

@@ -477,9 +477,7 @@ class Subgraph(object):
         -------
 
         """
-        measured_list = []
-        for i, j in sorted(self.exp_data.sig_species_over_time.items()):
-            measured_list.append(j)
+        measured_list = self.exp_data.species.sig.by_sample
         utils.paint_network_overtime(graph, measured_list, colors, prefix,
                                      self.exp_data.sample_ids)
 
@@ -504,13 +502,8 @@ class Subgraph(object):
 
         """
         labels = self.exp_data.sample_ids
-        up_measured_list = []
-        down_measured_list = []
-        for i, j in sorted(self.exp_data.sig_species_over_time.items()):
-            up_measured_list.append(j)
-
-        for i, j in sorted(self.exp_data.sig_species_down_over_time.items()):
-            down_measured_list.append(j)
+        up_measured_list = self.exp_data.species.sig.up.by_sample
+        down_measured_list = self.exp_data.species.sig.down.by_sample
         utils.paint_network_overtime_up_down(graph, list_up=up_measured_list,
                                              list_down=down_measured_list,
                                              save_name=prefix,
