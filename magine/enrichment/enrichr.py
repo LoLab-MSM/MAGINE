@@ -72,9 +72,9 @@ db_types = {
         'BioPlex_2017',
     ],
     'ontologies'   : [
-        'GO_Cellular_Component_2017b',
-        'GO_Biological_Process_2017b',
-        'GO_Molecular_Function_2017b',
+        'GO_Cellular_Component_2018',
+        'GO_Biological_Process_2018',
+        'GO_Molecular_Function_2018',
         'MGI_Mammalian_Phenotype_2017',
         'Jensen_COMPARTMENTS',
     ],
@@ -387,10 +387,6 @@ def clean_term_names(row):
         drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
         direction = re.search(r'-(.{2})$', term_name).group(0)
         term_name = drug_name + direction
-    if db in ['LINCS_L1000_Chem_Pert_up', 'LINCS_L1000_Chem_Pert_down', ]:
-        exp_id, rest = term_name.split('-', 1)
-        drug_name, _ = rest.rsplit('-', 1)
-        term_name = drug_name
     if db in ['Old_CMAP_down', 'Old_CMAP_up', ]:
         term_name = term_name.rsplit('-', 1)[0]
     if db in ['Ligand_Perturbations_from_GEO_down',
@@ -404,6 +400,58 @@ def clean_term_names(row):
             term_name = term_name.replace(i, j)
 
     return term_name
+
+
+def clean_lincs(df):
+    """ Cleans the lincs databases term_names from enrichR.
+
+    Parameters
+    ----------
+    df
+
+    Returns
+    -------
+
+    """
+    pattern = re.compile(
+        r'(?P<id>\w+)_(?P<cell>\w+)_(?P<time>\w+)-(?P<drug>\S*)-(\S*)')
+
+    def get_drug(row):
+        db = row['db']
+        term_name = row['term_name']
+        if db  not in ['LINCS_L1000_Chem_Pert_up',
+                       'LINCS_L1000_Chem_Pert_down']:
+            return term_name
+        try:
+            drug_name = pattern.search(term_name).group('drug')
+        except NameError:
+            drug_name = term_name
+        return drug_name
+    df['term_name'] = df.apply(get_drug, axis=1)
+    return df
+
+
+def clean_drug_pert_geo(df):
+    def get_drug(row):
+        db = row['db']
+        term_name = row['term_name']
+        if db != 'Drug_Perturbations_from_GEO_2014':
+            return term_name
+        try:
+            segs = term_name.split('_')
+            drug_name = segs[0] + '_' + segs[-1][0] + segs[-1][-1]
+        except NameError:
+            drug_name = term_name
+        return drug_name
+
+    df['term_name'] = df.apply(get_drug, axis=1)
+    return df
+
+
+def clean_drug_dbs(data):
+    df = clean_drug_pert_geo(data)
+    df = clean_lincs(df)
+    return df
 
 
 def clean_tf_names(data):

@@ -267,7 +267,8 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         term_g.node[i]['label'] = i
         for n, time in enumerate(labels):
             term_g.node[i]['sample{}'.format(time)] = float(values[time])
-
+    if save_name:
+        nx.write_graphml(term_g, "{}_ags_network.graphml".format(save_name))
     if not create_only:
         from magine.networks.visualization.cytoscape_view import RenderModel
         rm = RenderModel(term_g, layout='force-directed')

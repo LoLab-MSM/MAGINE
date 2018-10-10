@@ -77,6 +77,33 @@ def render_graph(graph, add_parent=False):
     display(HTML(template.render(name=u_name, filename=fname_temp)))
 
 
+def render_graph2(graph, add_parent=False):
+    g_copy = graph.copy()
+    if add_parent:
+        g_copy = _add_parent_term(g_copy)
+
+    d = nx_to_json(g_copy)
+    u_name = "cy{}".format(uuid.uuid4())
+    d['uuid'] = u_name
+    d['style_json'] = json.dumps(styles['default'])
+
+    edge_types = set()
+    for i, j, data in graph.edges(data=True):
+        if 'interactionType' in data:
+            for e in data['interactionType'].split('|'):
+                edge_types.add(e)
+
+    d['edge_list'] = list(edge_types)
+
+    fname_temp = '{}.html'.format(u_name)
+    subgraph_html = env.get_template('subgraph_3.html')
+
+    with open(fname_temp, 'w') as f:
+        f.write(subgraph_html.render(d))
+
+    display(HTML(subgraph_html.render(d)))
+
+
 def _add_parent_term(graph):
     g_copy = graph.copy()
     new_nodes = set()

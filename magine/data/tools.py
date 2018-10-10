@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def log2_normalize_df(df, column):
+def log2_normalize_df(df, column, new_col=None):
     """
 
     Parameters
@@ -10,7 +10,9 @@ def log2_normalize_df(df, column):
         dataframe of fold changes
     column : str
         column that contains fold change values
-
+    new_col : str, None
+        Name of new column to place fold_changes values. if not provided it
+        will overwrite column values with new values
     Returns
     -------
 
@@ -18,6 +20,11 @@ def log2_normalize_df(df, column):
     tmp_df = df.copy()
     greater_than = tmp_df[column] > 0
     less_than = tmp_df[column] < 0
-    tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
-    tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
+    if new_col is not None:
+        assert isinstance(new_col, str)
+        tmp_df.loc[greater_than, new_col] = np.log2(tmp_df[greater_than][column])
+        tmp_df.loc[less_than, new_col] = -np.log2(-tmp_df[less_than][column])
+    else:
+        tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
+        tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
     return tmp_df

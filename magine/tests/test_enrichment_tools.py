@@ -70,11 +70,11 @@ class TestEnrichmentResult(object):
 
         heatmap_from_array(copy_data, convert_to_log=True, index='term_name',
                            columns='sample_id',
-                           fig_size=(6, 14), annotate_sig=True, linewidths=.01,
+                           figsize=(6, 14), annotate_sig=True, linewidths=.01,
                            cluster_row=True)
         plt.close()
 
-        dist = self.data.dist_matrix(fig_size=(3, 3), level='each')
+        dist = self.data.dist_matrix(figsize=(3, 3), level='each')
         assert isinstance(dist, matplotlib.figure.Figure)
         plt.close()
 

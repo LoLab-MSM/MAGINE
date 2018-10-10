@@ -1,0 +1,280 @@
+<!doctype html>
+<html>
+<head>
+    <title>Network | Basic usage</title>
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    {#    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>#}
+    {#    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>#}
+    {#    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js"></script>#}
+    {#    <script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>#}
+    {#    <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>#}
+    {#    <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js"></script>#}
+
+    <style type="text/css">
+
+        #{{ uuid }}{
+            width: 900px;
+            height: 500px;
+            border: 0px solid white;
+            box-sizing: border-box;
+        }
+        .myClass {
+            background: red;
+        }
+
+        body {
+            font: 14px helvetica neue, helvetica, arial, sans-serif;
+        }
+
+        input[type='button'] {
+            width: 100%;
+        }
+    </style>
+
+
+    <script type="text/javascript">
+        function runVis() {
+            var cy = window.cy = cytoscape({
+                container: document.getElementById("{{ uuid }}"),
+                wheelSensitivity: .25,
+
+                elements: {
+                    nodes:{{nodes}},
+                    edges:{{edges}}
+                }
+            });
+
+            cy.layout(
+                {
+                    name: 'cose-bilkent',
+                    avoidOverlap: true,
+                    rankSep: 15,
+                    padding: 5,
+                    fit: true
+                }).run();
+            cy.resize();
+            cy.fit();
+            cy.style().fromJson({{style_json}}).update();
+
+            cy.on('tap', function (evt) {
+                var ele = evt.target;
+                if (ele.data()['tip']['state']['visible']) {
+                    ele.data()['tip'].hide();
+                } else {
+                    ele.data()['tip'].show();
+                }
+            });
+
+
+            {#var makeTippy = function (target, text) {#}
+            {#    return tippy(target.popperRef(), {#}
+            {#        html: (function () {#}
+            {#            var div = document.createElement('div');#}
+            {#            div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene="#}
+            {#                + text + "' target='_blank'>Gene Card</a>";#}
+            {#            return div;#}
+            {#        })(),#}
+            {#        trigger: 'manual',#}
+            {#        arrow: true,#}
+            {#        placement: 'top',#}
+            {#        hideOnClick: false,#}
+            {#        interactive: true,#}
+            {#        multiple: true,#}
+            {#        sticky: true#}
+            {##}
+            {#    }).tooltips[0];#}
+            {# };#}
+            {##}
+            {#cy.nodes().forEach(function (n) {#}
+            {#    n.data()['tip'] = makeTippy(n, n.data('id'));#}
+            {# });#}
+
+            {#var allNodes;#}
+            {#var layoutPadding = 50;#}
+            {#var aniDur = 500;#}
+            {#var easing = 'linear';#}
+            {#allNodes = cy.nodes();#}
+            {#$('#{{fitbutton}}').on('click', function () {#}
+            {##}
+            {#    allNodes.unselect();#}
+            {#    cy.stop();#}
+            {##}
+            {#    cy.animation({#}
+            {#        fit: {#}
+            {#            eles: cy.elements(),#}
+            {#            padding: layoutPadding#}
+            {#        },#}
+            {#        duration: aniDur,#}
+            {#        easing: easing#}
+            {#    }).play();#}
+            {##}
+            {# });#}
+            var HieButton = document.getElementById('HieButton');
+            HieButton.addEventListener('click', function () {
+                cy.layout({name: 'breadthfirst', avoidOverlap: true}).run();
+            });
+            var DagreButton = document.getElementById('DagreButton');
+            DagreButton.addEventListener('click', function () {
+                cy.layout(
+                    {
+                        name: 'dagre',
+                        avoidOverlap: true,
+                        rankSep: 15,
+                        padding: 5,
+                        fit: true
+                    }
+                ).run();
+                cy.resize();
+                cy.fit();
+
+            });
+            var FlatButton = document.getElementById('FlatButton');
+            FlatButton.addEventListener('click', function () {
+                cy.layout(
+                    {
+                        name: 'dagre',
+                        avoidOverlapPadding: 100,
+                        animate: false,
+                        avoidOverlap: true
+                    }
+                ).run();
+                cy.resize();
+                cy.fit();
+            });
+
+
+            function createNewFilter(name, criteria) {
+                var obj = {};
+                obj.removed_nodes = false;
+                obj.eles = 'none';
+                obj.criteria = criteria;
+                obj.button = document.getElementById(name);
+                obj.button.addEventListener('click', function () {
+                    $(this).toggleClass('myClass');
+                    if (obj.eles === 'none') {
+                        obj.eles = cy.$(obj.criteria).remove();
+                        obj.removed_nodes = cy.$('node[[degree<1]]').remove();
+                    }
+                    else {
+                        obj.removed_nodes.restore();
+                        obj.eles.restore();
+                        obj.eles = 'none';
+                    }
+                    {#cy.layout({name: 'dagre', avoidOverlap: true}).run();#}
+                    cy.resize();
+                    cy.fit();
+                });
+            }
+            {% for t in edge_list %}
+                createNewFilter("filter_{{ t }}", 'edge[interactionType *= \'{{ t }}\']');
+            {% endfor %}
+        }
+
+        var before_render = function () {
+            if (window['cytoscape'] === undefined) {
+                console.log("Waiting for Cyjs...");
+                window.addEventListener("load_cytoscape", before_render);
+            } else {
+                console.log("Ready to render graph!");
+                {#$(".tippy-popper").remove();#}
+                runVis();
+            }
+        };
+        before_render();
+
+
+        if (window['cytoscape'] === undefined) {
+            console.log('starting loading');
+
+            requirejs.config({
+
+                paths: {
+                    {#'popper': 'https://unpkg.com/popper.js@1.14.1/dist/umd/popper',#}
+                    {#'tippy': 'https://cdnjs.cloudflare.com/ajax/libs/tippy.js/2.3.0/tippy.min',#}
+                    'cytoscape': 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.2.10/cytoscape',
+                    {#'cytoscape-popper': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-popper/3ad50859/cytoscape-popper',#}
+                    'jquery': 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min',
+                    {#'qtip2': 'https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/basic/jquery.qtip.min',#}
+                    {#'cytoscape-cose-bilkent': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.1/cytoscape-cose-bilkent',#}
+                    'cytoscape_dag': 'https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min',
+                    'dag' : 'https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js'
+                },
+                {#shim: {#}
+                {#    'cytoscape-popper': {#}
+                {#        deps: ['cytoscape', 'popper']#}
+                {#    }#}
+
+                {#map: {#}
+                {#    '*': {#}
+                {#        'popper.js': 'popper',#}
+                {#        'webcola': 'cola'#}
+                {#    }#}
+
+
+            });
+            window.$ = window.jQuery = require('jquery');
+
+            {#require(['cytoscape', 'cytoscape-popper', 'popper', 'tippy', 'jquery', 'cytoscape-cose-bilkent', 'cytoscape-dag'],#}
+            {# function (cytoscape, cypopper, popper, tippy, jquery, regCose) {#}
+            require(['cytoscape', 'jquery', 'cytoscape_dag', 'dag'],
+                function (cytoscape, jquery, dagre, dag) {
+                    console.log('Loading Cytoscape.js Module...');
+                    {#window['popper'] = popper;#}
+                    {#window['tippy'] = tippy;#}
+                    window['cytoscape'] = cytoscape;
+                    {#cypopper(cytoscape);#}
+                    {#regCose(cytoscape);#}
+                    dagre(cytoscape);
+                    dag(cytoscape);
+
+
+                    var event = document.createEvent("HTMLEvents");
+                    event.initEvent("load_cytoscape", true, false);
+                    window.dispatchEvent(event);
+                }
+            );
+
+        }
+    </script>
+
+</head>
+<body>
+
+
+<div class="row">
+    <div class="container-fluid">
+        <div class="container-fluid">
+            {#            <div class="panel panel-primary">#}
+            <div class="dropdown nav navbar-nav">
+                <button class="btn btn-primary dropdown-toggle" type="button" data-toggle="dropdown">Layout options<span
+                        class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li><input type='button' id='HieButton' value='Hierarchical layout'></li>
+                    <li><input type='button' id='DagreButton' value='Default layout'></li>
+                    <li><input type='button' id='FlatButton' value='Compact layout (random)'></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div id="tools" class="panel panel-primary">
+        <div class="panel-heading">Filter edges</div>
+        <div class="panel-body">
+            {% for t in edge_list|sort %}
+                <button id="filter_{{ t }}" class="btn btn-success">{{ t|title }}</button>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="panel panel-primary">
+        <div class="panel-heading">Graph</div>
+        <div class="panel-body">
+            <div id="cy-container">
+                <div id="{{ uuid }}"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+</body>
+</html>

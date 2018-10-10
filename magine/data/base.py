@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 
+from magine.plotting.heatmaps import heatmap_from_array
+
 
 class Data(pd.DataFrame):
     _index = None
@@ -148,3 +150,62 @@ class Data(pd.DataFrame):
             self._update_inplace(new_data)
         else:
             return new_data
+
+    def heatmap(self, convert_to_log=True, y_tick_labels='auto',
+                cluster_row=False, cluster_col=False, cluster_by_set=False,
+                index=None, values=None, columns=None,
+                annotate_sig=True, figsize=(8, 12), div_colors=True,
+                linewidths=0, num_colors=21, rank_index=False):
+        """ Creates heatmap of data, providing pivot and formatting.
+
+        Parameters
+        ----------
+        convert_to_log : bool
+            Convert values to log2 scale
+        y_tick_labels : str
+            Column of values, default = 'auto'
+        cluster_row : bool
+        cluster_col : bool
+        cluster_by_set : bool
+            Clusters by gene set, only used in EnrichmentResult derived class
+        index : str
+            Index of heatmap, will be 'row' variables
+        values : str
+            Values to display in heatmap
+        columns : str
+            Value that will be used as columns
+        annotate_sig : bool
+            Add '*' annotation to not 'significant=True' column
+        figsize : tuple
+            Figure size to pass to matplotlib
+        div_colors : bool
+            Use colors that are divergent
+            (red to blue, instead of shades of blue)
+        num_colors : int
+            How many colors to include on color bar
+        linewidths : float
+            line width between individual cols and rows
+        rank_index : bool
+            Rank index alphabetically
+
+        Returns
+        -------
+        matplotlib.figure
+
+        """
+        if index is None:
+            index = self._identifier
+        if values is None:
+            values = self._value_name
+        if columns is None:
+            columns = self._sample_id_name
+
+        return heatmap_from_array(
+            self, convert_to_log=convert_to_log, y_tick_labels=y_tick_labels,
+            cluster_row=cluster_row, cluster_col=cluster_col,
+            cluster_by_set=cluster_by_set,  figsize=figsize,
+            columns=columns, index=index, values=values,
+            div_colors=div_colors, num_colors=num_colors,
+            rank_index=rank_index, annotate_sig=annotate_sig,
+            linewidths=linewidths,
+        )

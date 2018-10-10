@@ -7,7 +7,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                        cluster_row=False, cluster_col=False,
                        columns='sample_id', index='term_name',
                        values='combined_score', div_colors=False, num_colors=7,
-                       fig_size=(6, 4), rank_index=False, annotate_sig=False,
+                       figsize=(6, 4), rank_index=False, annotate_sig=False,
                        linewidths=0.0, cluster_by_set=False):
     """
 
@@ -30,7 +30,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         Cluster the data using searborn.clustermap
     div_colors : bool
         Use divergent colors for plotting
-    fig_size : tuple
+    figsize : tuple
         Size of figure, passed to matplotlib/seaborn
     rank_index : bool
         Order by index.
@@ -81,7 +81,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                              row_cluster=cluster_row,
                              col_cluster=cluster_col,
                              linewidths=linewidths,
-                             figsize=fig_size,
+                             figsize=figsize,
                              center=center,
                              cmap=pal
                              )
@@ -103,7 +103,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                                  row_cluster=cluster_row,
                                  col_cluster=cluster_col,
                                  linewidths=linewidths,
-                                 figsize=fig_size,
+                                 figsize=figsize,
                                  center=center,
                                  cmap=pal,
                                  annot=annotations,
@@ -111,7 +111,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                                  )
 
     else:
-        fig = plt.figure(figsize=fig_size)
+        # TODO see if i can use clustermap here instead of heatmap
+        fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
         if annotate_sig:
             annotate_sig, annotations, fmt = get_sig_annotations(array, data,
@@ -131,10 +132,13 @@ def heatmap_by_category(data,
                         index='term_name', cluster_by_set=False,
                         values='combined_score', linewidths=0,
                         num_colors=11, div_colors=False,
-                        annotate_sig=False, cluster_row=False):
+                        annotate_sig=False, cluster_row=False, rank_index=False):
     array = data.pivoter(convert_to_log, columns=columns,
                          index=index, fill_value=0.0,
                          values=values)
+    if rank_index:
+        array.sort_index(ascending=True, inplace=True)
+
     if div_colors:
         pal = sns.color_palette("coolwarm", num_colors)
         center = 0
@@ -142,14 +146,19 @@ def heatmap_by_category(data,
         pal = sns.light_palette("purple", as_cmap=True)
         center = None
 
-    color_labels = array.columns.levels[0]
-    col_labels = list(array.columns.levels[1])
-    colors = sns.color_palette("Dark2", len(color_labels))
-    row_colors = [colors[i] for i in array.columns.labels[0]]
-    array.columns = [col_labels[i] for i in array.columns.labels[1]]
+    col_colors = None
     annotations = None
     fmt = None
     linkage = None
+    add_col_group = True
+    # TODO create a function for generating column colors and row colors
+    if add_col_group:
+        col_color_labels = array.columns.levels[0]
+        col_labels = list(array.columns.levels[1])
+        colors = sns.color_palette("Dark2", len(col_color_labels))
+        col_colors = [colors[i] for i in array.columns.labels[0]]
+        array.columns = [col_labels[i] for i in array.columns.labels[1]]
+
     if cluster_by_set and "genes" in data.columns:
         # generate structure of graph based on jaccard index
         dist_mat, names = data.calc_dist(level='sample')
@@ -164,7 +173,7 @@ def heatmap_by_category(data,
         fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
                              yticklabels='auto',
-                             col_colors=row_colors,
+                             col_colors=col_colors,
                              col_cluster=False, row_cluster=cluster_row,
                              figsize=figsize, linewidths=linewidths,
                              annot=annotations, fmt=fmt)
@@ -180,18 +189,28 @@ def heatmap_by_category(data,
                 fig = sns.clustermap(array, cmap=pal, center=center,
                                      row_linkage=linkage,
                                      yticklabels='auto',
-                                     col_colors=row_colors,
+                                     col_colors=col_colors,
                                      col_cluster=False, row_cluster=cluster_row,
                                      figsize=figsize, linewidths=linewidths,
                                      annot=annotations, fmt=fmt)
     else:
+        if annotate_sig:
+            annotate_sig, annotations, fmt = get_sig_annotations(array, data,
+                                                                 columns,
+                                                                 index)
         fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
-                             yticklabels='auto', col_colors=row_colors,
+                             yticklabels='auto', col_colors=col_colors,
                              col_cluster=False, row_cluster=cluster_row,
                              figsize=figsize, linewidths=linewidths,
                              annot=annotations, fmt=fmt)
 
+    if add_col_group:
+        fig = _add_column_color_groups(data, fig, colors, col_color_labels)
+    return fig
+
+
+def _add_column_color_groups(data, fig, colors, color_labels):
     for color, label in zip(colors, color_labels):
         fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
     plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
@@ -209,29 +228,60 @@ def heatmap_by_category(data,
     return fig
 
 
-def heatmap_by_terms(data, terms, color_labels, colors=None,
+def get_sig_annotations(arr, dat, columns, index):
+    # Have to rank by column for this to work
+    if 'significant' in dat.columns:
+        tmp2 = dat.pivoter(False, columns=columns, index=index,
+                           values='significant', fill_value=0,
+                           min_sig=False)
+        tmp2 = tmp2.reindex(arr.index)
+        tmp2[tmp2 > 0] = True
+        tmp2 = tmp2.replace(False, '')
+        tmp2 = tmp2.replace(True, '+')
+        return True, tmp2.values, ''
+    else:
+        print("To annotate please add a significant_flag column to data")
+        return False, None, None
+
+
+def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
                      convert_to_log=False, y_tick_labels='auto',
-                     columns='sample_id', index='term_name', cluster_col=False,
-                     values='combined_score', div_colors=False, num_colors=7,
-                     fig_size=(6, 4), annotate_sig=False):
+                     columns='sample_id', index='identifier',
+                     values='fold_change', linewidths=0,
+                     cluster_col=False, div_colors=False, num_colors=7,
+                     figsize=(6, 4), annotate_sig=False):
     # pivot datatable
     array = data.pivoter(convert_to_log, columns=columns, index=index,
-                         fill_value=0.0, values=values)
+                         fill_value=0.0, values=values, min_sig=min_sig)
 
     if colors is None:
-        colors = sns.color_palette("Dark2", len(terms))
+        colors = sns.color_palette("Paired", n_colors=len(color_labels))
     vals = set(array.index.values)
     final_sorted = sorted(terms[0].intersection(vals))
     added = set(final_sorted)
     # create colors for each
     row_colors = [colors[0] for _ in added]
 
-    for term, color in zip(terms, colors):
+    to_remove = set()
+    for term, color, cname in zip(terms[1:], colors[1:], color_labels[1:]):
+        added_any = False
         for i in sorted(term.intersection(vals)):
             if i not in added:
+                added_any = True
                 row_colors.append(color)
                 final_sorted.append(i)
                 added.add(i)
+        if not added_any:
+            to_remove.add(cname)
+
+    add_col_group = True
+    col_colors = None
+    if add_col_group:
+        col_color_labels = array.columns.levels[0]
+        col_labels = list(array.columns.levels[1])
+        colors2 = sns.color_palette("Dark2", len(col_color_labels))
+        col_colors = [colors2[i] for i in array.columns.labels[0]]
+        array.columns = [col_labels[i] for i in array.columns.labels[1]]
 
     # only keep indexes that are in the provided sets
     array = array[array.index.isin(final_sorted)]
@@ -239,41 +289,46 @@ def heatmap_by_terms(data, terms, color_labels, colors=None,
     # resort according to color
     array = array.reindex(final_sorted)
 
-    labels = None
-    fmt = None
-
     if annotate_sig:
-        annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                             columns,
-                                                             index)
+        annotate_sig, annots, fmt = \
+            get_sig_annotations(array, data, columns, index)
+    else:
+        annots, fmt = None, None
 
     if div_colors:
         pal = sns.color_palette("coolwarm", num_colors)
         center = 0
     else:
-        pal = sns.light_palette("red", as_cmap=True)
+        pal = sns.light_palette("red", n_colors=len(terms), as_cmap=True)
         center = None
 
     fig = sns.clustermap(array,
                          yticklabels=y_tick_labels,
                          row_colors=row_colors,
-                         figsize=fig_size,
+                         col_colors=col_colors,
+                         figsize=figsize,
                          col_cluster=cluster_col,
                          row_cluster=False,
                          center=center,
                          cmap=pal,
-                         annot=labels, fmt=fmt
+                         linewidths=linewidths,
+                         annot=annots, fmt=fmt,
                          )
     for color, label in zip(colors, color_labels):
-        fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
-    fig.ax_col_dendrogram.legend(loc="center", ncol=6)
+        if label in to_remove:
+            continue
+        fig.ax_row_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
+    fig.ax_row_dendrogram.legend(loc=0, ncol=1)
+
+    if add_col_group:
+        fig = _add_column_color_groups(data, fig, colors2, col_color_labels)
 
     return fig
 
 
-def cluster_distance_mat(dist_mat, names, fig_size=(8, 8)):
+def cluster_distance_mat(dist_mat, names, figsize=(8, 8)):
     # Compute and plot first dendrogram.
-    fig = plt.figure(figsize=fig_size)
+    fig = plt.figure(figsize=figsize)
 
     # Compute and plot second dendrogram.
     ax2 = fig.add_axes([0.3, 0.71, 0.6, 0.2])
@@ -316,17 +371,3 @@ def cluster_distance_mat(dist_mat, names, fig_size=(8, 8)):
     return fig
 
 
-def get_sig_annotations(arr, dat, columns, index):
-    # Have to rank by column for this to work
-    if 'significant' in dat.columns:
-        tmp2 = dat.pivoter(False, columns=columns, index=index,
-                           values='significant', fill_value=0,
-                           min_sig=False)
-        tmp2 = tmp2.reindex(arr.index)
-        tmp2[tmp2 > 0] = True
-        tmp2 = tmp2.replace(False, '')
-        tmp2 = tmp2.replace(True, '*')
-        return True, tmp2.values, ''
-    else:
-        print("To annotate please add a significant_flag column to data")
-        return False, None, None

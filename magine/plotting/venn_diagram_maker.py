@@ -28,7 +28,8 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
     set3 = set(list3)
     v = _venn3([set1, set2, set3], ('%s(%s)' % (label1, str(len(set1))),
                                     '%s(%s)' % (label2, str(len(set2))),
-                                    '%s(%s)' % (label3, str(len(set3)))))
+                                    '%s(%s)' % (label3, str(len(set3)))),
+               set_colors=('g', 'r', 'b'))
     plt.tight_layout()
     if title is not None:
         plt.title(title)

@@ -56,6 +56,8 @@ class Sample(Data):
         super(Sample, self).__init__(*args, **kwargs)
         self._index = identifier
         self._identifier = identifier
+        self._value_name = fold_change
+        self._sample_id_name = sample_id
         self._label = label
         self._up = None
         self._down = None
@@ -159,7 +161,76 @@ class Sample(Data):
                                   x_range=x_range, y_range=y_range)
         return fig
 
-    def plot_species(self, species_list, save_name, out_dir=None, title=None,
+    def volcano_by_sample(self, save_name=None, p_value=0.1,
+                          out_dir=None, fold_change_cutoff=1.5, y_range=None,
+                          x_range=None, sig_column=False):
+        """
+        Creates a figure of subplots of provided experimental method
+
+        Parameters
+        ----------
+        save_name: str
+            name to save figure
+        out_dir: str, directory
+            Location to save figure
+        sig_column: bool, optional
+            If to use significant flags of data
+        p_value: float, optional
+            Criteria for significant
+        fold_change_cutoff: float, optional
+            Criteria for significant
+        y_range: array_like
+            upper and lower bounds of plot in y direction
+        x_range: array_like
+            upper and lower bounds of plot in x direction
+
+        Returns
+        -------
+
+        """
+
+        data = self.copy()
+        n_sample = np.sort(data[sample_id].unique())
+
+        if len(n_sample) > 8:
+            n_cols = 3
+        else:
+            n_cols = 2
+        n_rows = np.rint(np.rint(len(n_sample) / float(n_cols)))
+        if n_cols * n_rows < len(n_sample):
+            if n_cols >= n_rows:
+                n_rows += 1
+            else:
+                n_cols += 1
+
+        fig = plt.figure(figsize=(4 * n_rows, 3 * n_cols))
+        for n, i in enumerate(n_sample):
+            sample = data[data[sample_id] == i].copy()
+
+            sample = sample.dropna(subset=[p_val])
+            sample = sample[np.isfinite(sample[fold_change])]
+            sample = sample.dropna(subset=[fold_change])
+            sec_0, sec_1, sec_2 = v_plot.create_mask(sample, sig_column,
+                                                     p_value,
+                                                     fold_change_cutoff)
+
+            ax = fig.add_subplot(n_rows, n_cols, n + 1)
+            ax.set_title(i)
+            v_plot.add_volcano_plot(ax, sec_0, sec_1, sec_2)
+            if not sig_column:
+                fc = np.log2(fold_change_cutoff)
+                log_p_val = -1 * np.log10(p_value)
+                ax.axvline(x=fc, linestyle='--')
+                ax.axvline(x=-1 * fc, linestyle='--')
+                ax.axhline(y=log_p_val, linestyle='--')
+            if y_range is not None:
+                ax.set_ylim(y_range[0], y_range[1])
+            if x_range is not None:
+                ax.set_xlim(x_range[0], x_range[1])
+        if save_name is not None:
+            v_plot.save_plot(fig, save_name=save_name, out_dir=out_dir)
+
+    def plot_species(self, species_list, save_name=None, out_dir=None, title=None,
                      plot_type='plotly', image_format='png'):
         """
         Creates an HTML table of plots provided a list metabolites
@@ -212,6 +283,45 @@ class Sample(Data):
         plot_dataframe(self, html_filename=html_file_name,
                        out_dir=out_dir, plot_type=plot_type,
                        run_parallel=run_parallel)
+
+    def create_histogram_measurements(self, save_name=None,
+                                      y_range=None, out_dir=None):
+        """
+        Plots a histogram of data
+
+        Parameters
+        ----------
+        save_name: str
+            Name of figure
+        out_dir: str, path
+            Path to location to save figure
+        y_range: array_like
+            range of data
+
+
+        Returns
+        -------
+
+        """
+        data = self.copy()
+        data = data.dropna(subset=[p_val])
+        data = data[np.isfinite(data[fold_change])]
+        data = data.dropna(subset=[fold_change])
+
+        tmp = np.array(log2_normalize_df(data, fold_change)[fold_change])
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax.hist(tmp, 50, color='gray')
+        if y_range is not None:
+            plt.xlim(y_range[0], y_range[1])
+
+        ax.set_yscale('log', basey=10)
+        ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
+        ax.set_ylabel('Count', fontsize=16)
+        if save_name is not None:
+            v_plot.save_plot(fig, save_name, out_dir)
+        return fig
 
 
 class ExperimentalData(object):
@@ -699,7 +809,7 @@ def _write_to_latex(pd_table, save_name):
 
     with open(filename, 'wt') as f:
         st = pd_table.to_latex(
-            column_format='*{{{}}}{{c}}'.format(str(pd_table.shape[0] + 2)))
+            column_format='*{{{}}}{{c}}'.format(str(pd_table.shape[1] + 2)))
         f.write(template.format(st))
 
     if _which('pdflatex'):

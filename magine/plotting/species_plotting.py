@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pathos.multiprocessing as mp
 import plotly.graph_objs as plotly_graph
-from plotly.offline import plot
+import seaborn as sns
+from plotly.offline import plot, iplot, init_notebook_mode
 
 import magine.html_templates.html_tools as ht
 from magine.data.tools import log2_normalize_df
@@ -289,8 +290,7 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
 
     n_plots = len(ldf[identifier].unique())
     num_colors = len(ldf[label_col].unique())
-    color_list = [cm(1. * i / num_colors) for i in range(num_colors)]
-
+    color_list = sns.color_palette("tab20", num_colors)
     if plot_type == 'matplotlib':
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -338,24 +338,34 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
                     index_counter += 1
                     total_counter += 1
                     plotly.append(_ploty_graph(x_index[s_flag], y[s_flag],
-                                                    n, n, c,
-                                                    marker='x-open-dot'))
+                                               n, n, c, marker='x-open-dot'))
         names_list.append([name, index_counter])
     if plot_type == 'matplotlib':
-        _save_mpl_output(ax, save_name, out_dir, image_format, x_point_dict,
-                         x_points)
+        lgd = _format_mpl(ax, x_point_dict, x_points)
+        if save_name is not None:
+            tmp_savename = "{}.{}".format(save_name, image_format)
+            if out_dir is not None:
+                tmp_savename = os.path.join(out_dir, tmp_savename)
+
+            plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
+                        bbox_inches='tight')
+
         if close_plots:
             plt.close(fig)
         else:
             return fig
 
     elif plot_type == 'plotly':
-        _save_ploty_output(out_dir, save_name, total_counter, n_plots,
-                           names_list, x_point_dict, title, x_points, plotly)
+        fig = _create_plotly(total_counter, n_plots, names_list, x_point_dict,
+                             title, x_points, plotly)
+        if save_name:
+            _save_ploty_output(fig, out_dir, save_name)
+        else:
+            init_notebook_mode()
+            return iplot(fig)
 
 
-def _save_mpl_output(ax, save_name, out_dir, image_format, x_point_dict,
-                     x_points, ):
+def _format_mpl(ax, x_point_dict, x_points):
     ax.set_xlim(min(x_point_dict.values()) - 2, max(x_point_dict.values()) + 2)
     ax.set_xticks(sorted(x_point_dict.values()))
     ax.set_xticklabels(x_points, rotation=90)
@@ -368,16 +378,11 @@ def _save_mpl_output(ax, save_name, out_dir, image_format, x_point_dict,
     lgd = ax.legend(handles, labels, loc='best', ncol=3,
                     bbox_to_anchor=(1.01, 1.0))
 
-    tmp_savename = "{}.{}".format(save_name, image_format)
-    if out_dir is not None:
-        tmp_savename = os.path.join(out_dir, tmp_savename)
-
-    plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
-                bbox_inches='tight')
+    return lgd
 
 
-def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
-                       x_point_dict, title, x_points, plotly_list):
+def _create_plotly(total_counter, n_plots, names_list,
+                   x_point_dict, title, x_points, plotly_list):
     true_list = [True] * total_counter
     scroll_list = [dict(args=['visible', true_list],
                         label='All',
@@ -416,7 +421,10 @@ def _save_ploty_output(out_dir, save_name, total_counter, n_plots, names_list,
         updatemenus=update_menu
     )
 
-    fig = plotly_graph.Figure(data=plotly_list, layout=layout)
+    return plotly_graph.Figure(data=plotly_list, layout=layout)
+
+
+def _save_ploty_output(fig, out_dir, save_name):
     tmp_savename = "{}.html".format(save_name)
     if out_dir is not None:
         tmp_savename = os.path.join(out_dir, tmp_savename)

@@ -31,6 +31,9 @@ class EnrichmentResult(Data):
     def __init__(self, *args, **kwargs):
         super(EnrichmentResult, self).__init__(*args, **kwargs)
         self._index = 'term_name'
+        self._identifier = 'term_name'
+        self._value_name = 'combined_score'
+        self._sample_id_name = 'sample_id'
 
     @property
     def _constructor(self):
@@ -291,12 +294,12 @@ class EnrichmentResult(Data):
 
         return to_keep
 
-    def dist_matrix(self, fig_size=(8, 8), level='dataframe'):
+    def dist_matrix(self, figsize=(8, 8), level='dataframe'):
         """ Create a distance matrix of all term similarity
 
         Parameters
         ----------
-        fig_size : tuple
+        figsize : tuple
             Size of figure
         level : str, {'dataframe', 'each'}
             How to treats term_name to genes. Dataframe compresses all genes
@@ -309,7 +312,7 @@ class EnrichmentResult(Data):
 
         """
         mat, names = self.calc_dist(level)
-        return cluster_distance_mat(mat, names, fig_size)
+        return cluster_distance_mat(mat, names, figsize)
 
     def calc_dist(self, level='datafame'):
         if level == 'each':
