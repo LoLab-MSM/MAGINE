@@ -249,7 +249,7 @@ class Enrichr(object):
 
         response = requests.post(self._url + '/addList', files=payload)
         if not response.ok:
-            raise Exception('Error analyzing gene list')
+            raise Exception('Error analyzing gene list', response.ok)
 
         data = json.loads(response.text)
         return data['userListId']
