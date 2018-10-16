@@ -7,7 +7,6 @@ omit =
     build/lib/magine/networks/visualization/cytoscape_view.py
     build/lib/magine/networks/correlation_networks/*
     build/lib/magine/networks/dev_tools.py
-    build/lib/magine/data/formatter.py
     build/lib/magine/mappings/databases/pubchem.py
     build/lib/magine/tests/*
 [report]

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     import time
 
     st = time.time()
-    # download_id_mapping()
+    download_id_mapping()
     download_network_dbs()
     et = time.time()
     print(et - st)

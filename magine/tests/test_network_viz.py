@@ -31,8 +31,8 @@ def test_mpl():
     for i in ['circular_layout', 'random_layout', 'shell_layout',
               'spring_layout', 'spectral_layout',  # 'dot', 'neato', 'fdp',
               'fruchterman_reingold_layout']:
-        render_mpl(g, i)
-    plt.close()
+        fig = render_mpl(g, i)
+        plt.close()
 
 
 if __name__ == '__main__':

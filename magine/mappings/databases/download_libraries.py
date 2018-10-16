@@ -1,5 +1,5 @@
-
 import os
+import xml.etree.ElementTree as ElementTree
 import zipfile
 from xml.etree import cElementTree as ElementTree
 
@@ -54,16 +54,13 @@ def download_uniprot(species='hsa'):
 
 
     """
-    print("Downloading from Uniprot. This might take awhile depending on "
-          "connection speed.")
-
     _url_h = 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/idmapping/by_organism/{}'
 
     if species == 'hsa':
         url = _url_h.format('HUMAN_9606_idmapping.dat.gz')
     else:
         raise ValueError("Currently only implemented human uniprot. "
-                   "Please contain us for additional databases")
+                         "Please contact us for additional databases")
 
     columns = ['uniprot', 'mapping_type', 'mapping']
 
@@ -89,7 +86,8 @@ def download_uniprot(species='hsa'):
                           'PeroxiBase', 'PharmGKB', 'REBASE', 'Reactome',
                           'RefSeq', 'RefSeq_NT', 'STRING', 'SwissLipids',
                           'TCDB', 'TreeFam', 'UCSC', 'UniGene', 'UniParc',
-                          'UniPathway', 'UniProtKB-ID', 'UniRef100', 'UniRef50',
+                          'UniPathway', 'UniProtKB-ID', 'UniRef100',
+                          'UniRef50',
                           'UniRef90', 'eggNOG', 'neXtProt']
 
     outfile = os.path.join(id_mapping_dir, 'human_uniprot.csv.gz')
@@ -110,10 +108,12 @@ def download_hgnc():
 
     columns = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name', 'location',
                'entrez_id', 'ucsc_id', 'vega_id', 'alias_name', 'alias_symbol',
-               'status', 'gene_family', 'gene_family_id', 'ena', 'iuphar', 'cd',
+               'status', 'gene_family', 'gene_family_id', 'ena', 'iuphar',
+               'cd',
                'refseq_accession', 'ccds_id', 'pubmed_id', 'mgd_id', 'rgd_id',
-               'lsdb', 'bioparadigms_slc', 'enzyme_id',  'merops', 'horde_id',
-               'pseudogene.org', 'cosmic', 'rna_central_ids', 'omim_id', 'imgt',
+               'lsdb', 'bioparadigms_slc', 'enzyme_id', 'merops', 'horde_id',
+               'pseudogene.org', 'cosmic', 'rna_central_ids', 'omim_id',
+               'imgt',
                'intermediate_filament_db',
                ]
     return _download(url, columns, 'hgnc')
@@ -160,54 +160,65 @@ class HMDB(object):
         self.tmp_dir = id_mapping_dir
         self.target_file = 'hmdb_metabolites.zip'
         self.out_name = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
-        self._setup()
 
     def load_db(self):
+        if not os.path.exists(self.out_name):
+            self.download_db()
         df = pd.read_csv(self.out_name, low_memory=False)
         return df
 
-    def _setup(self):
+    def download_db(self):
         """ parse HMDB to Pandas.DataFrame
 
         """
         out_dir = os.path.join(self.tmp_dir, 'HMDB')
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
+
         if len(os.listdir(out_dir)) == 0:
             self._unzip_hmdb(out_dir)
 
-        count = 0
+        # count = 0
 
         print("Parsing metabolites information from files")
-        tmp_all = [None] * 1000000
+        # tmp_all = [None] * 1000000
         for i in os.listdir(out_dir):
-            filename = os.path.join(out_dir, i)
+            # turn file into an iteratorET
+            # context = iter(ElementTree.iterparse(os.path.join(out_dir, i),
+            #                                      events=("start-ns", "end")))
+            #
+            # # get the root element
+            # _, _ = next(context)
+            # # ElementTree.Element.keys()
+            # for ev, e in context:
+            #     if e.tag == '{http://www.hmdb.ca}metabolite' and ev == 'end':
+            #         tmp_all[count] = self._create_dict(e)
+            #         count += 1
+            #         # if count == 100:
+            #         #     break
 
-            # get an iterable
-            context = ElementTree.iterparse(filename, events=("start", "end"))
+            context = iter(ElementTree.iterparse(os.path.join(out_dir, i),
+                                                 events=("start", "end")))
+            #
+            # # get the root element
+            _, _ = next(context)
+            tmp_all = [
+                self._create_dict(e) for ev, e in context
+                if e.tag == '{http://www.hmdb.ca}metabolite' and ev == 'end'
+            ]
+        # if count > 1000000:
+        #     print("Need to allocate more space for HMDB data")
+        # df = pd.DataFrame(tmp_all[:count])
+        df = pd.DataFrame(tmp_all)
 
-            # turn it into an iterator
-            context = iter(context)
+        for i in categories:
+            if i in df.columns:
+                df[i.split('}')[1]] = df[i]
+                del df[i]
+        print(df.head(10))
+        for i in df.columns:
+            print(i, df[i].head(10))
 
-            # get the root element
-            event, root = next(context)
-            for event, elem in context:
-
-                if '}' in elem.tag:
-                    elem.tag = elem.tag.split('}', 1)[1]
-                if elem.tag == 'metabolite' and event == 'end':
-                    # """
-
-                    # if count > 10000:
-                    #     break
-                    # """
-                    template = self._create_dict(elem)
-                    tmp_all[count] = template
-                    count += 1
-                    elem.clear()
-                    root.clear()
-
-        df = pd.DataFrame(tmp_all[:count], columns=template.keys())
         df.to_csv(self.out_name, index=False, encoding='utf-8',
                   compression='gzip', tupleize_cols=True)
         print("Done processing HMDB")
@@ -229,12 +240,12 @@ class HMDB(object):
         """ Downloads hmdb metabolites xml file
         """
 
-        hmdb_db_url = 'http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip'
+        ur = 'http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip'
 
         out_path = os.path.join(self.tmp_dir, self.target_file)
 
-        r = requests.get(hmdb_db_url, stream=True)
-        response = requests.head(hmdb_db_url)
+        r = requests.get(ur, stream=True)
+        response = requests.head(ur)
         file_size = int(response.headers['content-length'])
         print("Downloading metabolites information from HMDB")
         print("File size is : %s Bytes: %s" % (self.target_file, file_size))
@@ -248,7 +259,7 @@ class HMDB(object):
             for chunk in r.iter_content(chunk_size=block_sz):
                 file_size_dl += len(chunk)
                 percent_download = int(
-                        np.floor(file_size_dl * 100. / file_size))
+                    np.floor(file_size_dl * 100. / file_size))
 
                 if percent_download in milestone_markers:
                     if percent_download not in v:
@@ -257,74 +268,61 @@ class HMDB(object):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
 
-        print("Downloaded {} and stored {}".format(hmdb_db_url, out_path))
+        print("Downloaded {} and stored {}".format(ur, out_path))
         return
 
     @staticmethod
     def _create_dict(elem):
-        categories = ['kegg_id', 'name', 'accession', 'chebi_id',
-                      'chemspider_id',
-                      'biocyc_id', 'synonyms', 'pubchem_compound_id',
-                      'protein_associations', 'inchikey', 'iupac_name',
-                      'ontology', 'drugbank_id', 'chemical_formula', 'smiles',
-                      'metlin_id', 'average_molecular_weight',
-                      'secondary_accessions',
-                      # 'normal_concentrations',
-                      # 'molecular_framework'
-                      #  'pathways',
-                      ]
         template = {}
         for i in categories:
             n = elem.find(i)
-            if i == 'protein_associations':
+            if n is None:
+                print(i)
+                continue
+            if i == '{http://www.hmdb.ca}protein_associations':
                 output = []
-                for pr in n.findall('protein'):
-                    for gn in pr.findall('gene_name'):
-                        gene_name = gn.text
-                        if gene_name is not None:
-                            output.append(gene_name)
-                template[i] = '|'.join(i for i in output)
-            elif i == 'synonyms':
-                output = []
-                for pr in n.findall('synonym'):
-                    output.append(pr.text)
-                template[i] = '|'.join(i for i in output)
-            elif i == 'ontology':
-                bf_all = []
-                cl_all = []
-                for pr in n.findall('biofunctions'):
-                    for bf in pr.findall('biofunction'):
-                        bf_text = bf.text
-                        if bf_text is not None:
-                            bf_all.append(bf_text)
-                template['biofunction'] = '|'.join(i for i in bf_all)
-                for pr in n.findall('cellular_locations'):
-                    for cl in pr.findall('cellular_location'):
-                        cl_text = cl.text
-                        if cl_text is not None:
-                            cl_all.append(cl.text)
-                template['cellular_locations'] = '|'.join(i for i in cl_all)
-            elif i == 'secondary_accessions':
-                accession = n.findall('accession')
+                for pr in n.findall('{http://www.hmdb.ca}protein'):
+                    for gn in pr.findall('{http://www.hmdb.ca}gene_name'):
+                        if gn.text is not None:
+                            output.append(gn.text)
+                template[i] = '|'.join(output)
+
+            elif i == '{http://www.hmdb.ca}synonyms':
+                template[i] = '|'.join(
+                    [p.text for p in n.findall('{http://www.hmdb.ca}synonym')]
+                )
+
+            elif i == '{http://www.hmdb.ca}secondary_accessions':
+                accession = n.findall('{http://www.hmdb.ca}accession')
                 if len(accession) == 0:
                     accession = ''
                 else:
-                    accessions = [acc.text for acc in accession]
-                    accession = '|'.join(acc for acc in sorted(accessions))
+                    accession = '|'.join(sorted([a.text for a in accession]))
                 template[i] = accession
+
             else:
-                output = n.text
-                if output is not None:
-                    output = output
-                    # output = output.encode('utf-8')
-                template[i] = output
+                template[i] = n.text
+        elem.clear()
         return template
 
 
+categories = ['kegg_id', 'name', 'accession', 'chebi_id',
+              'chemspider_id', 'biocyc_id', 'synonyms',
+              'pubchem_compound_id', 'protein_associations',
+              'inchikey', 'iupac_name', 'drugbank_id',
+              'chemical_formula', 'smiles', 'metlin_id',
+              'average_molecular_weight', 'secondary_accessions',
+              # 'normal_concentrations',
+              # 'molecular_framework'
+              #  'pathways',
+              ]
+
+categories = ['{http://www.hmdb.ca}' + i for i in categories]
+
 if __name__ == '__main__':
     # download_hgnc()
-    download_uniprot('acibt')
-    # hm = HMDB()
+    # download_uniprot('acibt')
+    HMDB().download_db()
 
     # end = time.time()
     # st = time.time()
