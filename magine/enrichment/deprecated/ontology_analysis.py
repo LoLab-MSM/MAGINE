@@ -258,7 +258,7 @@ class GoAnalysis(object):
         """
         if out_dir is None:
             out_dir = self.out_dir
-        print("Data", self.data)
+        print("BaseData", self.data)
         print("exp_data", self.exp_data)
         write_table_to_html_with_figures(
                 self.data, self.exp_data, save_name, out_dir=out_dir,

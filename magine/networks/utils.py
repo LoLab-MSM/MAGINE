@@ -321,9 +321,10 @@ def remove_isolated_nodes(net):
     """
     to_remove = set()
     for i in net.nodes:
-        if len(net.predecessors(i)) == 0 and len(net.successors(i)) == 0:
+        if len(list(net.predecessors(i))) == 0 and \
+                len(list(net.successors(i))) == 0:
             to_remove.add(i)
-        net.remove_nodes_from(to_remove)
+    net.remove_nodes_from(to_remove)
 
 
 def _add_nodes(old_network, new_network):

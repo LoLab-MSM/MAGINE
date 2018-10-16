@@ -74,7 +74,7 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
                       exp_data=None, run_parallel=False, plot_type='plotly'):
     """ Creates a figure for each GO term in data
 
-    Data should be a result of running calculate_enrichment.
+    BaseData should be a result of running calculate_enrichment.
     This function creates a plot of all proteins per term if a term is
     significant and the number of the reference set is larger than 5 and
     the total number of species measured is less than 100.
@@ -176,7 +176,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
     Parameters
     ----------
-    exp_data : magine.Data.
+    exp_data : magine.BaseData.
     html_filename : str
     out_dir: str, path
         Directory that will contain all proteins

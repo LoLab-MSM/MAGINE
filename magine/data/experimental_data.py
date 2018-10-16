@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from pandas.plotting import table
 
-import magine.plotting.volcano_plots as v_plot
-from magine.data import Data
+from magine.data.base import BaseData
 from magine.data.tools import log2_normalize_df
+from magine.plotting import volcano_plots as v_plot
 from magine.plotting.species_plotting import plot_dataframe, plot_species
 
 # pandas.set_option('display.max_colwidth', -1)
@@ -48,7 +48,7 @@ def load_data_csv(file_name, **kwargs):
     return ExperimentalData(df)
 
 
-class Sample(Data):
+class Sample(BaseData):
     """ Provides tools for subsets of data types
 
     """
@@ -349,7 +349,7 @@ class ExperimentalData(object):
             if i not in df.dtypes:
                 print("{} not in columns.".format(i))
 
-        self.data = Data(df)
+        self.data = BaseData(df)
         self._index = 'identifier'
         self.__proteins = None
         self.__genes = None

@@ -4,7 +4,7 @@ from itertools import combinations
 import numpy as np
 import pandas as pd
 
-from magine.data import Data
+from magine.data.base import BaseData
 from magine.plotting.heatmaps import cluster_distance_mat
 
 
@@ -26,7 +26,7 @@ def load_enrichment_csv(file_name, **args):
     return EnrichmentResult(d)
 
 
-class EnrichmentResult(Data):
+class EnrichmentResult(BaseData):
 
     def __init__(self, *args, **kwargs):
         super(EnrichmentResult, self).__init__(*args, **kwargs)

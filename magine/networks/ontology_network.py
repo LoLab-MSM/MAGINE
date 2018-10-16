@@ -167,7 +167,11 @@ class OntologyNetworkGenerator(object):
             x = self.network.subgraph(nodes).copy()
 
             mol_net.add_edges_from(list(x.edges(data=True)))
-        exp_net = self.network.subgraph(mol_net.nodes)
+
+        # addes missing edges between that maybe absent due to threshold, want
+        # to keep in network
+        for i, j, d in self.network.subgraph(mol_net.nodes).edges(data=True):
+            mol_net.add_edge(i, j, **d)
 
         for i in mol_net.nodes:
             labels = gene_to_label[i]
@@ -176,21 +180,18 @@ class OntologyNetworkGenerator(object):
                 'len(labels) should equal len(terms)'
             mol_net.node[i]['termName'] = ','.join(sorted(labels))
             mol_net.node[i]['terms'] = ','.join(sorted(terms))
-            exp_net.node[i]['termName'] = ','.join(sorted(labels))
-            exp_net.node[i]['terms'] = ','.join(sorted(terms))
 
         self.molecular_network = mol_net
         if save_name is not None:
             if out_dir is not None:
                 save_name = os.path.join(out_path, save_name)
-            out_name = '{}_subgraph.gml'.format(save_name)
-            nx.write_gml(mol_net, out_name)
+            nx.write_gml(mol_net, '{}_subgraph.gml'.format(save_name))
             nx.write_gml(go_graph, '{}.gml'.format(save_name))
 
             if draw:
                 export_to_dot(go_graph, save_name)
                 render_igraph(mol_net, save_name + '_subgraph_igraph')
-        return go_graph, exp_net
+        return go_graph, mol_net
 
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,

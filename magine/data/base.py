@@ -4,15 +4,15 @@ import pandas as pd
 from magine.plotting.heatmaps import heatmap_from_array
 
 
-class Data(pd.DataFrame):
+class BaseData(pd.DataFrame):
     _index = None
 
     def __init__(self, *args, **kwargs):
-        super(Data, self).__init__(*args, **kwargs)
+        super(BaseData, self).__init__(*args, **kwargs)
 
     @property
     def _constructor(self):
-        return Data
+        return BaseData
 
     def pivoter(self, convert_to_log, columns, values, index=None,
                 fill_value=None, min_sig=0):
@@ -83,7 +83,7 @@ class Data(pd.DataFrame):
 
         Returns
         -------
-        new_data : Data
+        new_data : BaseData
         """
         if index is None:
             index = self._index

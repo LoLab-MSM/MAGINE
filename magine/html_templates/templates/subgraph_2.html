@@ -53,7 +53,7 @@
 
                 });
 
-                cy.on('tap', function (evt) {
+                cy.on('tap', 'node', function (evt) {
                     var ele = evt.target;
                     if (ele.data()['tip']['state']['visible']) {
                         ele.data()['tip'].hide();

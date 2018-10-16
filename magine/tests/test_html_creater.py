@@ -23,7 +23,7 @@ def test_filter():
 """
 def test_create_plots_per_go():
     dirname = os.path.join(os.path.dirname(__file__),
-                           'Data', 'proteomics_up_enrichment_array.csv')
+                           'BaseData', 'proteomics_up_enrichment_array.csv')
 
     html_tools.write_table_to_html_with_figures(dirname, exp_data,
                                                 out_dir='DEL',
