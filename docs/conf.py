@@ -37,9 +37,17 @@ sys.path.append(os.path.abspath('..'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest', 'sphinx.ext.coverage',
-              'sphinx.ext.imgmath', 'sphinx.ext.ifconfig', 'numpydoc',
-              'sphinx.ext.viewcode', 'sphinx.ext.autosummary']
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.doctest',
+    'sphinx.ext.coverage',
+    'sphinx.ext.imgmath',
+    'sphinx.ext.ifconfig',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.autosummary',
+    'sphinx.ext.todo',
+    'numpydoc',
+]
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
@@ -92,6 +100,9 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
 
                 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
                 'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
+                'statsmodels',
+                'statsmodels.stats',
+                'statsmodels.stats.multitest',
                 ]
 
 for mod_name in MOCK_MODULES:
