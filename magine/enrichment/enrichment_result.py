@@ -157,12 +157,17 @@ class EnrichmentResult(BaseData):
         else:
             return df
 
-    def find_similar_terms(self, term):
+    def find_similar_terms(self, term, level='sample', remove_subset=True):
         """ Calculates similarity of all other terms to given term
 
         Parameters
         ----------
         term : str
+        level : str
+            Sample or dataframe level, flattens all terms to one set of genes
+        remove_subset : bool
+            If any term is a subset of the other term, a score of 1 will be
+            used instead of jaccard index.
 
 
         Returns
@@ -170,13 +175,19 @@ class EnrichmentResult(BaseData):
         pd.DataFrame
         """
 
-        rest_of_df = self[~(self['term_name'] == term)]
+        rest_of_df = self[~(self['term_name'] == term)].copy()
         first_genes = self.term_to_genes(term)
-        array = rest_of_df[['term_name', 'genes']].values
-        dist_m = [None] * len(array)
-        for n, index in enumerate(array):
-            dist_m[n] = [index[0], jaccard_index(first_genes,
-                                                 set(index[1].split(',')))]
+
+        if level == 'dataframe':
+            vals = [[i, self.term_to_genes(i)] for i in
+                    rest_of_df['term_name'].unique()]
+        else:
+            vals = [[i, j.split(',')] for i, j in
+                    rest_of_df[['term_name', 'genes']].values]
+
+        dist_m = [[i, jaccard_index(first_genes, j, remove_subset)]
+                  for i, j in vals]
+
 
         df = pd.DataFrame(dist_m, columns=['term_name', 'similarity_score'])
         df.sort_values('similarity_score', inplace=True, ascending=False)
@@ -347,7 +358,7 @@ def _score(vals):
     return jaccard_index(vals[0], vals[1])
 
 
-def jaccard_index(set1, set2):
+def jaccard_index(set1, set2, remove_subset=True):
     """
     Computes the similarity between two sets.
         https://en.wikipedia.org/wiki/Jaccard_index
@@ -356,6 +367,8 @@ def jaccard_index(set1, set2):
     ----------
     set1 : set
     set2 : set
+    remove_subset : bool
+        If a set is a subset of the other, return 1.
 
 
     Returns
@@ -369,6 +382,6 @@ def jaccard_index(set1, set2):
            <https://en.wikipedia.org/wiki/Jaccard_index>`_
     """
     union = len(set1.union(set2))
-    if union == len(set1) or union == len(set2):
-        return 1
+    if union == max(len(set1), len(set2)) and remove_subset:
+        return 1.
     return float(len(set1.intersection(set2))) / union

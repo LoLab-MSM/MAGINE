@@ -1,17 +1,17 @@
-Data management
+BaseData management
 ---------------
 Tools to process data.
 
-magine\.data module
--------------------
+magine\.data\.base
+------------------
 
-.. automodule:: magine.data
+.. automodule:: magine.data.base
    :members:
    :undoc-members:
    :show-inheritance:
 
-magine\.data\.datatypes module
-------------------------------
+magine\.data\.datatypes
+-----------------------
 
 .. automodule:: magine.data.experimental_data
    :members:

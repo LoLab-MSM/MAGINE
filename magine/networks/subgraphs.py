@@ -317,7 +317,13 @@ class Subgraph(object):
         return sg
 
     def expand_neighbors(self, network=None, nodes=None, upstream=False,
-                         downstream=False, max_dist=1, include_only=None):
+                         downstream=False, max_dist=1, include_only=None,
+                         add_interconnecting_edges=False):
+
+        if not upstream and not downstream:
+            print("Must provide upstream=True or downstream=True. "
+                  "Returning None")
+            return None
 
         if network is None:
             new_g = nx.DiGraph()
@@ -345,7 +351,8 @@ class Subgraph(object):
             if network is not None:
                 include_only.update(set(network.nodes()))
             new_g = self._include_only(new_g, include_only)
-
+        if add_interconnecting_edges:
+            new_g = self.network.subgraph(new_g.nodes()).copy()
         return new_g
 
     def upstream_of_node(self, species_1, include_list=None,

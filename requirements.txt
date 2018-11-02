@@ -14,7 +14,7 @@ pathos
 plotly==2.7
 appdirs
 seaborn
-IPython==5.3.0
+IPython>=5.3.0
 jupyter==1.0.0
 wordcloud
 sortedcontainers
