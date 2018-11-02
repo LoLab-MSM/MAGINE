@@ -52,7 +52,9 @@ def render_igraph(mol_net, save_name=None, layout='auto', title=None,
         margin = [50, 50, 50, 50]
 
     _valid_layouts = {
-        "kk", "drl", "lgl", "tree", "graphopt", "mds", "sugiyama", "auto"
+        "kk", "fr", "drl", "lgl", "tree", "graphopt", "mds", "sugiyama",
+    "auto",
+        "grid_fr",
     }
     assert layout in _valid_layouts, \
         'layout {} not in {}'.format(layout, _valid_layouts)
@@ -117,14 +119,15 @@ def render_igraph(mol_net, save_name=None, layout='auto', title=None,
     # have to redraw to add the plot
     plot.redraw()
 
-    if membership is not None:
-        # Grab the surface, construct a drawing context and a TextDrawer
-        ctx = cairo.Context(plot.surface)
-        ctx.set_font_size(36)
-        if title is not None:
-            drawer = TextDrawer(ctx, title, halign=TextDrawer.CENTER)
-            drawer.draw_at(0, 40, width=600)
+    # Grab the surface, construct a drawing context and a TextDrawer
+    ctx = cairo.Context(plot.surface)
+    ctx.set_font_size(36)
 
+    if title is not None:
+        drawer = TextDrawer(ctx, title, halign=TextDrawer.CENTER)
+        drawer.draw_at(0, 40, width=600)
+
+    if membership is not None:
         labels = dict()
         for vertex in g.vs():
             name = vertex['termName'].replace(',', '\n')
@@ -210,6 +213,76 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
                                     margin=[100, 100, 100, 100],
                                     cluster=cluster, title=labels[n],
                                     layout=layout,  # inline=inline
+                                    )
+        if inline:
+            display(Image(s_name))
+        string += ' ' + s_name
+        # yield result
+    string1 = string + '  %s.gif' % save_name
+    string2 = string + '  %s.pdf' % save_name
+
+    if compile_images:
+        os.system(string1)
+        os.system(string2)
+
+
+def color_by_list(graph, species_list, labels, colors, save_name,
+                  compile_images=False, cluster=False, fig_width=1500,
+                  fig_height=1500, layout='auto', inline=False):
+    """
+    Adds color attribute to network over time.
+
+    Parameters
+    ----------
+    compile_images
+    graph : nx.DiGraph
+        Network
+    species_list : list_like
+        List of lists, where the inner list contains the node to add the
+        color
+    labels : list_like
+        List of labels
+    colors : list_like
+        list of colors for each time point
+    save_name : str
+        prefix for images to be saved
+    cluster : bool
+        Group nodes based on category 'term_name'
+    fig_width : int
+        Size of fig
+    fig_height : int
+        Size of fig
+    layout : str
+        Layout format for igraph
+    inline : bool
+        Display figures inline (for ipython/jupyter)
+    Returns
+    -------
+
+    """
+    if inline:
+        from IPython.display import Image, display
+    if isinstance(colors, str):
+        colors = [colors, ] * len(species_list)
+    if len(species_list) != len(colors):
+        print('Length of list'
+              'of data must equal len of color list')
+        return
+
+    string = 'convert -delay 100 '
+    tmp_graph = graph.copy()
+    pos = None
+    for n, i in enumerate(species_list):
+        graph2 = magine.networks.utils.add_attribute_to_network(
+            tmp_graph, i, 'color', colors[n], 'white')
+
+        s_name = '%s_%04i_igraph.png' % (save_name, n)
+        result, pos = render_igraph(graph2, s_name, positions=pos,
+                                    node_size=50,
+                                    bbox=[fig_width, fig_height],
+                                    margin=[100, 100, 100, 100],
+                                    cluster=cluster, title=labels[n],
+                                    layout=layout,
                                     )
         if inline:
             display(Image(s_name))
