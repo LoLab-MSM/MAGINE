@@ -10,7 +10,7 @@ from magine.networks.visualization.igraph_tools import paint_network_overtime, \
     render_igraph
 
 if __name__ == '__main__':
-    e_array = load_enrichment_csv('Data/cisplatin_enrichment.csv.gz',
+    e_array = load_enrichment_csv('BaseData/cisplatin_enrichment.csv.gz',
                                   index_col=0)
 
     reactome_only = e_array.filter_multi(

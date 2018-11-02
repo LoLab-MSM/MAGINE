@@ -1,8 +1,8 @@
-from magine.data.datatypes import ExperimentalData
+from magine.data.experimental_data import ExperimentalData
 from magine.enrichment.enrichr import Enrichr
 from magine.html_templates.html_tools import workflow_template
 from magine.networks.network_generator import build_network
-from magine.plotting.species_plotting import plot_dataframe
+
 
 if __name__ == '__main__':
     data = ExperimentalData('Data/norris_et_al_2017_cisplatin_data.csv.gz')
@@ -12,18 +12,16 @@ if __name__ == '__main__':
     # proteins
     # metabolomics
 
-    plot_dataframe(data.metabolites, 'metabolites', 'metabolites',
-                   type_of_species='metabolites')
+    data.compounds.plot_all('metabolites', 'metabolites')
 
-    plot_dataframe(data.proteins, 'genes', 'protein',
-                   type_of_species='protein')
+    data.proteins.plot_all('genes', 'protein')
 
-    e = Enrichr(exp_data=data)
-    html_1 = e.run_key_dbs(data.proteomics_by_sample_id,
-                           data.proteomics_sample_ids,
+    e = Enrichr()
+    html_1 = e.run_samples(data.proteins.sig.by_sample,
+                           data.proteins.sig.sample_ids,
                            save_name='proteomics_changed', create_html=True)
 
-    html_2 = e.run_key_dbs(data.rna_over_time, data.rna_sample_ids,
+    html_2 = e.run_samples(data.rna.sig.by_sample, data.rna.sig.sample_ids,
                            save_name='rnaseq_changed', create_html=True)
 
     gene_html = 'genes.html'
@@ -44,10 +42,8 @@ if __name__ == '__main__':
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
 
-    quit()
-    build_network(data.list_sig_proteins,
+    build_network(data.species.sig.id_list,
                   save_name='example_network',
-                  all_measured_list=data.list_species,
-                  metabolite_list=data.list_metabolites,
+                  all_measured_list=data.species.id_list,
                   use_reactome=True, use_hmdb=True
                   )

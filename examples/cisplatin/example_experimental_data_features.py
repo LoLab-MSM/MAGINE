@@ -1,8 +1,7 @@
-from magine.data.datatypes import ExperimentalData
+from magine.data.experimental_data import ExperimentalData
 from magine.plotting.venn_diagram_maker import create_venn3
 
-exp_data = ExperimentalData('norris_et_al_2017_cisplatin_data.csv.gz',
-                            data_directory='Data')
+exp_data = ExperimentalData('Data/norris_et_al_2017_cisplatin_data.csv.gz')
 
 exp_data.time_series_volcano(exp_data_type='LF',
                              save_name='LF_volcano',
@@ -13,9 +12,9 @@ exp_data.time_series_volcano(exp_data_type='LF',
 exp_data.create_table_of_data(save_name='cisplatin_data_counts',
                               sig=True)
 
-create_venn3(exp_data.proteomics_by_sample_id[0],
-             exp_data.proteomics_by_sample_id[1],
-             exp_data.proteomics_by_sample_id[2],
+create_venn3(exp_data.proteins.by_sample[0],
+             exp_data.proteins.by_sample[1],
+             exp_data.proteins.by_sample[2],
              '1hr', '24hr', '48hr',
              save_name='protein_over_time'
              )

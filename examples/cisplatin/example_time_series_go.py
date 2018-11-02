@@ -1,7 +1,7 @@
 import networkx as nx
 import pandas as pd
 
-from magine.networks.visualization.notebook_tools import create_subnetwork
+from magine.networks.ontology_network import create_subnetwork
 
 if __name__ == '__main__':
 
@@ -17,9 +17,7 @@ if __name__ == '__main__':
     }
     renamed = df.copy()
     renamed['term_name'] = renamed['term_name'].replace(shorten_names)
-    term_net, mol_net = create_subnetwork(shorten_names.values(), renamed,
-                                          network, 'subgraphs_from_one_hour')
-
-
-
-
+    term_net, mol_net = create_subnetwork(renamed,
+                                          terms=shorten_names.values(),
+                                          network=network,
+                                          save_name='subgraphs_from_one_hour')
