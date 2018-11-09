@@ -5,6 +5,12 @@ import seaborn as sns
 import magine.networks.utils
 from magine.networks.exporters import nx_to_igraph
 
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
+
 
 def render_igraph(mol_net, save_name=None, layout='auto', title=None,
                   positions=None, cluster=False, node_size=50,
@@ -192,7 +198,7 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
                     exp_data.species.sig.by_sample):
         measured_list.append(j)
         labels.append(i)
-    if isinstance(color_list, str):
+    if isinstance(color_list, basestring):
         color_list = [color_list, ] * len(measured_list)
     if len(measured_list) != len(color_list):
         print('Length of list'

@@ -66,8 +66,8 @@ class BaseData(pd.DataFrame):
                               ascending=False, inplace=True)
         return array
 
-    def filter_by_minimum_sig_columns(self, columns, index=None, min_terms=3,
-                                      inplace=False):
+    def filter_by_minimum_sig_columns(self, columns='sample_id', index=None,
+                                      min_terms=3, inplace=False):
         """ Filter index to have at least "min_terms" significant species.
 
         Parameters
@@ -151,7 +151,8 @@ class BaseData(pd.DataFrame):
         else:
             return new_data
 
-    def heatmap(self, convert_to_log=True, y_tick_labels='auto',
+    def heatmap(self, subset_list=None, convert_to_log=True,
+                y_tick_labels='auto',
                 cluster_row=False, cluster_col=False, cluster_by_set=False,
                 index=None, values=None, columns=None,
                 annotate_sig=True, figsize=(8, 12), div_colors=True,
@@ -160,6 +161,8 @@ class BaseData(pd.DataFrame):
 
         Parameters
         ----------
+        subset_list : list
+            List for index to subset
         convert_to_log : bool
             Convert values to log2 scale
         y_tick_labels : str
@@ -193,6 +196,7 @@ class BaseData(pd.DataFrame):
         matplotlib.figure
 
         """
+
         if index is None:
             index = self._identifier
         if values is None:
@@ -200,8 +204,14 @@ class BaseData(pd.DataFrame):
         if columns is None:
             columns = self._sample_id_name
 
+        if subset_list is not None:
+            df_copy = self.copy()
+            df_copy = df_copy.loc[df_copy[index].isin(subset_list)]
+        else:
+            df_copy = self.copy()
         return heatmap_from_array(
-            self, convert_to_log=convert_to_log, y_tick_labels=y_tick_labels,
+            df_copy, convert_to_log=convert_to_log,
+            y_tick_labels=y_tick_labels,
             cluster_row=cluster_row, cluster_col=cluster_col,
             cluster_by_set=cluster_by_set,  figsize=figsize,
             columns=columns, index=index, values=values,
