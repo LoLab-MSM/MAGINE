@@ -7,7 +7,6 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import requests
-
 from py2cytoscape.data.cyrest_client import CyRestClient
 
 IP = 'localhost'
@@ -77,11 +76,7 @@ class RenderModel(object):
         self.cy = CyRestClient()
         self.cy.session.delete()
         self.cy.layout2 = LayoutClient()
-        self.style = None
-        self.edge_name2id = None
-        self.node_name2id = None
-        self.g_cy = None
-        self.view1 = None
+
         for n, (i, j) in enumerate(self.graph.edges()):
             self.graph[i][j]['name'] = '{},{}'.format(i, j)
         self.g_cy = self.cy.network.create_from_networkx(self.graph)
@@ -288,10 +283,11 @@ def name2suid(network, obj_type='node'):
         table = network.get_edge_table()
     else:
         raise ValueError('No such object type: ' + obj_type)
-    name2suid = {}
+    table.reset_index(level=0, inplace=True)
+    name_to_suid = {}
     for suid, name in table[['SUID', 'name']].values:
-        name2suid[name] = suid
-    return name2suid
+        name_to_suid[name] = suid
+    return name_to_suid
 
 
 def trip_photo(im_location, title=None):

@@ -1,3 +1,5 @@
+from itertools import chain
+
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
@@ -251,8 +253,11 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
                      cluster_col=False, div_colors=False, num_colors=7,
                      figsize=(6, 4), annotate_sig=False):
     # pivot datatable
-    array = data.pivoter(convert_to_log, columns=columns, index=index,
-                         fill_value=0.0, values=values, min_sig=min_sig)
+    tmp_d = data.copy()
+    tmp_d = tmp_d.loc[tmp_d.identifier.isin(set(chain.from_iterable(terms)))]
+
+    array = tmp_d.pivoter(convert_to_log, columns=columns, index=index,
+                          fill_value=0.0, values=values, min_sig=min_sig)
 
     if colors is None:
         colors = sns.color_palette("Paired", n_colors=len(color_labels))
@@ -273,8 +278,9 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
                 added.add(i)
         if not added_any:
             to_remove.add(cname)
-
-    add_col_group = True
+    add_col_group = False
+    if isinstance(columns, list) and len(columns) > 1:
+        add_col_group = True
     col_colors = None
     if add_col_group:
         col_color_labels = array.columns.levels[0]
@@ -291,7 +297,7 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
 
     if annotate_sig:
         annotate_sig, annots, fmt = \
-            get_sig_annotations(array, data, columns, index)
+            get_sig_annotations(array, tmp_d, columns, index)
     else:
         annots, fmt = None, None
 
@@ -321,7 +327,7 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
     fig.ax_row_dendrogram.legend(loc=0, ncol=1)
 
     if add_col_group:
-        fig = _add_column_color_groups(data, fig, colors2, col_color_labels)
+        fig = _add_column_color_groups(tmp_d, fig, colors2, col_color_labels)
 
     return fig
 
