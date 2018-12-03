@@ -10,7 +10,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                        columns='sample_id', index='term_name',
                        values='combined_score', div_colors=False, num_colors=7,
                        figsize=(6, 4), rank_index=False, annotate_sig=False,
-                       linewidths=0.0, cluster_by_set=False):
+                       linewidths=0.0, cluster_by_set=False, min_sig=0):
     """
 
     Parameters
@@ -44,13 +44,15 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         Add white line between plots
     cluster_by_set: bool
         Cluster by gene set column. Only works for enrichment_array
-
+    min_sig : int
+        Minimum number of significant 'index' across samples. Can be used to
+        remove rows that are not significant across any sample.
     Returns
     -------
 
     """
     array = data.pivoter(convert_to_log, columns=columns, index=index,
-                         fill_value=0.0, values=values)
+                         fill_value=0.0, values=values, min_sig=min_sig)
     annotations = None
     fmt = None
 

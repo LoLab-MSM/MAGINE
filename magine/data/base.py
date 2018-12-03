@@ -151,18 +151,20 @@ class BaseData(pd.DataFrame):
         else:
             return new_data
 
-    def heatmap(self, subset_list=None, convert_to_log=True,
-                y_tick_labels='auto',
+    def heatmap(self, subset_list=None, subset_index=None,
+                convert_to_log=True, y_tick_labels='auto',
                 cluster_row=False, cluster_col=False, cluster_by_set=False,
                 index=None, values=None, columns=None,
                 annotate_sig=True, figsize=(8, 12), div_colors=True,
-                linewidths=0, num_colors=21, rank_index=False):
+                linewidths=0, num_colors=21, rank_index=False, min_sig=0):
         """ Creates heatmap of data, providing pivot and formatting.
 
         Parameters
         ----------
         subset_list : list
             List for index to subset
+        subset_index : str
+            Index to for subset list to match against
         convert_to_log : bool
             Convert values to log2 scale
         y_tick_labels : str
@@ -190,7 +192,9 @@ class BaseData(pd.DataFrame):
             line width between individual cols and rows
         rank_index : bool
             Rank index alphabetically
-
+        min_sig : int
+            Minimum number of significant 'index' across samples. Can be used to
+            remove rows that are not significant across any sample.
         Returns
         -------
         matplotlib.figure
@@ -203,12 +207,12 @@ class BaseData(pd.DataFrame):
             values = self._value_name
         if columns is None:
             columns = self._sample_id_name
-
+        df_copy = self.copy()
         if subset_list is not None:
-            df_copy = self.copy()
-            df_copy = df_copy.loc[df_copy[index].isin(subset_list)]
-        else:
-            df_copy = self.copy()
+            if subset_index is None:
+                subset_index = index
+            df_copy = df_copy.loc[df_copy[subset_index].isin(subset_list)]
+
         return heatmap_from_array(
             df_copy, convert_to_log=convert_to_log,
             y_tick_labels=y_tick_labels,
@@ -217,5 +221,5 @@ class BaseData(pd.DataFrame):
             columns=columns, index=index, values=values,
             div_colors=div_colors, num_colors=num_colors,
             rank_index=rank_index, annotate_sig=annotate_sig,
-            linewidths=linewidths,
+            linewidths=linewidths, min_sig=min_sig
         )

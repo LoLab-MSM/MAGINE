@@ -50,7 +50,8 @@ class OntologyNetworkGenerator(object):
     def create_network_from_list(self, list_of_ontology_terms,
                                  ont_to_species_dict, ont_to_label_dict,
                                  save_name=None, draw=False, out_dir=None,
-                                 use_threshold=True, use_fdr=False):
+                                 use_threshold=True, use_fdr=False,
+                                 min_edges=0):
         """
         Creates a GO level network from list of GO terms
 
@@ -99,7 +100,11 @@ class OntologyNetworkGenerator(object):
 
         list_of_go_terms = set(list_of_ontology_terms)
 
-        n_edges = float(len(self.edges))
+        dd = nx.out_degree_centrality(self.network)
+        x = 0
+        for _, i in dd.items():
+            x += i
+        avg_conn = x / len(dd)
         p_values = []
         # create dictionaries that add the label and terms as node attributes
         gene_to_term, gene_to_label = dict(), dict()
@@ -120,8 +125,7 @@ class OntologyNetworkGenerator(object):
             n_possible = len(possible_edges)
             edge_hits = possible_edges.intersection(self.edges)
             n_hits = len(edge_hits)
-            odds_to_find = float(n_possible) / n_edges
-            p_val = stats.binom_test(n_hits, n_possible, odds_to_find)
+            p_val = stats.binom_test(n_hits, n_possible, avg_conn)
             return [edge_hits, n_hits, p_val]
 
         for term1, term2 in combinations(list_of_go_terms, 2):
@@ -134,24 +138,24 @@ class OntologyNetworkGenerator(object):
             p_values.append([term1, term2] + get_edges(term_1, term_2))
             p_values.append([term2, term1] + get_edges(term_2, term_1))
 
-        cols = ['term1', 'term2', 'edges', 'n_edges', 'p_values', ]
+        cols = ['term1', 'term2', 'edges', 'n_edges', 'p_value', ]
 
         df = pd.DataFrame(p_values, columns=cols)
-
+        df = df.loc[df['n_edges'] > min_edges].copy()
         # FDR correction
-        _, df['adj_p_values'] = fdrcorrection(df['p_values'])
-        df = df.loc[df['n_edges'] > 0]
+        _, df['adj_p_value'] = fdrcorrection(df['p_value'])
 
         if use_threshold:
             if use_fdr:
-                df = df.loc[df['adj_p_values'] <= .05]
+                df = df.loc[df['adj_p_value'] <= .05]
             else:
-                df = df.loc[df['p_values'] <= .05]
-        cols += ['adj_p_values']
+                df = df.loc[df['p_value'] <= .05]
+        cols += ['adj_p_value']
         # create empty networks
         go_graph = nx.DiGraph()
         mol_net = nx.DiGraph()
         for term1, term2, edge, n_edges, p_value, adj_pval in df[cols].values:
+
             label_1 = ont_to_label_dict[term1]
             label_2 = ont_to_label_dict[term2]
             go_graph.add_node(label_1, term=term1, label=label_1)
@@ -196,7 +200,8 @@ class OntologyNetworkGenerator(object):
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
                       remove_isolated=False, create_only=True, merge=False,
-                      out_dir=None, use_threshold=False, use_fdr=False):
+                      out_dir=None, use_threshold=False, use_fdr=False,
+                      min_edges=0):
     """
 
     Parameters
@@ -251,7 +256,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     print("Creating ontology network")
     term_g, molecular_g = ong.create_network_from_list(
         terms, term_dict, label_dict, save_name=save_name, draw=draw_png,
-        use_threshold=use_threshold, use_fdr=use_fdr
+        use_threshold=use_threshold, use_fdr=use_fdr, min_edges=min_edges
     )
 
     if remove_isolated:

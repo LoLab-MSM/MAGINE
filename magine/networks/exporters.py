@@ -63,13 +63,10 @@ def nx_to_dot(graph):
     strict = graph.number_of_selfloops() == 0 and not graph.is_multigraph()
 
     name = graph.name
-    graph_defaults = graph.graph.get('graph', {})
-    if name is '':
-        new_g = pydotplus.Dot('', graph_type=graph_type, strict=strict,
-                              **graph_defaults)
-    else:
-        new_g = pydotplus.Dot('"%s"' % name, graph_type=graph_type,
-                              strict=strict, **graph_defaults)
+    if name is not '':
+        name = '"%s"' % name
+    new_g = pydotplus.Dot(name, graph_type=graph_type, strict=strict,
+                          **graph.graph)
     try:
         new_g.set_node_defaults(**graph.graph['node'])
     except KeyError:
