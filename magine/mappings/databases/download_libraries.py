@@ -164,7 +164,7 @@ class HMDB(object):
     def load_db(self):
         if not os.path.exists(self.out_name):
             self.download_db()
-        df = pd.read_csv(self.out_name, low_memory=False)
+        df = pd.read_csv(self.out_name, low_memory=False, encoding='utf-8')
         return df
 
     def download_db(self):

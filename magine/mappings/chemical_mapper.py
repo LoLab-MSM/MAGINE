@@ -1,10 +1,8 @@
-import os
-
 import pandas as pd
 from bioservices import UniChem
 from sortedcontainers import SortedSet, SortedDict
 
-from magine.data.storage import id_mapping_dir
+from magine.mappings.databases.download_libraries import HMDB
 
 try:
     import cPickle as pickle
@@ -52,11 +50,7 @@ class ChemicalMapper(object):
         self._hmdb_to_protein = None
         self._hmdb_main_to_protein = None
         self._hmdb_accession_to_main = None
-        _file = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
-        if not os.path.exists(_file) or fresh_download:
-            from magine.mappings.databases.download_libraries import HMDB
-            HMDB()
-        hmdb_database = pd.read_csv(_file, low_memory=False, encoding='utf-8')
+        hmdb_database = HMDB().load_db()
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
         self.database['main_accession'] = self.database['accession']
         sub_db = self.database[
