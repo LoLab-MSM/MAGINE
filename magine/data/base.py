@@ -89,7 +89,7 @@ class BaseData(pd.DataFrame):
             index = self._index
         # create safe copy of array
         new_data = self.copy()
-
+        n_before = len(new_data[index].unique())
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
         if 'significant' in new_data.columns:
@@ -118,7 +118,10 @@ class BaseData(pd.DataFrame):
             new_data = new_data.loc[new_data[index].isin(keepers)]
         else:
             print("Index is not a str or a list. What is it?")
+        n_after = len(new_data[index].unique())
 
+        print("Number in index went from {} to {}".format(n_before, n_after))
+        
         if inplace:
             self._update_inplace(new_data)
         else:

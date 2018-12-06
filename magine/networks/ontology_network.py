@@ -1,5 +1,6 @@
 import itertools
 import os
+import random
 from itertools import combinations, product
 
 import networkx as nx
@@ -105,6 +106,7 @@ class OntologyNetworkGenerator(object):
         for _, i in dd.items():
             x += i
         avg_conn = x / len(dd)
+        n_total_edges = len(self.edges)
         p_values = []
         # create dictionaries that add the label and terms as node attributes
         gene_to_term, gene_to_label = dict(), dict()
@@ -134,14 +136,23 @@ class OntologyNetworkGenerator(object):
 
             add_to_dict(term_1, term1)
             add_to_dict(term_2, term2)
+            # print(get_edges(term_1, term_2)[1:], gather_stats(term_1, term_2, self.nodes, self.edges)[1:])
+            p_values.append(
+                [term1, term2] + gather_stats(term_1, term_2, self.nodes,
+                                              self.edges))
+            p_values.append(
+                [term2, term1] + gather_stats(term_2, term_1, self.nodes,
+                                              self.edges))
 
-            p_values.append([term1, term2] + get_edges(term_1, term_2))
-            p_values.append([term2, term1] + get_edges(term_2, term_1))
+            # p_values.append([term1, term2] + get_edges(term_1, term_2))
+            # p_values.append([term2, term1] + get_edges(term_2, term_1))
 
         cols = ['term1', 'term2', 'edges', 'n_edges', 'p_value', ]
 
         df = pd.DataFrame(p_values, columns=cols)
+        print(df.shape)
         df = df.loc[df['n_edges'] > min_edges].copy()
+        print(df.shape)
         # FDR correction
         _, df['adj_p_value'] = fdrcorrection(df['p_value'])
 
@@ -150,6 +161,7 @@ class OntologyNetworkGenerator(object):
                 df = df.loc[df['adj_p_value'] <= .05]
             else:
                 df = df.loc[df['p_value'] <= .05]
+        print(df.shape)
         cols += ['adj_p_value']
         # create empty networks
         go_graph = nx.DiGraph()
@@ -196,6 +208,33 @@ class OntologyNetworkGenerator(object):
                 export_to_dot(go_graph, save_name)
                 render_igraph(mol_net, save_name + '_subgraph_igraph')
         return go_graph, mol_net
+
+
+def gather_stats(set1, set2, backgroud_nodes, edges):
+    n_set1 = len(set1)
+    n_set2 = len(set2.difference(set1))
+    total_nodes = n_set1 + n_set2
+
+    n_tests = 10000
+    odds = np.zeros(n_tests)
+    nodes_list = list(backgroud_nodes)
+    n_possible = range(len(backgroud_nodes))
+    for i in range(n_tests):
+        s = [nodes_list[j] for j in random.sample(n_possible, total_nodes)]
+        odds[i] = len(set(product(s[:n_set1], s[n_set1:])).intersection(edges))
+
+    # calculates edges between two sets
+    possible_edges = set(product(set1, set2.difference(set1)))
+    edge_hits = possible_edges.intersection(edges)
+    n_hits = len(edge_hits)
+
+    # sort to find probability of finding random sets connectivity
+    odds.sort()
+    first_index = np.searchsorted(odds, n_hits, side='right')
+    probability = float(n_tests - first_index) / n_tests
+    p_val = stats.binom_test(n_hits, len(possible_edges), probability)
+
+    return [edge_hits, len(edge_hits), p_val]
 
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
