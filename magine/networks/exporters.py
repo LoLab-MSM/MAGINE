@@ -3,7 +3,7 @@ import sys
 import tempfile
 
 import networkx as nx
-import pydotplus
+import pydot
 
 
 def nx_to_igraph(network):
@@ -65,25 +65,24 @@ def nx_to_dot(graph):
     name = graph.name
     if name is not '':
         name = '"%s"' % name
-    new_g = pydotplus.Dot(name, graph_type=graph_type, strict=strict,
-                          **graph.graph)
+    g = pydot.Dot(name, graph_type=graph_type, strict=strict, **graph.graph)
     try:
-        new_g.set_node_defaults(**graph.graph['node'])
+        g.set_node_defaults(**graph.graph['node'])
     except KeyError:
         pass
     try:
-        new_g.set_edge_defaults(**graph.graph['edge'])
+        g.set_edge_defaults(**graph.graph['edge'])
     except KeyError:
         pass
 
     for n, data in graph.nodes(data=True):
         str_data = dict((k, make_str(v)) for k, v in data.items())
-        new_g.add_node(pydotplus.Node(make_str(n), **str_data))
+        g.add_node(pydot.Node(make_str(n), **str_data))
 
     for u, v, data in graph.edges(data=True):
         str_data = dict((k, make_str(v)) for k, v in data.items())
-        new_g.add_edge(pydotplus.Edge(make_str(u), make_str(v), **str_data))
-    return new_g
+        g.add_edge(pydot.Edge(make_str(u), make_str(v), **str_data))
+    return g
 
 
 def export_to_dot(graph, save_name, image_format='png', engine='dot'):

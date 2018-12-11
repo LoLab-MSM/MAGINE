@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -18,8 +19,9 @@ def test_filter():
     df = pd.concat([df, df2])
 
     x = wt.create_wordcloud(df)
+    out_dir = tempfile.mkdtemp()
 
-    x.plot(save_name='test_wc')
+    x.plot(save_name=os.path.join(out_dir, 'test_wc'))
     plt.close()
     wt.word_cloud_from_array(df, sample_ids=[1, 2])
     plt.close()

@@ -88,7 +88,7 @@ class RenderModel(object):
         # Marquee Directed Simple
         self.style = self.cy.style.create('MAGINE')
         self.style.update_defaults(default_style)
-
+        self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
         if layout == 'attributes-layout':
             self.cy.layout2.apply(name=layout, network=self.g_cy,
                                   params={'column': 'color'})
@@ -152,14 +152,12 @@ class RenderModel(object):
             if not os.path.exists(os.path.join(out_dir, 'Figures')):
                 os.mkdir(os.path.join(out_dir, 'Figures'))
 
-        self.style.create_passthrough_mapping('label', vp='NODE_LABEL')
-
         edge_width = {}
         for i, j, d in self.graph.edges(data=True):
             edge_width[self.edge_name2id['{},{}'.format(i, j)]] = d['weight']
 
         _min, _max = min(edge_width.values()), max(edge_width.values())
-
+        self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
         self.style.create_continuous_mapping(
             column='weight', col_type='Double', vp='EDGE_WIDTH',
             points=create_slope(min_val=_min, max_val=_max, values=(3, 10))
@@ -249,9 +247,22 @@ class RenderModel(object):
         self.cy.style.apply(style=self.style, network=self.g_cy)
         node_color_values = {self.node_name2id[i[0]]: i[1][attribute] for i in
                              self.graph.nodes(data=True)}
+
         self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
                                      values=node_color_values)
+        node_label_colors = {self.node_name2id[i]: 'black' for i in
+                             self.graph.nodes}
+        node_labels = {self.node_name2id[i]: i for i in self.graph.nodes()}
+        node_color_values = {self.node_name2id[i]: d[attribute] for i, d in
+                             self.graph.nodes(data=True)}
+        # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_label_colors, node_color_values, node_labels],
+            index=['NODE_LABEL_COLOR', 'NODE_FILL_COLOR', 'NODE_LABEL'],
+        )
 
+        df_vs_node = df_vs_node.T
+        self.view1.batch_update_node_views(df_vs_node)
         with open('{0}.svg'.format(save_name), 'wb') as f:
             network_pdf = self.g_cy.get_svg()
             f.write(network_pdf)

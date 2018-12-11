@@ -136,16 +136,18 @@ class OntologyNetworkGenerator(object):
 
             add_to_dict(term_1, term1)
             add_to_dict(term_2, term2)
-            # print(get_edges(term_1, term_2)[1:], gather_stats(term_1, term_2, self.nodes, self.edges)[1:])
-            p_values.append(
-                [term1, term2] + gather_stats(term_1, term_2, self.nodes,
-                                              self.edges))
-            p_values.append(
-                [term2, term1] + gather_stats(term_2, term_1, self.nodes,
-                                              self.edges))
+            # print(get_edges(term_1, term_2)[1:],
+            # gather_stats(term_1, term_2, self.nodes, self.edges)[1:])
 
-            # p_values.append([term1, term2] + get_edges(term_1, term_2))
-            # p_values.append([term2, term1] + get_edges(term_2, term_1))
+            # p_values.append(
+            #     [term1, term2] + gather_stats(term_1, term_2, self.nodes,
+            #                                   self.edges))
+            # p_values.append(
+            #     [term2, term1] + gather_stats(term_2, term_1, self.nodes,
+            #                                   self.edges))
+
+            p_values.append([term1, term2] + get_edges(term_1, term_2))
+            p_values.append([term2, term1] + get_edges(term_2, term_1))
 
         cols = ['term1', 'term2', 'edges', 'n_edges', 'p_value', ]
 
@@ -215,7 +217,7 @@ def gather_stats(set1, set2, backgroud_nodes, edges):
     n_set2 = len(set2.difference(set1))
     total_nodes = n_set1 + n_set2
 
-    n_tests = 10000
+    n_tests = 100
     odds = np.zeros(n_tests)
     nodes_list = list(backgroud_nodes)
     n_possible = range(len(backgroud_nodes))

@@ -19,3 +19,4 @@ jupyter==1.0.0
 wordcloud
 sortedcontainers
 statsmodels
+pydot
