@@ -45,7 +45,7 @@ class LayoutClient(object):
 
     def update(self, name, parameters='color'):
         _url = '{}/{}/{}'.format(self.__url, name, str(parameters))
-        requests.put(_url)
+        requests.get(_url)
 
     def apply(self, name='force-directed', network=None, params=None):
         self._check_net(network)
@@ -57,13 +57,14 @@ class LayoutClient(object):
         _url = '{}/edgebundling/{}'.format(self.__url, network.get_id())
         requests.get(_url)
 
-    def _check_net(self, network):
-        if network is None:
-            raise ValueError('Target network is required')
-
-    def fit(self, network=None):
+    def fit(self, network):
         _url = self.__url + 'apply/fit/' + str(network.get_id())
         requests.get(_url)
+
+    @staticmethod
+    def _check_net(network):
+        if network is None:
+            raise ValueError('Target network is required')
 
 
 class RenderModel(object):
@@ -433,6 +434,10 @@ default_style = {
 if __name__ == '__main__':
     # ddn = nx.nx.read_graphml('t_all_colored_pvalue_2.graphml')
     ddn = nx.DiGraph()
+    ddn.add_node('x')
+    ddn.add_edge('x', 'y')
     rm = RenderModel(ddn, style='Marquee')
+    rm.print_options()
+    quit()
     rm.visualize_by_list_of_time(
         ['time_0', 'time_1', 'time_2', 'time_3', 'time_4', ])
