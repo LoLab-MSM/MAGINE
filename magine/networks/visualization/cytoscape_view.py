@@ -217,7 +217,7 @@ class RenderModel(object):
         simple_slope = create_slope(min_val=size.min(), max_val=size.max(),
                                     values=(10, 50))
 
-        for j in list_of_time:
+        for j in sorted(list_of_time):
             time.sleep(1)
             self.style.create_continuous_mapping(column='sample{}'.format(j),
                                                  col_type='Double',
@@ -225,7 +225,7 @@ class RenderModel(object):
                                                  points=simple_slope)
             self.cy.style.apply(style=self.style, network=self.g_cy)
 
-            fig_name = 'ont_network_{0}_{1}'.format(prefix, j)
+            fig_name = '{0}_{1}'.format(prefix, j)
             print("Saving {}".format(fig_name))
 
             if out_dir is not None:
@@ -303,6 +303,42 @@ def name2suid(network, obj_type='node'):
 
 
 def trip_photo(im_location, title=None):
+    """
+    Removes whitespace and adds title to image
+
+
+    Parameters
+    ----------
+    im_location: str
+        location of file, will be used for output as well
+    title : str
+        title to provide to add to image
+        Will be the sample id
+
+    Returns
+    -------
+
+    """
+
+    img = mpimg.imread(im_location)
+    mask = img[:, :, 0] < 1
+
+    img = img[np.ix_(mask.any(1), mask.any(0))]
+
+    plt.imshow(img, interpolation='none')
+    plt.xticks([])
+    plt.yticks([])
+    if title is not None:
+        plt.title(title, fontsize=24)
+    plt.axis('off')
+    out = im_location.replace('.png', '_formatted.png')
+    out2 = im_location.replace('.png', '_formatted.svg')
+    plt.savefig(out, dpi=1000, bbox_inches='tight', transparent=True)
+    plt.savefig(out2, bbox_inches='tight', transparent=True)
+    plt.close()
+
+
+def trip_photo_old(im_location, title=None):
     """
     Removes whitespace and adds title to image
 

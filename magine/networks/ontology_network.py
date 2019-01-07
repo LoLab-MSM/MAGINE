@@ -127,6 +127,10 @@ class OntologyNetworkGenerator(object):
             n_possible = len(possible_edges)
             edge_hits = possible_edges.intersection(self.edges)
             n_hits = len(edge_hits)
+            odds_to_find = float(n_possible) / n_total_edges
+            # p_val = stats.binom_test(n_hits, n_possible, odds_to_find)
+            # print(stats.binom_test(n_hits, n_possible, odds_to_find),
+            #       stats.binom_test(n_hits, n_possible, avg_conn))
             p_val = stats.binom_test(n_hits, n_possible, avg_conn)
             return [edge_hits, n_hits, p_val]
 
@@ -152,9 +156,7 @@ class OntologyNetworkGenerator(object):
         cols = ['term1', 'term2', 'edges', 'n_edges', 'p_value', ]
 
         df = pd.DataFrame(p_values, columns=cols)
-        print(df.shape)
         df = df.loc[df['n_edges'] > min_edges].copy()
-        print(df.shape)
         # FDR correction
         _, df['adj_p_value'] = fdrcorrection(df['p_value'])
 
@@ -163,7 +165,6 @@ class OntologyNetworkGenerator(object):
                 df = df.loc[df['adj_p_value'] <= .05]
             else:
                 df = df.loc[df['p_value'] <= .05]
-        print(df.shape)
         cols += ['adj_p_value']
         # create empty networks
         go_graph = nx.DiGraph()
@@ -281,8 +282,8 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
 
     # normalize enriched scores
     df_copy['combined_score'] = np.abs(df_copy['combined_score'])
-    df_copy['combined_score'] = np.log2(df_copy['combined_score'])
-    df_copy.loc[df['combined_score'] > 150, 'combined_score'] = 150
+    # df_copy['combined_score'] = np.log2(df_copy['combined_score'])
+    # df_copy.loc[df['combined_score'] > 150, 'combined_score'] = 150
 
     labels = df_copy['sample_id'].unique()
     # create dictionary of values
