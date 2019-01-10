@@ -47,6 +47,8 @@ extensions = [
     'sphinx.ext.autosummary',
     'sphinx.ext.todo',
     'numpydoc',
+    'nbsphinx',
+    'sphinx.ext.mathjax',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -84,13 +86,14 @@ author = u'James C. Pino'
 # -- Mock out some problematic modules-------------------------------------
 
 # Note that for sub-modules, all parent modules must be listed explicitly.
-MOCK_MODULES = ['pandas', 'pandas.plotting',
+MOCK_MODULES = [#'pandas', 'pandas.plotting',
 
                 'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
                 'scipy.special', 'scipy.optimize', 'scipy.stats',
                 'scipy.stats.stats', 'scipy.stats.stats.distributions',
-                'scipy.sparse', 'scipy.linalg', 'seaborn',
-                'seaborn.color_palette', 'seaborn.color_palette',
+                'scipy.sparse', 'scipy.linalg',
+
+                'seaborn', 'seaborn.color_palette', 'seaborn.color_palette',
 
                 'python-igraph', 'igraph', 'py2cytoscape', 'pydotplus',
 
@@ -98,11 +101,10 @@ MOCK_MODULES = ['pandas', 'pandas.plotting',
                 'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
                 'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
 
-                'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
-                'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
-                'statsmodels',
-                'statsmodels.stats',
-                'statsmodels.stats.multitest',
+                # 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
+                # 'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
+    
+                'statsmodels', 'statsmodels.stats', 'statsmodels.stats.multitest',
                 ]
 
 for mod_name in MOCK_MODULES:
@@ -128,7 +130,7 @@ language = None
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ['_build']
+exclude_patterns = ['_build', '**.ipynb_checkpoints']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'

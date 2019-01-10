@@ -16,3 +16,5 @@ numpydoc
 pyparsing>=2.1.4
 sortedcontainers
 IPython==5.3.0
+jupyter_sphinx
+nbsphinx

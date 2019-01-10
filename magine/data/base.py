@@ -5,6 +5,9 @@ from magine.plotting.heatmaps import heatmap_from_array
 
 
 class BaseData(pd.DataFrame):
+    """
+    This class derived from pd.DataFrame
+    """
     _index = None
 
     def __init__(self, *args, **kwargs):
@@ -59,8 +62,10 @@ class BaseData(pd.DataFrame):
                                columns=columns, values=values)
 
         if isinstance(columns, list):
-            x = sorted(tuple(map(tuple, d_copy[columns].values)))
-            array.sort_values(by=x, ascending=False, inplace=True)
+            array.sort_values(
+                by=sorted(tuple(map(tuple, d_copy[columns].values))),
+                ascending=False, inplace=True
+            )
         elif isinstance(columns, str):
             array.sort_values(by=list(sorted(d_copy[columns].unique())),
                               ascending=False, inplace=True)

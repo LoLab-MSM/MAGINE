@@ -2,7 +2,7 @@ MAGINE Modules Reference
 ========================
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    data/index.rst
    html_templates/index.rst
@@ -10,5 +10,5 @@ MAGINE Modules Reference
    networks/index.rst
    enrichment/index.rst
    plotting/index.rst
-
+   all_enrichment_exploration.ipynb
 
