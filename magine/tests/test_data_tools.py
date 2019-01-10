@@ -1,5 +1,5 @@
 import pandas as pd
-from nose.tools import raises
+from nose.tools import raises, ok_
 
 from magine.data import BaseData
 
@@ -33,7 +33,7 @@ def test_pivot():
     d = ConcentrationBaseData(x)
     df = d.pivoter(True, values=values, columns=columns)
 
-    assert df.shape == (3, 2)
+    ok_(df.shape == (3, 2))
 
 
 @raises(AssertionError)
@@ -66,11 +66,11 @@ def test_filter_min():
 
     d = ConcentrationBaseData(x)
     df = d.filter_by_minimum_sig_columns(columns=columns, min_terms=1)
-    assert df.shape[0] == 4
+    ok_(df.shape[0] == 4)
     df = d.filter_by_minimum_sig_columns(columns=columns, min_terms=2)
-    assert df.shape[0] == 2
+    ok_(df.shape[0] == 2)
     df = d.filter_by_minimum_sig_columns(columns=columns, min_terms=3)
-    assert df.shape[0] == 0
+    ok_(df.shape[0] == 0)
 
     x = [
         {values: 1, index: 'x', columns: '1', flag: True, 'x': 2},
@@ -81,10 +81,11 @@ def test_filter_min():
     ]
 
     d = ConcentrationBaseData(x)
-    df = d.filter_by_minimum_sig_columns(index=[index, 'x'], columns=columns,
+
+    df = d.filter_by_minimum_sig_columns(index=index, columns=columns,
                                          min_terms=2)
 
-    assert df.shape == (3, 5)
+    ok_(df.shape == (3, 5))
 
 
 def test_log_normal():
@@ -96,5 +97,5 @@ def test_log_normal():
     df = ConcentrationBaseData(x, columns=['name', 'value'])
     new_df = df.log2_normalize_df('value')
 
-    assert new_df[new_df['name'] == 'a']['value'].values == [1.]
-    assert new_df[new_df['name'] == 'c']['value'].values == [-4.]
+    ok_(new_df[new_df['name'] == 'a']['value'].values == [1.])
+    ok_(new_df[new_df['name'] == 'c']['value'].values == [-4.])
