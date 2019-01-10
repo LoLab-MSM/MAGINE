@@ -1,3 +1,5 @@
+from nose.tools import ok_
+
 from magine.enrichment.enrichr import Enrichr, clean_tf_names
 from magine.tests.sample_experimental_data import exp_data
 
@@ -11,7 +13,7 @@ def test_single_run():
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
     df = e.run(list_2, 'GO_Biological_Process_2017')
     terms = df['term_name']
-    assert len(terms) == 185
+    ok_(len(terms) == 185)
 
 
 def test_multi_sample():
@@ -20,7 +22,7 @@ def test_multi_sample():
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'], save_name='enrichr_test')
-    assert df2.shape == (111, 10)
+    ok_(df2.shape == (111, 10))
 
 
 def test_multi_sample_plotting():
@@ -39,14 +41,14 @@ def test_set_of_dbs():
     df2 = e.run_samples(lists, ['1', '2', '3'],
                         database=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
-    assert df2.shape == (128, 10)
+    ok_(df2.shape == (128, 10))
 
 
 def test_tf_names():
     df = e.run(['BAX', 'BCL2', 'MCL1'], ['ARCHS4_TFs_Coexp', 'ChEA_2016'])
     tfs = clean_tf_names(df)
     for i in tfs['term_name']:
-        assert '_' not in i
+        ok_('_' not in i)
 
 
 if __name__ == '__main__':

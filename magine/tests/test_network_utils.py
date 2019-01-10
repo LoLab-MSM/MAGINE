@@ -1,4 +1,5 @@
 import networkx as nx
+from nose.tools import ok_
 
 import magine.networks.utils as utils
 
@@ -38,8 +39,8 @@ def test_delete_disconnected():
     g.add_edge('a', 'b')
     large_g_connected = utils.delete_disconnected_network(g)
     large_g_connected.nodes()
-    assert set(large_g_connected.nodes()) == {'b', 'a'}
-    assert set(large_g_connected.edges()) == {('a', 'b')}
+    ok_(set(large_g_connected.nodes()) == {'b', 'a'})
+    ok_(set(large_g_connected.edges()) == {('a', 'b')})
 
 
 def test_add_attribute_to_network():
@@ -47,9 +48,8 @@ def test_add_attribute_to_network():
     g = nx.DiGraph()
     g.add_nodes_from(['a', 'b', 'c'])
     new_g = utils.add_attribute_to_network(g, ['a', 'b'], 'inTest', 'true')
-    assert new_g.node['a'] == {'inTest': 'true'}
-
-    assert new_g.node['c'] == {'inTest': 'false'}
+    ok_(new_g.node['a'] == {'inTest': 'true'})
+    ok_(new_g.node['c'] == {'inTest': 'false'})
 
 
 def test_trim_source_sink():
@@ -61,7 +61,7 @@ def test_trim_source_sink():
     graph.add_edge('C', 'N')
     trimmed = utils.trim_sink_source_nodes(graph, ['A', 'B', 'D'],
                                            remove_self_edge=True)
-    assert set(trimmed.edges()) == {('B', 'C'), ('A', 'B'), ('D', 'C')}
+    ok_(set(trimmed.edges()) == {('B', 'C'), ('A', 'B'), ('D', 'C')})
     return
     import matplotlib.pyplot as plt
     plt.subplot(121)
@@ -74,5 +74,4 @@ def test_trim_source_sink():
             with_labels=True)
     plt.show()
 
-
-test_trim_source_sink()
+# test_trim_source_sink()

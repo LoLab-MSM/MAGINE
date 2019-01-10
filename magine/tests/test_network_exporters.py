@@ -3,6 +3,7 @@ import json
 import igraph
 import networkx as nx
 import pydot
+from nose.tools import ok_
 
 import magine.networks.exporters as exporters
 
@@ -11,7 +12,7 @@ def test_nx_to_igraph():
     g = nx.DiGraph()
     g.add_edge('a', 'b')
     i_g = exporters.nx_to_igraph(g)
-    assert isinstance(i_g, igraph.Graph)
+    ok_(isinstance(i_g, igraph.Graph))
 
 
 def ordered(obj):
@@ -35,12 +36,12 @@ def test_nx_to_json():
     a_nodes = json.loads(json_g['nodes'])
     b_nodes = json.loads(answer['nodes'])
 
-    assert ordered(a_edges) == ordered(b_edges)
-    assert ordered(a_nodes) == ordered(b_nodes)
+    ok_(ordered(a_edges) == ordered(b_edges))
+    ok_(ordered(a_nodes) == ordered(b_nodes))
 
 
 def test_nx_to_dot():
     g = nx.DiGraph()
     g.add_edge('a', 'b')
     dot_g = exporters.nx_to_dot(g)
-    assert isinstance(dot_g, pydot.Dot)
+    ok_(isinstance(dot_g, pydot.Dot))
