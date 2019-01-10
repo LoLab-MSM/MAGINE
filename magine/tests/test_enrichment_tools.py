@@ -2,6 +2,7 @@ import os
 
 import matplotlib.figure
 import matplotlib.pyplot as plt
+from nose.tools import ok_
 
 import magine.enrichment.enrichment_result as et
 from magine.plotting.heatmaps import heatmap_from_array
@@ -20,45 +21,44 @@ class TestEnrichmentResult(object):
 
         # checks if single entry
         slimmed = self.data.filter_rows('term_name', terms[0])
-        assert slimmed.shape[0] == 4
+        ok_(slimmed.shape[0] == 4)
 
         # checks if list
         slimmed = self.data.filter_rows('term_name', terms)
-        assert slimmed.shape[0] == 111
+        ok_(slimmed.shape[0] == 111)
 
     def test_filter_multi(self):
         slimmed = self.data.filter_multi(p_value=0.05, combined_score=20)
-        assert slimmed.shape == (20, 11)
+        ok_(slimmed.shape == (20, 11))
 
     def test_term_to_gene(self):
         genes = self.data.term_to_genes('apoptotic process')
-        assert genes == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'}
+        ok_(genes == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'})
 
     def test_filter_based_on_word(self):
         slimmed = self.data.filter_based_on_words('apoptotic')
-        assert slimmed.shape == (40, 11)
+        ok_(slimmed.shape == (40, 11))
 
         slimmed = self.data.filter_based_on_words('mitochondrial')
-        assert slimmed.shape == (9, 11)
+        ok_(slimmed.shape == (9, 11))
 
     def test_all_genes(self):
         all_g = self.data.all_genes_from_df()
-        assert all_g == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'}
+        ok_(all_g == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'})
 
     def test_filter_sim_terms(self):
         sim2 = self.data.remove_redundant(level='sample', sort_by='rank')
+        ok_(sim2.shape == (8, 11))
 
-        assert sim2.shape == (8, 11)
         sim2 = self.data.remove_redundant(level='sample')
-
-        assert sim2.shape == (8, 11)
+        ok_(sim2.shape == (8, 11))
 
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
-        assert sim2.shape == (3, 11)
+        ok_(sim2.shape == (3, 11))
 
         copy_data = self.data.copy()
         copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
-        assert copy_data.shape == (8, 11)
+        ok_(copy_data.shape == (8, 11))
 
     def test_dist(self):
 
@@ -75,7 +75,7 @@ class TestEnrichmentResult(object):
         plt.close()
 
         dist = self.data.dist_matrix(figsize=(3, 3), level='each')
-        assert isinstance(dist, matplotlib.figure.Figure)
+        ok_(isinstance(dist, matplotlib.figure.Figure))
         plt.close()
 
     def test_find_similar_terms(self):
@@ -87,4 +87,4 @@ class TestEnrichmentResult(object):
         term2 = {'BAX', 'BCL2', 'MCL1', 'TP53'}
         score = et.jaccard_index(term1, term2)
 
-        assert score == 0.6
+        ok_(score == 0.6)
