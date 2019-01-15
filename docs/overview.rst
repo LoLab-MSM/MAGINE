@@ -1,3 +1,10 @@
+Data
+----
+
+.. figure:: ./data_sample.png
+   :scale: 50 %
+   :align: center
+
 Data management
 ---------------
 Tools to process, organize, and query data.
@@ -10,3 +17,10 @@ This class is used by both "Sample" and "EnrichmentResult".
 .. figure:: ./data_class_design.png
    :scale: 100 %
    :align: center
+
+
+
+.. toctree::
+   :maxdepth: 1
+
+   data_exploration.ipynb

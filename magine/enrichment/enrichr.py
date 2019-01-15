@@ -128,7 +128,7 @@ db_types = {
 
 
 class Enrichr(object):
-    query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
+    _query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
 
     def __init__(self, verbose=False):
         self._url = 'http://amp.pharm.mssm.edu/Enrichr'
@@ -193,7 +193,7 @@ class Enrichr(object):
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
             return EnrichmentResult()
 
-        q = self.query.format(url=self._url, list_id=list_id, lib=gene_set_lib)
+        q = self._query.format(url=self._url, list_id=list_id, lib=gene_set_lib)
         while True:
             try:
                 response = requests.get(q)
@@ -455,6 +455,17 @@ def clean_drug_dbs(data):
 
 
 def clean_tf_names(data):
+    """
+    Cleans transcription factors databases by removing everything after '_'.
+
+    Parameters
+    ----------
+    data : pd.DataFrame
+
+    Returns
+    -------
+
+    """
     def return_single_tf(row):
         """
         Gets TF name only
@@ -520,6 +531,7 @@ def run_enrichment_for_project(exp_data, project_name):
 
     Returns
     -------
+    magine.enrichment.enrichment_result.EnrichmentResult
 
     """
     e = Enrichr(verbose=True)

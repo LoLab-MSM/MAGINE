@@ -190,8 +190,7 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     -------
 
     """
-    if inline:
-        from IPython.display import Image, display
+
     labels = []
     measured_list = []
     for i, j in zip(exp_data.species.sig.sample_ids,
@@ -221,6 +220,7 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
                                     layout=layout,  # inline=inline
                                     )
         if inline:
+            from IPython.display import Image, display
             display(Image(s_name))
         string += ' ' + s_name
         # yield result
