@@ -8,15 +8,24 @@ The tools are designed to organize and explore raw data.
     - Enable sample series enrichment exploration
     - Integrate network and enrichment analysis
 
+
+
+.. figure:: ./magine_capabilities_demo.png
+   :scale: 50 %
+   :align: center
+
+
+   MAGINE environment.
+
+
 MAGINE has four main modules
     - Data
     - Enrichment
     - Networks
     - Tools
 
-
 Our Data classes are built to organize and facilate exploration for both the raw data and the analysis.
-The data class
+The data class is the central structure that enables this.
 
 
 Contents
@@ -25,7 +34,9 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+
    installation
+   overview
    modules/index
 
 

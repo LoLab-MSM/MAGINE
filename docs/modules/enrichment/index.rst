@@ -1,8 +1,8 @@
-magine\.enrichment\.enrichr module
-----------------------------------
+Enrichment Module
+=================
 
-.. automodule:: magine.enrichment.enrichr
-   :members:
-   :undoc-members:
-   :show-inheritance:
+.. toctree::
+   :maxdepth: 2
 
+   enrichr.rst
+   enrichment_result.rst
