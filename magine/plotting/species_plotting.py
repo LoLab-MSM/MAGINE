@@ -221,7 +221,8 @@ def _make_plots(plots_to_make, plot_func, parallel=False):
     if parallel:
         st2 = time.time()
         pool = mp.Pool()
-        pool.map_async(plot_func, plots_to_make)
+        # lambda a: function(a[0], **a[1]), arguments
+        pool.map_async(lambda a: plot_func(**a), plots_to_make)
         pool.close()
         pool.join()
         end2 = time.time()
@@ -230,7 +231,7 @@ def _make_plots(plots_to_make, plot_func, parallel=False):
 
     else:
         st1 = time.time()
-        list(map(plot_func, plots_to_make))
+        list(map(lambda a: plot_func(**a), plots_to_make))
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
     plt.close('all')
@@ -263,10 +264,10 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
     """
 
     close_plots = False
-    if species_list is None:
-        df, species_list, save_name, out_dir, title, plot_type = df
-        # This means it was ran in parallel and we shouldn't need to keep plots
-        close_plots = True
+    # if species_list is None:
+    #     df, species_list, save_name, out_dir, title, plot_type = df
+    #     This means it was ran in parallel and we shouldn't need to keep plots
+    # close_plots = True
 
     ldf = df.copy()
 
@@ -284,8 +285,9 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
     else:
         x_point_dict = {i: n for n, i
                         in enumerate(x_points)}
+    if species_list is not None:
+        ldf = ldf.loc[ldf[identifier].isin(species_list)].copy()
 
-    ldf = ldf[ldf[identifier].isin(species_list)].copy()
     ldf = log2_normalize_df(ldf, column=fold_change)
 
     n_plots = len(ldf[identifier].unique())
@@ -361,8 +363,8 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
         if save_name:
             _save_ploty_output(fig, out_dir, save_name)
         else:
-            init_notebook_mode()
-            return iplot(fig)
+            init_notebook_mode(connected=True)
+            iplot(fig)
 
 
 def _format_mpl(ax, x_point_dict, x_points):
@@ -464,7 +466,7 @@ def _ploty_graph(x, y, label, enum, color, marker='circle'):
     g = plotly_graph.Scatter(
             x=x,
             y=y,
-            hoveron='text',
+        hoveron='points',
             name=label,
             visible=True,
             mode=mode,

@@ -31,7 +31,7 @@ import os
 import sys
 
 import mock
-
+import sphinx_bootstrap_theme
 sys.path.append(os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -144,7 +144,9 @@ todo_include_todos = False
 # a list of builtin themes.
 #
 # html_theme = 'alabaster'
-html_theme = 'default'
+# Activate the theme.
+html_theme = 'bootstrap'
+html_theme_path = sphinx_bootstrap_theme.get_html_theme_path()
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -216,3 +218,9 @@ intersphinx_mapping = {'https://docs.python.org/': None}
 # -- Options for numpydoc ------------------------------------------------------
 
 numpydoc_show_class_members = False
+from ipywidgets.embed import DEFAULT_EMBED_REQUIREJS_URL
+
+html_js_files = [
+    'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js',
+    DEFAULT_EMBED_REQUIREJS_URL,
+]

@@ -188,7 +188,6 @@ class EnrichmentResult(BaseData):
         dist_m = [[i, jaccard_index(first_genes, j, remove_subset)]
                   for i, j in vals]
 
-
         df = pd.DataFrame(dist_m, columns=['term_name', 'similarity_score'])
         df.sort_values('similarity_score', inplace=True, ascending=False)
         return df

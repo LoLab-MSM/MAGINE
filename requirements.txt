@@ -20,3 +20,4 @@ wordcloud
 sortedcontainers
 statsmodels
 pydot
+ipywidgets

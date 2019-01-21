@@ -17,8 +17,8 @@ class BaseData(pd.DataFrame):
     def _constructor(self):
         return BaseData
 
-    def pivoter(self, convert_to_log, columns, values, index=None,
-                fill_value=None, min_sig=0):
+    def pivoter(self, convert_to_log=False, columns='sample_id',
+                values='fold_change', index=None, fill_value=None, min_sig=0):
         """ Pivot data on provided axis.
 
         Parameters
@@ -60,7 +60,8 @@ class BaseData(pd.DataFrame):
 
         array = pd.pivot_table(d_copy, index=index, fill_value=fill_value,
                                columns=columns, values=values)
-
+        if isinstance(values, list):
+            return array
         if isinstance(columns, list):
             array.sort_values(
                 by=sorted(tuple(map(tuple, d_copy[columns].values))),
@@ -127,6 +128,66 @@ class BaseData(pd.DataFrame):
 
         print("Number in index went from {} to {}".format(n_before, n_after))
         
+        if inplace:
+            self._update_inplace(new_data)
+        else:
+            return new_data
+
+    def filter_by_minimum_present_columns(self, columns='sample_id',
+                                          index=None, inplace=False):
+        """ Filter index to have at least "min_terms" significant species.
+
+        Parameters
+        ----------
+        columns : str
+            Columns to consider
+        index : str, list
+            The column with which to filter by counts
+        min_terms : int
+            Number of terms required to not be filtered
+        inplace : bool
+            Filter in place or return a copy of the filtered data
+
+        Returns
+        -------
+        new_data : BaseData
+        """
+        if index is None:
+            index = self._index
+        # create safe copy of array
+        new_data = self.copy()
+        n_before = len(new_data[index].unique())
+        # get list of columns
+        cols_to_check = list(new_data[columns].unique())
+        if 'significant' in new_data.columns:
+            flag = 'significant'
+        elif 'significant_flag' in new_data.columns:
+            flag = 'significant_flag'
+        else:
+            flag = None
+        assert flag in new_data.columns, 'Requires significant_flag column'
+        # pivot
+        sig = pd.pivot_table(new_data,
+                             index=index,
+                             fill_value=np.nan,
+                             values=flag,
+                             columns=columns
+                             )[cols_to_check]
+
+        # convert everything thats not 0 to 1
+        sig = sig.loc[~np.any(np.isnan(sig.values), axis=1)]
+        if isinstance(index, list):
+            keepers = {i[0] for i in sig.index.values}
+            new_data = new_data[new_data[index[0]].isin(keepers)]
+        elif isinstance(index, str):
+            keepers = {i for i in sig.index.values}
+            new_data = new_data.loc[new_data[index].isin(keepers)]
+        else:
+            print("Index is not a str or a list. What is it?")
+        n_after = len(new_data[index].unique())
+
+        print("Number in index went from {} to {}".format(n_before, n_after))
+
         if inplace:
             self._update_inplace(new_data)
         else:
@@ -203,6 +264,7 @@ class BaseData(pd.DataFrame):
         min_sig : int
             Minimum number of significant 'index' across samples. Can be used to
             remove rows that are not significant across any sample.
+
         Returns
         -------
         matplotlib.figure

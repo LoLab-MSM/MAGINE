@@ -246,7 +246,7 @@ class Enrichr(object):
             'list'       : (None, genes_str),
             'description': (None, 'MAGINE analysis')
         }
-
+        print(payload)
         response = requests.post(self._url + '/addList', files=payload)
         if not response.ok:
             raise Exception('Error analyzing gene list', response.ok)
