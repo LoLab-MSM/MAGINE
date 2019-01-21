@@ -19,3 +19,4 @@ IPython>=5.3.0
 jupyter_sphinx
 nbsphinx
 ipywidgets
+sphinx_bootstrap_theme
