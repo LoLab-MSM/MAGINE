@@ -148,9 +148,8 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
             if len(gene_set) > 100:
                 figure_locations[i] = '<a>{0}</a>'.format(name)
                 continue
-        local_save_name = 'Figures/{0}_{1}'.format(n, save_name)
-        if out_dir is not None:
-            local_save_name = '{0}/{1}'.format(out_dir, local_save_name)
+        local_save_name = os.path.join('Figures',
+                                       '{0}_{1}'.format(n, save_name))
 
         local_save_name = local_save_name.replace(':', '')
         out_point = '<a href="{0}.html">{1}</a>'.format(local_save_name, name)
@@ -158,7 +157,7 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
 
         title = "{0} : {1}".format(str(i), name)
         local_df = _data.loc[_data[identifier].isin(list(gene_set))].copy()
-        p_input = [local_df, list(gene_set), local_save_name, '.',
+        p_input = [local_df, list(gene_set), local_save_name, out_dir,
                    title, plot_type]
 
         plots_to_create.append(p_input)
@@ -348,7 +347,6 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
             tmp_savename = "{}.{}".format(save_name, image_format)
             if out_dir is not None:
                 tmp_savename = os.path.join(out_dir, tmp_savename)
-
             plt.savefig(tmp_savename, bbox_extra_artists=(lgd,),
                         bbox_inches='tight')
 

@@ -12,9 +12,9 @@ except:
     basestring = str
 
 
-def render_igraph(mol_net, save_name=None, layout='auto', title=None,
-                  positions=None, cluster=False, node_size=50,
-                  bbox=None, margin=None, inline=False, font_size=36):
+def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
+                positions=None, cluster=False, node_size=50,
+                bbox=None, margin=None, inline=False, font_size=36):
     """
 
     Parameters
@@ -213,13 +213,11 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
             tmp_graph, i, 'color', color_list[n], 'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
-        result, pos = render_igraph(graph2, s_name, positions=pos,
-                                    node_size=50,
-                                    bbox=[fig_width, fig_height],
-                                    margin=[100, 100, 100, 100],
-                                    cluster=cluster, title=labels[n],
-                                    layout=layout,  # inline=inline
-                                    )
+        result, pos = draw_igraph(graph2, s_name, positions=pos, node_size=50,
+                                  bbox=[fig_width, fig_height],
+                                  margin=[100, 100, 100, 100],
+                                  cluster=cluster, title=labels[n],
+                                  layout=layout)
         if inline:
             from IPython.display import Image, display
             display(Image(s_name))

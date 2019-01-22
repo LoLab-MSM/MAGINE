@@ -1,4 +1,5 @@
-from .igraph_tools import render_igraph
-from .mpl import render_mpl
+from .graphviz import draw_graphviz
+from .igraph_tools import draw_igraph
+from .mpl import draw_mpl
 
-__all__ = ['render_igraph', 'render_mpl']
+__all__ = ['draw_igraph', 'draw_mpl', 'draw_graphviz']

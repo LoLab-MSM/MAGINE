@@ -179,6 +179,8 @@ class Enrichr(object):
             print("No terms returned")
             return df
         df['term_name'] = df.apply(clean_term_names, axis=1)
+        df['significant'] = False
+        df.loc[df['adj_p_value'] <= 0.05, 'significant'] = True
         after_size = len(df)
         assert init_size == after_size, 'not the same shape {}'.format(
             gene_set_lib)
@@ -308,7 +310,7 @@ class Enrichr(object):
                 df_final = df_final.append(df, ignore_index=True)
 
         df_final = self._filter_sig_across_term(df_final)
-
+        df_final = EnrichmentResult(df_final)
         if save_name:
             s_name = '{}_enrichr'.format(save_name)
             if pivot:

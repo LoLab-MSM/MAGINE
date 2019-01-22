@@ -1,3 +1,5 @@
+from locale import getpreferredencoding
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
@@ -5,6 +7,12 @@ import pydot
 from networkx.drawing.layout import rescale_layout
 
 from magine.networks.exporters import nx_to_dot
+
+try:
+    basestring
+except NameError:
+    basestring = str
+    unicode = str
 
 
 def pydot_layout(G, prog='neato'):
@@ -24,12 +32,17 @@ def pydot_layout(G, prog='neato'):
         Dictionary of positions keyed by node.
 
     """
-
-    net = nx_to_dot(G)
-    dot_file = pydot.graph_from_dot_data(net.create(prog=prog, format='dot'))
-    net = dot_file[0]
+    tmp_g = G.copy()
+    tmp_g.graph.update({'K': '1'})
+    tmp_g.graph.update({'repulsiveforce ': '1'})
+    tmp_g.graph.update({'overlap ': 'false'})
+    tmp_g.graph.update({'splines ': 'true'})
+    dot_fmt = nx_to_dot(tmp_g).create(prog=prog, format='dot', encoding='utf8')
+    dot_fmt = unicode(dot_fmt, encoding=getpreferredencoding())
+    net = pydot.graph_from_dot_data(dot_fmt)[0]
     node_pos = {}
-    for n in G.nodes():
+
+    for n in tmp_g.nodes():
         pydot_node = pydot.Node(n).get_name()
         node = net.get_node(pydot_node)
 
@@ -43,7 +56,7 @@ def pydot_layout(G, prog='neato'):
     return node_pos
 
 
-def render_mpl(network, layout='dot', scale=1):
+def draw_mpl(network, layout='dot', scale=1, node_size=500, font_size=16):
     """ Draw network using networkx and matplotlib
 
     Parameters
@@ -56,7 +69,7 @@ def render_mpl(network, layout='dot', scale=1):
         if 'keggName' in d:
             del d["keggName"]
 
-    if layout in ['dot', 'neato', 'fdp', 'twopi', 'circo']:
+    if layout in ['dot', 'neato', 'fdp', 'twopi', 'circo', 'sfdp']:
         pos = pydot_layout(network, prog=layout, )
     else:
         assert layout in ['circular_layout', 'random_layout', 'shell_layout',
@@ -82,14 +95,6 @@ def render_mpl(network, layout='dot', scale=1):
     # this allows us to add space between pode and label
     positions = np.array([p for _, p in pos.items()])
 
-    # x_min = positions[0, :].min()
-    # x_max = positions[0, :].max()
-    # y_min = positions[1, :].min()
-    # y_max = positions[1, :].max()
-    #
-    # positions[:, 0] = (positions[:, 0] - x_min) / (x_max - x_min)
-    # positions[:, 1] = (positions[:, 1] - y_min) / (y_max - y_min)
-
     positions = rescale_layout(positions, scale=1)
     new_pos, label_pos = {}, {}
     for num, n in enumerate(pos):
@@ -106,10 +111,10 @@ def render_mpl(network, layout='dot', scale=1):
     nx.draw_networkx(network, pos=new_pos,
                      with_labels=False,
                      node_color=node_colors,
-                     node_size=500,
+                     node_size=node_size,
                      alpha=.4, ax=ax
                      )
-    nx.draw_networkx_labels(network, label_pos, font_size=16, ax=ax)
+    nx.draw_networkx_labels(network, label_pos, font_size=font_size, ax=ax)
     # plt.axis('equal')
     plt.axis('off')
     # plt.xticks([])
@@ -126,6 +131,6 @@ if __name__ == '__main__':
     x.add_edge('C', 'E')
     x.add_edge('E', 'A')
     # x = pydot_layout(x)
-    render_mpl(x, 'circo', scale=1)
-    render_mpl(x, 'circo', scale=2)
+    draw_mpl(x, 'circo', scale=1)
+    draw_mpl(x, 'circo', scale=2)
     plt.show()

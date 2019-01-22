@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 
-from magine.networks.visualization import render_igraph, render_mpl
+from magine.networks.visualization import draw_igraph, draw_mpl
 
 
 def test_igraph():
@@ -14,9 +14,9 @@ def test_igraph():
     g.add_edge('C', 'B')
     g.add_edge('C', 'D')
 
-    plot, pos = render_igraph(g, )
-    plot, pos = render_igraph(g, cluster=True)
-    plot, pos = render_igraph(g, cluster=True, positions=pos)
+    plot, pos = draw_igraph(g, )
+    plot, pos = draw_igraph(g, cluster=True)
+    plot, pos = draw_igraph(g, cluster=True, positions=pos)
 
 
 def test_mpl():
@@ -31,7 +31,7 @@ def test_mpl():
     for i in ['circular_layout', 'random_layout', 'shell_layout',
               'spring_layout', 'spectral_layout',  # 'dot', 'neato', 'fdp',
               'fruchterman_reingold_layout']:
-        fig = render_mpl(g, i)
+        fig = draw_mpl(g, i)
         plt.close()
 
 

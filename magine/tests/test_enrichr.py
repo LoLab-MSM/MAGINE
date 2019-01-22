@@ -1,5 +1,7 @@
-from nose.tools import ok_
 import tempfile
+
+from nose.tools import ok_
+
 from magine.enrichment.enrichr import Enrichr, clean_tf_names
 from magine.tests.sample_experimental_data import exp_data
 
@@ -22,7 +24,7 @@ def test_multi_sample():
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'], save_name='enrichr_test')
-    ok_(df2.shape == (111, 10))
+    ok_(df2.shape == (111, 11))
 
 
 def test_multi_sample_plotting():
@@ -42,7 +44,7 @@ def test_set_of_dbs():
     df2 = e.run_samples(lists, ['1', '2', '3'],
                         database=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
-    ok_(df2.shape == (128, 10))
+    ok_(df2.shape == (128, 11))
 
 
 def test_tf_names():
