@@ -28,15 +28,15 @@ Our Data classes are built to organize and facilate exploration for both the raw
 The data class is the central structure that enables this.
 
 
-Contents
-========
+Table of contents
+-----------------
 
 .. toctree::
    :maxdepth: 2
 
-
    installation
    overview
+   Tutorial.ipynb
    modules/index
 
 

@@ -14,7 +14,7 @@ except:
 
 def render_igraph(mol_net, save_name=None, layout='auto', title=None,
                   positions=None, cluster=False, node_size=50,
-                  bbox=None, margin=None, inline=False):
+                  bbox=None, margin=None, inline=False, font_size=36):
     """
 
     Parameters
@@ -95,6 +95,7 @@ def render_igraph(mol_net, save_name=None, layout='auto', title=None,
     visual_style["vertex_label_dist"] = 0
     visual_style["vertex_shape"] = "circle"
     visual_style["vertex_size"] = node_size
+    visual_style["font_size"] = font_size
     visual_style["layout"] = positions
     visual_style["margin"] = margin
     # visual_style["edge_curved"] = True
@@ -127,7 +128,7 @@ def render_igraph(mol_net, save_name=None, layout='auto', title=None,
 
     # Grab the surface, construct a drawing context and a TextDrawer
     ctx = cairo.Context(plot.surface)
-    ctx.set_font_size(36)
+    ctx.set_font_size(font_size)
 
     if title is not None:
         drawer = TextDrawer(ctx, title, halign=TextDrawer.CENTER)

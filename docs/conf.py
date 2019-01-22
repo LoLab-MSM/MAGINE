@@ -222,5 +222,8 @@ from ipywidgets.embed import DEFAULT_EMBED_REQUIREJS_URL
 
 html_js_files = [
     'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min',
+    'https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.1/cytoscape-cose-bilkent',
     DEFAULT_EMBED_REQUIREJS_URL,
 ]
