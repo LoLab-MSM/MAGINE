@@ -158,12 +158,12 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
 
         title = "{0} : {1}".format(str(i), name)
         local_df = _data.loc[_data[identifier].isin(list(gene_set))].copy()
-        p_input = (local_df, list(gene_set), local_save_name, '.',
-                   title, plot_type)
+        p_input = [local_df, list(gene_set), local_save_name, '.',
+                   title, plot_type]
 
         plots_to_create.append(p_input)
 
-    print("Starting to create plots for each ontology term")
+    print("Starting to create plots for each term")
     _make_plots(plots_to_create, plot_species, run_parallel)
 
     return figure_locations, to_remove
@@ -201,7 +201,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
     for i in species_to_plot:
         save_name = re.sub('[/_.]', '', i)
 
-        plots.append((local_data, [i], save_name, out_dir, i, plot_type))
+        plots.append([local_data, [i], save_name, out_dir, i, plot_type])
 
         n = '<a href="{0}/{1}.{2}">{1}</a>'.format(out_dir, save_name, suffix)
         fig_loc[i] = n
@@ -218,11 +218,15 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
 
 def _make_plots(plots_to_make, plot_func, parallel=False):
+    for i in range(len(plots_to_make)):
+        plots_to_make[i].append('pdf')
+        plots_to_make[i].append(True)
+
     if parallel:
         st2 = time.time()
         pool = mp.Pool()
         # lambda a: function(a[0], **a[1]), arguments
-        pool.map_async(lambda a: plot_func(**a), plots_to_make)
+        pool.map_async(lambda a: plot_func(*a), plots_to_make)
         pool.close()
         pool.join()
         end2 = time.time()
@@ -231,14 +235,15 @@ def _make_plots(plots_to_make, plot_func, parallel=False):
 
     else:
         st1 = time.time()
-        list(map(lambda a: plot_func(**a), plots_to_make))
+        list(map(lambda a: plot_func(*a), plots_to_make))
         end1 = time.time()
         print("sequential time = {}".format(end1 - st1))
     plt.close('all')
 
 
 def plot_species(df, species_list=None, save_name='test', out_dir=None,
-                 title=None, plot_type='plotly', image_format='pdf'):
+                 title=None, plot_type='plotly', image_format='pdf',
+                 close_plots=False):
     """
 
     Parameters
@@ -257,17 +262,12 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
         Use plotly to generate html output or matplotlib to generate pdf
     image_format : str
         pdf or png, only used if plot_type="matplotlib"
-
+    close_plots : bool
+        Close plot after making, use when creating lots of plots in parallel.
     Returns
     -------
 
     """
-
-    close_plots = False
-    # if species_list is None:
-    #     df, species_list, save_name, out_dir, title, plot_type = df
-    #     This means it was ran in parallel and we shouldn't need to keep plots
-    # close_plots = True
 
     ldf = df.copy()
 

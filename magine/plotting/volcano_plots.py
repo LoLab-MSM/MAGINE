@@ -145,7 +145,7 @@ def volcano_plot(data, save_name=None, out_dir=None, sig_column=False,
         ax.set_ylim(y_range[0], y_range[1])
     if x_range is not None:
         ax.set_xlim(x_range[0], x_range[1])
-        fig.tight_layout()
+    fig.tight_layout()
     if save_name is not None:
         save_plot(fig, save_name=save_name, out_dir=out_dir)
     return fig

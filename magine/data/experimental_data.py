@@ -127,7 +127,7 @@ class Sample(BaseData):
             over_time.append(cur_slice.id_list)
         return over_time
 
-    def volcano_plot(self, save_name, out_dir=None, sig_column=False,
+    def volcano_plot(self, save_name=None, out_dir=None, sig_column=False,
                      p_value=0.1, fold_change_cutoff=1.5, x_range=None,
                      y_range=None):
         """ Create a volcano plot of data
@@ -433,6 +433,9 @@ class ExperimentalData(object):
         for i in self.exp_methods:
             self.__setattr__(i, Sample(
                 self.data.loc[self.data[exp_method] == i]))
+        for i in self.sample_ids:
+            self.__setattr__(i, Sample(
+                self.data.loc[self.data[sample_id] == i]))
 
     def __setattr__(self, name, value):
         super(ExperimentalData, self).__setattr__(name, value)
@@ -594,18 +597,10 @@ class ExperimentalData(object):
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
         for i in self.exp_methods:
-            self.volcano_plot(i, i, out_dir=out_dir, sig_column=use_sig_flag,
-                              p_value=p_value,
-                              fold_change_cutoff=fold_change_cutoff)
-
-
-
-    def _check_experiment_type_existence(self, exp_type):
-        if exp_type not in self.exp_methods:
-            print("Must provide experimental method for volcano plot")
-            # raise Warning
-            return False
-        return True
+            self[i].volcano_plot(
+                i, out_dir=out_dir, sig_column=use_sig_flag,
+                p_value=p_value, fold_change_cutoff=fold_change_cutoff
+            )
 
 
 template = r'''

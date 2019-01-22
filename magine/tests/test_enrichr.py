@@ -1,5 +1,5 @@
 from nose.tools import ok_
-
+import tempfile
 from magine.enrichment.enrichr import Enrichr, clean_tf_names
 from magine.tests.sample_experimental_data import exp_data
 
@@ -27,11 +27,12 @@ def test_multi_sample():
 
 def test_multi_sample_plotting():
     up = exp_data.genes.sig.up_by_sample
+    out_dir = tempfile.mkdtemp()
     e.run_samples(up, ['1', '2', '3'],
                   save_name='enrichr_test',
                   exp_data=exp_data,
                   create_html=True,
-                  out_dir='html_output2')
+                  out_dir=out_dir)
 
 
 def test_set_of_dbs():

@@ -1,5 +1,5 @@
 import os
-
+import tempfile
 import pandas as pd
 
 import magine.html_templates.html_tools as html_tools
@@ -15,10 +15,10 @@ def test_filter():
                         index=['GO_id', 'GO_name', 'depth', 'ref', 'slim',
                                'aspect'],
                         columns='sample_index')
+    out_dir = tempfile.mkdtemp()
+    html_tools.write_filter_table(df, os.path.join(out_dir, 'tmp'))
 
-    html_tools.write_filter_table(df, 'html_writer')
-
-    html_tools.write_single_table(df, 'test2', 'html_writer2')
+    html_tools.write_single_table(df, 't', os.path.join(out_dir, 'tmp2'))
 
 """
 def test_create_plots_per_go():

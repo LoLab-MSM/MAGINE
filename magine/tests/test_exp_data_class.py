@@ -87,9 +87,9 @@ class TestExpData(object):
         plt.close()
 
     def test_time_series_volcano(self):
-        self.exp_data.time_series_volcano('label_free', 'test_label_free',
-                                          out_dir=self.out_dir,
-                                          sig_column=True)
+        self.exp_data.label_free.time_series_volcano('test_label_free',
+                                                     out_dir=self.out_dir,
+                                                     sig_column=True)
         plt.close()
 
     def test_plot_all_metabolites(self):
@@ -105,10 +105,9 @@ class TestExpData(object):
         plt.close()
 
     def test_histogram(self):
-        self.exp_data.create_histogram_measurements('label_free',
-                                                    save_name='lf_hist',
-                                                    y_range=[0, 100],
-                                                    out_dir=self.out_dir)
+        self.exp_data.label_free.create_histogram_measurements(
+            save_name='lf_hist', y_range=[0, 100], out_dir=self.out_dir
+        )
         plt.close()
 
     def test_table(self):

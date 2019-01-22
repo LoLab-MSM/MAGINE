@@ -23,4 +23,4 @@ This class is used by both "Sample" and "EnrichmentResult".
 .. toctree::
    :maxdepth: 1
 
-   data_exploration.ipynb
+   Tutorial.ipynb
