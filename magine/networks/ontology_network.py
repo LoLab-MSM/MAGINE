@@ -11,7 +11,7 @@ from statsmodels.stats.multitest import fdrcorrection
 
 import magine.networks.utils as nt
 from magine.networks.exporters import export_to_dot
-from magine.networks.visualization.igraph_tools import render_igraph
+from magine.networks.visualization.igraph_tools import draw_igraph
 
 
 class OntologyNetworkGenerator(object):
@@ -209,7 +209,7 @@ class OntologyNetworkGenerator(object):
 
             if draw:
                 export_to_dot(go_graph, save_name)
-                render_igraph(mol_net, save_name + '_subgraph_igraph')
+                draw_igraph(mol_net, save_name + '_subgraph_igraph')
         return go_graph, mol_net
 
 
@@ -314,7 +314,8 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         term_g.node[i]['color'] = 'red'
         term_g.node[i]['label'] = i
         for n, time in enumerate(labels):
-            term_g.node[i]['sample{}'.format(time)] = float(values[time])
+            fmt_label = 'sample{}'.format(time.replace('_', ''))
+            term_g.node[i][fmt_label] = float(values[time])
     if save_name:
         nx.write_graphml(term_g, "{}_ags_network.graphml".format(save_name))
     if not create_only:
