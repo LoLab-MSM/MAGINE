@@ -32,6 +32,7 @@ import sys
 
 import mock
 import sphinx_bootstrap_theme
+
 sys.path.append(os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -224,6 +225,16 @@ html_js_files = [
     'https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js',
     'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js',
     'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min',
+    'https://cdn.plot.ly/plotly-latest.min.js',
     'https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.1/cytoscape-cose-bilkent',
     DEFAULT_EMBED_REQUIREJS_URL,
 ]
+
+
+def setup(app):
+    app.add_javascript(
+        "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js")
+    app.add_javascript(
+        "https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js")
+    for i in html_js_files:
+        app.add_javascript(i)
