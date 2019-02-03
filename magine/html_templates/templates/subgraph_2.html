@@ -15,22 +15,30 @@
             position: absolute;
             top: 5px;
             background: {{background}};
-        },
-        #{{fitbutton}}{
-            width: 3em;
-            margin: 0.5em;
-            position: absolute;
-            z-index: 999;
-            top: 5px;
-            right: 0;
-        },
-        #{{fitbutton}}i {
-            transform: rotate(45deg);
         }
 
     </style>
 
     <script>
+        function makeTippy(target, text) {
+            return tippy(target.popperRef(),
+                {
+                    html: add_tip(text),
+                    trigger: 'manual',
+                    arrow: true,
+                    placement: 'top',
+                    hideOnClick: false,
+                    interactive: true,
+                    multiple: true,
+                    sticky: true
+                }).tooltips[0];
+        }
+
+        function add_tip(text) {
+            var div = document.createElement('div');
+            div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene=" + text + "' target='_blank'>Gene Card</a>";
+            return div;
+        }
         (function () {
             function render() {
                 var cy = window.cy = cytoscape({
@@ -40,19 +48,19 @@
                         edges: {{edges}}
                     },
 
-                    layout: {
-                        name: '{{layout}}'
-                    },
+                    {#layout: {#}
+                    {#    name: '{{layout}}',#}
+                    {##}
+                    {#                    },#}
 
                     boxSelectionEnabled: true,
                     wheelSensitivity: .25,
-                    ready: function () {
-                        cy.style().fromJson({{style_json}}).update();
-                    }
-
 
                 });
 
+                cy.layout({{layout_json}}).run();
+
+                cy.style().fromJson({{style_json}}).update();
                 cy.on('tap', 'node', function (evt) {
                     var ele = evt.target;
                     if (ele.data()['tip']['state']['visible']) {
@@ -62,49 +70,10 @@
                     }
                 });
 
-                var makeTippy = function (target, text) {
-                    return tippy(target.popperRef(), {
-                        html: (function () {
-                            var div = document.createElement('div');
-                            div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene=" + text + "' target='_blank'>Gene Card</a>";
-                            return div;
-                        })(),
-                        trigger: 'manual',
-                        arrow: true,
-                        placement: 'top',
-                        hideOnClick: false,
-                        interactive: true,
-                        multiple: true,
-                        sticky: true
-
-                    }).tooltips[0];
-                };
 
                 cy.nodes().forEach(function (n) {
                     n.data()['tip'] = makeTippy(n, n.data('id'));
                 });
-
-                var allNodes;
-                var layoutPadding = 50;
-                var aniDur = 500;
-                var easing = 'linear';
-                allNodes = cy.nodes();
-                $('#{{fitbutton}}').on('click', function () {
-
-                    allNodes.unselect();
-                    cy.stop();
-
-                    cy.animation({
-                        fit: {
-                            eles: cy.elements(),
-                            padding: layoutPadding
-                        },
-                        duration: aniDur,
-                        easing: easing
-                    }).play();
-
-                });
-
             }
 
             var before_render = function () {
@@ -171,8 +140,6 @@
 
 <body>
 <div id="{{ uuid }}"></div>
-<button id={{ fitbutton }} class="btn btn-default
-"><i class="fa fa-arrows-h"></i></button>
 <!-- When only #uuid div is placed on this page,
 the height of output-box on ipynb will be 0px.
 One line below will prevent that. -->

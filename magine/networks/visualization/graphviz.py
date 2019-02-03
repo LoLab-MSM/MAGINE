@@ -1,9 +1,10 @@
+import networkx as nx
 from IPython.display import Image, display
 
 from magine.networks.exporters import nx_to_dot
 
 
-def draw_graphviz(network, layout='dot'):
+def draw_graphviz(network, layout='dot', width=100, save_name=None):
     """
 
     Parameters
@@ -21,4 +22,10 @@ def draw_graphviz(network, layout='dot'):
     net_copy.graph.update({'repulsiveforce ': '1'})
     net_copy.graph.update({'overlap ': 'false'})
     net_copy.graph.update({'splines ': 'true'})
-    display(Image(nx_to_dot(net_copy).create(format='png', prog=layout)))
+    if save_name is not None:
+        nx_to_dot(net_copy).write(save_name + '.png', format='png',
+                                  prog=layout)
+        display(Image(save_name + '.png', width=width))
+    else:
+        img = nx_to_dot(net_copy).create(format='png', prog=layout)
+        display(Image(img, width=width))

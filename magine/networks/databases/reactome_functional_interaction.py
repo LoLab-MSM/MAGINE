@@ -99,7 +99,7 @@ def download_reactome_fi():
     -------
 
     """
-    url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2016/FIsInGene_022717_with_annotations.txt.zip'
+    url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2017/FIsInGene_071718_with_annotations.txt.zip'
     table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
                         delimiter='\t', error_bad_lines=False, encoding='utf-8'
                         )

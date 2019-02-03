@@ -28,19 +28,40 @@ def init():
 
 # init()
 
+layouts = {
+    'breadthfirst': {
+        'name': 'breadthfirst',
+        'directed': 'true',
+        'spacingFactor': .5
+    },
+    'cose': {
+        'name': 'cose',
+    },
+    'cose-bilkent': {
+        'name': 'cose-bilkent',
+    }
+}
 
-def display_graph(graph, add_parent=False, layout_algorithm='cose-bilkent',
-                  background='#FFFFFF', height=700, width=100):
+
+def display_graph(graph, add_parent=False, layout='cose-bilkent',
+                  background='#FFFFFF', height=700, width=100,
+                  default_color='white', **layout_args):
     g_copy = graph.copy()
     if add_parent:
         g_copy = _add_parent_term(g_copy)
-
+    for i in g_copy.nodes:
+        if 'color' not in g_copy.node[i]:
+            g_copy.node[i]['color'] = default_color
     d = nx_to_json(g_copy)
     d['background'] = background
     d['uuid'] = "cy" + str(uuid.uuid4())
     d['widget_width'] = str(width)
     d['widget_height'] = str(height)
-    d['layout'] = layout_algorithm
+
+    layout_opts = layouts[layout]
+    layout_opts.update(layout_args)
+
+    d['layout_json'] = json.dumps(layout_opts)
     d['style_json'] = json.dumps(styles['default'])
     d['fitbutton'] = "fit" + str(uuid.uuid4())
 

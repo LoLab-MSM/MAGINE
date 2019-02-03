@@ -14,7 +14,8 @@ except:
 
 def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
                 positions=None, cluster=False, node_size=50,
-                bbox=None, margin=None, inline=False, font_size=36):
+                bbox=None, margin=None, inline=False, node_font_size=24,
+                font_size=36):
     """
 
     Parameters
@@ -29,8 +30,18 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
     positions : list, optional
     bbox : list
     cluster : bool
+        Add a shape around species that are tagged the same.
+         g.node[0][term_name]='dna'
+         g.node[0][term_name]='dna'
+         This will be grouped together.
     margin : list
+        Margin of white space for boxes. This should be considered for the
+         labels of the nodes
     node_size : int
+    node_font_size: int
+        Size of node labels
+    font_size : int
+        Title and group name (if clustering) font size
     Returns
     -------
 
@@ -48,10 +59,20 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
     except ImportError:
         print("No igraph, cannot use plotting function")
         return
-    g = nx_to_igraph(mol_net)
-    if not isinstance(g, igraph.Graph):
-        print("Error converting to Igraph")
-        return
+
+    if isinstance(mol_net, igraph.Graph):
+        g = mol_net
+    else:
+        g = nx_to_igraph(mol_net)
+        if not isinstance(g, igraph.Graph):
+            print("Error converting to Igraph")
+            return
+    if inline:
+        if bbox is None:
+            bbox = [500, 500]
+        if margin is None:
+            margin = [50, 50, 50, 50]
+
     if bbox is None:
         bbox = [2400, 2400]
     if margin is None:
@@ -59,8 +80,7 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
 
     _valid_layouts = {
         "kk", "fr", "drl", "lgl", "tree", "graphopt", "mds", "sugiyama",
-    "auto",
-        "grid_fr",
+        "auto", "grid_fr",
     }
     assert layout in _valid_layouts, \
         'layout {} not in {}'.format(layout, _valid_layouts)
@@ -95,7 +115,7 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
     visual_style["vertex_label_dist"] = 0
     visual_style["vertex_shape"] = "circle"
     visual_style["vertex_size"] = node_size
-    visual_style["font_size"] = font_size
+    visual_style["vertex_label_size"] = node_font_size
     visual_style["layout"] = positions
     visual_style["margin"] = margin
     # visual_style["edge_curved"] = True
@@ -233,7 +253,7 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
 
 def color_by_list(graph, species_list, labels, colors, save_name,
                   compile_images=False, cluster=False, fig_width=1500,
-                  fig_height=1500, layout='auto', inline=False):
+                  fig_height=1500, layout='auto', inline=False, **kwargs):
     """
     Adds color attribute to network over time.
 
@@ -273,7 +293,8 @@ def color_by_list(graph, species_list, labels, colors, save_name,
         print('Length of list'
               'of data must equal len of color list')
         return
-
+    if labels is None:
+        labels = [None] * len(species_list)
     string = 'convert -delay 100 '
     tmp_graph = graph.copy()
     pos = None
@@ -282,13 +303,8 @@ def color_by_list(graph, species_list, labels, colors, save_name,
             tmp_graph, i, 'color', colors[n], 'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
-        result, pos = render_igraph(graph2, s_name, positions=pos,
-                                    node_size=50,
-                                    bbox=[fig_width, fig_height],
-                                    margin=[100, 100, 100, 100],
-                                    cluster=cluster, title=labels[n],
-                                    layout=layout,
-                                    )
+        result, pos = draw_igraph(graph2, s_name, positions=pos,
+                                  title=labels[n], **kwargs)
         if inline:
             display(Image(s_name))
         string += ' ' + s_name
@@ -299,3 +315,14 @@ def color_by_list(graph, species_list, labels, colors, save_name,
     if compile_images:
         os.system(string1)
         os.system(string2)
+
+
+if __name__ == '__main__':
+    import networkx as nx
+    import igraph
+
+    # g = nx.read_gpickle('../background_network.p.gz')
+    g = nx.DiGraph()
+    g.add_edge("a", "b")
+    print(type(g))
+    draw_igraph(g, save_name='test', layout='lgl')

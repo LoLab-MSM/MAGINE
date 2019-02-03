@@ -22,10 +22,10 @@ def download_signor():
                         error_bad_lines=False, encoding='utf-8'
                         )
     # filter out non direct
-    table = table[table['DIRECT'] == 't']
+    table = table.loc[table['DIRECT'] == 't']
 
     # Filter out non descriptive
-    table = table[~table['MECHANISM'].isnull()]
+    table = table.loc[~table['MECHANISM'].isnull()]
 
     # Drop SIGNOR edges, these are generally complexes
     table = table[~(table['DATABASEA'] == 'SIGNOR')]
@@ -33,6 +33,18 @@ def download_signor():
 
     # Not sure what they mean, so will remove. Ideally other DBs have this info
     table = table[~(table['MECHANISM'] == 'post transcriptional regulation')]
+
+    col_a = ['ENTITYA', 'TYPEA', 'IDA', 'DATABASEA']
+    col_b = ['ENTITYB', 'TYPEB', 'IDB', 'DATABASEB']
+    cols = ['name', 'species_type', 'id', 'db']
+    species_a = table[col_a].copy()
+    species_b = table[col_b].copy()
+    species_a.rename(columns={i: j for i, j in zip(col_a, cols)}, inplace=True)
+    species_b.rename(columns={i: j for i, j in zip(col_b, cols)}, inplace=True)
+    species_a.drop_duplicates(inplace=True)
+    species_b.drop_duplicates(inplace=True)
+    all_species = pd.concat([species_a, species_b])
+    all_species.drop_duplicates(inplace=True)
 
     def map_to_activate_inhibit(row):
         effect = ''
@@ -56,7 +68,7 @@ def download_signor():
     # relabel edge types
     table['interactionType'] = table.apply(map_to_activate_inhibit, axis=1)
     table['databaseSource'] = 'SIGNOR'
-    table['pmid'] = 'PMID'
+    table['pmid'] = table['PMID']
 
     table['source'] = table['ENTITYA']
     table['target'] = table['ENTITYB']
@@ -68,20 +80,16 @@ def download_signor():
         edge_attr=['interactionType', 'databaseSource'],
         create_using=nx.DiGraph()
     )
-
-    table = table[['source', 'target']].values
-    added_genes = set()
-
-    def _add_node(node):
-        if node not in added_genes:
-            protein_graph.add_node(node, databaseSource='SIGNOR',
-                                   speciesType='gene')
-            added_genes.add(node)
-
     # add names to graph
-    for r in table:
-        _add_node(r[0])
-        _add_node(r[1])
+    for row in all_species.values:
+        name, species_type, id_name, db = row
+        if species_type != 'protein':
+            species_type = 'compound'
+        if species_type == 'protein':
+            species_type = 'gene'
+
+        protein_graph.add_node(name, databaseSource='SIGNOR',
+                               speciesType=species_type)
 
     nx.write_gpickle(protein_graph, _p_name)
 

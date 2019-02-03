@@ -85,7 +85,7 @@ styles = {
                      "text-wrap": "wrap",
                      "text-max-width": 95,
                      "shape": "ellipse",
-                     "background-color": "rgb(255,255,255)",
+                     "background-color": "data(color)",
                      "text-halign": "center",
                      "font-family": "SansSerif",
                      "text-valign": "center",

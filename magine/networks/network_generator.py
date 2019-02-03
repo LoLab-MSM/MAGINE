@@ -1,8 +1,10 @@
 import os
 import networkx as nx
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 import magine.networks.utils as nt
-from magine.networks.databases import load_hmdb_network, load_biogrid_network, \
-    load_signor, load_reactome_fi, load_kegg_mappings, load_all_of_kegg
+import magine.networks.databases as db
 from magine.mappings.chemical_mapper import ChemicalMapper
 from magine.mappings.gene_mapper import GeneMapper
 
@@ -51,11 +53,12 @@ def build_network(seed_species, species='hsa', save_name=None,
     networkx.DiGraph
     """
 
-    path_to_graph, node_to_path = load_kegg_mappings(species, verbose=False)
+    path_to_graph, node_to_path = db.load_kegg_mappings(species, verbose=False)
 
     seed_species = set(x.upper() for x in seed_species)
     updated_accession = set()
     old_accession = set()
+    # This maps HMDB numbers to the new numbering format
     for i in seed_species:
         if i.startswith('HMDB'):
             if i in cm.hmdb_accession_to_main:
@@ -95,16 +98,16 @@ def build_network(seed_species, species='hsa', save_name=None,
     networks_to_expand = []
 
     if use_hmdb:
-        networks_to_expand.append(load_hmdb_network(verbose))
+        networks_to_expand.append(db.load_hmdb_network(verbose))
 
     if use_reactome:
-        networks_to_expand.append(load_reactome_fi(verbose))
+        networks_to_expand.append(db.load_reactome_fi(verbose))
 
     if use_biogrid:
-        networks_to_expand.append(load_biogrid_network(verbose))
+        networks_to_expand.append(db.load_biogrid_network(verbose))
 
     if use_signor:
-        networks_to_expand.append(load_signor(verbose))
+        networks_to_expand.append(db.load_signor(verbose))
 
     if len(networks_to_expand) != 0:
         entire_expansion_network = nt.compose_all(networks_to_expand)
@@ -192,69 +195,100 @@ def expand_by_db(starting_network, expansion_source, measured_list,
 
 
 def create_background_network(save_name='background_network',
-                              fresh_download=False, verbose=True):
+                              fresh_download=False, verbose=True,
+                              create_overlap=False):
     """
 
     Parameters
     ----------
     save_name : str
-
+        Name of the network
+    fresh_download : bool
+        Download a fresh copy of the databases
+    verbose: bool
+        Print information about the databases
+    create_overlap : bool
+        Creates a figure comparing the databses
     Returns
     -------
-
+    nx.DiGraph
     """
 
-    kegg_network = load_all_of_kegg(fresh_download=fresh_download,
+    kegg_network = db.load_all_of_kegg(fresh_download=fresh_download,
+                                       verbose=verbose)
+    hmdb_network = db.load_hmdb_network(fresh_download=fresh_download,
+                                        verbose=verbose)
+    biogrid_network = db.load_biogrid_network(fresh_download=fresh_download,
+                                              verbose=verbose)
+    signor_network = db.load_signor(fresh_download=fresh_download,
                                     verbose=verbose)
-    hmdb_network = load_hmdb_network(fresh_download=fresh_download,
-                                     verbose=verbose)
-    biogrid_network = load_biogrid_network(fresh_download=fresh_download,
-                                           verbose=verbose)
-    signor_network = load_signor(fresh_download=fresh_download,
-                                 verbose=verbose)
-    reactome_network = load_reactome_fi(verbose=verbose)
+    reactome_network = db.load_reactome_fi(verbose=verbose)
+    network_list = [hmdb_network, kegg_network, biogrid_network,
+                    reactome_network, signor_network]
+    names = ['hmdb', 'kegg', 'biogrid', 'reactome', 'signor']
+
 
     def find_overlap(n1, n2):
         nodes1 = set(n1.nodes())
         nodes2 = set(n2.nodes())
         e1 = set(n1.edges())
         e2 = set(n2.edges())
-        print("\tnode overlap = {}".format(len(nodes1.intersection(nodes2))))
-        print("\tnode difference = {} | {}".format(
-            len(nodes1.difference(nodes2)),
-            len(nodes2.difference(nodes1)))
-        )
-        print("\tedge overlap = {}".format(len(e2.intersection(e1))))
-        print("\tedge difference = {} | {}".format(len(e1.difference(e2)),
-                                                   len(e2.difference(e1))))
+        edge_overlap = len(e2.intersection(e1))
+        node_overlap = len(nodes1.intersection(nodes2))
+        print("\tnode overlap = {}".format(node_overlap))
+        print("\tedge overlap = {}".format(edge_overlap))
+        return node_overlap, edge_overlap
 
-    network_list = [hmdb_network, kegg_network, biogrid_network,
-                    reactome_network, signor_network]
-    names = ['hmdb', 'kegg', 'biogrid', 'reactome', 'signor']
+    if create_overlap:
+        db_maps = {i: j for i, j in zip(names, network_list)}
+        n_dbs = len(names)
 
-    for i, n in zip(network_list, names):
-        for j, m in zip(network_list, names):
-            if n != m:
-                print('{} : {}'.format(n, m))
-                find_overlap(i, j)
+        pal = sns.light_palette("purple", as_cmap=True)
+        node_mat = np.zeros((n_dbs, n_dbs), dtype=np.int)
+        edge_mat = np.zeros((n_dbs, n_dbs), dtype=np.int)
 
-    full_network = nt.compose_all(
-        [hmdb_network, kegg_network, biogrid_network, reactome_network,
-         signor_network]
-    )
+        for i in range(n_dbs):
+            row = db_maps[names[i]]
+            for j in range(i + 1, n_dbs):
+                col = db_maps[names[j]]
+                n_overlap, e_overlap = find_overlap(row, col)
+                node_mat[i, j] = n_overlap
+                node_mat[j, i] = node_mat[i, j]
+                edge_mat[i, j] = e_overlap
+                edge_mat[j, i] = edge_mat[i, j]
 
-    nt.delete_disconnected_network(full_network)
+        fig = plt.figure(figsize=(10, 4))
+        ax = fig.add_subplot(121)
+        plt.title("Number of node overlaps")
+        sns.heatmap(node_mat, fmt='d', annot=True, linewidths=0.02, cmap=pal,
+                    yticklabels=names, xticklabels=names)
+        plt.yticks(rotation=0)
+        ax = fig.add_subplot(122)
+        plt.title("Number of edge overlaps")
+        sns.heatmap(edge_mat, fmt='d', annot=True, linewidths=0.02, cmap=pal,
+                    yticklabels=names, xticklabels=names)
+        plt.tight_layout()
+        plt.yticks(rotation=0)
+        plt.subplots_adjust(wspace=.3)
+        plt.savefig('compare_network_dbs.png', dpi=300, bbox_inches='tight')
+        plt.close()
+
+    full_network = nt.compose_all(network_list)
+
     nt.standardize_edge_types(full_network)
-
+    full_network = nt.delete_disconnected_network(full_network)
     # find_overlap(reactome_network, full_network)
     n_nodes = len(full_network.nodes)
     n_edges = len(full_network.edges)
     print("Background network {} nodes and {} edges".format(n_nodes, n_edges))
 
     nx.write_gpickle(full_network, '{}.p.gz'.format(save_name))
+    nx.write_gml(full_network, '{}.gml'.format(save_name))
+    return full_network
 
 
 if __name__ == '__main__':
-    create_background_network(fresh_download=True, verbose=True)
+    create_background_network(fresh_download=False, verbose=True,
+                              create_overlap=True)
     # load_hmdb_network(create_new=True)
     # load_hmdb_network(False)
