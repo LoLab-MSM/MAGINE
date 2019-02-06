@@ -100,10 +100,12 @@ class EnrichmentResult(BaseData):
         """
         new_data = self.copy()
         if p_value is not None:
-            assert isinstance(p_value, (int, float))
+            if not isinstance(p_value, (int, float)):
+                raise AssertionError("p_value must be a float or int")
             new_data = new_data[new_data['adj_p_value'] <= p_value]
         if combined_score is not None:
-            assert isinstance(combined_score, (int, float))
+            if not isinstance(combined_score, (int, float)):
+                raise AssertionError("combined_score must be a float or int")
             new_data = new_data[new_data['combined_score'] >= combined_score]
         if isinstance(rank, (int, float)):
             new_data = new_data[new_data['rank'] <= rank]

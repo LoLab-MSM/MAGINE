@@ -71,7 +71,8 @@ def load_trrust(fresh_download=False, verbose=False):
     if not os.path.exists(_p_name) or fresh_download:
         print("Downloading TRRUST network!")
         download_trrust()
-        assert os.path.exists(_p_name), "Error downloading TRRUST. "
+        if not os.path.exists(_p_name):
+            raise AssertionError("Error downloading TRRUST. ")
     tmp_graph = nx.read_gpickle(_p_name)
     if verbose:
         print("SIGNOR : {} nodes and {} edges".format(len(tmp_graph.nodes),

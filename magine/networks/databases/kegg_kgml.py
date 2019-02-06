@@ -1,9 +1,9 @@
 import gzip
 import os
-import xml.etree.cElementTree as element_tree
 
 import networkx as nx
 from bioservices import KEGG
+from defusedxml import cElementTree as element_tree
 
 import magine.networks.utils as utils
 from magine.data.storage import network_data_dir

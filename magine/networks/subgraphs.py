@@ -331,8 +331,9 @@ class Subgraph(object):
             new_g = network.copy()
 
         if nodes is None:
-            assert network is not None, "Must provide network or list of nodes"
-            nodes = list(new_g.nodes())
+            if network is None:
+                raise AssertionError("Must provide network or list of nodes")
+            nodes = set(new_g.nodes)
         elif isinstance(nodes, str):
             nodes = [nodes]
         elif not isinstance(nodes, (list, set)):
@@ -570,7 +571,8 @@ class Subgraph(object):
 
     @staticmethod
     def _include_only(network, include_list):
-        assert isinstance(include_list, (list, set))
+        if not isinstance(include_list, (list, set)):
+            raise AssertionError("Include list must be a list of set")
         sg = network.copy()
         all_nodes = set(sg.nodes())
         not_found = all_nodes.difference(set(include_list))

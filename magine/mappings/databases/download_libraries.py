@@ -1,11 +1,10 @@
 import os
-import xml.etree.ElementTree as ElementTree
 import zipfile
-from xml.etree import cElementTree as ElementTree
 
 import numpy as np
 import pandas as pd
 import requests
+from defusedxml import cElementTree as ElementTree
 
 from magine.data.storage import id_mapping_dir
 
@@ -14,7 +13,7 @@ def load_hgnc():
     hgnc_name = os.path.join(id_mapping_dir, 'hgnc.gz')
     if not os.path.exists(hgnc_name):
         hgnc = download_hgnc()
-        assert os.path.exists(hgnc_name)
+        _check_path(hgnc_name)
     else:
         hgnc = pd.read_csv(hgnc_name, low_memory=False)
 
@@ -26,7 +25,7 @@ def load_uniprot():
     uniprot_path = os.path.join(id_mapping_dir, 'human_uniprot.csv.gz')
     if not os.path.exists(uniprot_path):
         uniprot = download_uniprot()
-        assert os.path.exists(uniprot_path)
+        _check_path(uniprot_path)
     else:
         uniprot = pd.read_csv(uniprot_path, low_memory=False)
     return uniprot
@@ -36,10 +35,15 @@ def load_ncbi():
     ncbi_name = os.path.join(id_mapping_dir, 'ncbi.gz')
     if not os.path.exists(ncbi_name):
         ncbi = download_ncbi()
-        assert os.path.exists(ncbi_name)
+        _check_path(ncbi_name)
     else:
         ncbi = pd.read_csv(ncbi_name, low_memory=False)
     return ncbi
+
+
+def _check_path(path):
+    if not os.path.exists(path):
+        raise AssertionError()
 
 
 def download_uniprot(species='hsa'):

@@ -48,7 +48,8 @@ class BaseData(pd.DataFrame):
             d_copy.log2_normalize_df(values, inplace=True)
 
         if min_sig:
-            assert isinstance(min_sig, int)
+            if not isinstance(min_sig, int):
+                raise AssertionError()
             if 'significant' not in d_copy.columns:
                 print('In order to filter based on minimum sig figs, '
                       'please add a column of signficant terms with '

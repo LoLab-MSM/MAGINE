@@ -21,3 +21,5 @@ sortedcontainers
 statsmodels
 pydot
 ipywidgets
+defusedxml
+requests

@@ -114,7 +114,8 @@ def plot_genes_by_ont(data, list_of_terms, save_name, out_dir=None,
     plots_to_create = []
     to_remove = set()
 
-    assert plot_type in {'plotly', 'matplotlib'}
+    if plot_type not in {'plotly', 'matplotlib'}:
+        raise AssertionError("Please pass plotly or matplotlibn as plot_type")
     # filter data by significance and number of references
     if len(list_of_terms) == 0:
         print("No significant ontology terms!!!")

@@ -5,7 +5,8 @@ import jinja2
 env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(
         searchpath=os.path.join(os.path.dirname(__file__), 'templates')
-    )
+    ),
+    autoescape=True
 )
 
 workflow_template = env.get_template('workflow_template.html')

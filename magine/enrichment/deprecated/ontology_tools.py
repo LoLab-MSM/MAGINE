@@ -465,7 +465,8 @@ def filter_ontology_df(data, n_hits_per_time=None, go_aspects=None,
 
     # make sure all columns we need are defined
     for i in ['GO_id', 'pvalue', 'enrichment_score', 'sample_index', 'aspect']:
-        assert i in data.columns, "Must have {} in df".format(i)
+        if i not in data.columns:
+            raise AssertionError("Must have {} in df".format(i))
 
     data['genes'] = data['genes'].astype(set)
 
