@@ -25,5 +25,5 @@ def test_convert_all():
     ans = {'chemName': 'D-Ribulose 5-phosphate', 'keggName': 'C00199',
            'hmdbNames': 'HMDB0000618', 'databaseSource': 'KEGG',
            'speciesType': 'compound'}
-    print(network.node['HMDB0000618'])
-    print(network.node['DHDH'])
+    # print(network.node['HMDB0000618'])
+    # print(network.node['DHDH'])

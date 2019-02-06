@@ -1,9 +1,10 @@
 import gzip
 import os
 
+import defusedxml.cElementTree as et
 import networkx as nx
 from bioservices import KEGG
-from defusedxml import cElementTree as element_tree
+from defusedxml import cElementTree as ElementTree
 
 import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
@@ -54,7 +55,8 @@ def kgml_to_nx(xml_file, species='hsa'):
 
     """
     try:
-        tree = element_tree.ElementTree(element_tree.fromstring(xml_file))
+        tree = ElementTree(et.fromstring(xml_file))
+
     except TypeError:
         print("This file ({})is messed up! Investigate".format(xml_file))
         return nx.DiGraph(), []
