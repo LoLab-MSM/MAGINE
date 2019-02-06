@@ -48,19 +48,24 @@
                         edges: {{edges}}
                     },
 
-                    {#layout: {#}
-                    {#    name: '{{layout}}',#}
-                    {##}
-                    {#                    },#}
 
                     boxSelectionEnabled: true,
                     wheelSensitivity: .25,
 
                 });
 
+                // apply layout
                 cy.layout({{layout_json}}).run();
 
+                // add style
                 cy.style().fromJson({{style_json}}).update();
+
+                // Add tippy for each node
+                cy.nodes().forEach(function (n) {
+                    n.data()['tip'] = makeTippy(n, n.data('id'));
+                });
+
+                // hide tippy text on click
                 cy.on('tap', 'node', function (evt) {
                     var ele = evt.target;
                     if (ele.data()['tip']['state']['visible']) {
@@ -71,12 +76,10 @@
                 });
 
 
-                cy.nodes().forEach(function (n) {
-                    n.data()['tip'] = makeTippy(n, n.data('id'));
-                });
+
             }
 
-            var before_render = function () {
+            function before_render() {
                 if (window['cytoscape'] === undefined) {
                     console.log("Waiting for Cyjs...");
                     window.addEventListener("load_cytoscape", before_render);
