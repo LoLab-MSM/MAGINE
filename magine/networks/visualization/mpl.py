@@ -68,13 +68,16 @@ def draw_mpl(network, layout='dot', scale=1, node_size=500, font_size=16):
     for (n, d) in network.nodes(data=True):
         if 'keggName' in d:
             del d["keggName"]
-
-    if layout in ['dot', 'neato', 'fdp', 'twopi', 'circo', 'sfdp']:
+    mpl_layouts = ['circular_layout', 'random_layout', 'shell_layout',
+                   'spring_layout', 'spectral_layout', 'kamada_kawai_layout',
+                   'fruchterman_reingold_layout']
+    dot_layouts = ['dot', 'neato', 'fdp', 'twopi', 'circo', 'sfdp']
+    if layout in dot_layouts:
         pos = pydot_layout(network, prog=layout, )
     else:
-        assert layout in ['circular_layout', 'random_layout', 'shell_layout',
-                          'spring_layout', 'spectral_layout',
-                          'kamada_kawai_layout', 'fruchterman_reingold_layout']
+        if layout not in mpl_layouts:
+            raise AssertionError("Please provide valid layout option:{}"
+                                 "".format(mpl_layouts + dot_layouts))
         if layout == 'spring_layout':
             pos = nx.drawing.layout.spring_layout(network)
         elif layout == 'random_layout':

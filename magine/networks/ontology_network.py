@@ -195,8 +195,8 @@ class OntologyNetworkGenerator(object):
         for i in mol_net.nodes:
             labels = gene_to_label[i]
             terms = gene_to_term[i]
-            assert len(labels) == len(terms), \
-                'len(labels) should equal len(terms)'
+            if len(labels) != len(terms):
+                raise AssertionError('len(labels) should equal len(terms)')
             mol_net.node[i]['termName'] = ','.join(sorted(labels))
             mol_net.node[i]['terms'] = ','.join(sorted(terms))
 
