@@ -69,11 +69,13 @@ def display_graph(graph, add_parent=False, layout='cose-bilkent',
     display(HTML(template.render(d)))
 
 
-def render_graph(graph, add_parent=False):
+def render_graph(graph, add_parent=False, default_color='white'):
     g_copy = graph.copy()
     if add_parent:
         g_copy = _add_parent_term(g_copy)
-
+    for i in g_copy.nodes:
+        if 'color' not in g_copy.node[i]:
+            g_copy.node[i]['color'] = default_color
     d = nx_to_json(g_copy)
     u_name = "cy{}".format(uuid.uuid4())
     d['uuid'] = u_name
