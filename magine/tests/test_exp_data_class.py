@@ -28,26 +28,29 @@ class TestExpData(object):
         ok_(self.exp_data.proteins.id_list == {'AHR', 'PARP4', 'ADORA1',
                                                'BAX', 'TP53', 'PARP1',
                                                'ADRA1A', 'ADORA2A', 'CASP3',
-                                               'AGTR2'})
+                                               'AGTR2', 'BID'})
 
         ok_(self.exp_data.proteins.sig.id_list == {'ADRA1A', 'BAX', 'TP53',
-                                                   'AGTR2', 'PARP4',
+                                                   'AGTR2', 'PARP4', 'BID',
                                                    'PARP1', 'CASP3'})
 
         ok_(self.exp_data.proteins.up.id_list == {'PARP4', 'BAX', 'PARP1',
-                                                  'CASP3', 'TP53', 'ADRA1A'})
+                                                  'BID', 'CASP3', 'TP53',
+                                                  'ADRA1A'})
 
         ok_(self.exp_data.proteins.down.id_list == {'AGTR2', 'BAX'})
 
     def test_gene(self):
-        ok_(self.exp_data.genes.id_list == {'ADORA1', 'PARP4', 'AKT1',
-                                            'CASP3', 'ADRA1A', 'AIF1',
-                                            'PARP1', 'AGTR2', 'BAX', 'AKT2',
-                                            'ADORA2A', 'TP53', 'AHR'})
+        ok_(self.exp_data.genes.id_list == {'ADORA2A', 'CASP3', 'PARP4',
+                                            'PARP1', 'ADORA1', 'BAX',
+                                            'ADRA1A', 'AIF1', 'AKT2',
+                                            'AGTR2', 'AHR', 'TP53', 'BID',
+                                            'AKT1'})
 
-        ok_(self.exp_data.genes.sig.id_list == {'TP53', 'AIF1', 'AKT1',
-                                                'BAX', 'CASP3', 'PARP4',
-                                                'PARP1', 'AGTR2', 'ADRA1A'})
+        ok_(self.exp_data.genes.sig.id_list == {'CASP3', 'PARP4', 'PARP1',
+                                                'BAX', 'AIF1', 'ADRA1A',
+                                                'AGTR2', 'TP53', 'BID', 'AKT1'}
+            )
 
     def test_rna(self):
         ok_(self.exp_data.rna.id_list == {'AIF1', 'AKT1', 'AKT2'})
