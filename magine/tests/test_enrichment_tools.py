@@ -77,7 +77,8 @@ class TestEnrichmentResult(object):
         ok_(isinstance(dist, matplotlib.figure.Figure))
         plt.close()
 
-        df = load_data_csv('Data/example_apoptosis.csv')
+        df = load_data_csv(os.path.join(os.path.dirname(__file__), 'Data',
+                                        'example_apoptosis.csv'))
         terms = [{'BAX'}, {'PARP4'}]
         heatmap_by_terms(df.species, terms, color_labels=['1', '2'])
         plt.close()
