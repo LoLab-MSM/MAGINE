@@ -65,7 +65,6 @@ def write_table_to_html(data, save_name='index', out_dir=None,
 
     data = data[~data['term_name'].isin(to_remove)]
 
-    ht.write_single_table(data, 'MAGINE GO analysis', save_name)
     html_out = save_name + '_filter'
     ht.write_filter_table(data, html_out)
 

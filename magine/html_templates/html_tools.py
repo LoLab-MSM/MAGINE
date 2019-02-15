@@ -61,6 +61,8 @@ def _add_filter(column_num, f_type):
 def create_yadf_filters(table):
     _format_dict = []
     for n, i in enumerate(table.columns):
+        if isinstance(i, (tuple, list)):
+            i = i[0]
         if i in range_:
             _format_dict.append(_add_filter(n, 'range'))
         elif i in chosen_:
@@ -72,30 +74,6 @@ def create_yadf_filters(table):
         else:
             print("'{}' not found in yadf".format(i))
     return _format_dict
-
-
-def write_single_table(table, title, save_name=None):
-    """
-
-    Parameters
-    ----------
-    table : pandas.DataFrame
-    title : str
-    save_name : str
-
-    Returns
-    -------
-
-    """
-
-    # formats output to less precision and ints rather than floats
-    tmp_table = _format_simple_table(table)
-    html_out = single_template.render({"title": title,
-                                       "table_name": tmp_table})
-    if save_name is None:
-        return html_out
-    with open('{}.html'.format(save_name), 'w') as f:
-        f.write(html_out)
 
 
 def write_filter_table(table, save_name):
@@ -116,7 +94,6 @@ def write_filter_table(table, save_name):
 
     data = tmp_table.to_dict('split')
     data['filters'] = create_yadf_filters(table)
-
     html_out = filter_template.render({"data": data})
     with open('{}.html'.format(save_name), 'w') as f:
         f.write(html_out)
@@ -143,15 +120,20 @@ def _format_simple_table(data):
 
     int_type = ['n_genes', 'rank']
     for i in data.columns:
-        if i in float_type:
+        print(i)
+        if isinstance(i, (tuple, list)):
+            t_i = i[0]
+        else:
+            t_i = i
+        if t_i in float_type:
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(float)
             tmp_table[i] = tmp_table[i].round(2)
             tmp_table[i] = tmp_table[i].apply('{:.4g}'.format)
-        elif i in pvalue_float_type:
+        elif t_i in pvalue_float_type:
             tmp_table[i] = tmp_table[i].fillna(1)
             tmp_table[i] = tmp_table[i].apply('{:.2g}'.format)
-        elif i in int_type:
+        elif t_i in int_type:
             tmp_table[i] = tmp_table[i].fillna(0)
             tmp_table[i] = tmp_table[i].astype(int)
             tmp_table[i] = tmp_table[i].apply('{:,d}'.format)

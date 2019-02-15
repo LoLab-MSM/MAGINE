@@ -8,13 +8,13 @@
         }
 
         #{{uuid}}{
-            height: {{widget_height}}px;
+            height: {{widget_height|safe}}px;
             width: 90%;
             border: 5px solid black;
             box-sizing: border-box;
             position: absolute;
             top: 5px;
-            background: {{background}};
+            background: {{background|safe}};
         }
 
     </style>
@@ -42,10 +42,10 @@
         (function () {
             function render() {
                 var cy = window.cy = cytoscape({
-                    container: $('#{{uuid}}'),
+                    container: $('#{{uuid|safe}}'),
                     elements: {
-                        nodes: {{nodes}},
-                        edges: {{edges}}
+                        nodes: {{nodes|safe}},
+                        edges: {{edges|safe}}
                     },
 
 
@@ -55,10 +55,10 @@
                 });
 
                 // apply layout
-                cy.layout({{layout_json}}).run();
+                cy.layout({{layout_json|safe}}).run();
 
                 // add style
-                cy.style().fromJson({{style_json}}).update();
+                cy.style().fromJson({{style_json|safe}}).update();
 
                 // Add tippy for each node
                 cy.nodes().forEach(function (n) {
@@ -142,7 +142,7 @@
 </head>
 
 <body>
-<div id="{{ uuid }}"></div>
+<div id="{{ uuid|safe }}"></div>
 <!-- When only #uuid div is placed on this page,
 the height of output-box on ipynb will be 0px.
 One line below will prevent that. -->

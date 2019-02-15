@@ -15,7 +15,7 @@
 
     <style type="text/css">
 
-        #{{ uuid }}{
+        #{{ uuid|safe }}{
             width: 900px;
             height: 500px;
             border: 0px solid white;
@@ -67,7 +67,7 @@
             <div class="panel-heading">Graph</div>
             <div class="panel-body">
                 <div id="cy-container">
-                    <div id="{{ uuid }}"></div>
+                    <div id="{{ uuid |safe }}"></div>
                 </div>
 
             </div>
@@ -85,12 +85,12 @@
 
     function runVis() {
         var cy = cytoscape({
-            container: document.getElementById("{{ uuid }}"),
+            container: document.getElementById("{{ uuid|safe }}"),
             wheelSensitivity:.25,
 
             elements: {
-                nodes:{{nodes}},
-                edges:{{edges}}
+                nodes:{{nodes|safe}},
+                edges:{{edges|safe}}
             }
         });
         cy.layout(
@@ -103,7 +103,7 @@
             }).run();
         cy.resize();
         cy.fit();
-        cy.style().fromJson({{style_json}}).update();
+        cy.style().fromJson({{style_json|safe}}).update();
 
         var HieButton = document.getElementById('HieButton');
         HieButton.addEventListener('click', function () {
