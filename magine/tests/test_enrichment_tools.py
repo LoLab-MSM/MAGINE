@@ -57,9 +57,7 @@ class TestEnrichmentResult(object):
         ok_(sim2.shape[0] == 15)
 
         copy_data = self.data.copy()
-
         copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
-        print(copy_data.shape)
         ok_(copy_data.shape[0] == 7)
 
     def test_dist(self):

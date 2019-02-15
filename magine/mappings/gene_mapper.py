@@ -14,7 +14,6 @@ from bioservices import HGNC, UniProt
 from sortedcontainers import SortedSet, SortedDict
 
 from magine.mappings.databases import load_hgnc, load_uniprot, load_ncbi
-
 pd.set_option('display.width', 20000)
 
 
@@ -25,35 +24,6 @@ class GeneMapper(object):
     Database was creating by pulling down from NCBI, UNIPROT, HGNC
 
     """
-    ncbi_valid_categories = ['GeneID', 'Symbol', 'description']
-
-    hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id',
-                             'name', 'location', 'entrez_id', 'ucsc_id',
-                             'vega_id', 'alias_name', 'alias_symbol', 'status',
-                             'gene_family', 'gene_family_id', 'ena', 'iuphar',
-                             'cd', 'refseq_accession', 'ccds_id', 'pubmed_id',
-                             'mgd_id', 'rgd_id', 'lsdb', 'bioparadigms_slc',
-                             'enzyme_id', 'merops', 'horde_id',
-                             'pseudogene.org', 'cosmic', 'rna_central_ids',
-                             'omim_id', 'imgt', 'intermediate_filament_db',
-                             ]
-
-    valid_uniprot_cols = ['uniprot', 'Allergome', 'BioCyc', 'BioGrid',
-                          'BioMuta', 'CCDS', 'CRC64', 'ChEMBL', 'ChiTaRS',
-                          'CleanEx', 'DIP', 'DMDM', 'DNASU', 'DisProt',
-                          'DrugBank', 'EMBL', 'EMBL-CDS', 'ESTHER', 'Ensembl',
-                          'Ensembl_PRO', 'Ensembl_TRS', 'GI', 'GeneCards',
-                          'GeneDB', 'GeneID', 'GeneReviews', 'GeneTree',
-                          'GeneWiki', 'Gene_Name', 'Gene_ORFName',
-                          'Gene_Synonym', 'GenomeRNAi', 'GuidetoPHARMACOLOGY',
-                          'H-InvDB', 'HGNC', 'HOGENOM', 'HOVERGEN', 'HPA',
-                          'KEGG', 'KO', 'MEROPS', 'MIM', 'MINT', 'NCBI_TaxID',
-                          'OMA', 'Orphanet', 'OrthoDB', 'PATRIC', 'PDB',
-                          'PeroxiBase', 'PharmGKB', 'REBASE', 'Reactome',
-                          'RefSeq', 'RefSeq_NT', 'STRING', 'SwissLipids',
-                          'TCDB', 'TreeFam', 'UCSC', 'UniGene', 'UniParc',
-                          'UniPathway', 'UniProtKB-ID', 'UniRef100',
-                          'UniRef50', 'UniRef90', 'eggNOG', 'neXtProt']
 
     def __init__(self, species='hsa'):
         self.species = species
@@ -142,15 +112,16 @@ class GeneMapper(object):
         dict
 
         """
+        index = 'alias_symbol'
         synonyms = self.hgnc.copy()
-        synonyms = synonyms[~synonyms['alias_symbol'].isna()]
-        synonyms['alias_symbol'] = synonyms['alias_symbol'].str.upper()
+        synonyms = synonyms.loc[~synonyms[index].isna()]
+        synonyms[index] = synonyms[index].str.upper()
 
-        hits = synonyms[synonyms['alias_symbol'].str.contains(term.upper())].copy()
-        hits['alias_symbol'] = hits['alias_symbol'].str.split('|')
+        hits = synonyms.loc[synonyms[index].str.contains(term.upper())].copy()
+        hits[index] = hits[index].str.split('|')
 
         for i, row in hits.iterrows():
-            if term in row['alias_symbol']:
+            if term in row[index]:
                 return [row[format_name]]
         matches = sorted(set(hits[format_name].values))
         return matches

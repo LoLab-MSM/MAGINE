@@ -80,7 +80,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         array = array.reindex(names)
 
     # Group together by columns if provided
-    if isinstance(columns, list) and len(columns) == 2:
+    elif isinstance(columns, list) and len(columns) == 2:
         add_col_group = True
         col_color_labels = array.columns.levels[0]
         col_labels = list(array.columns.levels[1])
@@ -88,21 +88,21 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         col_colors = [colors[i] for i in array.columns.labels[0]]
         array.columns = [col_labels[i] for i in array.columns.labels[1]]
 
+    if annotate_sig:
+        annotate_sig, annotations, fmt = get_sig_annotations(array, data,
+                                                             columns,
+                                                             index)
+
     if cluster_row or cluster_col:
         fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
                              yticklabels='auto',
                              col_colors=col_colors,
-                             col_cluster=False, row_cluster=cluster_row,
+                             col_cluster=cluster_col, row_cluster=cluster_row,
                              figsize=figsize, linewidths=linewidths,
                              annot=annotations, fmt=fmt)
         if annotate_sig:
-            annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                                 columns,
-                                                                 index)
-            if not annotate_sig:
-                return fig
-            if cluster_by_set or cluster_row:
+            if cluster_row:
                 annotations = annotations[fig.dendrogram_row.reordered_ind]
             if cluster_col:
                 annotations = annotations[:, fig.dendrogram_col.reordered_ind]
@@ -111,18 +111,21 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                                  row_linkage=linkage,
                                  yticklabels='auto',
                                  col_colors=col_colors,
-                                 col_cluster=False, row_cluster=cluster_row,
+                                 col_cluster=cluster_col, row_cluster=cluster_row,
                                  figsize=figsize, linewidths=linewidths,
                                  annot=annotations, fmt=fmt)
+    elif add_col_group:
+        fig = sns.clustermap(array, cmap=pal, center=center,
+                             row_linkage=linkage,
+                             yticklabels='auto',
+                             col_colors=col_colors,
+                             col_cluster=cluster_col, row_cluster=cluster_row,
+                             figsize=figsize, linewidths=linewidths,
+                             annot=annotations, fmt=fmt)
 
     else:
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
-        if annotate_sig:
-            annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                                 columns,
-                                                                 index)
-
         sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
                     center=center, annot=annotations, fmt=fmt,
                     linewidths=linewidths)
@@ -213,7 +216,8 @@ def heatmap_by_category(data,
                              annot=annotations, fmt=fmt)
 
     if add_col_group:
-        fig = _add_column_color_groups(data, fig, colors, col_color_labels)
+        fig = _add_column_color_groups(data, fig, colors, col_color_labels,
+                                       columns)
     return fig
 
 
@@ -247,7 +251,7 @@ def get_sig_annotations(arr, dat, columns, index):
         tmp2 = tmp2.replace(True, '+')
         return True, tmp2.values, ''
     else:
-        print("To annotate please add a significant_flag column to data")
+        print("To annotate please add a significant column to data")
         return False, None, None
 
 
@@ -332,12 +336,28 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
     fig.ax_row_dendrogram.legend(loc=0, ncol=1)
 
     if add_col_group:
-        fig = _add_column_color_groups(tmp_d, fig, colors2, col_color_labels)
+        fig = _add_column_color_groups(tmp_d, fig, colors2, col_color_labels,
+                                       columns)
 
     return fig
 
 
 def cluster_distance_mat(dist_mat, names, figsize=(8, 8)):
+    """
+
+    Parameters
+    ----------
+    dist_mat : np.array
+        Distance matrix array.
+    names : list_like
+        Names of ticks for distance matrix
+    figsize : tuple
+        Size of figure, passed to matplotlib
+
+    Returns
+    -------
+
+    """
     # Compute and plot first dendrogram.
     fig = plt.figure(figsize=figsize)
 

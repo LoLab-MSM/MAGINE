@@ -323,6 +323,35 @@ categories = ['kegg_id', 'name', 'accession', 'chebi_id',
 
 categories = ['{http://www.hmdb.ca}' + i for i in categories]
 
+valid_uniprot_cols = ['uniprot', 'Allergome', 'BioCyc', 'BioGrid', 'BioMuta',
+                      'CCDS', 'CRC64', 'ChEMBL', 'ChiTaRS', 'CleanEx', 'DIP',
+                      'DMDM', 'DNASU', 'DisProt', 'DrugBank', 'EMBL',
+                      'EMBL-CDS', 'ESTHER', 'Ensembl', 'Ensembl_PRO',
+                      'Ensembl_TRS', 'GI', 'GeneCards','GeneDB', 'GeneID',
+                      'GeneReviews', 'GeneTree', 'GeneWiki', 'Gene_Name',
+                      'Gene_ORFName', 'Gene_Synonym', 'GenomeRNAi',
+                      'GuidetoPHARMACOLOGY', 'H-InvDB', 'HGNC', 'HOGENOM',
+                      'HOVERGEN', 'HPA', 'KEGG', 'KO', 'MEROPS', 'MIM', 'MINT',
+                      'NCBI_TaxID', 'OMA', 'Orphanet', 'OrthoDB', 'PATRIC',
+                      'PDB', 'PeroxiBase', 'PharmGKB', 'REBASE', 'Reactome',
+                      'RefSeq', 'RefSeq_NT', 'STRING', 'SwissLipids', 'TCDB',
+                      'TreeFam', 'UCSC', 'UniGene', 'UniParc', 'UniPathway',
+                      'UniProtKB-ID', 'UniRef100', 'UniRef50', 'UniRef90',
+                      'eggNOG', 'neXtProt']
+
+ncbi_valid_categories = ['GeneID', 'Symbol', 'description']
+
+hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
+                         'location', 'entrez_id', 'ucsc_id', 'vega_id',
+                         'alias_name', 'alias_symbol', 'status', 'gene_family',
+                         'gene_family_id', 'ena', 'iuphar', 'cd',
+                         'refseq_accession', 'ccds_id', 'pubmed_id', 'mgd_id',
+                         'rgd_id', 'lsdb', 'bioparadigms_slc', 'enzyme_id',
+                         'merops', 'horde_id', 'pseudogene.org', 'cosmic',
+                         'rna_central_ids', 'omim_id', 'imgt',
+                         'intermediate_filament_db'
+                         ]
+
 if __name__ == '__main__':
     # download_hgnc()
     # download_uniprot('acibt')

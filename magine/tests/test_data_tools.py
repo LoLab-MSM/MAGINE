@@ -56,7 +56,7 @@ def test_filter_min():
     index = 'protein'
     values = 'treated_control_fold_change'
     columns = 'time_points'
-    flag = 'significant_flag'
+    flag = 'significant'
     x = [
         {values: 1, index: 'x', columns: '1', flag: True, 'x': 2},
         {values: -2, index: 'i', columns: '2', flag: True, 'x': 2},

@@ -101,11 +101,9 @@ class BaseData(pd.DataFrame):
         cols_to_check = list(new_data[columns].unique())
         if 'significant' in new_data.columns:
             flag = 'significant'
-        elif 'significant_flag' in new_data.columns:
-            flag = 'significant_flag'
         else:
             flag = None
-        assert flag in new_data.columns, 'Requires significant_flag column'
+        assert flag in new_data.columns, 'Requires significant column'
         # pivot
         sig = pd.pivot_table(new_data,
                              index=index,
@@ -136,7 +134,7 @@ class BaseData(pd.DataFrame):
 
     def filter_by_minimum_present_columns(self, columns='sample_id',
                                           index=None, inplace=False):
-        """ Filter index to have at least "min_terms" significant species.
+        """ Require index to be present in all columns
 
         Parameters
         ----------
@@ -144,8 +142,6 @@ class BaseData(pd.DataFrame):
             Columns to consider
         index : str, list
             The column with which to filter by counts
-        min_terms : int
-            Number of terms required to not be filtered
         inplace : bool
             Filter in place or return a copy of the filtered data
 
@@ -162,11 +158,9 @@ class BaseData(pd.DataFrame):
         cols_to_check = list(new_data[columns].unique())
         if 'significant' in new_data.columns:
             flag = 'significant'
-        elif 'significant_flag' in new_data.columns:
-            flag = 'significant_flag'
         else:
             flag = None
-        assert flag in new_data.columns, 'Requires significant_flag column'
+        assert flag in new_data.columns, 'Requires significant column'
         # pivot
         sig = pd.pivot_table(new_data,
                              index=index,

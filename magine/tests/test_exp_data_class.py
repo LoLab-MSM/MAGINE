@@ -22,7 +22,7 @@ class TestExpData(object):
 
     def test_load_from_df(self):
         df = pd.read_csv(os.path.join(self._dir, 'example_apoptosis.csv'))
-        exp_data = ExperimentalData(df)
+        ExperimentalData(df)
 
     def test_protein(self):
         ok_(self.exp_data.proteins.id_list == {'AHR', 'PARP4', 'ADORA1',
@@ -82,6 +82,23 @@ class TestExpData(object):
                                         out_dir=self.out_dir)
         plt.close()
 
+    def test_heatmap(self):
+        self.exp_data.proteins.heatmap()
+        plt.close()
+        self.exp_data.species.heatmap({'BID', 'PARP4', 'BAX', 'AKT1', 'PARP1',
+                                       'AGTR2', 'AIF1', 'CASP3', 'TP53',
+                                       'HMDB0000001', 'ADRA1A', 'HMDB0009901'})
+        plt.close()
+        self.exp_data.species.heatmap({'BID', 'PARP4', 'BAX', 'AKT1', 'PARP1',
+                                       'AGTR2', 'AIF1', 'CASP3', 'TP53',
+                                       'HMDB0000001', 'ADRA1A', 'HMDB0009901'},
+                                      cluster_col=True, cluster_row=True)
+        plt.close()
+        self.exp_data.species.heatmap({'BID', 'PARP4', 'BAX', 'AKT1', 'PARP1',
+                                       'AGTR2', 'AIF1', 'CASP3', 'TP53',
+                                       'HMDB0000001', 'ADRA1A', 'HMDB0009901'},
+                                      columns=['sample_id', 'source'])
+
     def test_volcano(self):
         self.exp_data.volcano_analysis(out_dir=self.out_dir)
         plt.close()
@@ -118,7 +135,7 @@ class TestExpData(object):
 
     def test_log2(self):
         x = self.exp_data.rna.log2_normalize_df('fold_change')
-        ok_(x.to_dict() == \
+        ok_(x.to_dict() ==
             {'sample_id': {8: 'Time_3', 9: 'Time_3', 10: 'Time_3'},
              'source': {8: 'rna_seq', 9: 'rna_seq', 10: 'rna_seq'},
              'significant': {8: True, 9: True, 10: False},

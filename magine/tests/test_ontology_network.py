@@ -24,5 +24,4 @@ def test_ont_grouping():
     network = nx.read_gml(_path)
     ont = OntologyNetworkGenerator(network)
 
-    ont.create_network_from_list(term_list, term_dict, label_dict,
-                                 save_name='enrichr_network', draw=False)
+    ont.create_network_from_list(term_list, term_dict, label_dict, draw=False)
