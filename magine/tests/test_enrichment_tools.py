@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 from nose.tools import ok_
 
 import magine.enrichment.enrichment_result as et
-from magine.plotting.heatmaps import heatmap_from_array
+from magine.data.experimental_data import load_data_csv
+from magine.plotting.heatmaps import heatmap_by_terms
 
 data_dir = os.path.dirname(__file__)
 
@@ -68,14 +69,17 @@ class TestEnrichmentResult(object):
         copy_data.remove_redundant(level='sample', verbose=False, inplace=True)
         copy_data.dist_matrix()
 
-        heatmap_from_array(copy_data, convert_to_log=True, index='term_name',
-                           columns='sample_id',
-                           figsize=(6, 14), annotate_sig=True, linewidths=.01,
-                           cluster_row=True)
+        copy_data.heatmap(convert_to_log=True, index='term_name',
+                          columns='sample_id', figsize=(6, 14),
+                          annotate_sig=True, linewidths=.01, cluster_row=True)
         plt.close()
-
         dist = self.data.dist_matrix(figsize=(3, 3), level='each')
         ok_(isinstance(dist, matplotlib.figure.Figure))
+        plt.close()
+
+        df = load_data_csv('Data/example_apoptosis.csv')
+        terms = [{'BAX'}, {'PARP4'}]
+        heatmap_by_terms(df.species, terms, color_labels=['1', '2'])
         plt.close()
 
     def test_find_similar_terms(self):
