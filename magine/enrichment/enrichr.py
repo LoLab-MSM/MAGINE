@@ -198,6 +198,79 @@ class Enrichr(object):
 
         return df
 
+    def run_samples(self, sample_lists, sample_ids,
+                    database='GO_Biological_Process_2017', save_name=None,
+                    create_html=False, out_dir=None, run_parallel=False,
+                    exp_data=None, pivot=False):
+        """
+
+        Parameters
+        ----------
+        sample_lists : list_like
+            List of lists of genes for enrichment analysis
+        sample_ids : list
+            list of ids for the provided sample list
+        database : str, list
+            Type of gene set, refer to Enrichr.print_valid_libs
+        save_name : str, optional
+            if provided it will save a file as a pivoted table with
+            the term_ids vs sample_ids
+        create_html : bool
+            Creates html of output with plots of species across sample
+        out_dir : str
+            If create_html, it will place all html plots into this directory
+        run_parallel : bool
+            If create_html, it will create plots using multiprocessing
+        exp_data : magine.data.ExperimentalData
+            Must be provided if create_html=True
+        pivot : bool
+
+        Returns
+        -------
+        EnrichmentResult
+        """
+        assert isinstance(sample_lists, list), "List required"
+        assert isinstance(sample_lists[0],
+                          (list, set)), "List of lists required"
+        df_final = None
+        for count, (i, j) in enumerate(zip(sample_lists, sample_ids)):
+            df = self.run(i, database)
+            df['sample_id'] = j
+            if df_final is None:
+                df_final = df
+            else:
+                df_final = df_final.append(df, ignore_index=True)
+
+        df_final = self._filter_sig_across_term(df_final)
+        df_final = EnrichmentResult(df_final)
+        if save_name:
+            s_name = '{}_enrichr'.format(save_name)
+            if pivot:
+                # pivot output
+                index = ['term_name', 'db']
+
+                p_df = pd.pivot_table(
+                    df_final, index=index, columns='sample_id',
+                    aggfunc='first',
+                    fill_value=np.nan,
+                    values=['term_name', 'rank', 'p_value', 'z_score',
+                            'combined_score', 'adj_p_value', 'genes',
+                            'significant'],
+                )
+                # save files
+                p_df.to_excel('{}.xlsx'.format(s_name), merge_cells=True)
+            df_final.to_csv('{}.csv'.format(s_name), index=False)
+
+        if create_html:
+            if exp_data is None:
+                print("exp_data required to make plots over samples")
+                return df_final
+
+            write_table_to_html(data=df_final, save_name=save_name,
+                                out_dir=out_dir, run_parallel=run_parallel,
+                                exp_data=exp_data)
+        return df_final
+
     def _run_id(self, list_id, gene_set_lib):
         if gene_set_lib not in _valid_libs:
             print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
@@ -264,87 +337,13 @@ class Enrichr(object):
         return data['userListId']
 
     def _run_list_of_dbs(self, gene_list_id, databases):
-        for count, i in enumerate(databases):
-            if count == 0:
-                data = self._run_id(gene_list_id, i)
-            else:
-                data = data.append(self._run_id(gene_list_id, i),
-                                   ignore_index=True)
+        data = self._run_id(gene_list_id, databases[0])
+        for db in databases[1:]:
+            data = data.append(self._run_id(gene_list_id, db),
+                               ignore_index=True)
             if self.verbose:
-                print('\t\t{}/{} databases'.format(count, len(databases)))
+                print('\t\t{}/{} databases'.format(db, len(databases)))
         return data
-
-    def run_samples(self, sample_lists, sample_ids,
-                    database='GO_Biological_Process_2017', save_name=None,
-                    create_html=False, out_dir=None, run_parallel=False,
-                    exp_data=None, pivot=False):
-        """
-
-        Parameters
-        ----------
-        sample_lists : list_like
-            List of lists of genes for enrichment analysis
-        sample_ids : list
-            list of ids for the provided sample list
-        database : str, list
-            Type of gene set, refer to Enrichr.print_valid_libs
-        save_name : str, optional
-            if provided it will save a file as a pivoted table with
-            the term_ids vs sample_ids
-        create_html : bool
-            Creates html of output with plots of species across sample
-        out_dir : str
-            If create_html, it will place all html plots into this directory
-        run_parallel : bool
-            If create_html, it will create plots using multiprocessing
-        exp_data : magine.data.ExperimentalData
-            Must be provided if create_html=True
-        pivot : bool
-
-        Returns
-        -------
-        EnrichmentResult
-        """
-        assert isinstance(sample_lists, list), "List required"
-        assert isinstance(sample_lists[0],
-                          (list, set)), "List of lists required"
-        df_final = None
-        for count, (i, j) in enumerate(zip(sample_lists, sample_ids)):
-            df = self.run(i, database)
-            df['sample_id'] = j
-            if df_final is None:
-                df_final = df
-            else:
-                df_final = df_final.append(df, ignore_index=True)
-
-        df_final = self._filter_sig_across_term(df_final)
-        df_final = EnrichmentResult(df_final)
-        if save_name:
-            s_name = '{}_enrichr'.format(save_name)
-            if pivot:
-                # pivot output
-                index = ['term_name', 'db']
-
-                p_df = pd.pivot_table(
-                    df_final, index=index, columns='sample_id',
-                    aggfunc='first',
-                    fill_value=np.nan,
-                    values=['term_name', 'rank', 'p_value', 'z_score',
-                            'combined_score', 'adj_p_value', 'genes'],
-                )
-                # save files
-                p_df.to_excel('{}.xlsx'.format(s_name), merge_cells=True)
-            df_final.to_csv('{}.csv'.format(s_name), index=False)
-
-        if create_html:
-            if exp_data is None:
-                print("exp_data required to make plots over samples")
-                return df_final
-
-            write_table_to_html(data=df_final, save_name=save_name,
-                                out_dir=out_dir, run_parallel=run_parallel,
-                                exp_data=exp_data)
-        return df_final
 
     @staticmethod
     def _filter_sig_across_term(data, p_value_thresh=0.05):

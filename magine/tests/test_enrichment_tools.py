@@ -16,31 +16,31 @@ class TestEnrichmentResult(object):
         self.data = et.load_enrichment_csv(d_name)
 
     def test_filter_row(self):
-        terms = ['apoptotic process',
-                 'regulation of mitochondrial membrane potential'],
+        terms = ['p53 signaling pathway_hsa_hsa04115',
+                 'apoptosis_hsa_hsa04210'],
 
         # checks if single entry
         slimmed = self.data.filter_rows('term_name', terms[0])
-        ok_(slimmed.shape[0] == 4)
+        ok_(slimmed.shape[0] == 6)
 
         # checks if list
         slimmed = self.data.filter_rows('term_name', terms)
-        ok_(slimmed.shape[0] == 111)
+        ok_(slimmed.shape[0] == 128)
 
     def test_filter_multi(self):
         slimmed = self.data.filter_multi(p_value=0.05, combined_score=20)
-        ok_(slimmed.shape == (20, 11))
+        ok_(slimmed.shape[0] == 8)
 
     def test_term_to_gene(self):
-        genes = self.data.term_to_genes('apoptotic process')
+        genes = self.data.term_to_genes('apoptosis_hsa_hsa04210')
         ok_(genes == {'CASP8', 'CASP10', 'BCL2', 'BAX', 'CASP3'})
 
     def test_filter_based_on_word(self):
-        slimmed = self.data.filter_based_on_words('apoptotic')
-        ok_(slimmed.shape == (40, 11))
+        slimmed = self.data.filter_based_on_words('p53')
+        ok_(slimmed.shape[0] == 5)
 
-        slimmed = self.data.filter_based_on_words('mitochondrial')
-        ok_(slimmed.shape == (9, 11))
+        slimmed = self.data.filter_based_on_words(['apop', 'p53'])
+        ok_(slimmed.shape[0] == 11)
 
     def test_all_genes(self):
         all_g = self.data.all_genes_from_df()
@@ -48,17 +48,19 @@ class TestEnrichmentResult(object):
 
     def test_filter_sim_terms(self):
         sim2 = self.data.remove_redundant(level='sample', sort_by='rank')
-        ok_(sim2.shape == (8, 11))
+        ok_(sim2.shape[0] == 7)
 
         sim2 = self.data.remove_redundant(level='sample')
-        ok_(sim2.shape == (8, 11))
+        ok_(sim2.shape[0] == 7)
 
         sim2 = self.data.remove_redundant(level='dataframe', verbose=True)
-        ok_(sim2.shape == (3, 11))
+        ok_(sim2.shape[0] == 15)
 
         copy_data = self.data.copy()
+
         copy_data.remove_redundant(level='sample', verbose=True, inplace=True)
-        ok_(copy_data.shape == (8, 11))
+        print(copy_data.shape)
+        ok_(copy_data.shape[0] == 7)
 
     def test_dist(self):
 
