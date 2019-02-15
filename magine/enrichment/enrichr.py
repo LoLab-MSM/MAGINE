@@ -533,13 +533,14 @@ for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
     standard_dbs += db_types[i]
 
 
-def run_enrichment_for_project(exp_data, project_name):
+def run_enrichment_for_project(exp_data, project_name, databases=standard_dbs):
     """
 
     Parameters
     ----------
     exp_data : magine.data.experimental_data.ExprerimentalData
     project_name : str
+    databases : list
 
     Returns
     -------
@@ -552,11 +553,13 @@ def run_enrichment_for_project(exp_data, project_name):
     if not os.path.exists(_dir):
         os.mkdir(_dir)
 
-    print("Running {} databases".format(len(standard_dbs)))
+    print("Running {} databases".format(len(databases)))
 
     def _run_new(samples, timepoints, category):
         print("Running {}".format(category))
         for genes, sample_id in zip(samples, timepoints):
+            if not len(genes):
+                continue
             print('\t time point = {}'.format(sample_id))
             current = "{}_{}_{}".format(str(category),
                                         str(sample_id),
@@ -565,7 +568,7 @@ def run_enrichment_for_project(exp_data, project_name):
             try:
                 df = pd.read_csv(name, index_col=None, encoding='utf-8')
             except:
-                df = e.run(genes, standard_dbs)
+                df = e.run(genes, databases)
                 df['sample_id'] = sample_id
                 df['category'] = category
                 df.to_csv(name, index=False, encoding='utf-8',
@@ -588,9 +591,8 @@ def run_enrichment_for_project(exp_data, project_name):
 
     for source in exp_data.exp_methods:
         df = exp_data[source].sig
-        assert len(df['species_type'].unique()) == 1, \
-            "More one species type from source. " \
-            "Cannot run enrichment on multiple species type"
+        if len(df['species_type'].unique()) != 1:
+            continue
 
         if df['species_type'].unique()[0] == 'protein':
             _run_new(df.by_sample, df.sample_ids, '{}_both'.format(source))

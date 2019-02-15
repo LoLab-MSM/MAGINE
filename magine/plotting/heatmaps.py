@@ -89,9 +89,9 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         array.columns = [col_labels[i] for i in array.columns.labels[1]]
 
     if annotate_sig:
-        annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                             columns,
-                                                             index)
+        annotate_sig, annotations, fmt = _get_sig_annotations(array, data,
+                                                              columns,
+                                                              index)
 
     if cluster_row or cluster_col:
         fig = sns.clustermap(array, cmap=pal, center=center,
@@ -134,133 +134,12 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     return fig
 
 
-def heatmap_by_category(data,
-                        convert_to_log=False,
-                        figsize=(6, 4),
-                        columns=('category', 'sample_id'),
-                        index='term_name', cluster_by_set=False,
-                        values='combined_score', linewidths=0,
-                        num_colors=11, div_colors=False,
-                        annotate_sig=False, cluster_row=False, rank_index=False):
-    array = data.pivoter(convert_to_log, columns=columns,
-                         index=index, fill_value=0.0,
-                         values=values)
-    if rank_index:
-        array.sort_index(ascending=True, inplace=True)
-
-    if div_colors:
-        pal = sns.color_palette("coolwarm", num_colors)
-        center = 0
-    else:
-        pal = sns.light_palette("purple", as_cmap=True)
-        center = None
-
-    col_colors = None
-    annotations = None
-    fmt = None
-    linkage = None
-    add_col_group = True
-    # TODO create a function for generating column colors and row colors
-    if add_col_group:
-        col_color_labels = array.columns.levels[0]
-        col_labels = list(array.columns.levels[1])
-        colors = sns.color_palette("Dark2", len(col_color_labels))
-        col_colors = [colors[i] for i in array.columns.labels[0]]
-        array.columns = [col_labels[i] for i in array.columns.labels[1]]
-
-    if cluster_by_set and "genes" in data.columns:
-        # generate structure of graph based on jaccard index
-        dist_mat, names = data.calc_dist(level='sample')
-        linkage = sch.linkage(dist_mat, method='average')
-
-        # Add row cluster flag in case user didn't set
-        cluster_row = True
-        array = array.reindex(names)
-
-    if cluster_row or cluster_by_set:
-
-        fig = sns.clustermap(array, cmap=pal, center=center,
-                             row_linkage=linkage,
-                             yticklabels='auto',
-                             col_colors=col_colors,
-                             col_cluster=False, row_cluster=cluster_row,
-                             figsize=figsize, linewidths=linewidths,
-                             annot=annotations, fmt=fmt)
-
-        if annotate_sig:
-            annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                                 columns,
-                                                                 index)
-            # makes sure it is possible
-            if annotate_sig:
-                annotations = annotations[fig.dendrogram_row.reordered_ind]
-                plt.close()
-                fig = sns.clustermap(array, cmap=pal, center=center,
-                                     row_linkage=linkage,
-                                     yticklabels='auto',
-                                     col_colors=col_colors,
-                                     col_cluster=False, row_cluster=cluster_row,
-                                     figsize=figsize, linewidths=linewidths,
-                                     annot=annotations, fmt=fmt)
-    else:
-        if annotate_sig:
-            annotate_sig, annotations, fmt = get_sig_annotations(array, data,
-                                                                 columns,
-                                                                 index)
-        fig = sns.clustermap(array, cmap=pal, center=center,
-                             row_linkage=linkage,
-                             yticklabels='auto',
-                             col_colors=col_colors,
-                             col_cluster=False, row_cluster=cluster_row,
-                             figsize=figsize, linewidths=linewidths,
-                             annot=annotations, fmt=fmt)
-
-    if add_col_group:
-        fig = _add_column_color_groups(data, fig, colors, col_color_labels,
-                                       columns)
-    return fig
-
-
-def _add_column_color_groups(data, fig, colors, color_labels, columns):
-    for color, label in zip(colors, color_labels):
-        fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
-    plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
-             fontsize=16)
-    fig.ax_col_dendrogram.legend(loc="center", ncol=3, fontsize=12)
-    v_line_list = []
-    prev = 0
-    for i in color_labels:
-        n_samples = len(data[data[columns[0]] == i][columns[1]].unique())
-        prev += n_samples
-        v_line_list.append(prev)
-
-    fig.fig.axes[2].vlines(v_line_list, *fig.fig.axes[2].get_ylim())
-    fig.fig.axes[3].vlines(v_line_list, *fig.fig.axes[3].get_ylim())
-    return fig
-
-
-def get_sig_annotations(arr, dat, columns, index):
-    # Have to rank by column for this to work
-    if 'significant' in dat.columns:
-        tmp2 = dat.pivoter(False, columns=columns, index=index,
-                           values='significant', fill_value=0,
-                           min_sig=False)
-        tmp2 = tmp2.reindex(arr.index)
-        tmp2[tmp2 > 0] = True
-        tmp2 = tmp2.replace(False, '')
-        tmp2 = tmp2.replace(True, '+')
-        return True, tmp2.values, ''
-    else:
-        print("To annotate please add a significant column to data")
-        return False, None, None
-
-
 def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
                      convert_to_log=False, y_tick_labels='auto',
                      columns='sample_id', index='identifier',
                      values='fold_change', linewidths=0,
                      cluster_col=False, div_colors=False, num_colors=7,
-                     figsize=(6, 4), annotate_sig=False):
+                     figsize=None, annotate_sig=False):
     # pivot datatable
     tmp_d = data.copy()
     tmp_d = tmp_d.loc[tmp_d.identifier.isin(set(chain.from_iterable(terms)))]
@@ -287,15 +166,18 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
                 added.add(i)
         if not added_any:
             to_remove.add(cname)
+
     add_col_group = False
+    col_colors = None
+
     if isinstance(columns, list) and len(columns) > 1:
         add_col_group = True
-    col_colors = None
+
     if add_col_group:
         col_color_labels = array.columns.levels[0]
-        col_labels = list(array.columns.levels[1])
         colors2 = sns.color_palette("Dark2", len(col_color_labels))
         col_colors = [colors2[i] for i in array.columns.labels[0]]
+        col_labels = list(array.columns.levels[1])
         array.columns = [col_labels[i] for i in array.columns.labels[1]]
 
     # only keep indexes that are in the provided sets
@@ -306,7 +188,7 @@ def heatmap_by_terms(data, terms, color_labels, colors=None, min_sig=None,
 
     if annotate_sig:
         annotate_sig, annots, fmt = \
-            get_sig_annotations(array, tmp_d, columns, index)
+            _get_sig_annotations(array, tmp_d, columns, index)
     else:
         annots, fmt = None, None
 
@@ -402,3 +284,35 @@ def cluster_distance_mat(dist_mat, names, figsize=(8, 8)):
     return fig
 
 
+def _add_column_color_groups(data, fig, colors, color_labels, columns):
+    for color, label in zip(colors, color_labels):
+        fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
+    plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
+             fontsize=16)
+    fig.ax_col_dendrogram.legend(loc="center", ncol=3, fontsize=12)
+    v_line_list = []
+    prev = 0
+    for i in color_labels:
+        n_samples = len(data[data[columns[0]] == i][columns[1]].unique())
+        prev += n_samples
+        v_line_list.append(prev)
+
+    fig.fig.axes[2].vlines(v_line_list, *fig.fig.axes[2].get_ylim())
+    fig.fig.axes[3].vlines(v_line_list, *fig.fig.axes[3].get_ylim())
+    return fig
+
+
+def _get_sig_annotations(arr, dat, columns, index):
+    # Have to rank by column for this to work
+    if 'significant' in dat.columns:
+        tmp2 = dat.pivoter(False, columns=columns, index=index,
+                           values='significant', fill_value=0,
+                           min_sig=False)
+        tmp2 = tmp2.reindex(arr.index)
+        tmp2[tmp2 > 0] = True
+        tmp2 = tmp2.replace(False, '')
+        tmp2 = tmp2.replace(True, '+')
+        return True, tmp2.values, ''
+    else:
+        print("To annotate please add a significant column to data")
+        return False, None, None

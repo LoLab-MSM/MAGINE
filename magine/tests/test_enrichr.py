@@ -2,20 +2,42 @@ import tempfile
 
 from nose.tools import ok_
 
-from magine.enrichment.enrichr import Enrichr, clean_tf_names
+from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs, \
+    get_background_list, run_enrichment_for_project
 from magine.tests.sample_experimental_data import exp_data
 
 e = Enrichr()
 
 
 def test_single_run():
-
+    e.print_valid_libs()
     list_2 = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR', 'BAD',
               'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX', 'BAK1',
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
     df = e.run(list_2, 'GO_Biological_Process_2017')
     terms = df['term_name']
     ok_(len(terms) == 185)
+
+
+def test_project():
+    run_enrichment_for_project(exp_data, 'test',
+                               databases=['LINCS_L1000_Chem_Pert_up'])
+
+
+def test_get_gene_set_lib():
+    get_background_list('DrugMatrix')
+
+
+def test_clean_drug_dbs():
+    list_2 = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR', 'BAD',
+              'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX', 'BAK1',
+              'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
+    df = e.run(list_2, ['Drug_Perturbations_from_GEO_2014', 'DrugMatrix',
+                        'Ligand_Perturbations_from_GEO_down',
+                        'LINCS_L1000_Chem_Pert_up'])
+    df = clean_drug_dbs(df)
+    ok_(len(df['term_name']) == 9318)
+    ok_(len(df.sig['term_name']) == 249)
 
 
 def test_multi_sample():
@@ -31,9 +53,12 @@ def test_multi_sample_plotting():
     up = exp_data.genes.sig.up_by_sample
     out_dir = tempfile.mkdtemp()
     e.run_samples(up, ['1', '2', '3'],
+                  database=['Human_Phenotype_Ontology',
+                            'MGI_Mammalian_Phenotype_2017'],
                   save_name='enrichr_test',
                   exp_data=exp_data,
                   create_html=True,
+                  pivot=True,
                   out_dir=out_dir)
 
 

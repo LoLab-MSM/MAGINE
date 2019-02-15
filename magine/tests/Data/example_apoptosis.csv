@@ -16,7 +16,7 @@ BAX,BAX_T,-24,protein,TRUE,Time_3,label_free,0.05
 TP53,TP53,4,protein,TRUE,Time_3,label_free,0.05
 PARP1,PARP1,4,protein,TRUE,Time_3,label_free,0.05
 CASP3,CASP3,4,protein,TRUE,Time_3,label_free,0.05
-BID,BID_cleavage,3,metabolite,TRUE,Time_2,hilic,0.01
+BID,BID_cleavage,3,protein,TRUE,Time_2,label_free,0.01
 HMDB0009901,phosphatidylinositol,1,metabolites,TRUE,Time_1,hilic,0.01
 HMDB0009901,PIno(20:4/18:1),2,metabolites,TRUE,Time_2,hilic,0.01
 HMDB0009901,"PI(20:4(8Z,11Z,14Z,17Z)/18:1(11Z))",3,metabolites,TRUE,Time_3,hilic,0.01
