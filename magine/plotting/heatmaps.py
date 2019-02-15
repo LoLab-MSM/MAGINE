@@ -53,9 +53,6 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     """
     array = data.pivoter(convert_to_log, columns=columns, index=index,
                          fill_value=0.0, values=values, min_sig=min_sig)
-    annotations = None
-    fmt = None
-
     if rank_index:
         array.sort_index(ascending=True, inplace=True)
 
@@ -66,8 +63,13 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         pal = sns.light_palette("purple", as_cmap=True)
         center = None
 
+    col_colors = None
+    annotations = None
+    colors = None
+    col_color_labels = None
+    fmt = None
     linkage = None
-
+    add_col_group = False
     if cluster_by_set and "genes" in data.columns:
         # generate structure of graph based on jaccard index
         dist_mat, names = data.calc_dist(level='sample')
@@ -77,18 +79,23 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         cluster_row = True
         array = array.reindex(names)
 
+    # Group together by columns if provided
+    if isinstance(columns, list) and len(columns) == 2:
+        add_col_group = True
+        col_color_labels = array.columns.levels[0]
+        col_labels = list(array.columns.levels[1])
+        colors = sns.color_palette("Dark2", len(col_color_labels))
+        col_colors = [colors[i] for i in array.columns.labels[0]]
+        array.columns = [col_labels[i] for i in array.columns.labels[1]]
+
     if cluster_row or cluster_col:
-        fig = sns.clustermap(array,
-                             yticklabels=y_tick_labels,
+        fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
-                             col_linkage=None,
-                             row_cluster=cluster_row,
-                             col_cluster=cluster_col,
-                             linewidths=linewidths,
-                             figsize=figsize,
-                             center=center,
-                             cmap=pal
-                             )
+                             yticklabels='auto',
+                             col_colors=col_colors,
+                             col_cluster=False, row_cluster=cluster_row,
+                             figsize=figsize, linewidths=linewidths,
+                             annot=annotations, fmt=fmt)
         if annotate_sig:
             annotate_sig, annotations, fmt = get_sig_annotations(array, data,
                                                                  columns,
@@ -100,22 +107,15 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
             if cluster_col:
                 annotations = annotations[:, fig.dendrogram_col.reordered_ind]
             plt.close()
-            fig = sns.clustermap(array,
-                                 yticklabels=y_tick_labels,
+            fig = sns.clustermap(array, cmap=pal, center=center,
                                  row_linkage=linkage,
-                                 col_linkage=None,
-                                 row_cluster=cluster_row,
-                                 col_cluster=cluster_col,
-                                 linewidths=linewidths,
-                                 figsize=figsize,
-                                 center=center,
-                                 cmap=pal,
-                                 annot=annotations,
-                                 fmt=fmt
-                                 )
+                                 yticklabels='auto',
+                                 col_colors=col_colors,
+                                 col_cluster=False, row_cluster=cluster_row,
+                                 figsize=figsize, linewidths=linewidths,
+                                 annot=annotations, fmt=fmt)
 
     else:
-        # TODO see if i can use clustermap here instead of heatmap
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
         if annotate_sig:
@@ -126,6 +126,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
                     center=center, annot=annotations, fmt=fmt,
                     linewidths=linewidths)
+    if add_col_group:
+        fig = _add_column_color_groups(data, fig, colors, col_color_labels, columns)
     return fig
 
 
@@ -204,7 +206,8 @@ def heatmap_by_category(data,
                                                                  index)
         fig = sns.clustermap(array, cmap=pal, center=center,
                              row_linkage=linkage,
-                             yticklabels='auto', col_colors=col_colors,
+                             yticklabels='auto',
+                             col_colors=col_colors,
                              col_cluster=False, row_cluster=cluster_row,
                              figsize=figsize, linewidths=linewidths,
                              annot=annotations, fmt=fmt)
@@ -214,7 +217,7 @@ def heatmap_by_category(data,
     return fig
 
 
-def _add_column_color_groups(data, fig, colors, color_labels):
+def _add_column_color_groups(data, fig, colors, color_labels, columns):
     for color, label in zip(colors, color_labels):
         fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
     plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
@@ -223,7 +226,7 @@ def _add_column_color_groups(data, fig, colors, color_labels):
     v_line_list = []
     prev = 0
     for i in color_labels:
-        n_samples = len(data[data['category'] == i]['sample_id'].unique())
+        n_samples = len(data[data[columns[0]] == i][columns[1]].unique())
         prev += n_samples
         v_line_list.append(prev)
 

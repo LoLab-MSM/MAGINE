@@ -58,7 +58,7 @@ def display_graph(graph, add_parent=False, layout='cose-bilkent',
     d['widget_width'] = str(width)
     d['widget_height'] = str(height)
 
-    layout_opts = layouts[layout]
+    layout_opts = layouts[layout].copy()
     layout_opts.update(layout_args)
 
     d['layout_json'] = json.dumps(layout_opts)
@@ -66,8 +66,7 @@ def display_graph(graph, add_parent=False, layout='cose-bilkent',
     d['fitbutton'] = "fit" + str(uuid.uuid4())
 
     template = env.get_template('subgraph_2.html')
-    widget = template.render(d)
-    display(HTML(widget))
+    display(HTML(template.render(d)))
 
 
 def render_graph(graph, add_parent=False):

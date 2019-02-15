@@ -126,6 +126,14 @@ db_types = {
 
 }
 
+def get_gene_set_lib():
+    url = 'https://amp.pharm.mssm.edu/Enrichr/#stats'
+    d = pd.read_html(url,  header=0, attrs={'id':'stats_wrapper'})
+    print(len(d))
+    for i in d:
+        print(i.shape)
+    # print(d)
+
 
 class Enrichr(object):
     _query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
@@ -450,9 +458,13 @@ def clean_drug_pert_geo(df):
 
 
 def clean_drug_dbs(data):
-    df = clean_drug_pert_geo(data)
-    df = clean_lincs(df)
-    return df
+    df_copy = data.copy()
+    if 'Drug_Perturbations_from_GEO_2014' in df_copy.db.unique():
+        df_copy = clean_drug_pert_geo(df_copy)
+    if 'LINCS_L1000_Chem_Pert_up' in  df_copy.db.unique() or\
+            'LINCS_L1000_Chem_Pert_down' in  df_copy.db.unique():
+        df_copy = clean_lincs(df_copy)
+    return df_copy
 
 
 def clean_tf_names(data):

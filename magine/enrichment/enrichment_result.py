@@ -7,6 +7,8 @@ import pandas as pd
 from magine.data.base import BaseData
 from magine.plotting.heatmaps import cluster_distance_mat
 
+sig = 'significant'
+
 
 def load_enrichment_csv(file_name, **args):
     """ Load data into EnrichmentResult data class
@@ -21,8 +23,6 @@ def load_enrichment_csv(file_name, **args):
 
     """
     d = pd.read_csv(file_name, **args)
-    d['significant_flag'] = False
-    d.loc[d['adj_p_value'] <= 0.05, 'significant_flag'] = True
     return EnrichmentResult(d)
 
 
@@ -38,6 +38,11 @@ class EnrichmentResult(BaseData):
     @property
     def _constructor(self):
         return EnrichmentResult
+
+    @property
+    def sig(self):
+        """ terms with significant flag """
+        return self.loc[self[sig]]
 
     def filter_rows(self, column, options, inplace=False):
         """
@@ -251,8 +256,10 @@ class EnrichmentResult(BaseData):
                 )
 
         data_copy = data_copy[(data_copy['term_name'].isin(to_keep))]
-        print("Number of rows went from {} to {}".format(self.shape[0],
-                                                         data_copy.shape[0]))
+        print("Number of rows went from {} to {}"
+              "".format(len(self.term_name.unique()),
+                        len(data_copy.term_name.unique()))
+              )
         if inplace:
             self._update_inplace(data_copy)
         else:

@@ -288,7 +288,7 @@ def create_background_network(save_name='background_network',
 
 
 if __name__ == '__main__':
-    create_background_network(fresh_download=False, verbose=True,
+    create_background_network(fresh_download=True, verbose=True,
                               create_overlap=True)
     # load_hmdb_network(create_new=True)
     # load_hmdb_network(False)
