@@ -3,25 +3,24 @@ import os
 import networkx as nx
 
 from magine.enrichment.enrichr import Enrichr
-from magine.networks.ontology_network import OntologyNetworkGenerator
+from magine.networks.ontology_network import create_subnetwork
 
 
 def test_ont_grouping():
     e = Enrichr()
 
-    list_2 = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR', 'BAD',
+    list_1 = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR', 'BAD',
               'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX', 'BAK1',
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
-    df = e.run(list_2, 'GO_Biological_Process_2017')
-    df['genes'] = df['genes'].str.split(',')
-    df['termID'] = df['term_name'].str.replace(':', '')
-    term_dict = dict(zip(df['termID'], df['genes']))
-    label_dict = dict(zip(df['termID'], df['term_name']))
-    term_list = list(df.head(3)['termID'])
 
+    list_2 = ['DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
+
+    df = e.run_samples([list_1, list_2], 'GO_Biological_Process_2017')
+    df = df.sig.copy()
     _path = os.path.join(os.path.dirname(__file__), 'Network_files',
                          'sample_network.gml')
     network = nx.read_gml(_path)
-    ont = OntologyNetworkGenerator(network)
-
-    ont.create_network_from_list(term_list, term_dict, label_dict, draw=False)
+    create_subnetwork(df, network, use_threshold=True, save_name='test')
+    create_subnetwork(df, network, use_threshold=True, use_fdr=True)
+    create_subnetwork(df, network, use_threshold=True, use_fdr=True,
+                      out_dir='del')
