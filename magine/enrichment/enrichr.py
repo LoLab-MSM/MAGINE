@@ -27,16 +27,16 @@ with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
 gene = 'gene'
 
 db_types = {
-    'histone'      : [
+    'histone': [
         'Epigenomics_Roadmap_HM_ChIP-seq',
         'ENCODE_Histone_Modifications_2015',
         'ESCAPE',
     ],
-    'mrna'         : [
+    'mrna': [
         'TargetScan_microRNA_2017',
         'miRTarBase_2017',
     ],
-    'kinases'      : [
+    'kinases': [
         'KEA_2015',
         'LINCS_L1000_Kinase_Perturbations_down',
         'LINCS_L1000_Kinase_Perturbations_up',
@@ -57,7 +57,7 @@ db_types = {
         'TF-LOF_Expression_from_GEO',
         'Transcription_Factor_PPIs'
     ],
-    'pathways'     : [
+    'pathways': [
         'KEGG_2016',
         'WikiPathways_2016',
         'Reactome_2016',
@@ -65,20 +65,20 @@ db_types = {
         'NCI-Nature_2016',
         'Panther_2016',
     ],
-    'complex'      : [
+    'complex': [
         'NURSA_Human_Endogenous_Complexome',
         'CORUM',
         'PPI_Hub_Proteins',
         'BioPlex_2017',
     ],
-    'ontologies'   : [
+    'ontologies': [
         'GO_Cellular_Component_2018',
         'GO_Biological_Process_2018',
         'GO_Molecular_Function_2018',
         'MGI_Mammalian_Phenotype_2017',
         'Jensen_COMPARTMENTS',
     ],
-    'drug'         : [
+    'drug': [
         'DrugMatrix',
         'Drug_Perturbations_from_GEO_2014',
         'Old_CMAP_up',
@@ -88,13 +88,13 @@ db_types = {
         'LINCS_L1000_Ligand_Perturbations_up',
         'LINCS_L1000_Ligand_Perturbations_down',
     ],
-    'disease'      : [
+    'disease': [
         'OMIM_Disease',
         'OMIM_Expanded',
         'Jensen_DISEASES',
         'Human_Phenotype_Ontology'
     ],
-    'cell_type'    : [
+    'cell_type': [
 
         'ARCHS4_Tissues',
         'ARCHS4_Cell-lines',
@@ -105,7 +105,7 @@ db_types = {
         'NCI-60_Cancer_Cell_Lines',
         'Jensen_TISSUES',
     ],
-    'crowd'        : [
+    'crowd': [
         'Disease_Perturbations_from_GEO_down',
         'Disease_Perturbations_from_GEO_up',
         'Drug_Perturbations_from_GEO_down',
@@ -126,20 +126,13 @@ db_types = {
 
 }
 
-def get_gene_set_lib():
-    url = 'https://amp.pharm.mssm.edu/Enrichr/#stats'
-    d = pd.read_html(url,  header=0, attrs={'id':'stats_wrapper'})
-    print(len(d))
-    for i in d:
-        print(i.shape)
-    # print(d)
-
 
 def get_libraries():
     url = 'http://amp.pharm.mssm.edu/Enrichr/datasetStatistics'
     libs_json = json.loads(requests.get(url).text)
     libs = [lib['libraryName'] for lib in libs_json['statistics']]
     return libs
+
 
 class Enrichr(object):
     _query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
@@ -176,14 +169,14 @@ class Enrichr(object):
             Results from enrichR
 
         """
-        assert isinstance(list_of_genes, (list, set))
+        if not isinstance(list_of_genes, (list, set)):
+            raise AssertionError("list_of_genes must be list like")
 
         if self.verbose:
             print("Running Enrichr with gene set {}".format(gene_set_lib))
 
         user_list_id = self._add_gene_list(list_of_genes)
         if isinstance(gene_set_lib, str):
-
             df = self._run_id(user_list_id, gene_set_lib)
         else:
             df = self._run_list_of_dbs(user_list_id, gene_set_lib)
@@ -196,8 +189,8 @@ class Enrichr(object):
         df['significant'] = False
         df.loc[df['adj_p_value'] <= 0.05, 'significant'] = True
         after_size = len(df)
-        assert init_size == after_size, 'not the same shape {}'.format(
-            gene_set_lib)
+        if init_size != after_size:
+            raise AssertionError('not the same shape {}'.format(gene_set_lib))
 
         if self.verbose:
             print("Done calling Enrichr.")
@@ -235,28 +228,26 @@ class Enrichr(object):
         -------
         EnrichmentResult
         """
-        assert isinstance(sample_lists, list), "List required"
-        assert isinstance(sample_lists[0],
-                          (list, set)), "List of lists required"
-        df_final = None
-        for count, (i, j) in enumerate(zip(sample_lists, sample_ids)):
+        if not isinstance(sample_lists, list):
+            raise AssertionError("List required")
+        if not isinstance(sample_lists[0], (list, set)):
+            raise AssertionError("List of lists required")
+        df_final = self.run(sample_lists[0], database)
+        df_final['sample_id'] = sample_ids[0]
+        for count, (i, j) in enumerate(zip(sample_lists[1:], sample_ids[1:])):
             df = self.run(i, database)
             df['sample_id'] = j
-            if df_final is None:
-                df_final = df
-            else:
-                df_final = df_final.append(df, ignore_index=True)
+            df_final = df_final.append(df, ignore_index=True)
 
-        df_final = self._filter_sig_across_term(df_final)
+        df_final.filter_by_minimum_sig_columns(min_terms=1, inplace=True)
         df_final = EnrichmentResult(df_final)
         if save_name:
             s_name = '{}_enrichr'.format(save_name)
             if pivot:
                 # pivot output
-                index = ['term_name', 'db']
-
                 p_df = pd.pivot_table(
-                    df_final, index=index, columns='sample_id',
+                    df_final, index=['term_name', 'db'],
+                    columns='sample_id',
                     aggfunc='first',
                     fill_value=np.nan,
                     values=['term_name', 'rank', 'p_value', 'z_score',
@@ -269,8 +260,7 @@ class Enrichr(object):
 
         if create_html:
             if exp_data is None:
-                print("exp_data required to make plots over samples")
-                return df_final
+                raise AssertionError("exp_data required for plots")
 
             write_table_to_html(data=df_final, save_name=save_name,
                                 out_dir=out_dir, run_parallel=run_parallel,
@@ -279,10 +269,11 @@ class Enrichr(object):
 
     def _run_id(self, list_id, gene_set_lib):
         if gene_set_lib not in _valid_libs:
-            print("{} not in valid ids {}".format(gene_set_lib, _valid_libs))
-            return EnrichmentResult()
+            raise AssertionError("{} not in valid ids {}".format(gene_set_lib,
+                                                                 _valid_libs))
 
-        q = self._query.format(url=self._url, list_id=list_id, lib=gene_set_lib)
+        q = self._query.format(url=self._url, list_id=list_id,
+                               lib=gene_set_lib)
         while True:
             try:
                 response = requests.get(q)
@@ -332,7 +323,7 @@ class Enrichr(object):
         genes_str = '\n'.join(gene_list)
 
         payload = {
-            'list'       : (None, genes_str),
+            'list': (None, genes_str),
             'description': (None, 'MAGINE analysis')
         }
         response = requests.post(self._url + '/addList', files=payload)
@@ -351,26 +342,6 @@ class Enrichr(object):
                 print('\t\t{}/{} databases'.format(db, len(databases)))
         return data
 
-    @staticmethod
-    def _filter_sig_across_term(data, p_value_thresh=0.05):
-        """
-        removes terms if there are no significant terms
-        Parameters
-        ----------
-        data : EnrichmentResult
-
-
-        Returns
-        -------
-
-        """
-        non_sig = []
-        for i, g in data.groupby(['term_name', 'db']):
-            if len(g[g['adj_p_value'] <= p_value_thresh]) == 0:
-                non_sig.append(i[0])
-
-        return data[~data['term_name'].isin(non_sig)]
-
 
 def clean_term_names(row):
     term_name = row['term_name']
@@ -380,9 +351,12 @@ def clean_term_names(row):
     db = row['db']
 
     if db in [
-        'GO_Biological_Process_2018', 'GO_Molecular_Function_2018', 'GO_Cellular_Component_2018',
-        'GO_Biological_Process_2017', 'GO_Molecular_Function_2017', 'GO_Cellular_Component_2017',
-        'GO_Biological_Process_2017b', 'GO_Molecular_Function_2017b', 'GO_Cellular_Component_2017b',
+        'GO_Biological_Process_2018', 'GO_Molecular_Function_2018',
+        'GO_Cellular_Component_2018',
+        'GO_Biological_Process_2017', 'GO_Molecular_Function_2017',
+        'GO_Cellular_Component_2017',
+        'GO_Biological_Process_2017b', 'GO_Molecular_Function_2017b',
+        'GO_Cellular_Component_2017b',
     ]:
 
         if 'GO:' in term_name:
@@ -433,14 +407,15 @@ def clean_lincs(df):
     def get_drug(row):
         db = row['db']
         term_name = row['term_name']
-        if db  not in ['LINCS_L1000_Chem_Pert_up',
-                       'LINCS_L1000_Chem_Pert_down']:
+        if db not in ['LINCS_L1000_Chem_Pert_up',
+                      'LINCS_L1000_Chem_Pert_down']:
             return term_name
         try:
             drug_name = pattern.search(term_name).group('drug')
         except NameError:
             drug_name = term_name
         return drug_name
+
     df['term_name'] = df.apply(get_drug, axis=1)
     return df
 
@@ -466,8 +441,8 @@ def clean_drug_dbs(data):
     df_copy = data.copy()
     if 'Drug_Perturbations_from_GEO_2014' in df_copy.db.unique():
         df_copy = clean_drug_pert_geo(df_copy)
-    if 'LINCS_L1000_Chem_Pert_up' in  df_copy.db.unique() or\
-            'LINCS_L1000_Chem_Pert_down' in  df_copy.db.unique():
+    if 'LINCS_L1000_Chem_Pert_up' in df_copy.db.unique() or \
+            'LINCS_L1000_Chem_Pert_down' in df_copy.db.unique():
         df_copy = clean_lincs(df_copy)
     return df_copy
 
@@ -484,6 +459,7 @@ def clean_tf_names(data):
     -------
 
     """
+
     def return_single_tf(row):
         """
         Gets TF name only
@@ -573,7 +549,7 @@ def run_enrichment_for_project(exp_data, project_name, databases=standard_dbs):
             name = os.path.join(_dir, current + '.csv.gz')
             try:
                 df = pd.read_csv(name, index_col=None, encoding='utf-8')
-            except:
+            except FileNotFoundError:
                 df = e.run(genes, databases)
                 df['sample_id'] = sample_id
                 df['category'] = category
@@ -647,7 +623,8 @@ def get_background_list(lib_name):
     results = json.loads(response.text)
 
     term_to_gene = []
-    assert lib_name in results
+    if lib_name not in results:
+        raise AssertionError("Something happened when calling enrichR.")
 
     for term, genes_dict in results[lib_name]['terms'].items():
         genes = sorted(set(i for i in genes_dict))
