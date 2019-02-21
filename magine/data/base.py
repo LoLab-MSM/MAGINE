@@ -156,11 +156,10 @@ class BaseData(pd.DataFrame):
         n_before = len(new_data[index].unique())
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
-        if 'significant' in new_data.columns:
-            flag = 'significant'
-        else:
-            flag = None
-        assert flag in new_data.columns, 'Requires significant column'
+        flag = 'significant'
+        if flag not in new_data.columns:
+            raise AssertionError("Missing {} column in data".format(flag))
+
         # pivot
         sig = pd.pivot_table(new_data,
                              index=index,
@@ -215,7 +214,7 @@ class BaseData(pd.DataFrame):
         else:
             return new_data
 
-    def heatmap(self, subset_list=None, subset_index=None,
+    def heatmap(self, subset=None, subset_index=None,
                 convert_to_log=True, y_tick_labels='auto',
                 cluster_row=False, cluster_col=False, cluster_by_set=False,
                 index=None, values=None, columns=None,
@@ -225,8 +224,9 @@ class BaseData(pd.DataFrame):
 
         Parameters
         ----------
-        subset_list : list
-            List for index to subset
+        subset : list or str
+            Will filter to only contain a provided list.
+            If a str, will filter based on .contains(subset)
         subset_index : str
             Index to for subset list to match against
         convert_to_log : bool
@@ -244,7 +244,7 @@ class BaseData(pd.DataFrame):
         columns : str
             Value that will be used as columns
         annotate_sig : bool
-            Add '*' annotation to not 'significant=True' column
+            Add '+' annotation to not 'significant=True' column
         figsize : tuple
             Figure size to pass to matplotlib
         div_colors : bool
@@ -272,14 +272,19 @@ class BaseData(pd.DataFrame):
             values = self._value_name
         if columns is None:
             columns = self._sample_id_name
-        df_copy = self.copy()
-        if subset_list is not None:
+        df = self.copy()
+        if subset is not None:
             if subset_index is None:
                 subset_index = index
-            df_copy = df_copy.loc[df_copy[subset_index].isin(subset_list)]
-
+            if isinstance(subset, str):
+                df = df.loc[df[subset_index].str.contains(subset)]
+            else:
+                df = df.loc[df[subset_index].isin(subset)]
+        if not df.shape[0]:
+            print("No terms match subset")
+            return
         return heatmap_from_array(
-            df_copy, convert_to_log=convert_to_log,
+            df, convert_to_log=convert_to_log,
             y_tick_labels=y_tick_labels,
             cluster_row=cluster_row, cluster_col=cluster_col,
             cluster_by_set=cluster_by_set,  figsize=figsize,

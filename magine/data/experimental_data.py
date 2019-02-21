@@ -127,6 +127,26 @@ class Sample(BaseData):
             over_time.append(cur_slice.id_list)
         return over_time
 
+    def plot_pie_sig_ratio(self, save_name=None):
+        x = len(self.id_list)
+        y = len(self.sig.id_list)
+        total = x + y
+        fig = plt.figure(figsize=(3, 3))
+        ax = fig.add_subplot(111)
+        wedges, texts, autotexts = ax.pie([x, y],
+                                          explode=(0.05, 0.05),
+                                          textprops={'fontsize': 16},
+                                          autopct=lambda p: '{:.0f}'.format(
+                                              p * total / 100),
+                                          shadow=True, startangle=140)
+
+        plt.setp(autotexts, size=20)
+        plt.axis('equal')
+        if save_name is not None:
+            plt.savefig('{}.png'.format(save_name), dpi=300,
+                        bbox_inches='tight')
+        return fig
+
     def volcano_plot(self, save_name=None, out_dir=None, sig_column=False,
                      p_value=0.1, fold_change_cutoff=1.5, x_range=None,
                      y_range=None):

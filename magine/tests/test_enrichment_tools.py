@@ -80,7 +80,7 @@ class TestEnrichmentResult(object):
         df = load_data_csv(os.path.join(os.path.dirname(__file__), 'Data',
                                         'example_apoptosis.csv'))
         terms = [{'BAX'}, {'PARP4'}]
-        heatmap_by_terms(df.species, terms, color_labels=['1', '2'])
+        heatmap_by_terms(df.species, ['1', '2'], terms)
         plt.close()
 
     def test_find_similar_terms(self):
