@@ -217,7 +217,7 @@ def plot_dataframe(exp_data, html_filename, out_dir='proteins',
 
 
 def _make_plots(plots_to_make, plot_func, parallel=False):
-    for i in enumerate(plots_to_make):
+    for i, _ in enumerate(plots_to_make):
         plots_to_make[i].append('pdf')
         plots_to_make[i].append(True)
 
