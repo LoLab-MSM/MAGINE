@@ -135,6 +135,12 @@ def get_gene_set_lib():
     # print(d)
 
 
+def get_libraries():
+    url = 'http://amp.pharm.mssm.edu/Enrichr/datasetStatistics'
+    libs_json = json.loads(requests.get(url).text)
+    libs = [lib['libraryName'] for lib in libs_json['statistics']]
+    return libs
+
 class Enrichr(object):
     _query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
 
@@ -650,3 +656,7 @@ def get_background_list(lib_name):
         )
 
     return term_to_gene
+
+
+if __name__ == '__main__':
+    print(get_libraries())

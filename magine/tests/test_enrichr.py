@@ -3,7 +3,7 @@ import tempfile
 from nose.tools import ok_
 
 from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs, \
-    get_background_list, run_enrichment_for_project
+    get_background_list, run_enrichment_for_project, get_libraries
 from magine.tests.sample_experimental_data import exp_data
 
 e = Enrichr()
@@ -18,6 +18,9 @@ def test_single_run():
     terms = df['term_name']
     ok_(len(terms) == 185)
 
+
+def test_libaries():
+    get_libraries()
 
 def test_project():
     run_enrichment_for_project(exp_data, 'test',
