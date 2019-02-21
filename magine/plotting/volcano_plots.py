@@ -152,7 +152,7 @@ def volcano_plot(data, save_name=None, out_dir=None, sig_column=False,
 
 
 def save_plot(fig, save_name, out_dir=None, image_type='png'):
-    """
+    """ Saves fig
     
     Parameters
     ----------

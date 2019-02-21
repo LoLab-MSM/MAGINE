@@ -4,7 +4,6 @@ import os
 import defusedxml.cElementTree as et
 import networkx as nx
 from bioservices import KEGG
-from defusedxml import cElementTree as ElementTree
 
 import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
@@ -36,7 +35,8 @@ def pathway_id_to_network(pathway_id, species='hsa'):
     kegg.organism = species
     list_of_kegg_pathways = [i[5:] for i in kegg.pathwayIds]
 
-    assert pathway_id in list_of_kegg_pathways
+    if pathway_id not in list_of_kegg_pathways:
+        raise AssertionError("{} not a KEGG pathway id".format(pathway_id))
     pathway = kegg.get(pathway_id, "kgml")
     graph, pathway_name = kgml_to_nx(pathway, species=species)
     return graph
@@ -55,16 +55,15 @@ def kgml_to_nx(xml_file, species='hsa'):
 
     """
     try:
-        tree = ElementTree(et.fromstring(xml_file))
+        tree = et.fromstring(xml_file)
 
     except TypeError:
-        print("This file ({})is messed up! Investigate".format(xml_file))
-        return nx.DiGraph(), []
+        raise TypeError("This file ({})is messed up!".format(xml_file))
     pathway_local = nx.DiGraph()
     connecting_maps = []
     name_label_dict = {}
-    organism = tree.getroot().get('org')
-    pathway_name = tree.getroot().get('title')
+    organism = tree.get('org')
+    pathway_name = tree.get('title')
 
     def _add_node(node, type_species):
         pathway_local.add_node(node, speciesType=type_species,

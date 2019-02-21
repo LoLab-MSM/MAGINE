@@ -4,7 +4,7 @@ from matplotlib_venn import venn2 as _venn2, venn3 as _venn3
 
 def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
                  image_format='png', title=None):
-    """
+    """ Creates a venn digram containing for 3 lists
     
     Parameters
     ----------
@@ -41,7 +41,7 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
 
 def create_venn2(list1, list2, label1, label2, save_name=None, title=None,
                  image_format='png'):
-    """
+    """Creates a venn digram containing for 2 lists
     
     Parameters
     ----------
@@ -50,6 +50,7 @@ def create_venn2(list1, list2, label1, label2, save_name=None, title=None,
     label1 : str
     label2 : str
     save_name : str
+    title : str
     image_format : str, optional
         default png
 

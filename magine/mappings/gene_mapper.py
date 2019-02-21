@@ -1,8 +1,4 @@
 try:
-    import cPickle as pickle
-except ImportError:  # python3 doesnt have cPickle
-    import pickle
-try:
     basestring
 # Allows isinstance(foo, basestring) to work in Python 3
 except:
@@ -208,7 +204,7 @@ def kegg_to_symbol_through_uniprot(unknown_genes):
                 x = uniprot.search("accession:{}".format(n),
                                    columns='genes(PREFERRED),reviewed,id',
                                    limit=1)
-                header, data = x.rstrip('\n').split('\n')
+                _, data = x.rstrip('\n').split('\n')
                 name, review, entry = data.split('\t')
                 if n != entry:
                     print(i, n, entry, x, "dont match")
