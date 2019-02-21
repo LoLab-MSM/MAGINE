@@ -549,7 +549,7 @@ def run_enrichment_for_project(exp_data, project_name, databases=standard_dbs):
             name = os.path.join(_dir, current + '.csv.gz')
             try:
                 df = pd.read_csv(name, index_col=None, encoding='utf-8')
-            except FileNotFoundError:
+            except:
                 df = e.run(genes, databases)
                 df['sample_id'] = sample_id
                 df['category'] = category
