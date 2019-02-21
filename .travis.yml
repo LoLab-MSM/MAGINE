@@ -2,28 +2,28 @@ language: python
 sudo: required
 dist: trusty
 python:
-- '2.7'
-- '3.6'
+  - '2.7'
+  - '3.6'
 cache: pip
 before_install:
-- wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
-- chmod +x miniconda.sh
-- bash miniconda.sh -b -p $HOME/miniconda
-- export PATH="$HOME/miniconda/bin:$PATH"
-- conda update --yes conda
-- conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy networkx nose pandas jinja2 plotly pycairo
-- conda install --yes -c marufr python-igraph
-- mkdir -p ~/.config/matplotlib
-- echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
-- pip install -r requirements.txt
-- pip install python-coveralls
-- pip install nose-exclude
-- pip install nose-timer
-- pip install codecov
+  - wget http://repo.continuum.io/miniconda/Miniconda${TRAVIS_PYTHON_VERSION:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
+  - chmod +x miniconda.sh
+  - bash miniconda.sh -b -p $HOME/miniconda
+  - export PATH="$HOME/miniconda/bin:$PATH"
+  - conda update --yes conda
+  - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy networkx nose pandas jinja2 plotly pycairo
+  - conda install --yes -c marufr python-igraph
+  - mkdir -p ~/.config/matplotlib
+  - echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
+  - pip install -r requirements.txt
+  - pip install python-coveralls
+  - pip install nose-exclude
+  - pip install nose-timer
+  - pip install codecov
 
 install:
-- sudo apt-get install graphviz
-- python setup.py build --build-lib=build/lib
+  - sudo apt-get install graphviz
+  - python setup.py build --build-lib=build/lib
 
 script:
   - python copy_sample_data.py

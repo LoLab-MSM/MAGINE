@@ -1,4 +1,3 @@
-
 try:
     import cPickle as pickle
 except ImportError:  # python3 doesnt have cPickle
@@ -14,6 +13,7 @@ from bioservices import HGNC, UniProt
 from sortedcontainers import SortedSet, SortedDict
 
 from magine.mappings.databases import load_hgnc, load_uniprot, load_ncbi
+
 pd.set_option('display.width', 20000)
 
 
@@ -98,7 +98,7 @@ class GeneMapper(object):
         if self._ncbi_to_symbol is None:
             self._ncbi_to_symbol = _dict(self.ncbi, 'GeneID', 'Symbol')
         return self._ncbi_to_symbol
-        
+
     def check_synonym_dict(self, term, format_name):
         """ checks hmdb database for synonyms and returns formatted name
 
@@ -298,25 +298,24 @@ manual_dict = {'hsa:857': 'CAV1',
                'hsa:102723407': 'IGHV4OR15-8',
                'hsa:100132074': 'FOXO6',
                'hsa:728635': 'DHRS4L1',
-               'hsa:10411'    : 'RAPGEF3',
+               'hsa:10411': 'RAPGEF3',
                'hsa:100101267': 'POM121C',
-               'hsa:2768'     : 'GNA12',
-               'hsa:2044'     : 'EPHA5',
+               'hsa:2768': 'GNA12',
+               'hsa:2044': 'EPHA5',
                'hsa:100533467': 'BIVM-ERCC5',
-               'hsa:7403'     : 'KDM6A',
-               'hsa:1981'     : 'EIF4G1',
-               'hsa:2906'     : 'GRIN2D',
-               'hsa:4088'     : 'SMAD3',
-               'hsa:6776'     : 'STAT5A',
-               'hsa:182'      : 'JAG1',
-               'hsa:3708'     : 'ITPR1',
-               'hsa:1293'     : 'COL6A3',
-               'hsa:93034'    : 'NT5C1B',
-               'hsa:574537'   : 'UGT2A2',
-               'hsa:11044'    : 'PAPD7',
-               'hsa:57292'    : 'KIR2DL5A'
+               'hsa:7403': 'KDM6A',
+               'hsa:1981': 'EIF4G1',
+               'hsa:2906': 'GRIN2D',
+               'hsa:4088': 'SMAD3',
+               'hsa:6776': 'STAT5A',
+               'hsa:182': 'JAG1',
+               'hsa:3708': 'ITPR1',
+               'hsa:1293': 'COL6A3',
+               'hsa:93034': 'NT5C1B',
+               'hsa:574537': 'UGT2A2',
+               'hsa:11044': 'PAPD7',
+               'hsa:57292': 'KIR2DL5A'
                }
 
 if __name__ == '__main__':
     gm = GeneMapper()
-

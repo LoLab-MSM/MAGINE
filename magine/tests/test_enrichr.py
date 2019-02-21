@@ -22,6 +22,7 @@ def test_single_run():
 def test_libaries():
     get_libraries()
 
+
 def test_project():
     run_enrichment_for_project(exp_data, 'test',
                                databases=['LINCS_L1000_Chem_Pert_up'])
@@ -44,7 +45,6 @@ def test_clean_drug_dbs():
 
 
 def test_multi_sample():
-
     lists = [['BAX', 'BCL2', 'CASP3'],
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]

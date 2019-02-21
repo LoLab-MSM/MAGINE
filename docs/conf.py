@@ -83,34 +83,32 @@ project = u'magine'
 copyright = u'2017, James C. Pino'
 author = u'James C. Pino'
 
-
 # -- Mock out some problematic modules-------------------------------------
 
 # Note that for sub-modules, all parent modules must be listed explicitly.
-MOCK_MODULES = [#'pandas', 'pandas.plotting',
+MOCK_MODULES = [  # 'pandas', 'pandas.plotting',
 
-                'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
-                'scipy.special', 'scipy.optimize', 'scipy.stats',
-                'scipy.stats.stats', 'scipy.stats.stats.distributions',
-                'scipy.sparse', 'scipy.linalg',
+    'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
+    'scipy.special', 'scipy.optimize', 'scipy.stats',
+    'scipy.stats.stats', 'scipy.stats.stats.distributions',
+    'scipy.sparse', 'scipy.linalg',
 
-                'seaborn', 'seaborn.color_palette', 'seaborn.color_palette',
+    'seaborn', 'seaborn.color_palette', 'seaborn.color_palette',
 
-                'python-igraph', 'igraph', 'py2cytoscape', 'pydotplus',
+    'python-igraph', 'igraph', 'py2cytoscape', 'pydotplus',
 
-                'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
-                'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
-                'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
+    'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
+    'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
+    'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
 
-                # 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
-                # 'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
-    
-                'statsmodels', 'statsmodels.stats', 'statsmodels.stats.multitest',
-                ]
+    # 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
+    # 'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
+
+    'statsmodels', 'statsmodels.stats', 'statsmodels.stats.multitest',
+]
 
 for mod_name in MOCK_MODULES:
     sys.modules[mod_name] = mock.MagicMock()
-
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

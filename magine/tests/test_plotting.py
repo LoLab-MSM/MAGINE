@@ -1,13 +1,13 @@
-import shutil
 import os
+import shutil
 import tempfile
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
 import magine.plotting.wordcloud_tools as wt
-from magine.plotting.venn_diagram_maker import create_venn3, create_venn2
 from magine.enrichment import load_enrichment_csv
+from magine.plotting.venn_diagram_maker import create_venn3, create_venn2
 
 
 class TestVennDiagram(object):

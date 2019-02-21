@@ -13,7 +13,6 @@ try:
 except ImportError:
     import pickle as pickle
 
-
 gm = GeneMapper()
 cm = ChemicalMapper()
 

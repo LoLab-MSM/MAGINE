@@ -23,9 +23,11 @@ def log2_normalize_df(df, column, new_col=None):
     if new_col is not None:
         if not isinstance(new_col, str):
             raise AssertionError()
-        tmp_df.loc[greater_than, new_col] = np.log2(tmp_df[greater_than][column])
+        tmp_df.loc[greater_than, new_col] = np.log2(
+            tmp_df[greater_than][column])
         tmp_df.loc[less_than, new_col] = -np.log2(-tmp_df[less_than][column])
     else:
-        tmp_df.loc[greater_than, column] = np.log2(tmp_df[greater_than][column])
+        tmp_df.loc[greater_than, column] = np.log2(
+            tmp_df[greater_than][column])
         tmp_df.loc[less_than, column] = -np.log2(-tmp_df[less_than][column])
     return tmp_df

@@ -126,7 +126,7 @@ class BaseData(pd.DataFrame):
         n_after = len(new_data[index].unique())
 
         print("Number in index went from {} to {}".format(n_before, n_after))
-        
+
         if inplace:
             self._update_inplace(new_data)
         else:
@@ -287,7 +287,7 @@ class BaseData(pd.DataFrame):
             df, convert_to_log=convert_to_log,
             y_tick_labels=y_tick_labels,
             cluster_row=cluster_row, cluster_col=cluster_col,
-            cluster_by_set=cluster_by_set,  figsize=figsize,
+            cluster_by_set=cluster_by_set, figsize=figsize,
             columns=columns, index=index, values=values,
             div_colors=div_colors, num_colors=num_colors,
             rank_index=rank_index, annotate_sig=annotate_sig,

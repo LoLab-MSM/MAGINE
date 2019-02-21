@@ -44,7 +44,6 @@ def test_delete_disconnected():
 
 
 def test_add_attribute_to_network():
-
     g = nx.DiGraph()
     g.add_nodes_from(['a', 'b', 'c'])
     new_g = utils.add_attribute_to_network(g, ['a', 'b'], 'inTest', 'true')

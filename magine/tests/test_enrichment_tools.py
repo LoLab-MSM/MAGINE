@@ -62,7 +62,6 @@ class TestEnrichmentResult(object):
         ok_(copy_data.shape[0] == 7)
 
     def test_dist(self):
-
         # dist = self.data.dist_matrix()
         # assert isinstance(dist, matplotlib.figure.Figure)
         copy_data = self.data.copy()

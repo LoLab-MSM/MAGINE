@@ -1,5 +1,6 @@
-from appdirs import user_data_dir
 import os
+
+from appdirs import user_data_dir
 
 dir_name = user_data_dir('magine')
 
@@ -19,6 +20,3 @@ if not os.path.exists(id_mapping_dir):
 # check or create the network data storage directory
 if not os.path.exists(network_data_dir):
     os.makedirs(network_data_dir)
-
-
-

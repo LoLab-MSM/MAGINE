@@ -7,6 +7,7 @@ from magine.networks.standards import edge_standards
 
 try:
     from IPython.display import Image, display
+
     IPYTHON = True
 except RuntimeError:
     IPYTHON = False

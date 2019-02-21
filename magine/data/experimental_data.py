@@ -52,6 +52,7 @@ class Sample(BaseData):
     """ Provides tools for subsets of data types
 
     """
+
     def __init__(self, *args, **kwargs):
         super(Sample, self).__init__(*args, **kwargs)
         self._index = identifier
