@@ -2,31 +2,11 @@ import json
 import uuid
 
 import networkx as nx
-from IPython.display import display, HTML, Javascript
+from IPython.display import display, HTML
 
 from magine.html_templates.cy_stypes import styles
 from magine.html_templates.html_tools import env
 from magine.networks.exporters import nx_to_json
-
-
-def init():
-    _urls = [
-        "https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js",
-        "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.1.4/cytoscape.js",
-        "https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js",
-        "https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js",
-        "https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js",
-        "https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min"
-    ]
-
-    # JS_LOADER_FILE = "loader.js"
-    # path = os.path.abspath(os.path.dirname(__file__)) + "/" + JS_LOADER_FILE
-    # js_loader = open(path).read()
-    Javascript(lib=_urls)
-
-
-# init()
 
 layouts = {
     'breadthfirst': {
@@ -39,7 +19,12 @@ layouts = {
     },
     'cose-bilkent': {
         'name': 'cose-bilkent',
+    },
+    'dagre': {
+        'name': 'dagre',
+        'rankDir': 'LR',
     }
+
 }
 
 

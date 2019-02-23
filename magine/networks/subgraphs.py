@@ -312,7 +312,10 @@ class Subgraph(object):
                 down_layer = {i for n in down_layer for i in
                               _get_downstream(n)}
         if include_only is not None:
-            sg = self._include_only(sg, include_only)
+            include_copy = list(include_only)
+            if node not in include_only:
+                include_copy += [node]
+            sg = self._include_only(sg, include_copy)
 
         return sg
 

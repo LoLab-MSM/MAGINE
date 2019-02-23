@@ -96,14 +96,15 @@ class BaseData(pd.DataFrame):
             index = self._index
         # create safe copy of array
         new_data = self.copy()
-        n_before = len(new_data[index].unique())
+
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
         if 'significant' in new_data.columns:
             flag = 'significant'
         else:
             flag = None
-        assert flag in new_data.columns, 'Requires significant column'
+        if flag not in new_data.columns:
+            raise AssertionError('Requires significant column')
         # pivot
         sig = pd.pivot_table(new_data,
                              index=index,
@@ -119,13 +120,15 @@ class BaseData(pd.DataFrame):
             keepers = {i[0] for i in sig.index.values}
             new_data = new_data[new_data[index[0]].isin(keepers)]
         elif isinstance(index, str):
+            n_before = len(new_data[index].unique())
             keepers = {i for i in sig.index.values}
             new_data = new_data.loc[new_data[index].isin(keepers)]
+            n_after = len(new_data[index].unique())
+
+            print("Number in index went from {} to {}"
+                  "".format(n_before, n_after))
         else:
             print("Index is not a str or a list. What is it?")
-        n_after = len(new_data[index].unique())
-
-        print("Number in index went from {} to {}".format(n_before, n_after))
 
         if inplace:
             self._update_inplace(new_data)

@@ -199,6 +199,45 @@ class EnrichmentResult(BaseData):
         df.sort_values('similarity_score', inplace=True, ascending=False)
         return df
 
+    def show_terms_below(self, term, level='dataframe', threshold=.7,
+                         remove_subset=True):
+        """ Find terms that were removed by remove_redundant
+
+        Parameters
+        ----------
+        term : str
+        level : str
+        threshold : float
+        remove_subset : bool
+        Returns
+        -------
+        EnrichmentResult
+
+        """
+        temp_df = self.copy()
+        # calculate similarity of term to all terms
+        sim_terms = temp_df.find_similar_terms(term,
+                                               remove_subset=remove_subset,
+                                               level=level)
+        # gather terms that are highly similar
+        sim_terms = sim_terms.loc[sim_terms.similarity_score >= threshold]
+        high_similar_terms = set(sim_terms.term_name.values)
+
+        # this shows all terms that remained after filtering
+        # Will be used to compare against
+        term_kept = temp_df.remove_redundant(
+            threshold=threshold,
+            level=level,
+            inplace=False,
+            sort_by='combined_score'
+        )
+
+        term_kept = set(term_kept.term_name.values)
+        terms_removed = high_similar_terms.difference(term_kept)
+        # Adding the original term to show similarity
+        terms_removed.add(term)
+        return temp_df.loc[temp_df.term_name.isin(terms_removed)]
+
     def all_genes_from_df(self):
         """ Returns all genes from gene columns in a set
 
@@ -390,6 +429,7 @@ def jaccard_index(set1, set2, remove_subset=True):
            <https://en.wikipedia.org/wiki/Jaccard_index>`_
     """
     union = len(set1.union(set2))
-    if union == max(len(set1), len(set2)) and remove_subset:
+    max_size = max(len(set1), len(set2))
+    if union == max_size and remove_subset:
         return 1.
-    return float(len(set1.intersection(set2))) / union
+    return float(len(set1.intersection(set2))) / float(union)

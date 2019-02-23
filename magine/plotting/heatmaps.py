@@ -123,6 +123,25 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         if add_col_group:
             fig = _add_column_color_groups(data, fig, col_color_map,
                                            col_labels, columns)
+        if cluster_col:
+            col_cltrs = sch.fcluster(fig.dendrogram_col.linkage, t=2,
+                                     criterion='maxclust')
+            col_cltrs = col_cltrs[fig.dendrogram_col.reordered_ind]
+            col_clusters = dict()
+            for i in sorted(set(col_cltrs)):
+                cols = fig.data2d.columns.values[col_cltrs == i]
+                col_clusters[i] = fig.data2d[cols]
+            fig.col_clusters = col_clusters
+        if cluster_row:
+            row_cltrs = sch.fcluster(fig.dendrogram_row.linkage, t=2,
+                                     criterion='maxclust')
+            row_cltrs = row_cltrs[fig.dendrogram_row.reordered_ind]
+            row_clusters = dict()
+            for i in sorted(set(row_cltrs)):
+                row_clusters[i] = fig.data2d.loc[row_cltrs == i].index.values
+            fig.row_clusters = row_clusters
+        fig.ax_heatmap.set_ylabel('')
+        fig.ax_heatmap.set_xlabel('')
     else:
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
@@ -282,7 +301,8 @@ def heatmap_by_terms(data, term_labels, term_sets, colors=None, min_sig=None,
     if add_col_group:
         fig = _add_column_color_groups(tmp_d, fig, col_color_map, col_labels,
                                        columns)
-
+    fig.ax_heatmap.set_ylabel('')
+    fig.ax_heatmap.set_xlabel('')
     return fig
 
 

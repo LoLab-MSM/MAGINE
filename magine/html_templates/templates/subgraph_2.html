@@ -20,35 +20,77 @@
     </style>
 
     <script>
-        function makeTippy(target, text) {
-            return tippy(target.popperRef(),
-                {
-                    html: add_tip(text),
-                    trigger: 'manual',
-                    arrow: true,
-                    placement: 'top',
-                    hideOnClick: false,
-                    interactive: true,
-                    multiple: true,
-                    sticky: true
-                }).tooltips[0];
-        }
 
-        function add_tip(text) {
-            var div = document.createElement('div');
-            div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene=" + text + "' target='_blank'>Gene Card</a>";
-            return div;
-        }
-        (function () {
-            function render() {
+
+        requirejs.config({
+
+            paths: {
+                'popper': 'https://unpkg.com/popper.js@1.14.1/dist/umd/popper',
+                'tippy': 'https://cdnjs.cloudflare.com/ajax/libs/tippy.js/2.3.0/tippy.min',
+                'cytoscape': 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.2.10/cytoscape',
+                'cytoscape-popper': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-popper/3ad50859/cytoscape-popper',
+                'jquery': 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min',
+                'qtip2': 'https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/basic/jquery.qtip.min',
+                'dagre': 'https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min',
+                'cytoscape-dagre': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre',
+                'cytoscape-cose-bilkent': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.1/cytoscape-cose-bilkent'
+            },
+            shim: {
+                'cytoscape-popper': {
+                    deps: ['cytoscape', 'popper']
+                },
+                'cytoscape-dagre': {
+                    deps: ['cytoscape', 'dagre']
+                }
+            },
+            map: {
+                '*': {
+                    'popper.js': 'popper',
+                    'webcola': 'cola'
+                }
+            }
+
+        });
+
+
+        require(['cytoscape', 'cytoscape-popper', 'popper', 'tippy', 'jquery',
+                'cytoscape-cose-bilkent', 'cytoscape-dagre', 'dagre'],
+            function (cytoscape, cypopper, popper, tippy, jquery, regCose,
+                      cydag, dagre) {
+                console.log('Loading Cytoscape.js Module...');
+                window['popper'] = popper;
+                window['tippy'] = tippy;
+                window['cytoscape'] = cytoscape;
+                cypopper(cytoscape);
+                regCose(cytoscape);
+                cydag(cytoscape, dagre);
+
+                function makeTippy(target, text) {
+                    return tippy(target.popperRef(),
+                        {
+                            html: add_tip(text),
+                            trigger: 'manual',
+                            arrow: true,
+                            placement: 'top',
+                            hideOnClick: false,
+                            interactive: true,
+                            multiple: true,
+                            sticky: true
+                        }).tooltips[0];
+                }
+
+                function add_tip(text) {
+                    var div = document.createElement('div');
+                    div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene=" + text + "' target='_blank'>Gene Card</a>";
+                    return div;
+                }
+
                 var cy = window.cy = cytoscape({
                     container: $('#{{uuid|safe}}'),
                     elements: {
                         nodes: {{nodes|safe}},
                         edges: {{edges|safe}}
                     },
-
-
                     boxSelectionEnabled: true,
                     wheelSensitivity: .25,
 
@@ -74,69 +116,8 @@
                         ele.data()['tip'].show();
                     }
                 });
-
-
-
-            }
-
-            function before_render() {
-                if (window['cytoscape'] === undefined) {
-                    console.log("Waiting for Cyjs...");
-                    window.addEventListener("load_cytoscape", before_render);
-                } else {
-                    console.log("Ready to render graph!");
-                    $(".tippy-popper").remove();
-
-                    render();
-                }
-            };
-            before_render();
-        })();
-        if (window['cytoscape'] === undefined) {
-            console.log('starting loading');
-
-            requirejs.config({
-
-                paths: {
-                    'popper': 'https://unpkg.com/popper.js@1.14.1/dist/umd/popper',
-                    'tippy': 'https://cdnjs.cloudflare.com/ajax/libs/tippy.js/2.3.0/tippy.min',
-                    'cytoscape': 'https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.2.10/cytoscape',
-                    'cytoscape-popper': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-popper/3ad50859/cytoscape-popper',
-                    'jquery': 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min',
-                    'qtip2': 'https://cdnjs.cloudflare.com/ajax/libs/qtip2/2.2.0/basic/jquery.qtip.min',
-                    'cytoscape-cose-bilkent': 'https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.1/cytoscape-cose-bilkent'
-                },
-                shim: {
-                    'cytoscape-popper': {
-                        deps: ['cytoscape', 'popper']
-                    }
-                },
-                map: {
-                    '*': {
-                        'popper.js': 'popper',
-                        'webcola': 'cola'
-                    }
-                }
-
             });
-            window.$ = window.jQuery = require('jquery');
 
-            require(['cytoscape', 'cytoscape-popper', 'popper', 'tippy', 'jquery', 'cytoscape-cose-bilkent'],
-                function (cytoscape, cypopper, popper, tippy, jquery, regCose) {
-                    console.log('Loading Cytoscape.js Module...');
-                    window['popper'] = popper;
-                    window['tippy'] = tippy;
-                    window['cytoscape'] = cytoscape;
-                    cypopper(cytoscape);
-                    regCose(cytoscape);
-
-
-                    var event = document.createEvent("HTMLEvents");
-                    event.initEvent("load_cytoscape", true, false);
-                    window.dispatchEvent(event);
-                }
-            );
-        }
 
     </script>
 </head>
@@ -146,7 +127,8 @@
 <!-- When only #uuid div is placed on this page,
 the height of output-box on ipynb will be 0px.
 One line below will prevent that. -->
-<div id="dummy" style="width:{{ widget_width }}px;height:{{ widget_height }}px"></div>
+<div id="dummy"
+     style="width:{{ widget_width }}px;height:{{ widget_height }}px"></div>
 </body>
 
 </html>
