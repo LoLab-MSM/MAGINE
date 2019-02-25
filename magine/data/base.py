@@ -3,6 +3,8 @@ import pandas as pd
 
 from magine.plotting.heatmaps import heatmap_from_array
 
+flag = 'significant'
+
 
 class BaseData(pd.DataFrame):
     """
@@ -69,7 +71,7 @@ class BaseData(pd.DataFrame):
                 ascending=False, inplace=True
             )
         elif isinstance(columns, str):
-            array.sort_values(by=list(sorted(d_copy[columns].unique())),
+            array.sort_values(by=sorted(d_copy[columns].unique()),
                               ascending=False, inplace=True)
         return array
 
@@ -99,10 +101,6 @@ class BaseData(pd.DataFrame):
 
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
-        if 'significant' in new_data.columns:
-            flag = 'significant'
-        else:
-            flag = None
         if flag not in new_data.columns:
             raise AssertionError('Requires significant column')
         # pivot
@@ -113,7 +111,7 @@ class BaseData(pd.DataFrame):
                              columns=columns
                              )[cols_to_check]
 
-        # convert everything thats not 0 to 1
+        # convert everything that's not 0 to 1
         sig[sig > 0] = 1
         sig = sig[sig.T.sum() >= min_terms]
         if isinstance(index, list):
@@ -159,7 +157,7 @@ class BaseData(pd.DataFrame):
         n_before = len(new_data[index].unique())
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
-        flag = 'significant'
+
         if flag not in new_data.columns:
             raise AssertionError("Missing {} column in data".format(flag))
 

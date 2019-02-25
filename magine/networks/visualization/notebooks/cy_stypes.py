@@ -1,31 +1,53 @@
+layouts = {
+    'breadthfirst': {
+        'name': 'breadthfirst',
+        'directed': 'true',
+        'spacingFactor': 1.5
+    },
+    'cose': {
+        'name': 'cose',
+        'spacingFactor': 1.5
+    },
+    'cose-bilkent': {
+        'name': 'cose-bilkent',
+        'spacingFactor': 1.5
+    },
+    'dagre': {
+        'name': 'dagre',
+        'rankDir': 'LR',
+        'spacingFactor': 1.5
+    },
+    'concentric': {
+        'name': 'concentric',
+        'spacingFactor': 1.5
+
+    }
+}
+
 styles = {
     'main': [
-        {
-            'selector': 'node',
-            'css': {
-                'content': 'data(id)',
-                'text-valign': 'center',
-                'text-halign': 'center'
+        {'selector': 'node',
+         'css': {
+             'content': 'data(id)',
+             'text-valign': 'center',
+             'text-halign': 'center'
             }
-        },
-        {
-            'selector': 'node[speciesType = \'compound\']',
-            'css': {
-                'content': 'data(chemName)',
-                'text-valign': 'center',
-                'text-halign': 'center',
-                'shape': 'rectangle'
-            }
-        },
-        {
-            'selector': 'node[speciesType = \'gene\']',
-            'css': {
-                'content': 'data(id)',
-                'text-valign': 'center',
-                'text-halign': 'center',
-                'shape': 'rectangle'
-            }
-        },
+         },
+        {'selector': 'node[speciesType = \'compound\']',
+         'css': {
+             'content': 'data(chemName)',
+             'text-valign': 'center',
+             'text-halign': 'center',
+             'shape': 'rectangle'}
+         },
+        {'selector': 'node[speciesType = \'gene\']',
+         'css': {
+             'content': 'data(id)',
+             'text-valign': 'center',
+             'text-halign': 'center',
+             'shape': 'rectangle'
+         }
+         },
         {
             'selector': '$node > node',
             'css': {
@@ -38,32 +60,29 @@ styles = {
                 'background-color': 'green'
             }
         },
-        {
-            'selector': 'edge',
+        {'selector': 'edge',
             'css': {
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'triangle',
-                'target-arrow-color': 'black'
-
+                'target-arrow-color': 'black',
+                "width": "mapData(weight, 1, 10, 1, 5)",
             }
-        },
-        {
-            'selector': "edge[interactionType *= 'inhibit'],"
-                        "edge[interactionType *= 'deactivat']",
+         },
+        {'selector': "edge[interactionType *= 'inhibit'],\
+                      edge[interactionType *= 'deactivat']",
             'css': {
                 'curve-style': 'bezier',
                 'target-arrow-shape': 'tee',
                 'target-arrow-color': 'black'
             }
-        },
-        {
-            'selector': 'edge:selected',
-            'css': {
-                'background-color': 'yellow',
-                'line-color': 'red',
-                'label': 'data(interactionType)',
-                'target-arrow-color': 'black',
-                'source-arrow-color': 'black'
+         },
+        {'selector': 'edge:selected',
+         'css': {
+             'background-color': 'yellow',
+             'line-color': 'red',
+             'label': 'data(interactionType)',
+             'target-arrow-color': 'black',
+             'source-arrow-color': 'black'
             }
         }
     ]
@@ -111,7 +130,7 @@ styles = {
                      "font-family": "SansSerif",
                      "text-valign": "center",
                      "border-opacity": 1.0},
-            },
+             },
 
             {"selector": "$node > node",
              "css": {"font-size": 20,

@@ -80,12 +80,12 @@
                 }
 
                 function add_tip(text) {
-                    var div = document.createElement('div');
+                    let div = document.createElement('div');
                     div.innerHTML = "<a href='https://www.genecards.org/cgi-bin/carddisp.pl?gene=" + text + "' target='_blank'>Gene Card</a>";
                     return div;
                 }
 
-                var cy = window.cy = cytoscape({
+                let cy = window.cy = cytoscape({
                     container: $('#{{uuid|safe}}'),
                     elements: {
                         nodes: {{nodes|safe}},
@@ -116,6 +116,23 @@
                         ele.data()['tip'].show();
                     }
                 });
+
+                // put the png data in an img tag
+                let downloadButton = document.createElement("BUTTON");
+                downloadButton.id = 'dbutton';
+                downloadButton.innerHTML = '<i class="fa fa-download" aria-hidden="true"></i>';
+                downloadButton.addEventListener('click', function () {
+                    let element = document.createElement('a');
+                    element.setAttribute('href', cy.png({scale: 3}));
+                    element.setAttribute('download', 'graph.png');
+                    element.style.display = 'none';
+                    document.body.appendChild(element);
+                    element.click();
+                    document.body.removeChild(element);
+                });
+                let p = document.getElementById('{{uuid|safe}}');
+                p.parentElement.append(downloadButton);
+
             });
 
 

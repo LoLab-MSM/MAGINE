@@ -4,28 +4,9 @@ import uuid
 import networkx as nx
 from IPython.display import display, HTML
 
-from magine.html_templates.cy_stypes import styles
 from magine.html_templates.html_tools import env
 from magine.networks.exporters import nx_to_json
-
-layouts = {
-    'breadthfirst': {
-        'name': 'breadthfirst',
-        'directed': 'true',
-        'spacingFactor': .5
-    },
-    'cose': {
-        'name': 'cose',
-    },
-    'cose-bilkent': {
-        'name': 'cose-bilkent',
-    },
-    'dagre': {
-        'name': 'dagre',
-        'rankDir': 'LR',
-    }
-
-}
+from magine.networks.visualization.notebooks.cy_stypes import styles, layouts
 
 
 def display_graph(graph, add_parent=False, layout='cose-bilkent',
@@ -34,16 +15,19 @@ def display_graph(graph, add_parent=False, layout='cose-bilkent',
     g_copy = graph.copy()
     if add_parent:
         g_copy = _add_parent_term(g_copy)
-    for i in g_copy.nodes:
-        if 'color' not in g_copy.node[i]:
-            g_copy.node[i]['color'] = default_color
+
+    _set_node_color(g_copy, default_color)
+
     d = nx_to_json(g_copy)
     d['background'] = background
     d['uuid'] = "cy" + str(uuid.uuid4())
     d['widget_width'] = str(width)
     d['widget_height'] = str(height)
 
-    layout_opts = layouts[layout].copy()
+    if layout not in layout:
+        layout_opts = dict()
+    else:
+        layout_opts = layouts[layout].copy()
     layout_opts.update(layout_args)
 
     d['layout_json'] = json.dumps(layout_opts)
@@ -58,9 +42,7 @@ def render_graph(graph, add_parent=False, default_color='white'):
     g_copy = graph.copy()
     if add_parent:
         g_copy = _add_parent_term(g_copy)
-    for i in g_copy.nodes:
-        if 'color' not in g_copy.node[i]:
-            g_copy.node[i]['color'] = default_color
+    _set_node_color(g_copy, default_color)
     d = nx_to_json(g_copy)
     u_name = "cy{}".format(uuid.uuid4())
     d['uuid'] = u_name
@@ -109,6 +91,12 @@ def render_graph2(graph, add_parent=False):
         f.write(subgraph_html.render(d))
 
     display(HTML(subgraph_html.render(d)))
+
+
+def _set_node_color(net, color):
+    for i in net.nodes:
+        if 'color' not in net.node[i]:
+            net.node[i]['color'] = color
 
 
 def _add_parent_term(graph):
