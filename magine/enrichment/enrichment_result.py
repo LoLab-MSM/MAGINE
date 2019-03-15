@@ -39,11 +39,6 @@ class EnrichmentResult(BaseData):
     def _constructor(self):
         return EnrichmentResult
 
-    @property
-    def sig(self):
-        """ terms with significant flag """
-        return self.loc[self[sig]]
-
     def filter_rows(self, column, options, inplace=False):
         """
         Filters a pandas dataframe provides a column and filter selection.

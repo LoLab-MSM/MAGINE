@@ -91,7 +91,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     if annotate_sig:
         annotate_sig, annotations, fmt = _get_sig_annotations(array, data,
                                                               columns,
-                                                              index)
+                                                              index, min_sig)
 
     if cluster_row or cluster_col or add_col_group:
         fig = sns.clustermap(array, cmap=pal, center=center,
@@ -148,7 +148,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         sns.heatmap(array, ax=ax, yticklabels=y_tick_labels, cmap=pal,
                     center=center, annot=annotations, fmt=fmt,
                     linewidths=linewidths)
-
+        ax.set_ylabel('')
+        ax.set_xlabel('')
     return fig
 
 
@@ -262,7 +263,7 @@ def heatmap_by_terms(data, term_labels, term_sets, colors=None, min_sig=None,
     if annotate_sig:
         annotate_sig, annotations, fmt = _get_sig_annotations(array, data,
                                                               columns,
-                                                              index)
+                                                              index, min_sig)
 
     fig = sns.clustermap(array,
                          yticklabels=y_tick_labels,
@@ -393,12 +394,11 @@ def _add_column_color_groups(data, fig, colors, color_labels, columns):
     return fig
 
 
-def _get_sig_annotations(arr, dat, columns, index):
+def _get_sig_annotations(arr, dat, columns, index, min_sig):
     # Have to rank by column for this to work
     if 'significant' in dat.columns:
         tmp2 = dat.pivoter(False, columns=columns, index=index,
-                           values='significant', fill_value=0,
-                           min_sig=False)
+                           values='significant', fill_value=0, min_sig=min_sig)
         tmp2 = tmp2.reindex(arr.index)
         tmp2[tmp2 > 0] = True
         tmp2 = tmp2.replace(False, '')

@@ -19,6 +19,11 @@ class BaseData(pd.DataFrame):
     def _constructor(self):
         return BaseData
 
+    @property
+    def sig(self):
+        """ terms with significant flag """
+        return self.loc[self[flag]]
+
     def pivoter(self, convert_to_log=False, columns='sample_id',
                 values='fold_change', index=None, fill_value=None, min_sig=0):
         """ Pivot data on provided axis.
@@ -54,8 +59,7 @@ class BaseData(pd.DataFrame):
                 raise AssertionError()
             if 'significant' not in d_copy.columns:
                 print('In order to filter based on minimum sig figs, '
-                      'please add a column of signficant terms with '
-                      'a tag of "significant"')
+                      'please add a "significant" column')
 
             d_copy.filter_by_minimum_sig_columns(index=index, columns=columns,
                                                  min_terms=min_sig,
@@ -76,7 +80,8 @@ class BaseData(pd.DataFrame):
         return array
 
     def filter_by_minimum_sig_columns(self, columns='sample_id', index=None,
-                                      min_terms=3, inplace=False):
+                                      min_terms=3, inplace=False,
+                                      verbose=False):
         """ Filter index to have at least "min_terms" significant species.
 
         Parameters
@@ -89,6 +94,7 @@ class BaseData(pd.DataFrame):
             Number of terms required to not be filtered
         inplace : bool
             Filter in place or return a copy of the filtered data
+        verbose : bool
 
         Returns
         -------
@@ -122,9 +128,9 @@ class BaseData(pd.DataFrame):
             keepers = {i for i in sig.index.values}
             new_data = new_data.loc[new_data[index].isin(keepers)]
             n_after = len(new_data[index].unique())
-
-            print("Number in index went from {} to {}"
-                  "".format(n_before, n_after))
+            if verbose:
+                print("Number in index went from {} to {}"
+                      "".format(n_before, n_after))
         else:
             print("Index is not a str or a list. What is it?")
 

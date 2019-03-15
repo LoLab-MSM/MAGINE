@@ -316,6 +316,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         for n, time in enumerate(labels):
             fmt_label = 'sample{}'.format(time.replace('_', ''))
             term_g.node[i][fmt_label] = float(values[time])
+    labels = [i.replace('_', '') for i in labels]
     if save_name:
         nx.write_graphml(term_g, "{}_ags_network.graphml".format(save_name))
     if not create_only:

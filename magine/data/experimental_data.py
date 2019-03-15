@@ -84,11 +84,6 @@ class Sample(BaseData):
         return self.loc[self[flag] & (self[fold_change] < 0)]
 
     @property
-    def sig(self):
-        """ species with significant flag """
-        return self.loc[self[flag]]
-
-    @property
     def id_list(self):
         """ Set of species identifiers """
         return set(self[self._identifier].values)

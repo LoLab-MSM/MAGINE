@@ -330,8 +330,10 @@ class Subgraph(object):
 
         if network is None:
             new_g = nx.DiGraph()
+            starting_nodes = set()
         else:
             new_g = network.copy()
+            starting_nodes = set(new_g.nodes)
 
         if nodes is None:
             if network is None:
@@ -352,8 +354,7 @@ class Subgraph(object):
         if include_only is not None:
             include_only = set(include_only)
             include_only.update(set(nodes))
-            if network is not None:
-                include_only.update(set(network.nodes()))
+            include_only.update(starting_nodes)
             new_g = self._include_only(new_g, include_only)
         if add_interconnecting_edges:
             new_g = self.network.subgraph(new_g.nodes()).copy()
