@@ -61,9 +61,9 @@ class BaseData(pd.DataFrame):
                 print('In order to filter based on minimum sig figs, '
                       'please add a "significant" column')
 
-            d_copy.filter_by_minimum_sig_columns(index=index, columns=columns,
-                                                 min_terms=min_sig,
-                                                 inplace=True)
+            d_copy.require_n_sig(index=index, columns=columns,
+                                 n_sig=min_sig,
+                                 inplace=True)
 
         array = pd.pivot_table(d_copy, index=index, fill_value=fill_value,
                                columns=columns, values=values)
@@ -79,9 +79,9 @@ class BaseData(pd.DataFrame):
                               ascending=False, inplace=True)
         return array
 
-    def filter_by_minimum_sig_columns(self, columns='sample_id', index=None,
-                                      min_terms=3, inplace=False,
-                                      verbose=False):
+    def require_n_sig(self, columns='sample_id', index=None,
+                      n_sig=3, inplace=False,
+                      verbose=False):
         """ Filter index to have at least "min_terms" significant species.
 
         Parameters
@@ -90,7 +90,7 @@ class BaseData(pd.DataFrame):
             Columns to consider
         index : str, list
             The column with which to filter by counts
-        min_terms : int
+        n_sig : int
             Number of terms required to not be filtered
         inplace : bool
             Filter in place or return a copy of the filtered data
@@ -119,7 +119,7 @@ class BaseData(pd.DataFrame):
 
         # convert everything that's not 0 to 1
         sig[sig > 0] = 1
-        sig = sig[sig.T.sum() >= min_terms]
+        sig = sig[sig.T.sum() >= n_sig]
         if isinstance(index, list):
             keepers = {i[0] for i in sig.index.values}
             new_data = new_data[new_data[index[0]].isin(keepers)]
@@ -139,8 +139,8 @@ class BaseData(pd.DataFrame):
         else:
             return new_data
 
-    def filter_by_minimum_present_columns(self, columns='sample_id',
-                                          index=None, inplace=False):
+    def present_in_all_columns(self, columns='sample_id',
+                               index=None, inplace=False):
         """ Require index to be present in all columns
 
         Parameters
@@ -168,15 +168,12 @@ class BaseData(pd.DataFrame):
             raise AssertionError("Missing {} column in data".format(flag))
 
         # pivot
-        sig = pd.pivot_table(new_data,
-                             index=index,
-                             fill_value=np.nan,
-                             values=flag,
-                             columns=columns
-                             )[cols_to_check]
+        pivoted_df = pd.pivot_table(new_data, index=index, fill_value=np.nan,
+                                    values=flag, columns=columns
+                                    )[cols_to_check]
 
-        # convert everything thats not 0 to 1
-        sig = sig.loc[~np.any(np.isnan(sig.values), axis=1)]
+        # sig = pivoted_df.loc[~np.any(np.isnan(pivoted_df.values), axis=1)]
+        sig = pivoted_df.loc[~pivoted_df.isnull().T.any()]
         if isinstance(index, list):
             keepers = {i[0] for i in sig.index.values}
             new_data = new_data[new_data[index[0]].isin(keepers)]

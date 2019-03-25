@@ -134,7 +134,7 @@ class TestExpData(object):
         self.exp_data.create_table_of_data()
         self.exp_data.create_table_of_data(write_latex=True, save_name='latex')
         self.exp_data.create_table_of_data(sig=True)
-        self.exp_data.create_table_of_data(sig=True, unique=True)
+        self.exp_data.create_table_of_data(sig=True, index='label')
 
     def test_log2(self):
         x = self.exp_data.rna.log2_normalize_df('fold_change')

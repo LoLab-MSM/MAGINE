@@ -239,7 +239,7 @@ class Enrichr(object):
             df['sample_id'] = j
             df_final = df_final.append(df, ignore_index=True)
 
-        df_final.filter_by_minimum_sig_columns(min_terms=1, inplace=True)
+        df_final.require_n_sig(n_sig=1, inplace=True)
         df_final = EnrichmentResult(df_final)
         if save_name:
             s_name = '{}_enrichr'.format(save_name)

@@ -558,7 +558,7 @@ class ExperimentalData(object):
         """
         return get_measured_by_datatype(self)
 
-    def create_table_of_data(self, sig=False, unique=False, save_name=None,
+    def create_table_of_data(self, sig=False, index=identifier, save_name=None,
                              plot=False, write_latex=False):
         """
         Creates a summary table of data.
@@ -570,9 +570,8 @@ class ExperimentalData(object):
             Flag to summarize significant species only
         save_name: str
             Name to save csv and .tex file
-        unique: bool
-            If you want to only consider unique species
-            ie count gene species rather than PTMs
+        index: str
+           Index for counts
         plot: bool
             If you want to create a plot of the table
         write_latex: bool
@@ -584,7 +583,7 @@ class ExperimentalData(object):
         pandas.DataFrame
 
         """
-        return create_table_of_data(self, sig=sig, unique=unique,
+        return create_table_of_data(self, sig=sig, index=index,
                                     save_name=save_name, plot=plot,
                                     write_latex=write_latex)
 
@@ -658,7 +657,7 @@ def get_measured_by_datatype(data):
     return measured, sig_measured
 
 
-def create_table_of_data(data, sig=False, unique=False, save_name=None,
+def create_table_of_data(data, sig=False, index='identifier', save_name=None,
                          plot=False, write_latex=False):
     """
     Creates a summary table of data.
@@ -671,9 +670,8 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
         Flag to summarize significant species only
     save_name: None, str
         Name to save csv and .tex file
-    unique: bool
-        If you want to only consider unique species
-        ie count gene species rather than PTMs
+    index: str
+        Index to create counts
     plot: bool
         If you want to create a plot of the table
     write_latex: bool
@@ -691,33 +689,19 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
     else:
         data_copy = data.species.copy()
 
-    if unique:
-        index = identifier
-    else:
-        index = label
-
     count_table = data_copy.pivot_table(values=index, index=exp_method,
                                         columns=sample_id, fill_value=np.nan,
                                         aggfunc=lambda x: x.dropna().nunique())
 
     # This just makes sure things are printed as ints, not floats
     for i in count_table.columns:
-        count_table[i] = count_table[i].fillna(-1)
-        count_table[i] = count_table[i].astype(int)
-        count_table[i] = count_table[i].replace(-1, '-')
+        count_table[i] = count_table[i].fillna(-1).astype(int).replace(-1, '-')
     unique_col = {}
     for i in data.exp_methods:
-        if unique:
-            if sig:
-                unique_col[i] = len(set(data[i].sig.id_list))
-            else:
-                unique_col[i] = len(set(data[i].id_list))
+        if sig:
+            unique_col[i] = len(set(data[i].sig[index].values))
         else:
-            if sig:
-                unique_col[i] = len(set(data[i].sig.label_list))
-            else:
-                unique_col[i] = len(set(data[i].label_list))
-
+            unique_col[i] = len(set(data[i][index].values))
     count_table['Total Unique Across'] = pd.Series(unique_col,
                                                    index=count_table.index)
     if plot:
@@ -732,7 +716,7 @@ def create_table_of_data(data, sig=False, unique=False, save_name=None,
                         bbox_inches='tight')
 
     if save_name is not None:
-        count_table.to_csv('{0}.csv'.format(save_name))
+        count_table.to_csv('{}.csv'.format(save_name))
     if write_latex and save_name is not None:
         _write_to_latex(pd_table=count_table, save_name=save_name)
     return count_table

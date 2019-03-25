@@ -49,7 +49,7 @@ def test_min_raises():
     ]
 
     d = ConcentrationBaseData(x)
-    d.filter_by_minimum_sig_columns(index=index, columns=columns)
+    d.require_n_sig(index=index, columns=columns)
 
 
 def test_filter_min():
@@ -65,11 +65,11 @@ def test_filter_min():
     ]
 
     d = ConcentrationBaseData(x)
-    df = d.filter_by_minimum_sig_columns(columns=columns, min_terms=1)
+    df = d.require_n_sig(columns=columns, n_sig=1)
     ok_(df.shape[0] == 4)
-    df = d.filter_by_minimum_sig_columns(columns=columns, min_terms=2)
+    df = d.require_n_sig(columns=columns, n_sig=2)
     ok_(df.shape[0] == 2)
-    df = d.filter_by_minimum_sig_columns(columns=columns, min_terms=3)
+    df = d.require_n_sig(columns=columns, n_sig=3)
     ok_(df.shape[0] == 0)
 
     x = [
@@ -82,8 +82,8 @@ def test_filter_min():
 
     d = ConcentrationBaseData(x)
 
-    df = d.filter_by_minimum_sig_columns(index=index, columns=columns,
-                                         min_terms=2)
+    df = d.require_n_sig(index=index, columns=columns,
+                         n_sig=2)
 
     ok_(df.shape == (3, 5))
 
