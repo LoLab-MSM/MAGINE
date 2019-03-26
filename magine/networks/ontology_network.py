@@ -10,8 +10,8 @@ import scipy.stats as stats
 from statsmodels.stats.multitest import fdrcorrection
 
 import magine.networks.utils as nt
-from magine.networks.exporters import export_to_dot
-from magine.networks.visualization.igraph_tools import draw_igraph
+from magine.networks.visualization.graphviz import draw_graphviz
+from magine.networks.visualization.igraph import draw_igraph
 
 
 class OntologyNetworkGenerator(object):
@@ -208,7 +208,7 @@ class OntologyNetworkGenerator(object):
             nx.write_gml(go_graph, '{}.gml'.format(save_name))
 
             if draw:
-                export_to_dot(go_graph, save_name)
+                draw_graphviz(go_graph, save_name=save_name)
                 draw_igraph(mol_net, save_name + '_subgraph_igraph')
         return go_graph, mol_net
 
@@ -320,7 +320,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     if save_name:
         nx.write_graphml(term_g, "{}_ags_network.graphml".format(save_name))
     if not create_only:
-        from magine.networks.visualization.cytoscape_view import RenderModel
+        from magine.networks.visualization.cytoscape import RenderModel
         rm = RenderModel(term_g, layout='force-directed')
         rm.visualize_by_list_of_time(labels,
                                      prefix=save_name,

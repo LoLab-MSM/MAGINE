@@ -7,6 +7,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 import requests
+
 from py2cytoscape.data.cyrest_client import CyRestClient
 
 IP = 'localhost'

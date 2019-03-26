@@ -5,7 +5,8 @@ import networkx as nx
 
 import magine.networks.dev_tools as nt
 import magine.networks.exporters
-import magine.networks.utils as utils
+import magine.networks.visualization.graphviz
+from magine.networks.visualization.graphviz import draw_graphviz
 
 
 class Subgraph(object):
@@ -490,8 +491,11 @@ class Subgraph(object):
 
         """
         measured_list = self.exp_data.species.sig.by_sample
-        utils.paint_network_overtime(graph, measured_list, colors, prefix,
-                                     self.exp_data.sample_ids)
+        magine.networks.visualization.graphviz.paint_network_overtime(graph,
+                                                                      measured_list,
+                                                                      colors,
+                                                                      prefix,
+                                                                      self.exp_data.sample_ids)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
                                             color_up='tomato',
@@ -516,11 +520,12 @@ class Subgraph(object):
         labels = self.exp_data.sample_ids
         up_measured_list = self.exp_data.species.sig.up.by_sample
         down_measured_list = self.exp_data.species.sig.down.by_sample
-        utils.paint_network_overtime_up_down(graph, list_up=up_measured_list,
-                                             list_down=down_measured_list,
-                                             save_name=prefix,
-                                             color_down=color_down,
-                                             color_up=color_up, labels=labels)
+        magine.networks.visualization.graphviz.paint_network_overtime_up_down(
+            graph, list_up=up_measured_list,
+            list_down=down_measured_list,
+            save_name=prefix,
+            color_down=color_down,
+            color_up=color_up, labels=labels)
 
     def _check_node(self, node_list):
         """
@@ -591,9 +596,7 @@ class Subgraph(object):
     def _save_or_draw(graph, save_name, draw, img_format='png'):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
-            graph = magine.networks.exporters.format_to_directions(graph)
-            magine.networks.exporters.export_to_dot(graph, save_name=save_name,
-                                                    image_format=img_format)
+            draw_graphviz(graph, save_name=save_name, image_format=img_format)
 
 
 def _find_nx_path(node, network, single_path):

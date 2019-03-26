@@ -99,7 +99,8 @@ def download_reactome_fi():
     -------
 
     """
-    url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2017/FIsInGene_071718_with_annotations.txt.zip'
+    url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2017/' \
+          'FIsInGene_071718_with_annotations.txt.zip'
     table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
                         delimiter='\t', error_bad_lines=False, encoding='utf-8'
                         )
@@ -131,20 +132,14 @@ def download_reactome_fi():
         edge_attr=['interactionType', 'databaseSource'],
         create_using=nx.DiGraph()
     )
-
-    table = table[['source', 'target']].values
-    added_genes = set()
-
-    def _add_node(node):
-        if node not in added_genes:
-            protein_graph.add_node(node, databaseSource='ReactomeFI',
-                                   speciesType='gene')
-            added_genes.add(node)
+    species = set(table['source'].unique()
+                  ).union(set(table['target'].unique()))
 
     # add names to graph
-    for r in table:
-        _add_node(r[0])
-        _add_node(r[1])
+    for node in species:
+        protein_graph.add_node(node, databaseSource='ReactomeFI',
+                               speciesType='gene')
+
     print("Reactome network has {} nodes and {} edges"
           "".format(len(protein_graph.nodes()), len(protein_graph.edges())))
 

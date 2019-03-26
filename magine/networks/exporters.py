@@ -89,52 +89,6 @@ def nx_to_dot(graph):
     return g
 
 
-def to_pydot(N):
-    # set Graphviz graph type
-    if N.is_directed():
-        graph_type = 'digraph'
-    else:
-        graph_type = 'graph'
-    strict = nx.number_of_selfloops(N) == 0 and not N.is_multigraph()
-
-    name = N.name
-    graph_defaults = N.graph.get('graph', {})
-    if name is '':
-        P = pydot.Dot('', graph_type=graph_type, strict=strict,
-                      **graph_defaults)
-    else:
-        P = pydot.Dot('"%s"' % name, graph_type=graph_type, strict=strict,
-                      **graph_defaults)
-    try:
-        P.set_node_defaults(**N.graph['node'])
-    except KeyError:
-        pass
-    try:
-        P.set_edge_defaults(**N.graph['edge'])
-    except KeyError:
-        pass
-
-    for n, nodedata in N.nodes(data=True):
-        str_nodedata = dict((k, make_str(v)) for k, v in nodedata.items())
-        p = pydot.Node(make_str(n), **str_nodedata)
-        P.add_node(p)
-
-    if N.is_multigraph():
-        for u, v, key, edgedata in N.edges(data=True, keys=True):
-            str_edgedata = dict((k, make_str(v)) for k, v in edgedata.items()
-                                if k != 'key')
-            edge = pydot.Edge(make_str(u), make_str(v),
-                              key=make_str(key), **str_edgedata)
-            P.add_edge(edge)
-
-    else:
-        for u, v, edgedata in N.edges(data=True):
-            str_edgedata = dict((k, make_str(v)) for k, v in edgedata.items())
-            edge = pydot.Edge(make_str(u), make_str(v), **str_edgedata)
-            P.add_edge(edge)
-    return P
-
-
 def export_to_dot(graph, save_name, image_format='png', engine='dot'):
     """
     Converts networkx graph to graphviz dot

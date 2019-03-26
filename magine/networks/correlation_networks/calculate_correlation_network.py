@@ -1,3 +1,6 @@
+'''
+
+
 # import pathos.multiprocessing as mp
 import time
 from itertools import combinations
@@ -13,12 +16,9 @@ from statsmodels.sandbox.stats.multicomp import multipletests
 
 np.set_printoptions(linewidth=300)
 
+
 global_data = None
 samples = None
-import networkx as nx
-
-nx.draw_networkx
-"""
 import scipy.special as special
 from scipy.stats.stats import distributions
 
@@ -91,7 +91,6 @@ def calculate_spearmanr(a, b):
         return rs[1, 0], prob[1, 0]
     else:
         return rs, prob
-"""
 
 def calculate_spearman(pos):
     tmp = global_data[samples[pos, :], :]
@@ -299,3 +298,4 @@ def correlation_sampling(data, names, save_name, create_plots=True, pool=None):
         plt.close()
         print("Done 2")
     return output
+'''

@@ -1,16 +1,6 @@
 import os
-
 import networkx as nx
-
-import magine.networks.exporters as exporters
 from magine.networks.standards import edge_standards
-
-try:
-    from IPython.display import Image, display
-
-    IPYTHON = True
-except RuntimeError:
-    IPYTHON = False
 
 
 def delete_disconnected_network(full_graph):
@@ -127,119 +117,6 @@ def add_color_graphviz_fmt(graph, list_to_paint, color):
             tmp_g.node[i]['style'] = 'filled'
 
     return tmp_g
-
-
-def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
-                                   color_up='red', color_down='blue',
-                                   labels=None, create_gif=False):
-    """
-    Adds color attribute to network over time and creates figure.
-
-    Parameters
-    ----------
-    graph : nx.DiGraph
-        Network
-    list_up : list_like
-        List of lists, where the inner list contains the node to add the
-        color
-    list_down : list_like
-        list of colors for each time point
-    color_up : str
-        color for first list of species
-    color_down : str
-        color of second list of species
-    save_name : str
-        prefix for images to be saved
-    labels: list_like
-        list of labels to add to graph per sample
-    create_gif : bool
-        Create a gif from series of images
-
-
-    """
-
-    if len(list_up) != len(list_down):
-        print('Length of list of data must equal len of color list')
-        return
-    if labels is not None:
-        if len(labels) != len(list_down):
-            print('Length of labels must be equal to len of data')
-            return
-    string = 'convert -delay 100 '
-    tmp_graph = graph.copy()
-
-    for n, (up, down) in enumerate(zip(list_up, list_down)):
-        tmp_graph = add_color_graphviz_fmt(tmp_graph, up, color_up)
-        tmp_graph = add_color_graphviz_fmt(tmp_graph, down, color_down)
-        both = set(up).intersection(set(down))
-        tmp_graph = add_color_graphviz_fmt(tmp_graph, both, 'yellow')
-
-        if labels is not None:
-            tmp_graph.graph['label'] = labels[n]
-            tmp_graph.graph['fontsize'] = 13
-
-        s_name = '%s_%04i.png' % (save_name, n)
-
-        exporters.export_to_dot(tmp_graph, s_name, 'png', 'dot')
-        string += s_name + ' '
-        if IPYTHON and run_from_ipython():
-            display(Image(s_name))
-
-    if create_gif:
-        os.system('{}  {}.gif'.format(string, save_name))
-        os.system('{}  {}.pdf'.format(string, save_name))
-
-
-def paint_network_overtime(graph, list_of_lists, color_list, save_name,
-                           labels=None, create_gif=False):
-    """
-    Adds color attribute to network over time.
-
-    Parameters
-    ----------
-    graph : nx.DiGraph
-        Network
-    list_of_lists : list_like
-        List of lists, where the inner list contains the node to add the
-        color
-    color_list : list_like
-        list of colors for each time point
-    save_name : str
-        prefix for images to be saved
-    labels: list_like
-        list of labels to add to graph per sample
-
-    """
-
-    if len(list_of_lists) != len(color_list):
-        print('Length of list of data must equal len of color list')
-        return
-    if labels is not None:
-        if len(labels) != len(list_of_lists):
-            print('Length of labels must be equal to len of data')
-            return
-
-    string = 'convert -delay 100 '
-    tmp_graph = graph.copy()
-
-    for n, i in enumerate(list_of_lists):
-        graph2 = add_color_graphviz_fmt(tmp_graph, i, color_list[n])
-
-        if labels is not None:
-            graph2.graph['label'] = labels[n]
-            graph2.graph['fontsize'] = 13
-
-        s_name = '%s_%04i.png' % (save_name, n)
-        exporters.export_to_dot(graph2, s_name, 'png', 'dot')
-        if IPYTHON and run_from_ipython():
-            display(Image(s_name))
-
-        string += s_name + ' '
-    string1 = string + '  %s.gif' % save_name
-    string2 = string + '  %s.pdf' % save_name
-    if create_gif:
-        os.system(string1)
-        os.system(string2)
 
 
 def compose(g, g_1):
@@ -565,11 +442,3 @@ def add_data_to_graph(network, exp_data):
         time = 'sample{}'.format(time)
         network = add_attribute_to_network(network, spec, time, 'red', 'blue')
     return n_copy
-
-
-def run_from_ipython():
-    try:
-        __IPYTHON__
-        return True
-    except NameError:
-        return False
