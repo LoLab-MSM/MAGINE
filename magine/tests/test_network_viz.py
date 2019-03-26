@@ -33,7 +33,3 @@ def test_mpl():
               'fruchterman_reingold_layout']:
         fig = draw_mpl(g, i)
         plt.close()
-
-
-if __name__ == '__main__':
-    test_igraph()

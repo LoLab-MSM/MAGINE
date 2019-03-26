@@ -42,6 +42,9 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
         Size of node labels
     font_size : int
         Title and group name (if clustering) font size
+    inline : bool
+        Return plot as svg view ipython
+
     Returns
     -------
 
@@ -49,16 +52,14 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
     try:
         import cairo
     except ImportError:
-        print("Please install pycairo to use igraph plotting")
-        return
+        ImportError("Please install pycairo to use igraph plotting")
 
     try:
         import igraph
         from igraph.drawing.text import TextDrawer
         from igraph.drawing.colors import color_name_to_rgba
     except ImportError:
-        print("No igraph, cannot use plotting function")
-        return
+        raise ImportError("No igraph, cannot use plotting function")
 
     if isinstance(mol_net, igraph.Graph):
         g = mol_net
@@ -82,8 +83,8 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
         "kk", "fr", "drl", "lgl", "tree", "graphopt", "mds", "sugiyama",
         "auto", "grid_fr",
     }
-    assert layout in _valid_layouts, \
-        'layout {} not in {}'.format(layout, _valid_layouts)
+    if layout not in _valid_layouts:
+        raise Exception('layout {} not in {}'.format(layout, _valid_layouts))
 
     mark_groups = None
     membership = None

@@ -10,8 +10,7 @@ def nx_to_igraph(network):
     try:
         import igraph
     except ImportError:
-        raise ImportError('requires igraph ',
-                          )
+        raise ImportError('requires igraph ')
     file_descriptor, file_path = tempfile.mkstemp(suffix='.gml')
 
     nx.write_gml(network, file_path)
