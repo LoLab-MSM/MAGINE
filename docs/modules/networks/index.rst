@@ -11,7 +11,7 @@ magine\.networks\.network\_generator module
    :show-inheritance:
 
 magine\.networks\.ontology\_network module
------------------------------------------------
+------------------------------------------
 
 .. automodule:: magine.networks.ontology_network
    :members:
@@ -20,7 +20,7 @@ magine\.networks\.ontology\_network module
 
 
 magine\.networks\.subgraphs module
--------------------------------------------
+----------------------------------
 
 .. automodule:: magine.networks.subgraphs
    :members:
