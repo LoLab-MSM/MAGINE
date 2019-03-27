@@ -71,9 +71,7 @@ _maps = {
 
 def standardize_edge_types(row):
     name = row['Annotation']
-    name = name.replace(':', ' ')
-    name = name.replace(';', ' ')
-    name = name.replace(',', ' ')
+    name = name.replace(':', ' ').replace(';', ' ').replace(',', ' ')
     name = name.replace('state change', 'stateChange')
     name = set(name.split(' '))
     to_remove = ['by', 'regulates', 'regulated', 'input',

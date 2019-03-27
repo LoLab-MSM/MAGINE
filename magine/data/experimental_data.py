@@ -547,6 +547,27 @@ class ExperimentalData(object):
         """ List of sample_ids """
         return sorted(list(self.data[sample_id].unique()))
 
+    def subset(self, species, index='identifier'):
+        """
+
+        Parameters
+        ----------
+        species : list, str
+            List of species to create subset dataframe from
+        index : str
+            Index to filter based on provided 'species' list
+
+        Returns
+        -------
+        magine.data.experimental_data.Species
+        """
+        df = self.species.copy()
+        if isinstance(species, str):
+            df = df.loc[df[index].str.contains(species)]
+        else:
+            df = df.loc[df[index].isin(species)]
+        return df
+
     def get_measured_by_datatype(self):
         """
         Returns dict of species per data type

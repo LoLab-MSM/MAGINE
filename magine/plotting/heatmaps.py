@@ -15,13 +15,12 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
 
     Parameters
     ----------
-
-
-    data : magine.data.experimental_data.ExpreimentalData
+    data : magine.data.base.BaseData
     convert_to_log : bool
+        Convert fold_change column to log2 scale
     y_tick_labels : list_like
     columns : str
-        Name of columns of df for pivotn
+        Name of columns of df for pivot
     index : str
         Name of index of df for pivot
     values : str
@@ -47,8 +46,10 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     min_sig : int
         Minimum number of significant 'index' across samples. Can be used to
         remove rows that are not significant across any sample.
+
     Returns
     -------
+    plt.Figure
 
     """
     array = data.pivoter(convert_to_log, columns=columns, index=index,

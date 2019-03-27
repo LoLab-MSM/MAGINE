@@ -1,4 +1,3 @@
-import io
 import os
 import sys
 
@@ -9,23 +8,22 @@ import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
 from magine.mappings import ChemicalMapper
 
-if sys.version_info[0] == 3:
-    from urllib.request import urlopen
-else:
-    from urllib import urlopen
-
 p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
+_base_url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/'
+_chem_url = _base_url + 'BIOGRID-CHEMICALS-LATEST.chemtab.zip'
+_protein_url = _base_url + 'BIOGRID-ALL-LATEST.tab2.zip'
 
 
 class BioGridDownload(object):
     def __init__(self):
-        self.url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-ALL-LATEST.tab2.zip'
-        self.url2 = 'https://thebiogrid.org/downloads/archives/Latest%20Release/BIOGRID-CHEMICALS-LATEST.chemtab.zip'
+        self.url = _protein_url
+        self.url2 = _chem_url
         self._db_name = 'BioGrid'
         self._cm = ChemicalMapper()
 
     def _create_chemical_network(self):
-        df = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
+        # df = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
+        df = pd.read_csv(self.url2,
                          compression='zip',
                          delimiter='\t',
                          error_bad_lines=False,
@@ -81,9 +79,9 @@ class BioGridDownload(object):
         df['pubmedId'] = df['Pubmed ID'].astype(str)
 
         # cleanup names
-        df.rename(columns={'Chemical Type'  : 'chemType',
+        df.rename(columns={'Chemical Type': 'chemType',
                            'Official Symbol': 'gene',
-                           'Action'         : 'interactionType'},
+                           'Action': 'interactionType'},
                   inplace=True)
 
         # keep the same info as other databases (store as compound)
@@ -148,7 +146,7 @@ class BioGridDownload(object):
 
         """
 
-        table = pd.read_csv(io.BytesIO(urlopen(self.url).read()),
+        table = pd.read_csv(self.url,
                             compression='zip',
                             delimiter='\t',
                             encoding='utf8',
@@ -156,10 +154,8 @@ class BioGridDownload(object):
                             low_memory=False)
         # only keep human
         # TODO enable other organisms
-        table = table[table['Organism Interactor A'].isin(['9606'])]
-        table = table[table['Organism Interactor B'].isin(['9606'])]
-
-        # table.to_csv('biogrid.csv')
+        table = table.loc[table['Organism Interactor A'].isin(['9606'])]
+        table = table.loc[table['Organism Interactor B'].isin(['9606'])]
 
         protein_cols = ['Official Symbol Interactor A',
                         'Official Symbol Interactor B',
@@ -179,7 +175,7 @@ class BioGridDownload(object):
         # cleanup names
         table.rename(columns={'Official Symbol Interactor A': 'source',
                               'Official Symbol Interactor B': 'target',
-                              'Source Database'             : 'databaseSource'},
+                              'Source Database': 'databaseSource'},
                      inplace=True)
 
         # create graph
@@ -190,20 +186,11 @@ class BioGridDownload(object):
             edge_attr=['interactionType', 'databaseSource', 'pubmedId'],
             create_using=nx.DiGraph()
         )
-
-        added_genes = set()
-
-        def _add_node(node):
+        # add names to graph
+        nodes = set(table['source'].values).union(set(table['target'].values))
+        for node in nodes:
             protein_graph.add_node(node, databaseSource=self._db_name,
                                    speciesType='gene')
-            added_genes.add(node)
-
-        # add names to graph
-        for r in table[['source', 'target']].values:
-            if r[0] not in added_genes:
-                _add_node(r[0])
-            if r[1] not in added_genes:
-                _add_node(r[1])
 
         final_graph = utils.compose(protein_graph,
                                     self._create_chemical_network())

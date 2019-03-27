@@ -156,3 +156,8 @@ class TestExpData(object):
                                       min_sig=1)
         ok_(x.to_dict('index') == {'AKT1': {'Time_3': -1.8073549220576042},
                                    'AIF1': {'Time_3': -0.5849625007211562}})
+
+    def test_subset(self):
+        species = ['AKT1', 'AIF1']
+        x = self.exp_data.subset(species, index='identifier')
+        ok_(x.shape==(2,8))
