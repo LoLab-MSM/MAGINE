@@ -13,12 +13,12 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev
   - conda update --yes conda
-  - conda install --yes python="$TRAVIS_PYTHON_VERSION" numpy scipy networkx nose pandas jinja2 plotly pycairo
+  - conda install --yes python="$PYVER" numpy scipy networkx nose pandas jinja2 plotly pycairo
+  - onda install -c conda-forge python-igraph
   - mkdir -p ~/.config/matplotlib
   - echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
   - pip install -r requirements.txt
   - pip install python-coveralls
-  - pip install python-igraph
   - pip install nose-exclude
   - pip install nose-timer
   - pip install codecov
