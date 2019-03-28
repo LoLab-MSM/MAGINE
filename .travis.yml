@@ -8,9 +8,10 @@ env:
 cache: pip
 before_install:
   # setup igraph.
-  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev
+  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev autoconf
   - git clone https://github.com/igraph/igraph.git
   - cd igraph
+  - autoconf
   - ./configure
   - make
   - make check
