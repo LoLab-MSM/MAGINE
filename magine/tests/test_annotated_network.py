@@ -3,7 +3,7 @@ import os
 import networkx as nx
 
 from magine.enrichment.enrichr import Enrichr
-from magine.networks.ontology_network import create_subnetwork
+from magine.networks.annotated_set import create_subnetwork
 
 
 def test_ont_grouping():

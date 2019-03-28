@@ -10,11 +10,10 @@ import scipy.stats as stats
 from statsmodels.stats.multitest import fdrcorrection
 
 import magine.networks.utils as nt
-from magine.networks.visualization.graphviz import draw_graphviz
-from magine.networks.visualization.igraph import draw_igraph
+from magine.networks.visualization import draw_graphviz, draw_igraph
 
 
-class OntologyNetworkGenerator(object):
+class AnnotatedSetNetworkGenerator(object):
     """ Generates ontology network from molecular networks.
 
     Nodes are the ontology terms
@@ -22,31 +21,22 @@ class OntologyNetworkGenerator(object):
 
     """
 
-    def __init__(self, molecular_network=None):
+    def __init__(self, network):
         """
 
         Parameters
         ----------
-        molecular_network : nx.DiGraph
+        network : nx.DiGraph
         """
-
-        self.network = molecular_network
-        self._nodes = None
-        self._edges = None
+        # make sure a network exists
+        if not(isinstance(network, nx.DiGraph)):
+            raise Exception("Must provide a nx.DiGraph")
+        self.network = network.copy()
+        # remove all self loops from graph
+        self.network.remove_edges_from(nx.selfloop_edges(self.network))
+        self.nodes = set(self.network.nodes)
+        self.edges = set(self.network.edges)
         self.molecular_network = None
-
-    @property
-    def edges(self):
-        if self._edges is None:
-            self.network.remove_edges_from(nx.selfloop_edges(self.network))
-            self._edges = set(self.network.edges())
-        return self._edges
-
-    @property
-    def nodes(self):
-        if self._nodes is None:
-            self._nodes = set(self.network.nodes())
-        return self._nodes
 
     def create_network_from_list(self, list_of_ontology_terms,
                                  ont_to_species_dict, ont_to_label_dict,
@@ -77,11 +67,13 @@ class OntologyNetworkGenerator(object):
             output directory
         use_fdr : bool
             Use FDR correction for edge
+        min_edges : int
+            Minimum number of edges between terms
 
         Returns
         -------
-        go_graph : networkx.DiGraph
-            Ontology level network
+        asn : networkx.DiGraph
+            Annotated set network
         mol_net : networkx.DiGraph
             Sub-network made my molecular level species
 
@@ -94,11 +86,6 @@ class OntologyNetworkGenerator(object):
         else:
             out_path = '.'
 
-        # make sure a network exists
-        if self.network is None:
-            print("Must provide a network! Returning None")
-            return None
-
         list_of_go_terms = set(list_of_ontology_terms)
 
         dd = nx.out_degree_centrality(self.network)
@@ -106,7 +93,7 @@ class OntologyNetworkGenerator(object):
         for _, i in dd.items():
             x += i
         avg_conn = x / len(dd)
-        n_total_edges = len(self.edges)
+        # n_total_edges = len(self.edges)
         p_values = []
         # create dictionaries that add the label and terms as node attributes
         gene_to_term, gene_to_label = dict(), dict()
@@ -127,7 +114,7 @@ class OntologyNetworkGenerator(object):
             n_possible = len(possible_edges)
             edge_hits = possible_edges.intersection(self.edges)
             n_hits = len(edge_hits)
-            odds_to_find = float(n_possible) / n_total_edges
+            # odds_to_find = float(n_possible) / n_total_edges
             # p_val = stats.binom_test(n_hits, n_possible, odds_to_find)
             # print(stats.binom_test(n_hits, n_possible, odds_to_find),
             #       stats.binom_test(n_hits, n_possible, avg_conn))
@@ -167,16 +154,16 @@ class OntologyNetworkGenerator(object):
                 df = df.loc[df['p_value'] <= .05]
         cols += ['adj_p_value']
         # create empty networks
-        go_graph = nx.DiGraph()
+        asn = nx.DiGraph()
         mol_net = nx.DiGraph()
         for term1, term2, edge, n_edges, p_value, adj_pval in df[cols].values:
 
             label_1 = ont_to_label_dict[term1]
             label_2 = ont_to_label_dict[term2]
-            go_graph.add_node(label_1, term=term1, label=label_1)
-            go_graph.add_node(label_2, term=term2, label=label_2)
-            go_graph.add_edge(label_1, label_2, label=str(n_edges),
-                              weight=n_edges, pvalue=p_value, adjPval=adj_pval)
+            asn.add_node(label_1, term=term1, label=label_1)
+            asn.add_node(label_2, term=term2, label=label_2)
+            asn.add_edge(label_1, label_2, label=str(n_edges), weight=n_edges,
+                         pvalue=p_value, adjPval=adj_pval)
 
             nodes = list(itertools.chain(*edge))
 
@@ -205,12 +192,12 @@ class OntologyNetworkGenerator(object):
             if out_dir is not None:
                 save_name = os.path.join(out_path, save_name)
             nx.write_gml(mol_net, '{}_subgraph.gml'.format(save_name))
-            nx.write_gml(go_graph, '{}.gml'.format(save_name))
+            nx.write_gml(asn, '{}.gml'.format(save_name))
 
             if draw:
-                draw_graphviz(go_graph, save_name=save_name)
+                draw_graphviz(asn, save_name=save_name)
                 draw_igraph(mol_net, save_name + '_subgraph_igraph')
-        return go_graph, mol_net
+        return asn, mol_net
 
 
 def gather_stats(set1, set2, backgroud_nodes, edges):
@@ -267,7 +254,8 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         Use binomial test to calculate edge relevance between terms
     use_fdr : bool
         Use BH correction on binomial test
-
+    min_edges : int
+        Minimum number of edges between two terms
 
     Returns
     -------
@@ -293,7 +281,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         term_dict[i] = genes
         label_dict[i] = i
 
-    ong = OntologyNetworkGenerator(molecular_network=network)
+    ong = AnnotatedSetNetworkGenerator(network=network)
 
     print("Creating ontology network")
     term_g, molecular_g = ong.create_network_from_list(
