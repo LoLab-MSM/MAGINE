@@ -160,4 +160,4 @@ class TestExpData(object):
     def test_subset(self):
         species = ['AKT1', 'AIF1']
         x = self.exp_data.subset(species, index='identifier')
-        ok_(x.shape==(2,8))
+        ok_(x.shape == (2, 8))

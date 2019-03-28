@@ -3,10 +3,8 @@ from functools import partial
 
 import networkx as nx
 
-import magine.networks.dev_tools as nt
-import magine.networks.exporters
-import magine.networks.visualization.graphviz
-from magine.networks.visualization.graphviz import draw_graphviz
+from magine.networks.visualization.graphviz import draw_graphviz, \
+    paint_network_overtime_up_down, paint_network_overtime
 
 
 class Subgraph(object):
@@ -23,18 +21,11 @@ class Subgraph(object):
         self.network = network
         self.nodes = set(self.network.nodes())
         self.exp_data = exp_data
-        self._paths = None
 
         if pool is None:
             self.map = map
         else:
             self.map = pool.map
-
-    def find_paths(self, source, target):
-        try:
-            return self._paths[source][target]
-        except:
-            return None
 
     def paths_between_pair(self, node_1, node_2, bidirectional=False,
                            single_path=False, draw=False, image_format='png'):
@@ -231,21 +222,10 @@ class Subgraph(object):
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
-    def _max_distance(self, path_list, max_dist):
-
-        new_paths = []
-        for p in path_list:
-            local_p = []
-            for i in p:
-                if len(i) <= max_dist:
-                    local_p.append(i)
-            new_paths.append(local_p)
-        return new_paths
-
     def neighbors(self, node, upstream=True, downstream=True, max_dist=1,
                   include_only=None, start_network=None):
         """
-        Create network of node and its neighbors.
+        Create network containing provided node and its neighbors.
 
         Parameters
         ----------
@@ -259,7 +239,7 @@ class Subgraph(object):
 
         Returns
         -------
-
+        nx.DiGraph
         """
 
         if not upstream and not downstream:
@@ -323,6 +303,31 @@ class Subgraph(object):
     def expand_neighbors(self, network=None, nodes=None, upstream=False,
                          downstream=False, max_dist=1, include_only=None,
                          add_interconnecting_edges=False):
+        """ Create/expand a network based on neighbors from a list of species
+
+        Parameters
+        ----------
+        network : nx.DiGraph or None
+            Starting network to expand nodes. If not provided, will use
+            default network
+        nodes : list_like
+            List of nodes to expand
+        upstream : bool
+            Expand upstream nodes
+        downstream : bool
+            Expand downstream nodes
+        max_dist :
+            Max distance to explore
+        include_only : list_like
+            Limit network to only contain these species
+        add_interconnecting_edges : bool
+            Add edges connecting all nodes. Default if False, so only direct
+            edges to neighbors will be added.
+
+        Returns
+        -------
+        nx.DiGraph
+        """
 
         if not upstream and not downstream:
             print("Must provide upstream=True or downstream=True. "
@@ -362,11 +367,8 @@ class Subgraph(object):
         return new_g
 
     def upstream_of_node(self, species_1, include_list=None,
-                         save_name=None, compress=False,
-                         draw=False):
-        """
-        Generate network of all upstream species of provides species
-
+                         save_name=None, draw=False):
+        """ Generate network of all upstream species of provides species
 
         Parameters
         ----------
@@ -374,15 +376,14 @@ class Subgraph(object):
             species name
         save_name : str
             name to save gml file
-        compress : bool
-            compress the graph by making species in linear path a single node
         draw : bool
             create figure of graph
         include_list : list_like
             list of species that must be in path in order to consider a path
+
         Returns
         -------
-        graph : networkx.DiGraph
+        nx.DiGraph
 
 
         Examples
@@ -409,19 +410,14 @@ class Subgraph(object):
         graph = self._list_paths_to_graph(
             [_nx_find_path(self.network, i, species_1, single_path=True)
              for i in self.nodes if i in include_list])
-
-        if compress:
-            graph = nt.compress_edges(graph)
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw)
 
         return graph
 
     def downstream_of_node(self, species_1, include_list=None,
-                           save_name=None, compress=False,
-                           draw=False, ):
-        """
-        Generate network of all downstream species of provides species
+                           save_name=None, draw=False):
+        """ Generate network of all downstream species of provides species
 
 
         Parameters
@@ -430,15 +426,13 @@ class Subgraph(object):
             species name
         save_name : str
             name to save gml file
-        compress : bool
-            compress the graph by making species in linear path a single node
         draw : bool
             create figure of graph
         include_list : list_like
             list of species that must be in path in order to consider a path
         Returns
         -------
-        graph : networkx.DiGraph
+        nx.DiGraph
 
 
         Examples
@@ -466,9 +460,6 @@ class Subgraph(object):
             [_nx_find_path(self.network, species_1, i, single_path=True)
              for i in self.nodes if i in include_list])
 
-        if compress:
-            graph = nt.compress_edges(graph)
-
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw)
 
@@ -491,11 +482,8 @@ class Subgraph(object):
 
         """
         measured_list = self.exp_data.species.sig.by_sample
-        magine.networks.visualization.graphviz.paint_network_overtime(graph,
-                                                                      measured_list,
-                                                                      colors,
-                                                                      prefix,
-                                                                      self.exp_data.sample_ids)
+        paint_network_overtime(graph, measured_list, colors, prefix,
+                               self.exp_data.sample_ids)
 
     def measured_networks_over_time_up_down(self, graph, prefix,
                                             color_up='tomato',
@@ -520,12 +508,14 @@ class Subgraph(object):
         labels = self.exp_data.sample_ids
         up_measured_list = self.exp_data.species.sig.up.by_sample
         down_measured_list = self.exp_data.species.sig.down.by_sample
-        magine.networks.visualization.graphviz.paint_network_overtime_up_down(
-            graph, list_up=up_measured_list,
+        paint_network_overtime_up_down(
+            graph,
+            list_up=up_measured_list,
             list_down=down_measured_list,
             save_name=prefix,
             color_down=color_down,
-            color_up=color_up, labels=labels)
+            color_up=color_up, labels=labels
+        )
 
     def _check_node(self, node_list):
         """
@@ -589,7 +579,6 @@ class Subgraph(object):
         if len(sg.nodes()) == 0:
             print("Warning: no nodes were found in include_only list! "
                   "Network doesn't contain any nodes!")
-        # nt.delete_disconnected_network(sg)
         return sg
 
     @staticmethod
@@ -597,6 +586,18 @@ class Subgraph(object):
         nx.write_gml(graph, "{}.gml".format(save_name))
         if draw:
             draw_graphviz(graph, save_name=save_name, image_format=img_format)
+
+    @staticmethod
+    def _max_distance(path_list, max_dist):
+
+        new_paths = []
+        for p in path_list:
+            local_p = []
+            for i in p:
+                if len(i) <= max_dist:
+                    local_p.append(i)
+            new_paths.append(local_p)
+        return new_paths
 
 
 def _find_nx_path(node, network, single_path):
@@ -643,14 +644,6 @@ if __name__ == '__main__':
     # quit()
 
     x = Subgraph(net)
-    import sys
-
-    print(sys.getsizeof(x._paths))
-    print(x._paths['BAX'])
-    quit()
-    print(x.find_paths('X', 'Y'))
-    print(x.find_paths('Y', 'X'))
-
     g = x.paths_between_list(['X', 'Y', 'B', 'D'], single_path=True,
                              draw=False, save_name='test')
 

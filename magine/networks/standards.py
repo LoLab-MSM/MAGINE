@@ -1,3 +1,8 @@
+"""
+Manually constructed mapping to most common description.
+
+"""
+
 edge_standards = {
     'activation'                        : 'activate',
     'activator'                         : 'activate',
@@ -23,6 +28,7 @@ edge_standards = {
     'lipidation'                        : 'lipidation',
     'guanine nucleotide exchange factor': 'gtpase-activate',
     'gtpase-activating protein'         : 'gtpase-activate',
+
     # binding
     'binding'                           : 'binding',
     'binding/association'               : 'binding',
@@ -63,12 +69,7 @@ edge_standards = {
     'allosteric modulator': 'allosteric|modulate',
     'positive allosteric modulator': 'activate|allosteric',
     'positive modulator': 'activate',
-    'partial agonist': 'activate|chemical',
-    'inverse agonist': 'activate|chemical',
-    'agonist': 'activate|chemical',
 
-    'antagonist': 'inhibit|chemical',
-    'partial antagonist': 'inhibit|chemical',
 
     # chemical related
     'compound': 'chemical',
@@ -79,4 +80,9 @@ edge_standards = {
     'small molecule catalysis': 'activate|catalyst|chemical',
     'chemical activation': 'activate|chemical',
     'chemical inhibition': 'chemical|inhibit',
+    'partial agonist': 'activate|chemical',
+    'inverse agonist': 'activate|chemical',
+    'agonist': 'activate|chemical',
+    'antagonist': 'inhibit|chemical',
+    'partial antagonist': 'inhibit|chemical',
 }
