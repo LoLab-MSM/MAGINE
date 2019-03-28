@@ -8,16 +8,16 @@ env:
 cache: pip
 before_install:
   # setup igraph.
-  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev autoconf
-  - wget https://github.com/igraph/igraph/releases/download/0.7.1/igraph-0.7.1.tar.gz
-  - tar -xzf igraph-0.7.1.tar.gz
-  - cd igraph
-  - autoconf
-  - ./configure
-  - make
-  - make check
-  - make install
-  - cd ..
+  #  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev autoconf
+  #  - wget https://github.com/igraph/igraph/releases/download/0.7.1/igraph-0.7.1.tar.gz
+  #  - tar -xzf igraph-0.7.1.tar.gz
+  #  - cd igraph
+  #  - autoconf
+  #  - ./configure
+  #  - make
+  #  - make check
+  #  - make install
+  #  - cd ..
   # install conda
   - wget http://repo.continuum.io/miniconda/Miniconda${PYVER:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
@@ -25,7 +25,7 @@ before_install:
   - export PATH="$HOME/miniconda/bin:$PATH"
   - conda update --yes conda
   - conda install --yes python="$PYVER" numpy scipy networkx nose pandas jinja2 plotly pycairo
-  - pip install python-igraph
+  - conda install --yes -c conda-forge python-igraph
   - mkdir -p ~/.config/matplotlib
   - echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
   - pip install -r requirements.txt

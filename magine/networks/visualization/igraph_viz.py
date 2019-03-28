@@ -2,8 +2,8 @@ import os
 
 import seaborn as sns
 
-import magine.networks.utils
 from magine.networks.exporters import nx_to_igraph
+from magine.networks.utils import add_attribute_to_network
 
 try:
     basestring
@@ -230,8 +230,8 @@ def paint_network_overtime(graph, exp_data, color_list, save_name,
     tmp_graph = graph.copy()
     pos = None
     for n, i in enumerate(measured_list):
-        graph2 = magine.networks.utils.add_attribute_to_network(
-            tmp_graph, i, 'color', color_list[n], 'white')
+        graph2 = add_attribute_to_network(tmp_graph, i, 'color', color_list[n],
+                                          'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
         result, pos = draw_igraph(graph2, s_name, positions=pos, node_size=50,
@@ -300,8 +300,8 @@ def color_by_list(graph, species_list, labels, colors, save_name,
     tmp_graph = graph.copy()
     pos = None
     for n, i in enumerate(species_list):
-        graph2 = magine.networks.utils.add_attribute_to_network(
-            tmp_graph, i, 'color', colors[n], 'white')
+        graph2 = add_attribute_to_network(tmp_graph, i, 'color', colors[n],
+                                          'white')
 
         s_name = '%s_%04i_igraph.png' % (save_name, n)
         result, pos = draw_igraph(graph2, s_name, positions=pos,
