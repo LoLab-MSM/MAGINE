@@ -9,7 +9,8 @@ cache: pip
 before_install:
   # setup igraph.
   - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev autoconf
-  - git clone https://github.com/igraph/igraph.git
+  - wget https://github.com/igraph/igraph/releases/download/0.7.1/igraph-0.7.1.tar.gz
+  - tar -xzf igraph-0.7.1.tar.gz
   - cd igraph
   - autoconf
   - ./configure
@@ -22,7 +23,6 @@ before_install:
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-
   - conda update --yes conda
   - conda install --yes python="$PYVER" numpy scipy networkx nose pandas jinja2 plotly pycairo
   - pip install python-igraph
