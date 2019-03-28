@@ -7,11 +7,21 @@ env:
 - PYVER=3.7
 cache: pip
 before_install:
+  # setup igraph.
+  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev
+  - git clone https://github.com/igraph/igraph.git
+  - cd igraph
+  - ./configure
+  - make
+  - make check
+  - make install
+  - cd ..
+  # install conda
   - wget http://repo.continuum.io/miniconda/Miniconda${PYVER:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
   - chmod +x miniconda.sh
   - bash miniconda.sh -b -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
-  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev
+
   - conda update --yes conda
   - conda install --yes python="$PYVER" numpy scipy networkx nose pandas jinja2 plotly pycairo
   - conda install  --yes -c conda-forge python-igraph
