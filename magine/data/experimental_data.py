@@ -69,6 +69,11 @@ class Sample(BaseData):
         return Sample
 
     @property
+    def exp_methods(self):
+        """ List of sample_ids in data"""
+        return sorted(set(self[exp_method].values))
+
+    @property
     def sample_ids(self):
         """ List of sample_ids in data"""
         return sorted(set(self[sample_id].values))
