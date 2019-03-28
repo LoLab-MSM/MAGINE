@@ -1,8 +1,8 @@
 import tempfile
 
 from nose.tools import ok_
-
-from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs, \
+from magine.data.experimental_data import ExperimentalData
+from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs,\
     get_background_list, run_enrichment_for_project, get_libraries
 from magine.tests.sample_experimental_data import exp_data
 
@@ -24,8 +24,12 @@ def test_libaries():
 
 
 def test_project():
-    run_enrichment_for_project(exp_data, 'test',
-                               databases=['LINCS_L1000_Chem_Pert_up'])
+    slimmed = exp_data.species.copy()
+    slimmed = slimmed.loc[slimmed.source.isin(['label_free', 'silac'])]
+    slimmed = slimmed.loc[slimmed.sample_id.isin(['Time_1', 'Time_2',])]
+    slimmed = ExperimentalData(slimmed)
+    run_enrichment_for_project(slimmed, 'test',
+                               databases=['KEGG_2016'])
 
 
 def test_get_gene_set_lib():
