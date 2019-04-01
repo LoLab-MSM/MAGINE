@@ -10,10 +10,10 @@ magine\.networks\.network\_generator module
    :undoc-members:
    :show-inheritance:
 
-magine\.networks\.ontology\_network module
-------------------------------------------
+magine\.networks\.annotated\_set module
+---------------------------------------
 
-.. automodule:: magine.networks.ontology_network
+.. automodule:: magine.networks.annotated_set
    :members:
    :undoc-members:
    :show-inheritance:

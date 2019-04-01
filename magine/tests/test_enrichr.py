@@ -1,8 +1,9 @@
 import tempfile
 
 from nose.tools import ok_
+
 from magine.data.experimental_data import ExperimentalData
-from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs,\
+from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs, \
     get_background_list, run_enrichment_for_project, get_libraries
 from magine.tests.sample_experimental_data import exp_data
 
@@ -60,7 +61,7 @@ def test_multi_sample_plotting():
     up = exp_data.genes.sig.up_by_sample
     out_dir = tempfile.mkdtemp()
     e.run_samples(up, ['1', '2', '3'],
-                  database=['Human_Phenotype_Ontology',
+                  gene_set_lib=['Human_Phenotype_Ontology',
                             'MGI_Mammalian_Phenotype_2017'],
                   save_name='enrichr_test',
                   exp_data=exp_data,
@@ -74,7 +75,7 @@ def test_set_of_dbs():
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'],
-                        database=['KEGG_2016', 'NCI-Nature_2016'],
+                        gene_set_lib=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
     ok_(df2.shape == (128, 11))
 

@@ -145,8 +145,8 @@ class Enrichr(object):
     def print_valid_libs(self):
         """
         Print a list of all available libraries EnrichR has to offer.
-        Returns
-        -------
+
+
 
         """
         for lib_name in sorted(self._valid_libs):
@@ -162,6 +162,23 @@ class Enrichr(object):
         gene_set_lib : str or list
             Name of gene set library
             To print options use Enrichr.print_valid_libs
+
+
+        Examples
+        --------
+        >>> import pandas as pd
+        >>> pd.set_option('display.max_colwidth', 40)
+        >>> pd.set_option('precision', 3)
+        >>> e = Enrichr()
+        >>> df = e.run(['BAX', 'BCL2', 'CASP3', 'CASP8'], \
+                        gene_set_lib='Reactome_2016')
+        >>> print(df[['term_name','combined_score']].head(5))#doctest: +NORMALIZE_WHITESPACE
+                                             term_name  combined_score
+            0  intrinsic pathway for apoptosis_hsa_...      48.157
+            1  programmed cell death_hsa_r-hsa-5357801      41.516
+            2               apoptosis_hsa_r-hsa-109581      41.403
+            3  caspase-mediated cleavage of cytoske...      27.349
+            4  caspase activation via extrinsic apo...      22.438
 
         Returns
         -------
@@ -198,10 +215,10 @@ class Enrichr(object):
         return df
 
     def run_samples(self, sample_lists, sample_ids,
-                    database='GO_Biological_Process_2017', save_name=None,
+                    gene_set_lib='GO_Biological_Process_2017', save_name=None,
                     create_html=False, out_dir=None, run_parallel=False,
                     exp_data=None, pivot=False):
-        """
+        """ Run enrichment analysis on a list of samples.
 
         Parameters
         ----------
@@ -209,7 +226,7 @@ class Enrichr(object):
             List of lists of genes for enrichment analysis
         sample_ids : list
             list of ids for the provided sample list
-        database : str, list
+        gene_set_lib : str, list
             Type of gene set, refer to Enrichr.print_valid_libs
         save_name : str, optional
             if provided it will save a file as a pivoted table with
@@ -224,6 +241,33 @@ class Enrichr(object):
             Must be provided if create_html=True
         pivot : bool
 
+        Examples
+        --------
+        .. plot::
+            :context: close-figs
+
+            >>> import pandas as pd
+            >>> import matplotlib.pyplot as plt
+            >>> from magine.enrichment.enrichr import Enrichr
+            >>> pd.set_option('display.max_colwidth', 40)
+            >>> pd.set_option('precision', 3)
+            >>> samples = [['BAX', 'BCL2', 'CASP3', 'CASP8'], \
+['ATR', 'ATM', 'TP53', 'CHEK1']]
+            >>> sample_ids = ['apoptosis', 'dna_repair']
+            >>> e = Enrichr()
+            >>> df = e.run_samples(samples, sample_ids, \
+gene_set_lib='Reactome_2016')
+            >>> print(df[['term_name','combined_score']].head(5))#doctest: +NORMALIZE_WHITESPACE
+                                                 term_name  combined_score
+                0  intrinsic pathway for apoptosis_hsa_...      48.157
+                1  programmed cell death_hsa_r-hsa-5357801      41.516
+                2               apoptosis_hsa_r-hsa-109581      41.403
+                3  caspase-mediated cleavage of cytoske...      27.349
+                4  caspase activation via extrinsic apo...      22.438
+            >>> df.filter_multi(rank=10, inplace=True)
+            >>> df['term_name'] = df['term_name'].str.split('_').str.get(0)
+            >>> fig = df.sig.heatmap(figsize=(6, 6), linewidths=.05)
+
         Returns
         -------
         EnrichmentResult
@@ -232,10 +276,10 @@ class Enrichr(object):
             raise AssertionError("List required")
         if not isinstance(sample_lists[0], (list, set)):
             raise AssertionError("List of lists required")
-        df_final = self.run(sample_lists[0], database)
+        df_final = self.run(sample_lists[0], gene_set_lib)
         df_final['sample_id'] = sample_ids[0]
         for count, (i, j) in enumerate(zip(sample_lists[1:], sample_ids[1:])):
-            df = self.run(i, database)
+            df = self.run(i, gene_set_lib)
             df['sample_id'] = j
             df_final = df_final.append(df, ignore_index=True)
 
@@ -510,12 +554,12 @@ replace_pairs = [
 ]
 
 standard_dbs = []
-for i in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
-          'kinases', 'histone', 'cell_type']:
-    standard_dbs += db_types[i]
+for db in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
+           'kinases', 'histone', 'cell_type']:
+    standard_dbs += db_types[db]
 
 
-def run_enrichment_for_project(exp_data, project_name, databases=standard_dbs):
+def run_enrichment_for_project(exp_data, project_name, databases=None):
     """
 
     Parameters
@@ -534,7 +578,8 @@ def run_enrichment_for_project(exp_data, project_name, databases=standard_dbs):
     _dir = 'enrichment_output'
     if not os.path.exists(_dir):
         os.mkdir(_dir)
-
+    if databases is None:
+        databases = standard_dbs
     print("Running {} databases".format(len(databases)))
 
     def _run_new(samples, timepoints, category):
@@ -609,13 +654,10 @@ def get_background_list(lib_name):
     -------
 
     """
-
-    # http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary?mode=text&libraryName=Genes_Associated_with_NIH_Grants
-
     enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary'
-    query_string = '?userListId&libraryName=%s'
+    query_string = '?userListId&libraryName={}'
     response = requests.get(
-        enrichment_url + query_string % lib_name
+        enrichment_url + query_string.format(lib_name)
     )
     if not response.ok:
         raise Exception('Error fetching enrichment results')
@@ -633,7 +675,3 @@ def get_background_list(lib_name):
         )
 
     return term_to_gene
-
-
-if __name__ == '__main__':
-    print(get_libraries())

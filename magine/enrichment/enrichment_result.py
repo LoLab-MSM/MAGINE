@@ -196,7 +196,8 @@ class EnrichmentResult(BaseData):
 
     def show_terms_below(self, term, level='dataframe', threshold=.7,
                          remove_subset=True):
-        """ Find terms that were removed by remove_redundant
+        """
+        Find terms that were removed by remove_redundant
 
         Parameters
         ----------
@@ -204,10 +205,10 @@ class EnrichmentResult(BaseData):
         level : str
         threshold : float
         remove_subset : bool
+
         Returns
         -------
         EnrichmentResult
-
         """
         temp_df = self.copy()
         # calculate similarity of term to all terms
@@ -249,7 +250,6 @@ class EnrichmentResult(BaseData):
         """
         Calculate similarity between all term sets and removes redundant terms.
 
-
         Parameters
         ----------
         threshold : float, default 0.75
@@ -260,7 +260,7 @@ class EnrichmentResult(BaseData):
             filter each group of 'sample_id' individually. 'dataframe' will
             merge all genes that share the same 'term_name'.
         sort_by : {'combined_score', 'rank', 'adj_p_value', 'n_genes'},
-                    default 'combined_score'
+            default 'combined_score'
             Keyword to sort the dataframe. The scoring starts at the top term and
             compares to all the lower terms. Options are
         inplace : bool

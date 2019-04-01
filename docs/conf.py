@@ -30,9 +30,11 @@
 import os
 import sys
 
+import matplotlib as mpl
 import mock
 import sphinx_bootstrap_theme
 
+mpl.use("Agg")
 sys.path.append(os.path.abspath('..'))
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -47,10 +49,24 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.autosummary',
     'sphinx.ext.todo',
+    'sphinx.ext.inheritance_diagram',
+
     'numpydoc',
     'nbsphinx',
-    # 'sphinx.ext.mathjax',
+
+    'matplotlib.sphinxext.plot_directive',
+
+    'IPython.sphinxext.ipython_directive',
+    'IPython.sphinxext.ipython_console_highlighting',
 ]
+
+# Include the example source for plots in API docs
+plot_include_source = True
+plot_formats = [("png", 90)]
+plot_html_show_formats = False
+plot_html_show_source_link = False
+plot_rcparams = {'savefig.bbox': 'tight'}
+plot_apply_rcparams = True  # if context option is used
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
@@ -88,18 +104,18 @@ author = u'James C. Pino'
 # Note that for sub-modules, all parent modules must be listed explicitly.
 MOCK_MODULES = [  # 'pandas', 'pandas.plotting',
 
-    'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
-    'scipy.special', 'scipy.optimize', 'scipy.stats',
-    'scipy.stats.stats', 'scipy.stats.stats.distributions',
-    'scipy.sparse', 'scipy.linalg',
+    # 'scipy', 'scipy.cluster.hierarchy', 'scipy.cluster',
+    # 'scipy.special', 'scipy.optimize', 'scipy.stats',
+    # 'scipy.stats.stats', 'scipy.stats.stats.distributions',
+    # 'scipy.sparse', 'scipy.linalg',
 
-    'seaborn', 'seaborn.color_palette', 'seaborn.color_palette',
+    # 'seaborn', 'seaborn.color_palette', 'seaborn.color_palette',
 
     'python-igraph', 'igraph', 'py2cytoscape', 'pydotplus',
 
-    'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
-    'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
-    'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
+    # 'matplotlib', 'matplotlib.pyplot', 'matplotlib.image',
+    # 'matplotlib.path', 'matplotlib.axes', 'matplotlib.ticker',
+    # 'matplotlib.patches', 'matplotlib.colors', 'matplotlib.cbook',
 
     # 'numpy', 'numpy.testing', 'numpy.core', 'numpy.core.multiarray',
     # 'numpy.core.ma', 'numpy.linalg', 'numpy.ma',
