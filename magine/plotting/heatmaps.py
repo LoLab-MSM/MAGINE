@@ -52,8 +52,9 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     plt.Figure
 
     """
-    array = data.pivoter(convert_to_log, columns=columns, index=index,
-                         fill_value=0.0, values=values, min_sig=min_sig)
+    d_copy = data.require_n_sig(columns=columns, index=index, n_sig=min_sig)
+    array = d_copy.pivoter(convert_to_log, columns=columns, index=index,
+                           fill_value=0.0, values=values, min_sig=min_sig)
 
     # default values to be overwritten below
     col_colors = None
@@ -67,9 +68,9 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     # rank by index or cluster by term column
     if rank_index:
         array.sort_index(ascending=True, inplace=True)
-    elif cluster_by_set and "genes" in data.columns:
+    elif cluster_by_set and "genes" in d_copy.columns:
         # clustering will be based on jaccard index of terms
-        dist_mat, names = data.calc_dist(level='sample')
+        dist_mat, names = d_copy.calc_dist(level='sample')
         linkage = sch.linkage(dist_mat, method='average')
         # Add row cluster flag in case user didn't set
         cluster_row = True
@@ -90,7 +91,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
 
     # check annotations exist
     if annotate_sig:
-        annotate_sig, annotations, fmt = _get_sig_annotations(array, data,
+        annotate_sig, annotations, fmt = _get_sig_annotations(array, d_copy,
                                                               columns,
                                                               index, min_sig)
 
@@ -122,7 +123,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
 
         # add labels to column colors
         if add_col_group:
-            fig = _add_column_color_groups(data, fig, col_color_map,
+            fig = _add_column_color_groups(d_copy, fig, col_color_map,
                                            col_labels, columns)
         if cluster_col:
             col_cltrs = sch.fcluster(fig.dendrogram_col.linkage, t=2,
