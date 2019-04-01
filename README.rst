@@ -22,7 +22,6 @@ MAGINE
 Mechanism of Action Generator involving Network Expansion
 
 
-
 Installation
 ============
 
@@ -35,25 +34,30 @@ Installation
    this step and use your existing Python installation.
 
    Anaconda has a simple graphical installer which can be downloaded from
-   https://www.continuum.io/downloads - select your operating system
-   and download the **Python 2.7 version**. The default installer options
-   are usually appropriate.
-
-
-        **Windows users:** If you are unsure whether to use the 32-bit or
-           64-bit installer, press the Windows Start button, search for “About
-           your PC”, and under “System type” it will specify 32-bit operating
-           system or 64-bit operating system
+    https://www.anaconda.com/distribution/#download-section - select your
+    operating system and download the **Python 3.7 version**.
+    The default installer options are usually appropriate.
 
 2. **Open a terminal**
 
     We will install most packages with conda::
 
-       $ conda create -n magine_env python=2
+       $ conda create -n magine_env python=3.7
        $ source activate magine_env
        $ conda config --add channels conda-forge
-       $ conda install jinja2 statsmodels networkx graphviz 
+       $ conda install jinja2 statsmodels networkx graphviz
        $ conda install -c marufr python-igraph
+
+    **Windows users:** Please download and install igraph and pycairo using
+        the wheel files provided by  Christoph Gohlke,  found at
+        https://www.lfd.uci.edu/~gohlke/ . Assuming 64 bit windows, download
+        python_igraph‑0.7.1.post6‑cp37‑cp37m‑win_amd64.whl from
+        https://www.lfd.uci.edu/~gohlke/pythonlibs/#python-igraph
+        and pycairo‑1.18.0‑cp37‑cp37m‑win_amd64.whl from
+        https://www.lfd.uci.edu/~gohlke/pythonlibs/#pycairo ::
+
+        $ pip install pycairo‑1.18.0‑cp37‑cp37m‑win_amd64.whl
+        $ pip install python_igraph‑0.7.1.post6‑cp37‑cp37m‑win_amd64.whl
 
 3. **Install MAGINE**
 
@@ -65,16 +69,11 @@ Installation
       $ pip install -r requirements.txt
       $ export PYTHONPATH=`pwd`:$PYTHONPATH
 
-     **Mac users:** To open a terminal on a Mac, open Spotlight search
-            (press command key and space), type ``terminal`` and press enter.
-
-
-
 4. **Start Python and MAGINE**
 
    If you installed Python using `Anaconda`_ on Windows, search for and select
-   ``IPython`` from your Start Menu (Windows). Otherwise, open a terminal
-   and type ``python`` to get started (or ``ipython``, if installed).
+   ``jupyter notebook`` from your Start Menu (Windows). Otherwise, open a terminal
+   and type ``jupyter notebook``.
 
    You will then be at the Python prompt. Type ``import magine`` to try
    loading magine. If no error messages appear and the next Python prompt
@@ -85,3 +84,8 @@ Documentation
 -------------
 
 The manual is available online at http://magine.readthedocs.io.
+
+
+.. _Anaconda: https://www.anaconda.com/distribution/#download-section
+
+
