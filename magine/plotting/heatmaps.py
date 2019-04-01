@@ -52,7 +52,11 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     plt.Figure
 
     """
-    d_copy = data.require_n_sig(columns=columns, index=index, n_sig=min_sig)
+    if min_sig:
+        d_copy = data.require_n_sig(columns=columns, index=index,
+                                    n_sig=min_sig)
+    else:
+        d_copy = data.copy()
     array = d_copy.pivoter(convert_to_log, columns=columns, index=index,
                            fill_value=0.0, values=values, min_sig=min_sig)
 
