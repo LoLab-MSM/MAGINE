@@ -101,45 +101,53 @@ class Sample(BaseData):
     @property
     def up_by_sample(self):
         """List of up regulated species by sample"""
-        over_time = []
-        for i in self.sample_ids:
-            cur_slice = self.copy()
-            cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
-            over_time.append(cur_slice.up.id_list)
-        return over_time
+        return [self.loc[self[sample_id] == i].up.id_list
+                for i in self.sample_ids]
 
     @property
     def down_by_sample(self):
         """List of down regulated species by sample"""
-        over_time = []
-        for i in self.sample_ids:
-            cur_slice = self.copy()
-            cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
-            over_time.append(cur_slice.down.id_list)
-        return over_time
+        return [self.loc[self[sample_id] == i].down.id_list
+                for i in self.sample_ids]
 
     @property
     def by_sample(self):
         """List of significantly flagged species by sample"""
-        over_time = []
-        for i in self.sample_ids:
-            cur_slice = self.copy()
-            cur_slice = cur_slice.loc[cur_slice[sample_id] == i]
-            over_time.append(cur_slice.id_list)
-        return over_time
+        return [self.loc[self[sample_id] == i].id_list
+                for i in self.sample_ids]
 
-    def plot_pie_sig_ratio(self, save_name=None):
+    def plot_pie_sig_ratio(self, save_name=None, ax=None, fig=None,
+                           figsize=None):
+        """
+
+        Parameters
+        ----------
+        save_name : str
+        ax : matplotlib.axes, optional
+        fig : matplotlib.figure
+        figsize : tuple
+            Size of figure
+
+        Returns
+        -------
+
+        """
         x = len(self.id_list)
         y = len(self.sig.id_list)
         total = x + y
-        fig = plt.figure(figsize=(3, 3))
-        ax = fig.add_subplot(111)
-        wedges, texts, autotexts = ax.pie([x, y],
-                                          explode=(0.05, 0.05),
-                                          textprops={'fontsize': 16},
-                                          autopct=lambda p: '{:.0f}'.format(
-                                              p * total / 100),
-                                          shadow=True, startangle=140)
+        if fig is None and ax is None:
+            if figsize is None:
+                figsize = (3, 3)
+            fig = plt.figure(figsize=figsize)
+            ax = fig.add_subplot(111)
+        wedges, texts, autotexts = ax.pie(
+            [x, y],
+            explode=(0.05, 0.05),
+            textprops={'fontsize': 16},
+            autopct=lambda p: '{:.0f}'.format(p * total / 100),
+            shadow=True,
+            startangle=140
+        )
 
         plt.setp(autotexts, size=20)
         plt.axis('equal')

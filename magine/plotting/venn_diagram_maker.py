@@ -3,7 +3,7 @@ from matplotlib_venn import venn2 as _venn2, venn3 as _venn3
 
 
 def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
-                 image_format='png', title=None):
+                 image_format='png', title=None, ax=None):
     """ Creates a venn digram containing for 3 lists
     
     Parameters
@@ -18,6 +18,7 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
     image_format : str
         default png
     title: str
+    ax : matplotlib.axes
 
     Returns
     -------
@@ -29,7 +30,8 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
     v = _venn3([set1, set2, set3], ('%s(%s)' % (label1, str(len(set1))),
                                     '%s(%s)' % (label2, str(len(set2))),
                                     '%s(%s)' % (label3, str(len(set3)))),
-               set_colors=('g', 'r', 'b'))
+               set_colors=('g', 'r', 'b'),
+               ax=ax)
     plt.tight_layout()
     if title is not None:
         plt.title(title)
@@ -40,7 +42,7 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
 
 
 def create_venn2(list1, list2, label1, label2, save_name=None, title=None,
-                 image_format='png'):
+                 image_format='png', ax=None):
     """Creates a venn digram containing for 2 lists
     
     Parameters
@@ -53,15 +55,17 @@ def create_venn2(list1, list2, label1, label2, save_name=None, title=None,
     title : str
     image_format : str, optional
         default png
-
+    ax : matplotlib.axes
+    
     Returns
     -------
-
+    
     """
     set1 = set(list1)
     set2 = set(list2)
     v = _venn2([set1, set2], ('%s(%s)' % (label1, str(len(set1))),
-                              '%s(%s)' % (label2, str(len(set2))),))
+                              '%s(%s)' % (label2, str(len(set2))),),
+               ax=ax)
     plt.tight_layout()
     if title is not None:
         plt.title(title)
