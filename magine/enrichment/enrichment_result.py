@@ -7,6 +7,13 @@ import pandas as pd
 from magine.data.base import BaseData
 from magine.plotting.heatmaps import cluster_distance_mat
 
+# Will be OK in Python 2
+try:
+    basestring
+# Allows isinstance(foo, basestring) to work in Python 3
+except:
+    basestring = str
+
 sig = 'significant'
 
 
@@ -121,19 +128,33 @@ class EnrichmentResult(BaseData):
             return new_data
 
     def term_to_genes(self, term):
-        """ Get set of genes of provides term
+        """ Get set of genes of provides term(s)
 
         Parameters
         ----------
-        term : str
+        term : str, list
 
         Returns
         -------
         set
 
         """
-        genes = self[self['term_name'] == term]['genes']
+        if isinstance(term, basestring):
+            genes = self[self['term_name'].isin([term])]['genes']
+        else:
+            genes = self[self['term_name'].isin(term)]['genes']
         return set(itertools.chain.from_iterable(genes.str.split(',').values))
+
+    def all_genes_from_df(self):
+        """ Returns all genes from gene columns in a set
+
+        Returns
+        -------
+        set
+        """
+        return set(
+            itertools.chain.from_iterable(self['genes'].str.split(',').values)
+        )
 
     def filter_based_on_words(self, words, inplace=False):
         """ Filter term_name based on key terms
@@ -233,17 +254,6 @@ class EnrichmentResult(BaseData):
         # Adding the original term to show similarity
         terms_removed.add(term)
         return temp_df.loc[temp_df.term_name.isin(terms_removed)]
-
-    def all_genes_from_df(self):
-        """ Returns all genes from gene columns in a set
-
-        Returns
-        -------
-        set
-        """
-        return set(
-            itertools.chain.from_iterable(self['genes'].str.split(',').values)
-        )
 
     def remove_redundant(self, threshold=0.75, verbose=False, level='sample',
                          sort_by='combined_score', inplace=False):

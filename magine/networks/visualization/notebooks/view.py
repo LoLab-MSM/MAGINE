@@ -36,7 +36,6 @@ def display_graph(graph, add_parent=False, layout='cose-bilkent',
     else:
         layout_opts = default_styles.layouts[layout].copy()
         layout_opts.update(layout_args)
-        print(layout_opts)
 
     d['layout_json'] = json.dumps(layout_opts)
     d['style_json'] = json.dumps(default_styles.styles['default'])

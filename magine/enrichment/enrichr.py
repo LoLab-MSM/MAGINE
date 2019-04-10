@@ -588,8 +588,8 @@ def run_enrichment_for_project(exp_data, project_name, databases=None):
             if not len(genes):
                 continue
             print('\t time point = {}'.format(sample_id))
-            current = "{}_{}_{}".format(str(category),
-                                        str(sample_id),
+            current = "{}_{}_{}".format(category,
+                                        sample_id,
                                         project_name)
             name = os.path.join(_dir, current + '.csv.gz')
             try:

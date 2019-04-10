@@ -212,10 +212,7 @@ def heatmap_by_terms(data, term_labels, term_sets, colors=None, min_sig=None,
         raise AssertionError("Number of term_labels must "
                              "equal number of term_sets")
     # default values to be overwritten below
-    col_colors = None
     annotations = None
-    col_color_map = None
-    col_labels = None
     fmt = None
     add_col_group = False
     tmp_d = data.copy()
@@ -251,7 +248,8 @@ def heatmap_by_terms(data, term_labels, term_sets, colors=None, min_sig=None,
     if isinstance(columns, list) and len(columns) == 2:
         add_col_group = True
         col_labels, col_colors, col_color_map = _set_col_colors(array)
-
+    else:
+        col_labels, col_colors, col_color_map = None, None, None
     # only keep indexes that are in the provided sets
     array = array[array.index.isin(final_sorted)]
 
