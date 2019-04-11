@@ -32,9 +32,8 @@ class TestSubgraphs(object):
     def test_path_between_two_does_not_exist(self):
         start = 'HSPA9'
         end = 'ZFYVE1'
-        g = self.net_sub.paths_between_pair(start, end,
-                                            bidirectional=True)
-        ok_(g is None)
+        g = self.net_sub.paths_between_pair(start, end, bidirectional=True)
+        ok_(len(g.nodes) == 0)
 
     def test_path_between_two(self):
         start = 'AKT1'

@@ -1,52 +1,70 @@
 import json
 import uuid
-from importlib import reload
 
 import networkx as nx
 import numpy as np
 from IPython.display import display, HTML
 
-import magine.networks.visualization.notebooks.cy_stypes as default_styles
 from magine.html_templates.html_tools import env
 from magine.networks.exporters import nx_to_json
+from .cyjs_options import layouts, styles
 
 
-def display_graph(graph, add_parent=False, layout='cose-bilkent',
-                  background='#FFFFFF', height=700, width=100,
-                  default_color='white', **layout_args):
-    reload(default_styles)
+def draw_cyjs(graph, add_parent=False, layout='cose-bilkent',
+              bg_color='white', default_node_color='white', **layout_args):
+    """ Renders a graph using cytoscape.js
+
+    Parameters
+    ----------
+    graph : nx.DiGraph
+    add_parent : bool
+        Group together nodes that share 'termName'.
+    layout : str
+        Layout
+    bg_color
+    default_node_color : str
+        Will only be used if color is not already set for node
+    layout_args : dict
+        Any additional arguments for use in cytoscape.js. Examples can be found
+        in cyjs_options.py
+
+    Returns
+    -------
+
+    """
+    # Dont think users need these
+    height = 700
+    width = 100
     g_copy = graph.copy()
     if add_parent:
         g_copy = _add_parent_term(g_copy)
 
     _scale_edges(g_copy)
-    _set_node_color(g_copy, default_color)
+    _set_node_color(g_copy, default_node_color)
 
     d = nx_to_json(g_copy)
-    d['background'] = background
+    d['background'] = bg_color
     d['uuid'] = "cy" + str(uuid.uuid4())
     d['widget_width'] = str(width)
     d['widget_height'] = str(height)
 
-    if layout not in default_styles.layouts:
+    if layout not in layouts:
         raise Exception(
-            "layout {} is not in {}".format(layout,
-                                            default_styles.layouts.keys())
+            "layout {} is not in {}".format(layout, layouts.keys())
         )
     else:
-        layout_opts = default_styles.layouts[layout].copy()
+        layout_opts = layouts[layout].copy()
         layout_opts.update(layout_args)
 
     d['layout_json'] = json.dumps(layout_opts)
-    d['style_json'] = json.dumps(default_styles.styles['default'])
+    d['style_json'] = json.dumps(styles['default'])
     d['fitbutton'] = "fit{}".format(uuid.uuid4())
 
     template = env.get_template('subgraph_2.html')
     display(HTML(template.render(d)))
-
+ 
 
 def render_graph(graph, add_parent=False, default_color='white'):
-    reload(default_styles)
     g_copy = graph.copy()
 
     _scale_edges(g_copy)
@@ -57,7 +75,7 @@ def render_graph(graph, add_parent=False, default_color='white'):
     d = nx_to_json(g_copy)
     u_name = "cy{}".format(uuid.uuid4())
     d['uuid'] = u_name
-    d['style_json'] = json.dumps(default_styles.styles['default'])
+    d['style_json'] = json.dumps(styles['default'])
 
     edge_types = set()
     for i, j, data in graph.edges(data=True):

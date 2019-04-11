@@ -1,6 +1,30 @@
 import os
+import operator
 import networkx as nx
 from magine.networks.standards import edge_standards
+from collections import OrderedDict
+
+
+def create_dict_from_node_attributes(net, attribute):
+    """
+
+    Parameters
+    ----------
+    net : nx.DiGraph
+    attribute : str
+
+    Returns
+    -------
+    OrderedDict
+
+    """
+    attr_to_node = {}
+    for i, j in net.nodes(attribute):
+        if j not in attr_to_node:
+            attr_to_node[j] = set()
+        attr_to_node[j].add(i)
+    return OrderedDict(
+        sorted(attr_to_node.items(), key=operator.itemgetter(0)))
 
 
 def delete_disconnected_network(full_graph):

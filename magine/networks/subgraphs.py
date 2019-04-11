@@ -59,13 +59,14 @@ class Subgraph(object):
         >>> from networkx import DiGraph
         >>> from magine.networks.subgraphs import Subgraph
         >>> g = DiGraph()
-        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'), ('a', 'd'), ('e', 'd')])
+        >>> g.add_edges_from([('a','b'),('b','c'), ('c', 'd'),  ('e', 'd'), ('d', 'a')])
         >>> net_sub = Subgraph(g)
-        >>> path_a_d = net_sub.paths_between_pair('a','d')
-        >>> path_a_d.edges()
-        [('a', 'd')]
-        >>> path_a_e = net_sub.paths_between_pair('a','e')
-
+        >>> path_a_d = net_sub.paths_between_pair('a','d', False)
+        >>> sorted(path_a_d.edges)
+        [('a', 'b'), ('b', 'c'), ('c', 'd')]
+        >>> path_a_d = net_sub.paths_between_pair('a','d', True)
+        >>> sorted(path_a_d.edges)
+        [('a', 'b'), ('b', 'c'), ('c', 'd'), ('d', 'a')]
         """
 
         for i in (node_1, node_2):
@@ -73,13 +74,10 @@ class Subgraph(object):
                 print("{} is not in network!")
                 return
 
-        _paths = list()
-        _paths.append(_nx_find_path(self.network, node_1, node_2,
-                                    single_path=single_path))
+        paths = [_nx_find_path(self.network, node_1, node_2, single_path)]
         if bidirectional:
-            _paths.append(_nx_find_path(self.network, node_2, node_1,
-                                        single_path=single_path))
-        graph = self._list_paths_to_graph(_paths)
+            paths += [_nx_find_path(self.network, node_2, node_1, single_path)]
+        graph = self._process(paths, None, None, False)
         if draw:
             save_name = "%s_and_%s" % (node_1, node_2)
             self._save_or_draw(graph, save_name, draw, image_format)
@@ -87,8 +85,10 @@ class Subgraph(object):
         return graph
 
     def paths_between_two_lists(self, list_1, list_2, single_path=False,
-                                draw=False, save_name=None, max_length=None,
-                                image_format='png'):
+                                max_length=None, include_only=None,
+                                reverse=False, add_interconnecting_edges=False,
+                                draw=False, save_name=None, image_format='png'
+                                ):
         """
         Generates a graph based on all shortest paths between two species.
 
@@ -96,11 +96,23 @@ class Subgraph(object):
         Parameters
         ----------
         list_1 : list
-            name of first species
+            Node names
         list_2 : list
-            name of second species
+            Node names
         single_path : bool
-            If you only want a single shortest path
+            If you only want a single shortest path.
+        max_length : int
+            Maximum distance between any two species.
+        include_only : list
+            Species required to be in paths/
+        reverse : bool
+            Flag to check list_2 to list_1. Default will only look for list_1
+            to list_2.
+        add_interconnecting_edges : bool
+            Add edges between species even if not between list_1 and list_2
+            nodes.
+        save_name : str
+            Save of figure/network
         draw : bool
             create an image of returned network
         image_format : str, optional
@@ -120,37 +132,50 @@ class Subgraph(object):
         >>> g.add_path(['g', 'h', 'c', 'i'])
         >>> net_sub = Subgraph(g)
         >>> path_a_d = net_sub.paths_between_two_lists(['a','g'], ['c', 'i'], max_length=3)
-        >>> path_a_d.edges
-        OutEdgeView([('b', 'c'), ('a', 'b'), ('h', 'c'), ('g', 'h')])
+        >>> sorted(path_a_d.edges)
+        [('a', 'b'), ('b', 'c'), ('g', 'h'), ('h', 'c')]
 
         """
 
-        paths = list()
-        for i in list_1:
-            if i not in self.nodes:
-                continue
-            for j in list_2:
-                if j not in self.nodes:
-                    continue
-                if i == j:
-                    continue
-                paths.append(_nx_find_path(self.network, i, j,
-                                           single_path=single_path))
-        if max_length is not None:
-            paths = self._max_distance(paths, max_length)
-        graph = self._list_paths_to_graph(paths)
-        if draw:
-            if save_name is None:
-                print("please provide save name")
-                save_name = 'tmp'
-            self._save_or_draw(graph, save_name, draw, image_format)
+        tmp_list1 = list(self._check_node(list_1))
+        tmp_list2 = list(self._check_node(list_2))
+        paths = [_nx_find_path(self.network, i, j, single_path)
+                 for i, j in itertools.product(tmp_list1, tmp_list2)]
+        if reverse:
+            paths += [_nx_find_path(self.network, i, j, single_path)
+                      for i, j in itertools.product(tmp_list2, tmp_list1)]
+        if include_only is not None:
+            include_copy = list(include_only) + list(list_1) + list(list_2)
+        else:
+            include_copy = None
+        graph = self._process(paths, max_length, include_copy,
+                              add_interconnecting_edges)
 
+        if save_name is not None:
+            self._save_or_draw(graph, save_name, draw, image_format)
         return graph
 
-    def paths_between_list(self, species_list, save_name=None,
-                           single_path=False, draw=False, pool=None,
-                           image_format='png', max_length=None,
-                           include_only=None):
+    def _process(self, paths, max_length, include_only,
+                 add_interconnecting_edges):
+        if max_length is not None:
+            paths = self._max_distance(paths, max_length)
+        _new_paths = []
+        for path in paths:
+            for p in path:
+                _new_paths += [(p[i], p[i + 1]) for i in range(len(p) - 1)]
+        _new_paths = set(_new_paths)
+        graph = self.network.edge_subgraph(_new_paths).copy()
+        if add_interconnecting_edges:
+            graph = self.network.subgraph(graph.nodes).copy()
+        if include_only is not None:
+            graph = self._include_only(graph, include_only)
+        return graph
+
+    def paths_between_list(self, species_list, single_path=False,
+                           max_length=None, add_interconnecting_edges=False,
+                           include_only=None, pool=None,
+                           save_name=None, draw=False, image_format='png',
+                           ):
         """
         Returns graph containing all shortest paths between list.
 
@@ -188,36 +213,30 @@ class Subgraph(object):
         >>> g.add_path(['g', 'h', 'c', 'i', 'j', 'k'])
         >>> net_sub = Subgraph(g)
         >>> path_a_d = net_sub.paths_between_list(['a','c','d'])
-        >>> path_a_d.edges
-        OutEdgeView([('c', 'd'), ('b', 'c'), ('a', 'b'), ('a', 'd')])
-        >>> path_a_f = net_sub.paths_between_list(['g','h','j'], max_length=4)
-        >>> path_a_f.edges
-        OutEdgeView([('c', 'i'), ('i', 'j'), ('h', 'c'), ('g', 'h')])
+        >>> sorted(path_a_d.edges)
+        [('a', 'b'), ('a', 'd'), ('b', 'c'), ('c', 'd')]
+        >>> path_a_f = net_sub.paths_between_list(['g', 'h', 'j'], max_length=4)
+        >>> sorted(path_a_f.edges)
+        [('c', 'i'), ('g', 'h'), ('h', 'c'), ('i', 'j')]
         """
 
         tmp_species_list = list(self._check_node(species_list))
 
         if pool is not None:
-            paths = pool.map(
-                partial(_find_nx_path,
-                        network=self.network,
-                        single_path=single_path),
-                itertools.combinations(tmp_species_list, 2)
-            )
-            pool.close()
+            _map = pool.map
         else:
-            paths = map(partial(_find_nx_path,
-                                network=self.network,
-                                single_path=single_path),
-                        itertools.combinations(tmp_species_list, 2))
-
-        if max_length is not None:
-            paths = self._max_distance(paths, max_length)
-
-        graph = self._list_paths_to_graph(paths)
+            _map = map
+        paths = _map(partial(_find_nx_path, network=self.network,
+                             single_path=single_path),
+                     itertools.combinations(tmp_species_list, 2))
 
         if include_only is not None:
-            graph = self._include_only(graph, include_only)
+            include_copy = list(include_only) + list(species_list)
+        else:
+            include_copy = None
+        graph = self._process(paths, max_length, include_copy,
+                              add_interconnecting_edges)
+
         if save_name is not None:
             self._save_or_draw(graph, save_name, draw, image_format)
         return graph
@@ -379,7 +398,7 @@ class Subgraph(object):
         draw : bool
             create figure of graph
         include_list : list_like
-            list of species that must be in path in order to consider a path
+            Species that must be in path in order to consider a path
 
         Returns
         -------
@@ -395,10 +414,10 @@ class Subgraph(object):
         ('e', 'd')])
         >>> net_sub = Subgraph(g)
         >>> upstream_d = net_sub.upstream_of_node('d')
-        >>> upstream_d.edges()
-        [('a', 'd'), ('c', 'd'), ('b', 'c'), ('e', 'd')]
+        >>> sorted(upstream_d.edges())
+        [('a', 'd'), ('b', 'c'), ('c', 'd'), ('e', 'd')]
         >>> upstream_c = net_sub.upstream_of_node('c')
-        >>> upstream_c.edges()
+        >>> sorted(upstream_c.edges())
         [('a', 'b'), ('b', 'c')]
 
         """
@@ -444,10 +463,10 @@ class Subgraph(object):
          ('e', 'd')])
         >>> net_sub = Subgraph(g)
         >>> downstream_d = net_sub.downstream_of_node('d')
-        >>> downstream_d.edges()
+        >>> sorted(downstream_d.edges)
         []
         >>> downstream_c = net_sub.downstream_of_node('c')
-        >>> downstream_c.edges()
+        >>> sorted(downstream_c.edges)
         [('c', 'd')]
 
         """
@@ -533,11 +552,11 @@ class Subgraph(object):
         for i in node_list:
             if i not in self.nodes:
                 missing_nodes.add(i)
-        if len(missing_nodes) != 0:
+        if len(missing_nodes):
             print("Warning : {} do not exist in graph\n"
                   "Removing from list".format(len(missing_nodes)))
-            node_list.difference_update(missing_nodes)
-        return sorted(node_list)
+
+        return sorted(node_list.difference(missing_nodes))
 
     def _list_paths_to_graph(self, paths):
         graph = nx.DiGraph()
@@ -564,8 +583,8 @@ class Subgraph(object):
                 _add_node(protein)
                 _add_edge(previous, protein)
                 previous = protein
-        if len(graph.nodes()) == 0:
-            return None
+        if not len(graph.nodes):
+            raise Exception("Resulting graph has no Nodes")
         return graph
 
     @staticmethod
