@@ -64,6 +64,8 @@ class BaseData(pd.DataFrame):
             d_copy.require_n_sig(index=index, columns=columns,
                                  n_sig=min_sig,
                                  inplace=True)
+            if not d_copy.shape[0]:
+                return pd.DataFrame()
 
         array = pd.pivot_table(d_copy, index=index, fill_value=fill_value,
                                columns=columns, values=values)

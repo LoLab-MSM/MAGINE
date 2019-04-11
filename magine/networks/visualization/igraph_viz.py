@@ -26,6 +26,8 @@ def draw_igraph(mol_net, save_name=None, layout='auto', title=None,
     save_name : str
         Save name
     layout : str
+        Options = "kk", "fr", "drl", "lgl", "tree", "graphopt", "mds", "sugiyama",
+        "auto", "grid_fr"
     title : str, optional
     positions : list, optional
     bbox : list
