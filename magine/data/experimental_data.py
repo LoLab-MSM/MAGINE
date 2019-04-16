@@ -55,6 +55,7 @@ class Sample(BaseData):
 
     def __init__(self, *args, **kwargs):
         super(Sample, self).__init__(*args, **kwargs)
+        self.drop_duplicates(inplace=True)
         self._index = identifier
         self._identifier = identifier
         self._value_name = fold_change
@@ -115,6 +116,42 @@ class Sample(BaseData):
         """List of significantly flagged species by sample"""
         return [self.loc[self[sample_id] == i].id_list
                 for i in self.sample_ids]
+
+    def subset(self, species, index='identifier', sample_ids=None,
+               exp_methods=None):
+        """
+
+        Parameters
+        ----------
+        species : list, str
+            List of species to create subset dataframe from
+        index : str
+            Index to filter based on provided 'species' list
+        sample_ids : str, list
+            List or string to filter sample
+        exp_methods : str, list
+            List or string to filter sample
+
+        Returns
+        -------
+        magine.data.experimental_data.Species
+        """
+        df = self.copy()
+        if isinstance(species, str):
+            df = df.loc[df[index].str.contains(species)]
+        else:
+            df = df.loc[df[index].isin(species)]
+        if sample_ids is not None:
+            if isinstance(species, str):
+                df = df.loc[df[sample_id].str.contains(sample_ids)]
+            else:
+                df = df.loc[df[sample_id].isin(sample_ids)]
+        if exp_methods is not None:
+            if isinstance(species, str):
+                df = df.loc[df[exp_method].str.contains(exp_methods)]
+            else:
+                df = df.loc[df[exp_method].isin(exp_methods)]
+        return df
 
     def plot_pie_sig_ratio(self, save_name=None, ax=None, fig=None,
                            figsize=None):
@@ -448,6 +485,7 @@ class ExperimentalData(object):
             df = data_file.copy()
         else:
             df = pd.read_csv(data_file, parse_dates=False, low_memory=False)
+        df.drop_duplicates(inplace=True)
         for i in valid_cols:
             if i not in df.dtypes:
                 print("{} not in columns.".format(i))
