@@ -55,7 +55,7 @@ class Sample(BaseData):
 
     def __init__(self, *args, **kwargs):
         super(Sample, self).__init__(*args, **kwargs)
-        self.drop_duplicates(inplace=True)
+        # self.drop_duplicates(inplace=True)
         self._index = identifier
         self._identifier = identifier
         self._value_name = fold_change
