@@ -125,12 +125,11 @@ def volcano_plot(data, save_name=None, out_dir=None, sig_column=False,
 
 
     """
-
-    data = data.dropna(subset=[p_val])
-    data = data[np.isfinite(data[fold_change])]
-    filtered_data = create_mask(data, sig_column, p_value,
-                                fold_change_cutoff)
-    sec_0, sec_1, sec_2 = filtered_data
+    cp_df = data.copy()
+    cp_df.dropna(subset=[p_val], inplace=True)
+    cp_df = cp_df[np.isfinite(data[fold_change])]
+    sec_0, sec_1, sec_2 = create_mask(cp_df, sig_column, p_value,
+                                      fold_change_cutoff)
     fig = plt.figure()
     ax = fig.add_subplot(111)
     add_volcano_plot(ax, sec_0, sec_1, sec_2)

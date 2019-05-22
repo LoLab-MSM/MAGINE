@@ -485,6 +485,7 @@ class ExperimentalData(object):
             df = data_file.copy()
         else:
             df = pd.read_csv(data_file, parse_dates=False, low_memory=False)
+        df.reset_index(drop=True, inplace=True)
         df.drop_duplicates(inplace=True)
         for i in valid_cols:
             if i not in df.dtypes:
