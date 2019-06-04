@@ -353,78 +353,7 @@ class Sample(BaseData):
                        out_dir=out_dir, plot_type=plot_type,
                        run_parallel=run_parallel)
 
-    def time_series_volcano(self, save_name=None, p_value=0.1,
-                            out_dir=None, fold_change_cutoff=1.5,
-                            y_range=None, x_range=None, sig_column=False):
-        """
-        Creates a figure of subplots of provided experimental method
-
-        Parameters
-        ----------
-        save_name: str
-            name to save figure
-        out_dir: str, directory
-            Location to save figure
-        sig_column: bool, optional
-            If to use significant flags of data
-        p_value: float, optional
-            Criteria for significant
-        fold_change_cutoff: float, optional
-            Criteria for significant
-        y_range: array_like
-            upper and lower bounds of plot in y direction
-        x_range: array_like
-            upper and lower bounds of plot in x direction
-
-        Returns
-        -------
-
-        """
-
-        n_sample = np.sort(self[sample_id].unique())
-
-        if len(n_sample) > 8:
-            n_cols = 3
-        else:
-            n_cols = 2
-        n_rows = np.rint(np.rint(len(n_sample) / float(n_cols)))
-        if n_cols * n_rows < len(n_sample):
-            if n_cols >= n_rows:
-                n_rows += 1
-            else:
-                n_cols += 1
-
-        fig = plt.figure(figsize=(4 * n_rows, 3 * n_cols))
-        for n, i in enumerate(n_sample):
-            sample = self.loc[self[sample_id] == i].copy()
-
-            sample = sample.dropna(subset=[p_val])
-            sample = sample[np.isfinite(sample[fold_change])]
-            sample = sample.dropna(subset=[fold_change])
-            sec_0, sec_1, sec_2 = v_plot.create_mask(sample, sig_column,
-                                                     p_value,
-                                                     fold_change_cutoff)
-
-            ax = fig.add_subplot(n_rows, n_cols, n + 1)
-            ax.set_title(i)
-            v_plot.add_volcano_plot(ax, sec_0, sec_1, sec_2)
-            if not sig_column:
-                fc = np.log2(fold_change_cutoff)
-                log_p_val = -1 * np.log10(p_value)
-                ax.axvline(x=fc, linestyle='--')
-                ax.axvline(x=-1 * fc, linestyle='--')
-                ax.axhline(y=log_p_val, linestyle='--')
-            if y_range is not None:
-                ax.set_ylim(y_range[0], y_range[1])
-            if x_range is not None:
-                ax.set_xlim(x_range[0], x_range[1])
-        fig.tight_layout()
-        if save_name is not None:
-            v_plot.save_plot(fig, save_name=save_name, out_dir=out_dir)
-        return fig
-
-    def create_histogram_measurements(self, save_name=None,
-                                      y_range=None, out_dir=None):
+    def plot_histogram(self, save_name=None, y_range=None, out_dir=None):
         """
         Plots a histogram of data
 

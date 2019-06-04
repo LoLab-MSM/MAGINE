@@ -22,7 +22,7 @@ class BaseData(pd.DataFrame):
     @property
     def sig(self):
         """ terms with significant flag """
-        return self.loc[self[flag]]
+        return self.loc[self[flag]].copy()
 
     def pivoter(self, convert_to_log=False, columns='sample_id',
                 values='fold_change', index=None, fill_value=None, min_sig=0):

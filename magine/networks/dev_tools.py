@@ -92,16 +92,13 @@ def merge_nodes(graph):
                             new_g.remove_edge(n, x)
                             new_g.add_edge(new_name, x, **graph.edge[n][x])
                             edges.remove((n, x))
-    print(
-        "{} nodes and {} edges".format(len(graph.nodes()), len(graph.edges())))
-    print(
-        "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
+    print("{} nodes and {} edges".format(len(graph.nodes), len(graph.edges)))
+    print("{} nodes and {} edges".format(len(new_g.nodes), len(new_g.edges)))
     for n in new_g.nodes():
         if len(new_g.successors(n)) == 0 and len(new_g.predecessors(n)) == 0:
             new_g.remove_node(n)
 
-    print(
-        "{} nodes and {} edges".format(len(new_g.nodes()), len(new_g.edges())))
+    print("{} nodes and {} edges".format(len(new_g.nodes), len(new_g.edges)))
     return new_g
 
 
@@ -132,9 +129,7 @@ def compress_edges(graph):
     for i in neighbor_dict:
         neigh = neighbor_dict[i]
         # print(i,neigh)
-        if len(i) != 1:
-            continue
-        if len(neigh) == 1:
+        if len(i) != 1 or len(neigh) == 1:
             continue
         interaction_types = {}
         for j in neighbor_dict[i]:

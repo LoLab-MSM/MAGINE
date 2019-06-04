@@ -1,7 +1,7 @@
 import pandas as pd
 from nose.tools import raises, ok_
 
-from magine.data import BaseData
+from magine.data.base import BaseData
 
 
 class ConcentrationBaseData(BaseData):

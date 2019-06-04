@@ -1,12 +1,16 @@
+import logging
 import os
 import zipfile
 
-import numpy as np
+import math
 import pandas as pd
 import requests
 from defusedxml import cElementTree as ElementTree
 
 from magine.data.storage import id_mapping_dir
+from magine.logging import get_logger
+
+logger = get_logger('magine.downloads', log_level=logging.INFO)
 
 
 def load_hgnc():
@@ -17,7 +21,7 @@ def load_hgnc():
     else:
         hgnc = pd.read_csv(hgnc_name, low_memory=False)
 
-    return hgnc[hgnc['status'] == 'Approved']
+    return hgnc.loc[hgnc.status == 'Approved']
 
 
 def load_uniprot():
@@ -137,8 +141,8 @@ def download_ncbi():
 
 
 def _download(url, columns, name, save=True, names=None, compression=None):
-    print("Downloading from {}. This might take awhile depending on "
-          "connection speed.".format(name))
+    logger.info("Downloading from {}. This might take awhile depending on "
+                "connection speed.".format(name))
     if names is None:
         df = pd.read_table(url, delimiter='\t', low_memory=False, verbose=True,
                            compression=compression)
@@ -182,50 +186,24 @@ class HMDB(object):
         if len(os.listdir(out_dir)) == 0:
             self._unzip_hmdb(out_dir)
 
-        # count = 0
-
-        print("Parsing metabolites information from files")
-        # tmp_all = [None] * 1000000
-        for i in os.listdir(out_dir):
-            # turn file into an iteratorET
-            # context = iter(ElementTree.iterparse(os.path.join(out_dir, i),
-            #                                      events=("start-ns", "end")))
-            #
-            # # get the root element
-            # _, _ = next(context)
-            # # ElementTree.Element.keys()
-            # for ev, e in context:
-            #     if e.tag == '{http://www.hmdb.ca}metabolite' and ev == 'end':
-            #         tmp_all[count] = self._create_dict(e)
-            #         count += 1
-            #         # if count == 100:
-            #         #     break
-
-            context = iter(ElementTree.iterparse(os.path.join(out_dir, i),
-                                                 events=("start", "end")))
-            #
-            # # get the root element
-            _, _ = next(context)
-            tmp_all = [
-                self._create_dict(e) for ev, e in context
-                if e.tag == '{http://www.hmdb.ca}metabolite' and ev == 'end'
-            ]
-        # if count > 1000000:
-        #     print("Need to allocate more space for HMDB data")
-        # df = pd.DataFrame(tmp_all[:count])
-        df = pd.DataFrame(tmp_all)
+        logger.info("Parsing metabolites information from files")
+        df = pd.DataFrame([
+            self._create_dict(e) for ev, e in
+            iter(ElementTree.iterparse(
+                os.path.join(out_dir, os.listdir(out_dir)[0]),
+                events=("start", "end"))
+            )
+            if e.tag == '{http://www.hmdb.ca}metabolite' and ev == 'end'
+        ])
 
         for i in categories:
             if i in df.columns:
                 df[i.split('}')[1]] = df[i]
                 del df[i]
-        print(df.head(10))
-        for i in df.columns:
-            print(i, df[i].head(10))
 
         df.to_csv(self.out_name, index=False, encoding='utf-8',
                   compression='gzip', tupleize_cols=True)
-        print("Done processing HMDB")
+        logger.info("Done processing HMDB")
 
     def _unzip_hmdb(self, out_directory):
         """ unzips hmdb metabolites file
@@ -233,12 +211,11 @@ class HMDB(object):
         hmdb_file = os.path.join(self.tmp_dir, self.target_file)
         if not os.path.exists(hmdb_file):
             self._download_hmdb()
-
-        print("Unzipping metabolites file")
+        logger.info("Unzipping metabolites file")
         zip_ref = zipfile.ZipFile(hmdb_file, 'r')
         zip_ref.extractall(out_directory)
         zip_ref.close()
-        print("Done unzipping metabolites file")
+        logger.info("Done unzipping metabolites file")
 
     def _download_hmdb(self):
         """ Downloads hmdb metabolites xml file
@@ -252,7 +229,9 @@ class HMDB(object):
         response = requests.head(ur)
         file_size = int(response.headers['content-length'])
         print("Downloading metabolites information from HMDB")
-        print("File size is : %s Bytes: %s" % (self.target_file, file_size))
+        logger.info("Downloading metabolites information from HMDB")
+        logger.info("File size is : {} Bytes: {}".format(self.target_file,
+                                                         file_size))
         file_size_dl = 0
         block_sz = 1024
         # block_sz = 8024
@@ -263,7 +242,7 @@ class HMDB(object):
             for chunk in r.iter_content(chunk_size=block_sz):
                 file_size_dl += len(chunk)
                 percent_download = int(
-                    np.floor(file_size_dl * 100. / file_size))
+                    math.floor(file_size_dl * 100. / file_size))
 
                 if percent_download in milestone_markers:
                     if percent_download not in v:
@@ -272,7 +251,7 @@ class HMDB(object):
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
 
-        print("Downloaded {} and stored {}".format(ur, out_path))
+        logger.info("Downloaded {} and stored {}".format(ur, out_path))
         return
 
     @staticmethod
@@ -281,9 +260,9 @@ class HMDB(object):
         for i in categories:
             n = elem.find(i)
             if n is None:
-                print(i)
+                # print(i)
                 continue
-            if i == '{http://www.hmdb.ca}protein_associations':
+            elif i == '{http://www.hmdb.ca}protein_associations':
                 output = []
                 for pr in n.findall('{http://www.hmdb.ca}protein'):
                     for gn in pr.findall('{http://www.hmdb.ca}gene_name'):

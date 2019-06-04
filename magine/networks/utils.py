@@ -280,14 +280,9 @@ def standardize_edge_types(network):
                 if i in edge_type:
                     edge_type.remove(i)
 
-            if 'reaction' in edge_type:
-                if len(edge_type) != 1:
-                    edge_type.remove('reaction')
-
             edge_type = '|'.join(sorted(edge_type))
 
-            if edge_type in ('', 'binding', 'indirect'):
-                # network.remove_edge(source, target)
+            if edge_type in ('', 'reaction', 'indirect'):
                 to_remove.add((source, target))
             else:
                 network[source][target]['interactionType'] = edge_type
