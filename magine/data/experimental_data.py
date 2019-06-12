@@ -1,5 +1,6 @@
 import os
 import subprocess
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +31,15 @@ valid_cols = [fold_change, flag, p_val, species_type, sample_id]
 
 
 def load_data_csv(file_name, **kwargs):
+    """ Deprecated; use :class:`load_data` instead. """
+
+    warnings.warn("load_data_csv will be removed in a future "
+                  "version of MAGINE. Use load_data instead.",
+                  DeprecationWarning, stacklevel=2)
+    load_data(file_name, **kwargs)
+
+
+def load_data(file_name, **kwargs):
     """ Load data into EnrichmentResult data class
 
     Parameters
@@ -560,7 +570,7 @@ class ExperimentalData(object):
         """
         return get_measured_by_datatype(self)
 
-    def create_table_of_data(self, sig=False, index=identifier, save_name=None,
+    def create_summary_table(self, sig=False, index=identifier, save_name=None,
                              plot=False, write_latex=False):
         """
         Creates a summary table of data.

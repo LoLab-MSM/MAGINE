@@ -6,13 +6,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from nose.tools import ok_
 
-from magine.data.experimental_data import ExperimentalData, load_data_csv
+from magine.data.experimental_data import ExperimentalData, load_data
 
 
 class TestExpData(object):
     def setUp(self):
         self._dir = os.path.join(os.path.dirname(__file__), 'Data')
-        self.exp_data = load_data_csv(os.path.join(self._dir,
+        self.exp_data = load_data(os.path.join(self._dir,
                                                    'example_apoptosis.csv'))
         self.out_dir = tempfile.mkdtemp()
 
@@ -131,10 +131,10 @@ class TestExpData(object):
         plt.close()
 
     def test_table(self):
-        self.exp_data.create_table_of_data()
-        self.exp_data.create_table_of_data(write_latex=True, save_name='latex')
-        self.exp_data.create_table_of_data(sig=True)
-        self.exp_data.create_table_of_data(sig=True, index='label')
+        self.exp_data.create_summary_table()
+        self.exp_data.create_summary_table(write_latex=True, save_name='latex')
+        self.exp_data.create_summary_table(sig=True)
+        self.exp_data.create_summary_table(sig=True, index='label')
 
     def test_log2(self):
         x = self.exp_data.rna.log2_normalize_df('fold_change')

@@ -228,7 +228,7 @@ def gather_stats(set1, set2, backgroud_nodes, edges):
 
 
 def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
-                      remove_isolated=False, create_only=True, merge=False,
+                      remove_isolated=False, use_cytoscape=False, merge=False,
                       out_dir=None, use_threshold=False, use_fdr=False,
                       min_edges=0):
     """
@@ -244,7 +244,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     draw_png : bool
     remove_isolated : bool
         Remove nodes that are not connected in the final graphs
-    create_only : bool
+    use_cytoscape : bool
         Create ontology network only, don't visualize with cytoscape
     merge : bool
         Create gif of cytoscape session
@@ -307,7 +307,7 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
     labels = [i.replace('_', '') for i in labels]
     if save_name:
         nx.write_graphml(term_g, "{}_ags_network.graphml".format(save_name))
-    if not create_only:
+    if use_cytoscape:
         from magine.networks.visualization.cytoscape import RenderModel
         rm = RenderModel(term_g, layout='force-directed')
         rm.visualize_by_list_of_time(labels,

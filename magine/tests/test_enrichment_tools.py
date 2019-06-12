@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from nose.tools import ok_
 
 import magine.enrichment.enrichment_result as et
-from magine.data.experimental_data import load_data_csv
+from magine.data.experimental_data import load_data
 from magine.plotting.heatmaps import heatmap_by_terms
 
 data_dir = os.path.dirname(__file__)
@@ -76,7 +76,7 @@ class TestEnrichmentResult(object):
         ok_(isinstance(dist, matplotlib.figure.Figure))
         plt.close()
 
-        df = load_data_csv(os.path.join(os.path.dirname(__file__), 'Data',
+        df = load_data(os.path.join(os.path.dirname(__file__), 'Data',
                                         'example_apoptosis.csv'))
         terms = [{'BAX'}, {'PARP4'}]
         heatmap_by_terms(df.species, ['1', '2'], terms)
