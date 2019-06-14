@@ -36,7 +36,7 @@ def load_data_csv(file_name, **kwargs):
     warnings.warn("load_data_csv will be removed in a future "
                   "version of MAGINE. Use load_data instead.",
                   DeprecationWarning, stacklevel=2)
-    load_data(file_name, **kwargs)
+    return load_data(file_name, **kwargs)
 
 
 def load_data(file_name, **kwargs):
@@ -308,16 +308,18 @@ class Sample(BaseData):
             v_plot.save_plot(fig, save_name=save_name, out_dir=out_dir)
         return fig
 
-    def plot_species(self, species_list=None, save_name=None, out_dir=None,
-                     title=None,
+    def plot_species(self, species_list=None, subset_index=None,
+                     save_name=None, out_dir=None, title=None,
                      plot_type='plotly', image_format='png'):
         """
-        Creates an HTML table of plots provided a list metabolites
+        Create scatter plot of species list
 
         Parameters
         ----------
         species_list : list
             list of compounds
+        subset_index : list
+            Column to filter based on species_list
         save_name : str
             Name of html output file
         out_dir : str
@@ -328,14 +330,18 @@ class Sample(BaseData):
             Type of plot outputs, can be "plotly" or "matplotlib"
         image_format : str
             pdf or png, only used if plot_type="matplotlib"
+
         Returns
         -------
-
+        matplotlib.Figure or plotly.Figure
         """
-
+        df = self.copy()
+        if species_list is not None:
+            if subset_index is None:
+                subset_index = self._index
+            df = df.subset(species_list, index=subset_index)
         return plot_species(
-            self, species_list=species_list,
-            save_name=save_name, out_dir=out_dir, title=title,
+            df, save_name=save_name, out_dir=out_dir, title=title,
             plot_type=plot_type, image_format=image_format
         )
 
@@ -463,7 +469,6 @@ class ExperimentalData(object):
         if self.__genes is None:
             tmp = self.data.copy()
             tmp = tmp.loc[tmp[species_type] == protein]
-
             self.__genes = Sample(tmp)
         return self.__genes
 
