@@ -547,9 +547,10 @@ replace_pairs = [
     (' (mouse)', '_mus'),
     (' (human)', '_hsa'),
     ('Homo sapiens', 'hsa'),
-    ('Mus musculus', 'hsa'),
+    ('Mus musculus', 'mus'),
     ('hg19', '_hsa'),
     ('mm9', '_mus'),
+    ('hsa_r-hsa', 'hsa')
 
 ]
 
@@ -633,12 +634,12 @@ def run_enrichment_for_project(exp_data, project_name, databases=None):
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
-    final_df['significant'] = False
-    final_df.loc[final_df['adj_p_value'] <= 0.05, 'significant'] = True
-
     final_df = final_df[~final_df['term_name'].isnull()].copy()
-    final_df.to_csv('{}.csv.gz'.format(project_name), encoding='utf-8',
-                    compression='gzip')
+    final_df.loc[(final_df['adj_p_value'] <= 0.05) &
+                 (final_df['combined_score'] > 0.0), 'significant'] = True
+
+    final_df.to_csv('{}_enrichment.csv.gz'.format(project_name),
+                    encoding='utf-8', compression='gzip', index=False)
     print("Done with enrichment")
 
 

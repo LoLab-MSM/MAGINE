@@ -263,6 +263,7 @@ def plot_species(df, species_list=None, save_name='test', out_dir=None,
         pdf or png, only used if plot_type="matplotlib"
     close_plots : bool
         Close plot after making, use when creating lots of plots in parallel.
+        
     Returns
     -------
 

@@ -12,8 +12,9 @@ from magine.data.experimental_data import ExperimentalData, load_data
 class TestExpData(object):
     def setUp(self):
         self._dir = os.path.join(os.path.dirname(__file__), 'Data')
-        self.exp_data = load_data(os.path.join(self._dir,
-                                                   'example_apoptosis.csv'))
+        self.exp_data = load_data(
+            os.path.join(self._dir, 'example_apoptosis.csv')
+        )
         self.out_dir = tempfile.mkdtemp()
 
     def tearDown(self):
@@ -77,7 +78,8 @@ class TestExpData(object):
 
     def test_plot_list(self):
         self.exp_data.rna.plot_species(self.exp_data.rna.sig.id_list,
-                                       'del_test', self.out_dir)
+                                       save_name='del_test',
+                                       out_dir=self.out_dir)
         plt.close()
 
     def test_html_output(self):

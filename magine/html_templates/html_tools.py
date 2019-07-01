@@ -120,7 +120,6 @@ def _format_simple_table(data):
 
     int_type = ['n_genes', 'rank']
     for i in data.columns:
-        print(i)
         if isinstance(i, (tuple, list)):
             t_i = i[0]
         else:
