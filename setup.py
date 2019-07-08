@@ -20,7 +20,7 @@ with open(path.join(here, 'README.rst'), 'r') as f:
 
 setup(
     name='MAGINE',
-    version='0.0.7',
+    version='0.0.8',
     description='Package to analyze biological data.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
@@ -50,21 +50,33 @@ setup(
     install_requires=[
         'scipy',
         'numpy',
-        'jinja2',
-        'pydot',
-        'pydotplus',
-        'requests',
         'pandas',
+        'statsmodels',
+
+        'jinja2',
+
+        'requests',
+
         'sortedcontainers',
+        'defusedxml',
         'xlrd',
+
         'matplotlib',
         'seaborn',
         'matplotlib-venn',
+        'plotly==2.7',
+        'wordcloud',
+
         'bioservices',
+
         'pathos',
         'jupyter',
-        'plotly==2.7',
+        'ipywidgets',
+        'py2cytoscape',
+        'pydot',
+        'pydotplus',
         'networkx>=2.1',
+
     ],
 
     test_suite='nose.collector',

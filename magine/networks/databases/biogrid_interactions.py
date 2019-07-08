@@ -1,12 +1,11 @@
 import os
-import sys
 
 import networkx as nx
 import pandas as pd
 
 import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
-from magine.mappings import ChemicalMapper
+from magine.mappings.chemical_mapper import ChemicalMapper
 
 p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
 _base_url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/'
@@ -16,13 +15,13 @@ _protein_url = _base_url + 'BIOGRID-ALL-LATEST.tab2.zip'
 
 class BioGridDownload(object):
     def __init__(self):
+
         self.url = _protein_url
         self.url2 = _chem_url
         self._db_name = 'BioGrid'
         self._cm = ChemicalMapper()
 
     def _create_chemical_network(self):
-        # df = pd.read_csv(io.BytesIO(urlopen(self.url2).read()),
         df = pd.read_csv(self.url2,
                          compression='zip',
                          delimiter='\t',
@@ -164,7 +163,7 @@ class BioGridDownload(object):
                         'Source Database'
                         ]
 
-        table = table[protein_cols]
+        table = table[protein_cols].copy()
         # Remove puring binding and no modification
         table = table[~table['Modification'].isin(['-', 'No Modification'])]
 
