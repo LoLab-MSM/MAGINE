@@ -92,3 +92,12 @@ class TestEnrichmentResult(object):
         score = et.jaccard_index(term1, term2)
 
         ok_(score == 0.6)
+
+    def test_term_to_dict(self):
+        g = self.data.term_to_genes_dict(
+            ['apoptosis_hsa_hsa04210', 'p53 signaling pathway_hsa_hsa04115']
+        )
+
+        ok_(g['apoptosis_hsa_hsa04210'] == {'BCL2', 'CASP10'})
+        ok_(g['apoptosis_hsa_hsa04210,p53 signaling pathway_hsa_hsa04115'] == {
+            'CASP3', 'CASP8', 'BAX'})

@@ -1,7 +1,6 @@
 import json
 import os
 import re
-import time
 
 # Will be OK in Python 2
 try:
@@ -193,7 +192,7 @@ class Enrichr(object):
             print("Running Enrichr with gene set {}".format(gene_set_lib))
 
         user_list_id = self._add_gene_list(list_of_genes)
-        if isinstance(gene_set_lib, str):
+        if isinstance(gene_set_lib, basestring):
             df = self._run_id(user_list_id, gene_set_lib)
         else:
             df = self._run_list_of_dbs(user_list_id, gene_set_lib)
@@ -202,9 +201,7 @@ class Enrichr(object):
         if init_size == 0:
             print("No terms returned")
             return df
-        df['term_name'] = df.apply(clean_term_names, axis=1)
-        df['significant'] = False
-        df.loc[df['adj_p_value'] <= 0.05, 'significant'] = True
+        df = _prepare_output(df)
         after_size = len(df)
         if init_size != after_size:
             raise AssertionError('not the same shape {}'.format(gene_set_lib))
@@ -318,18 +315,10 @@ gene_set_lib='Reactome_2016')
 
         q = self._query.format(url=self._url, list_id=list_id,
                                lib=gene_set_lib)
-        while True:
-            try:
-                response = requests.get(q)
-                break
-            except:
-                time.sleep(1)
+        response = requests.get(q, timeout=100)
 
         if not response.ok:
-            # quick way to wait for response
-            while not response.ok:
-                response = requests.get(q)
-
+            raise Exception("EnrichR response error")
         data = json.loads(response.text)
         if len(data[gene_set_lib]) == 0:
             return EnrichmentResult()
@@ -351,18 +340,42 @@ gene_set_lib='Reactome_2016')
         def get_length(row):
             return len(row['gene_hits'])
 
+        # compress genes into string and get count
         df['genes'] = df.apply(compress_genes, axis=1)
         df['n_genes'] = df.apply(get_length, axis=1)
 
+        # remove term names if null
+        df = df[~df['term_name'].isnull()].copy()
+
+        # keep only desired columns
         cols = ['term_name', 'rank', 'p_value', 'z_score', 'combined_score',
                 'adj_p_value', 'genes', 'n_genes']
 
-        df = df[~df['term_name'].isnull()]
         df = df[cols]
         df['db'] = gene_set_lib
         return df
 
+    def _run_list_of_dbs(self, gene_list_id, databases):
+        data = self._run_id(gene_list_id, databases[0])
+        for db in databases[1:]:
+            data = data.append(self._run_id(gene_list_id, db),
+                               ignore_index=True)
+            if self.verbose:
+                print('\t\t{}/{} databases'.format(db, len(databases)))
+        return data
+
     def _add_gene_list(self, gene_list):
+        """ Upload to enrichr
+
+        Parameters
+        ----------
+        gene_list : list
+
+        Returns
+        -------
+        str : userListId that maps to gene list provided, used within enrichR
+        to gather enrichment results.
+        """
 
         genes_str = '\n'.join(gene_list)
 
@@ -377,14 +390,12 @@ gene_set_lib='Reactome_2016')
         data = json.loads(response.text)
         return data['userListId']
 
-    def _run_list_of_dbs(self, gene_list_id, databases):
-        data = self._run_id(gene_list_id, databases[0])
-        for db in databases[1:]:
-            data = data.append(self._run_id(gene_list_id, db),
-                               ignore_index=True)
-            if self.verbose:
-                print('\t\t{}/{} databases'.format(db, len(databases)))
-        return data
+
+def _prepare_output(df):
+    df['term_name'] = df.apply(clean_term_names, axis=1)
+    df['significant'] = False
+    df.loc[df['adj_p_value'] <= 0.05, 'significant'] = True
+    return df
 
 
 def clean_term_names(row):
@@ -560,6 +571,41 @@ for db in ['drug', 'disease', 'ontologies', 'pathways', 'transcription',
     standard_dbs += db_types[db]
 
 
+def get_background_list(lib_name):
+    """
+    Return reference list for given gene referecen set
+
+    Parameters
+    ----------
+    lib_name : str
+
+    Returns
+    -------
+
+    """
+    enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary'
+    query_string = '?userListId&libraryName={}'
+    response = requests.get(
+        enrichment_url + query_string.format(lib_name)
+    )
+    if not response.ok:
+        raise Exception('Error fetching enrichment results')
+
+    results = json.loads(response.text)
+
+    term_to_gene = []
+    if lib_name not in results:
+        raise AssertionError("Something happened when calling enrichR.")
+
+    for term, genes_dict in results[lib_name]['terms'].items():
+        genes = sorted(set(i for i in genes_dict))
+        term_to_gene.append(
+            dict(term=term.lower(), gene_list=genes, n_genes=len(genes))
+        )
+
+    return term_to_gene
+
+
 def run_enrichment_for_project(exp_data, project_name, databases=None):
     """
 
@@ -643,36 +689,3 @@ def run_enrichment_for_project(exp_data, project_name, databases=None):
     print("Done with enrichment")
 
 
-def get_background_list(lib_name):
-    """
-    Return reference list for given gene referecen set
-
-    Parameters
-    ----------
-    lib_name : str
-
-    Returns
-    -------
-
-    """
-    enrichment_url = 'http://amp.pharm.mssm.edu/Enrichr/geneSetLibrary'
-    query_string = '?userListId&libraryName={}'
-    response = requests.get(
-        enrichment_url + query_string.format(lib_name)
-    )
-    if not response.ok:
-        raise Exception('Error fetching enrichment results')
-
-    results = json.loads(response.text)
-
-    term_to_gene = []
-    if lib_name not in results:
-        raise AssertionError("Something happened when calling enrichR.")
-
-    for term, genes_dict in results[lib_name]['terms'].items():
-        genes = sorted(set(i for i in genes_dict))
-        term_to_gene.append(
-            dict(term=term.lower(), gene_list=genes, n_genes=len(genes))
-        )
-
-    return term_to_gene

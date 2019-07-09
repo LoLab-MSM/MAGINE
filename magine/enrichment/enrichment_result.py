@@ -1,4 +1,6 @@
 import itertools
+import operator
+from collections import OrderedDict
 from itertools import combinations
 
 import numpy as np
@@ -144,6 +146,39 @@ class EnrichmentResult(BaseData):
         else:
             genes = self[self['term_name'].isin(term)]['genes']
         return set(itertools.chain.from_iterable(genes.str.split(',').values))
+
+    def term_to_genes_dict(self, term_list=None):
+        """
+
+        Parameters
+        ----------
+        term_list : list
+
+        Returns
+        -------
+        OrderedDict
+
+        """
+        if term_list is None:
+            term_list = set(self['term_name'].values)
+        elif isinstance(term_list, basestring):
+            term_list = [term_list]
+        gene_to_term = {}
+        for term in term_list:
+            gene_list = self.term_to_genes(term)
+            for g in gene_list:
+                if g not in gene_to_term:
+                    gene_to_term[g] = set()
+                gene_to_term[g].add(term)
+        term_to_gene = {}
+        for i, j in gene_to_term.items():
+            name = ','.join(sorted(j))
+            if name not in term_to_gene:
+                term_to_gene[name] = set()
+            term_to_gene[name].add(i)
+        return OrderedDict(
+            sorted(term_to_gene.items(), key=operator.itemgetter(0))
+        )
 
     def all_genes_from_df(self):
         """ Returns all genes from gene columns in a set
