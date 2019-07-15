@@ -41,12 +41,13 @@ def test_clean_drug_dbs():
     list_2 = ['CASP3', 'CASP6', 'FAS', 'FADD', 'CASP8', 'CFLAR', 'BFAR', 'BAD',
               'BID', 'PMAIP1', 'MCL1', 'BCL2', 'BCL2L1', 'BAX', 'BAK1',
               'DIABLO', 'CYCS', 'PARP1', 'APAF1', 'XIAP']
-    df = e.run(list_2, ['Drug_Perturbations_from_GEO_2014', 'DrugMatrix',
-                        'Ligand_Perturbations_from_GEO_down',
-                        'LINCS_L1000_Chem_Pert_up'])
+    df = e.run(list_2, ['Drug_Perturbations_from_GEO_2014',
+                        'LINCS_L1000_Chem_Pert_up'
+                        ])
+
     df = clean_drug_dbs(df)
-    ok_(len(df['term_name']) == 9318)
-    ok_(len(df.sig['term_name']) == 249)
+    ok_(len(df['term_name']) == 6243)
+    ok_(len(df.sig['term_name']) == 6234)
 
 
 def test_multi_sample():
@@ -77,7 +78,8 @@ def test_set_of_dbs():
     df2 = e.run_samples(lists, ['1', '2', '3'],
                         gene_set_lib=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
-    ok_(df2.shape == (128, 11))
+
+    ok_(df2.shape == (123, 11))
 
 
 def test_tf_names():

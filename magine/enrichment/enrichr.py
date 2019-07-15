@@ -394,7 +394,8 @@ gene_set_lib='Reactome_2016')
 def _prepare_output(df):
     df['term_name'] = df.apply(clean_term_names, axis=1)
     df['significant'] = False
-    df.loc[df['adj_p_value'] <= 0.05, 'significant'] = True
+    crit = (df['adj_p_value'] <= 0.05)
+    df.loc[crit, 'significant'] = True
     return df
 
 
