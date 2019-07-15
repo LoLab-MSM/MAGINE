@@ -82,3 +82,8 @@ Installation
 
 
 
+
+
+.. image:: https://badges.gitter.im/LoLab-VU/MAGINE.svg
+   :alt: Join the chat at https://gitter.im/LoLab-VU/MAGINE
+   :target: https://gitter.im/LoLab-VU/MAGINE?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
