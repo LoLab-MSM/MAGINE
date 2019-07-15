@@ -19,6 +19,10 @@ MAGINE : Mechanism of Action Generator involving Network Expansion
 .. image:: https://mybinder.org/badge.svg
     :target: https://mybinder.org/v2/gh/LoLab-VU/MAGINE/master
 
+.. image:: https://badges.gitter.im/LoLab-VU/MAGINE.svg
+   :target: https://gitter.im/LoLab-VU/MAGINE?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
+   :alt: Join the chat at https://gitter.im/LoLab-VU/MAGINE
+
 MAGINE is a framework for the analysis of quantitative multi-omics data.
 It was designed to handle multi-sample (time points) and multi-omics
 (rnaseq, label-free proteomics, etc). Users are provided access to tools driven
