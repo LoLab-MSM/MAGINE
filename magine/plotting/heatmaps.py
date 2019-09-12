@@ -92,7 +92,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         center = None
 
     # Group together by columns if provided
-    if isinstance(columns, list) and len(columns) == 2:
+    if isinstance(columns, (list, tuple)) and len(columns) == 2:
         add_col_group = True
         col_labels, col_colors, col_color_map = _set_col_colors(array)
 

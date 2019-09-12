@@ -127,7 +127,7 @@ class Sample(BaseData):
         return [self.loc[self[sample_id] == i].id_list
                 for i in self.sample_ids]
 
-    def subset(self, species, index='identifier', sample_ids=None,
+    def subset(self, species=None, index='identifier', sample_ids=None,
                exp_methods=None):
         """
 
@@ -149,7 +149,7 @@ class Sample(BaseData):
         df = self.copy()
         if isinstance(species, str):
             df = df.loc[df[index].str.contains(species)]
-        else:
+        elif isinstance(species, (list, tuple, set)):
             df = df.loc[df[index].isin(species)]
         if sample_ids is not None:
             if isinstance(species, str):

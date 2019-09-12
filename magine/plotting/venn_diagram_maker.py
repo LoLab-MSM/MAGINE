@@ -3,7 +3,8 @@ from matplotlib_venn import venn2 as _venn2, venn3 as _venn3
 
 
 def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
-                 image_format='png', title=None, ax=None):
+                 image_format='png', title=None, ax=None,
+                 colors=('g', 'r', 'b')):
     """ Creates a venn digram containing for 3 lists
     
     Parameters
@@ -27,10 +28,12 @@ def create_venn3(list1, list2, list3, label1, label2, label3, save_name=None,
     set1 = set(list1)
     set2 = set(list2)
     set3 = set(list3)
+    if len(colors) != 3:
+        raise Exception("Must provide a list of three colors")
     v = _venn3([set1, set2, set3], ('%s(%s)' % (label1, str(len(set1))),
                                     '%s(%s)' % (label2, str(len(set2))),
                                     '%s(%s)' % (label3, str(len(set3)))),
-               set_colors=('g', 'r', 'b'),
+               set_colors=colors,
                ax=ax)
     plt.tight_layout()
     if title is not None:
