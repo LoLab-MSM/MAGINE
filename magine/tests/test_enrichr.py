@@ -3,8 +3,8 @@ import tempfile
 from nose.tools import ok_
 
 from magine.data.experimental_data import ExperimentalData
-from magine.enrichment.enrichr import Enrichr, clean_tf_names, clean_drug_dbs, \
-    get_background_list, run_enrichment_for_project, get_libraries
+from magine.enrichment.enrichr import Enrichr, clean_drug_dbs, clean_tf_names, \
+    get_background_list, get_libraries, run_enrichment_for_project
 from magine.tests.sample_experimental_data import exp_data
 
 e = Enrichr()
@@ -44,10 +44,9 @@ def test_clean_drug_dbs():
     df = e.run(list_2, ['Drug_Perturbations_from_GEO_2014',
                         'LINCS_L1000_Chem_Pert_up'
                         ])
-
     df = clean_drug_dbs(df)
     ok_(len(df['term_name']) == 6243)
-    ok_(len(df.sig['term_name']) == 6234)
+    ok_(len(df.sig['term_name']) == 11)
 
 
 def test_multi_sample():
@@ -55,7 +54,7 @@ def test_multi_sample():
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'], save_name='enrichr_test')
-    ok_(df2.shape == (111, 11))
+    ok_(df2.shape == (22, 11))
 
 
 def test_multi_sample_plotting():
@@ -78,8 +77,7 @@ def test_set_of_dbs():
     df2 = e.run_samples(lists, ['1', '2', '3'],
                         gene_set_lib=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
-
-    ok_(df2.shape == (123, 11))
+    ok_(df2.shape == (60, 11))
 
 
 def test_tf_names():
