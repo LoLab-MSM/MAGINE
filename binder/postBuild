@@ -1,2 +1,0 @@
-pip install appdirs
-python copy_sample_data.py
