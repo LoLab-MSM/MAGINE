@@ -1,9 +1,10 @@
-name: magine-env
+name: magine_env
 channels:
   - conda-forge
 dependencies:
   - python
   - numpy
+  - seaborn
   - python-igraph
   - pycairo
   - scipy
@@ -17,6 +18,7 @@ dependencies:
   - pip
   - pip:
       - wordcloud
+      - appdirs
       - sortedcontainers
       - bioservices
       - matplotlib_venn
