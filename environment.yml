@@ -1,0 +1,30 @@
+name: magine-env
+channels:
+  - conda-forge
+dependencies:
+  - python
+  - numpy
+  - python-igraph
+  - pycairo
+  - scipy
+  - ipython
+  - pandas
+  - matplotlib
+  - plotly
+  - seaborn
+  - jupyter
+  - networkx
+  - pip
+  - pip:
+      - wordcloud
+      - sortedcontainers
+      - bioservices
+      - matplotlib_venn
+      - py2cytoscape
+      - pathos
+      - openpyxl
+      - pydot
+      - defusedxml
+      - requests
+      - Jinja2
+      - statsmodels
