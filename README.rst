@@ -1,6 +1,6 @@
-==================================================================
-MAGINE : Mechanism of Action Generator involving Network Expansion
-==================================================================
+=================================================================
+MAGINE : Mechanism of Action Generator involving Network Analysis
+=================================================================
 
 .. image:: https://api.codacy.com/project/badge/Grade/cba1091c58a246bfb07f7ed7f86afe24
    :alt: Codacy Badge
