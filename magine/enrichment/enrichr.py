@@ -129,8 +129,7 @@ db_types = {
 def get_libraries():
     url = 'http://amp.pharm.mssm.edu/Enrichr/datasetStatistics'
     libs_json = json.loads(requests.get(url).text)
-    libs = [lib['libraryName'] for lib in libs_json['statistics']]
-    return libs
+    return [lib['libraryName'] for lib in libs_json['statistics']]
 
 
 class Enrichr(object):
@@ -425,7 +424,7 @@ def clean_term_names(row):
 
     if db == 'MGI_Mammalian_Phenotype_2017':
         if term_name.startswith('MP:'):
-            term_name = term_name.split('_', 1)[1]
+            term_name = term_name.split(' ', 1)[1]
 
     if db == 'DrugMatrix':
         drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
@@ -458,7 +457,7 @@ def clean_lincs(df):
 
     """
     pattern = re.compile(
-        r'(?P<id>\w+)_(?P<cell>\w+)_(?P<time>\w+)-(?P<drug>\S*)-(\S*)')
+        r'(?P<id>\w+) (?P<cell>\w+) (?P<time>\w+)-(?P<drug>.*)-(\S*)')
 
     def get_drug(row):
         db = row['db']
@@ -468,9 +467,15 @@ def clean_lincs(df):
             return term_name
         try:
             drug_name = pattern.search(term_name).group('drug')
-        except NameError:
-            drug_name = term_name
-        return drug_name
+            return drug_name
+        except:
+            # If the string doesnt have the pattern above, there is no way
+            # to properly parse it. Ran into a few examples where they used
+            # spaces instead of "_". Hard to parse since the names of the drugs
+            # can also have spaces ("sulfide salts")
+            # ex. cpc006 snuc5 6h-quinine hemisulfate salt monohydrate-10.0
+            print(term_name)
+            return term_name
 
     df['term_name'] = df.apply(get_drug, axis=1)
     return df
