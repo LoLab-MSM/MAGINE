@@ -129,7 +129,7 @@ class RenderModel(object):
             print(i)
 
     def visualize_by_list_of_time(self, list_of_time, labels=None,
-                                  prefix='tmp', out_dir=None):
+                                  prefix='tmp', out_dir=None, scale=10):
         """
         create sequences of pdfs and svgs based on list of attributes
 
@@ -216,7 +216,7 @@ class RenderModel(object):
             all_node_size.append(size)
         size = np.array(all_node_size).flatten()
         simple_slope = create_slope(min_val=size.min(), max_val=size.max(),
-                                    values=(10, 50))
+                                    values=(10, scale))
 
         for j in sorted(list_of_time):
             time.sleep(1)
@@ -240,6 +240,7 @@ class RenderModel(object):
 
             x = self.view1.get_network_view_as_dict()
             self.create_png(out_file, int(x['NETWORK_WIDTH']))
+            self.create_svg(out_file, int(x['NETWORK_WIDTH']))
             if labels is None:
                 trip_photo(out_file, j)
             else:
@@ -283,6 +284,10 @@ class RenderModel(object):
     def create_png(self, out_file, width):
         with open(out_file, 'wb') as f:
             f.write(self.g_cy.get_png(width))
+
+    def create_svg(self, out_file, width):
+        with open(out_file.replace('png', 'svg'), 'wb') as f:
+            f.write(self.get_svg(width))
 
     def get_svg(self, height=2000):
         url = '%sviews/first.svg?h=%d' % (self.g_cy._CyNetwork__url, height)
@@ -439,27 +444,27 @@ default_style = {
     u'NETWORK_WIDTH'                     : 550.0,
 
     u'NODE_BORDER_PAINT'                 : u'#000000',
-    u'NODE_BORDER_STROKE'                : u'SOLID',
-    u'NODE_BORDER_TRANSPARENCY'          : 255,
-    u'NODE_BORDER_WIDTH'                 : 2.0,
-    u'NODE_DEPTH'                        : 0.0,
-    u'NODE_FILL_COLOR'                   : u'red',
-    u'NODE_HEIGHT'                       : 40.0,
+    u'NODE_BORDER_STROKE': u'SOLID',
+    u'NODE_BORDER_TRANSPARENCY': 255,
+    u'NODE_BORDER_WIDTH': 2.0,
+    u'NODE_DEPTH': 0.0,
+    u'NODE_FILL_COLOR': u'red',
+    u'NODE_HEIGHT': 40.0,
     # u'NODE_LABEL': u'<passthroughMapping attributeName="name" ',
-    u'NODE_LABEL_COLOR'                  : u'black',
-    u'NODE_LABEL_FONT_FACE'              : u'SansSerif.plain,plain,12',
-    u'NODE_LABEL_FONT_SIZE'              : 24,
-    u'NODE_LABEL_POSITION'               : u'C,C,c,0.00,0.00',
-    u'NODE_LABEL_TRANSPARENCY'           : 255,
-    u'NODE_LABEL_WIDTH'                  : 200.0,
-    u'NODE_NESTED_NETWORK_IMAGE_VISIBLE' : True,
-    u'NODE_PAINT'                        : u'#787878',
-    u'NODE_SELECTED'                     : False,
-    u'NODE_SELECTED_PAINT'               : u'#FFFF00',
-    u'NODE_SHAPE'                        : u'ELLIPSE',
-    u'NODE_SIZE'                         : 50.0,
-    u'NODE_TOOLTIP'                      : u'',
-    u'NODE_TRANSPARENCY'                 : 255,
+    u'NODE_LABEL_COLOR': u'black',
+    u'NODE_LABEL_FONT_FACE': u'SansSerif.plain,plain,12',
+    u'NODE_LABEL_FONT_SIZE': 24,
+    u'NODE_LABEL_POSITION': u'C,C,c,0.50,0.00',
+    u'NODE_LABEL_TRANSPARENCY': 255,
+    u'NODE_LABEL_WIDTH': 200.0,
+    u'NODE_NESTED_NETWORK_IMAGE_VISIBLE': True,
+    u'NODE_PAINT': u'#787878',
+    u'NODE_SELECTED': False,
+    u'NODE_SELECTED_PAINT': u'#FFFF00',
+    u'NODE_SHAPE': u'ELLIPSE',
+    u'NODE_SIZE': 50.0,
+    u'NODE_TOOLTIP': u'',
+    u'NODE_TRANSPARENCY': 255,
     u'NODE_VISIBLE'                      : True,
     u'NODE_WIDTH'                        : 60.0,
     u'NODE_X_LOCATION'                   : 0.0,
