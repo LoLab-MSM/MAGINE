@@ -1,5 +1,5 @@
-import itertools
 from functools import partial
+import itertools
 
 import networkx as nx
 
@@ -553,7 +553,7 @@ class Subgraph(object):
             if i not in self.nodes:
                 missing_nodes.add(i)
         if len(missing_nodes):
-            print("Warning : {} do not exist in graph\n"
+            print("Warning : {} nodes do not exist in graph\n"
                   "Removing from list".format(len(missing_nodes)))
 
         return sorted(node_list.difference(missing_nodes))
