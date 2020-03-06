@@ -2,7 +2,7 @@ import os
 
 import networkx as nx
 
-from magine.networks.exporters import nx_to_dot
+from magine.networks.exporters import nx_to_dot, export_to_dot
 from magine.networks.utils import add_color_graphviz_fmt
 
 IPYTHON = False
@@ -14,7 +14,7 @@ except RuntimeError:
     pass
 
 
-def draw_graphviz(network, layout='dot', image_format='png', width=100,
+def draw_graphviz(network, layout='dot', image_format='png', width=800,
                   save_name=None):
     """ Draws an
 
@@ -156,7 +156,7 @@ def paint_network_overtime_up_down(graph, list_up, list_down, save_name,
 
         s_name = '%s_%04i.png' % (save_name, n)
 
-        exporters.export_to_dot(tmp_graph, s_name, 'png', 'dot')
+        export_to_dot(tmp_graph, s_name, 'png', 'dot')
         draw_graphviz(tmp_graph, layout='dot', save_name=s_name,
                       image_format='png')
         string += s_name + ' '
