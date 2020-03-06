@@ -1,5 +1,5 @@
-import warnings
 from itertools import chain
+import warnings
 
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as sch
@@ -272,18 +272,16 @@ def heatmap_by_terms(data, term_labels, term_sets, colors=None, min_sig=None,
                 added.add(i)
         if not added_any:
             to_remove.add(cname)
-
-    if isinstance(columns, list) and len(columns) == 2:
-        add_col_group = True
-        col_labels, col_colors, col_color_map = _set_col_colors(array)
-    else:
-        col_labels, col_colors, col_color_map = None, None, None
     # only keep indexes that are in the provided sets
     array = array[array.index.isin(final_sorted)]
 
     # resort according to color
     array = array.reindex(final_sorted)
-
+    if isinstance(columns, list) and len(columns) == 2:
+        add_col_group = True
+        col_labels, col_colors, col_color_map = _set_col_colors(array)
+    else:
+        col_labels, col_colors, col_color_map = None, None, None
     # set colors map for heatmap
     if div_colors:
         pal = sns.color_palette("coolwarm", num_colors)
