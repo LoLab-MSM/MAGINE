@@ -97,8 +97,7 @@ def download_reactome_fi():
     -------
 
     """
-    url = 'http://reactomews.oicr.on.ca:8080/caBigR3WebApp2017/' \
-          'FIsInGene_071718_with_annotations.txt.zip'
+    url = 'http://cpws.reactome.org/caBigR3WebApp2019/FIsInGene_020720_with_annotations.txt.zip'
     table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
                         delimiter='\t', error_bad_lines=False, encoding='utf-8'
                         )
