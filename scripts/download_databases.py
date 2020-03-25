@@ -22,7 +22,7 @@ def download_network_dbs():
     nd.download_biogrid()
 
 
-if __name__ == '__main__':
+def run():
     import time
 
     clear_cached_dbs()
@@ -33,3 +33,7 @@ if __name__ == '__main__':
     download_network_dbs()
     et = time.time()
     logger.info("Took {} seconds".format(et - st))
+
+
+if __name__ == '__main__':
+    run()

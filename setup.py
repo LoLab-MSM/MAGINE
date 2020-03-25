@@ -88,5 +88,9 @@ setup(
     include_package_data=True,
     scripts=['scripts/create_template_project',
              'scripts/download_databases.py'],
-
+    entry_points={
+        'console_scripts': [
+            'download_magine_databases=download_databases:run'
+        ]
+    }
 )
