@@ -80,26 +80,8 @@ def download_uniprot(species='hsa'):
 
     uniprot.columns = uniprot.columns.droplevel()
     uniprot.reset_index(inplace=True)
-    valid_uniprot_cols = ['uniprot', 'Allergome', 'BioCyc', 'BioGrid',
-                          'BioMuta', 'CCDS', 'CRC64', 'ChEMBL', 'ChiTaRS',
-                          'CleanEx', 'DIP', 'DMDM', 'DNASU', 'DisProt',
-                          'DrugBank', 'EMBL', 'EMBL-CDS', 'ESTHER', 'Ensembl',
-                          'Ensembl_PRO', 'Ensembl_TRS', 'GI', 'GeneCards',
-                          'GeneDB', 'GeneID', 'GeneReviews', 'GeneTree',
-                          'GeneWiki', 'Gene_Name', 'Gene_ORFName',
-                          'Gene_Synonym', 'GenomeRNAi', 'GuidetoPHARMACOLOGY',
-                          'H-InvDB', 'HGNC', 'HOGENOM', 'HOVERGEN', 'HPA',
-                          'KEGG', 'KO', 'MEROPS', 'MIM', 'MINT', 'NCBI_TaxID',
-                          'OMA', 'Orphanet', 'OrthoDB', 'PATRIC', 'PDB',
-                          'PeroxiBase', 'PharmGKB', 'REBASE', 'Reactome',
-                          'RefSeq', 'RefSeq_NT', 'STRING', 'SwissLipids',
-                          'TCDB', 'TreeFam', 'UCSC', 'UniGene', 'UniParc',
-                          'UniPathway', 'UniProtKB-ID', 'UniRef100',
-                          'UniRef50',
-                          'UniRef90', 'eggNOG', 'neXtProt']
-
     outfile = os.path.join(id_mapping_dir, 'human_uniprot.csv.gz')
-    uniprot.to_csv(outfile, compression='gzip', columns=valid_uniprot_cols,
+    uniprot.to_csv(outfile, compression='gzip',
                    header=True, index=False)
 
     return uniprot
@@ -330,8 +312,8 @@ hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
 
 if __name__ == '__main__':
     # download_hgnc()
-    # download_uniprot('acibt')
-    hmdb = HMDB()
-    df = hmdb.load_db(fresh_download=True)
-    print(df.head(10))
-    print(df.columns)
+    download_uniprot('hsa')
+    # hmdb = HMDB()
+    # df = hmdb.load_db(fresh_download=True)
+    # print(df.head(10))
+    # print(df.columns)
