@@ -20,7 +20,7 @@ with open(path.join(here, 'README.rst'), 'r') as f:
 
 setup(
     name='MAGINE',
-    version='0.0.10',
+    version='0.0.11',
     description='Package to analyze biological data.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
