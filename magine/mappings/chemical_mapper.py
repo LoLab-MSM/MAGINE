@@ -1,5 +1,5 @@
-import pandas as pd
 from bioservices import UniChem
+import pandas as pd
 from sortedcontainers import SortedSet, SortedDict
 
 from magine.mappings.databases.download_libraries import HMDB
@@ -50,7 +50,7 @@ class ChemicalMapper(object):
         self._hmdb_to_protein = None
         self._hmdb_main_to_protein = None
         self._hmdb_accession_to_main = None
-        hmdb_database = HMDB().load_db()
+        hmdb_database = HMDB().load_db(fresh_download=fresh_download)
         self.database = hmdb_database.where((pd.notnull(hmdb_database)), None)
         self.database['main_accession'] = self.database['accession']
         sub_db = self.database[
@@ -315,5 +315,7 @@ if __name__ == "__main__":
     cm = ChemicalMapper()
     print(cm.check_synonym_dict(term='dodecene', format_name='main_accession'))
     print(cm.hmdb_accession_to_main['HMDB15015'])
+    print(cm.hmdb_accession_to_main['HMDB0015015'])
+    # print(cm.hmdb_to_kegg['HMDB0015015'])
     print(cm.kegg_to_hmdb.keys())
-    print(cm.kegg_to_hmdb['C07909'])
+    print(cm.kegg_to_hmdb['C07467'])

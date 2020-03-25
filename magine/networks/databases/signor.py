@@ -1,3 +1,4 @@
+import logging
 import os
 
 import networkx as nx
@@ -7,9 +8,13 @@ from magine.data.storage import network_data_dir
 from magine.networks.standards import edge_standards
 
 _p_name = os.path.join(network_data_dir, 'signor.p.gz')
+from magine.logging import get_logger
+
+logger = get_logger('magine.downloads', log_level=logging.INFO)
 
 
 def download_signor():
+    logger.info("Downloading SIGNOR")
     col_names = [
         'ENTITYA', 'TYPEA', 'IDA', 'DATABASEA', 'ENTITYB', 'TYPEB', 'IDB',
         'DATABASEB', 'EFFECT', 'MECHANISM', 'RESIDUE', 'SEQUENCE', 'TAX_ID',
@@ -92,6 +97,7 @@ def download_signor():
                                speciesType=species_type)
 
     nx.write_gpickle(protein_graph, _p_name)
+    logger.info("Done downloading SIGNOR")
 
 
 def load_signor(fresh_download=False, verbose=False):

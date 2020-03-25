@@ -1,4 +1,5 @@
 import io
+import logging
 import os
 import sys
 
@@ -6,6 +7,7 @@ import networkx as nx
 import pandas as pd
 
 from magine.data.storage import network_data_dir
+from magine.logging import get_logger
 
 if sys.version_info[0] == 3:
     from urllib.request import urlopen
@@ -13,24 +15,26 @@ else:
     from urllib import urlopen
 
 _p_name = os.path.join(network_data_dir, 'reactome_fi.p.gz')
+logger = get_logger('magine.downloads', log_level=logging.INFO)
 
 
 def load_reactome_fi(verbose=False):
     """
     Load reactome functional interaction network
+
     Returns
     -------
-
+    pandas.DataFrame
     """
 
     if not os.path.exists(_p_name):
-        print("Downloading Reactome Functional interaction network!")
         download_reactome_fi()
-        assert os.path.exists(_p_name), "Error downloading reactome FI. "
+        if not os.path.exists(_p_name):
+            raise FileNotFoundError("Error downloading reactome FI. ")
     tmp_graph = nx.read_gpickle(_p_name)
     if verbose:
         n_n, n_e = len(tmp_graph.nodes()), len(tmp_graph.edges())
-        print("Reactome : {} nodes and {} edges".format(n_n, n_e))
+        logger.info("Reactome : {} nodes and {} edges".format(n_n, n_e))
     return tmp_graph
 
 
@@ -90,17 +94,15 @@ def standardize_edge_types(row):
 
 
 def download_reactome_fi():
-    """
-    Downloads reactome functional interaction network
+    """ Downloads reactome functional interaction network """
 
-    Returns
-    -------
+    logger.info("Downloading Reactome Functional interaction network")
 
-    """
     url = 'http://cpws.reactome.org/caBigR3WebApp2019/FIsInGene_020720_with_annotations.txt.zip'
-    table = pd.read_csv(io.BytesIO(urlopen(url).read()), compression='zip',
-                        delimiter='\t', error_bad_lines=False, encoding='utf-8'
-                        )
+    table = pd.read_csv(
+        io.BytesIO(urlopen(url).read()), compression='zip', delimiter='\t',
+        error_bad_lines=False, encoding='utf-8'
+    )
     table = table[table['Direction'] != '-']
     table = table[~table['Annotation'].str.contains('indirect effect')]
     table = table[~table['Annotation'].str.contains('predicted')]
@@ -129,17 +131,16 @@ def download_reactome_fi():
         edge_attr=['interactionType', 'databaseSource'],
         create_using=nx.DiGraph()
     )
-    species = set(table['source'].unique()
-                  ).union(set(table['target'].unique()))
+    species = set(table['source'].unique()).union(
+        set(table['target'].unique())
+    )
 
     # add names to graph
     for node in species:
         protein_graph.add_node(node, databaseSource='ReactomeFI',
                                speciesType='gene')
 
-    print("Reactome network has {} nodes and {} edges"
-          "".format(len(protein_graph.nodes()), len(protein_graph.edges())))
-
+    logger.info("Done downloading Reactome functional interaction network")
     nx.write_gpickle(protein_graph, _p_name)
 
 

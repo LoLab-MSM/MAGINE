@@ -1,7 +1,12 @@
 #!python
+import logging
 
+from magine.data.storage import clear_cached_dbs, create_storage_structure
+from magine.logging import get_logger
 import magine.mappings.databases.download_libraries as dl
 import magine.networks.databases as nd
+
+logger = get_logger('magine.downloads', log_level=logging.INFO)
 
 
 def download_id_mapping():
@@ -11,17 +16,20 @@ def download_id_mapping():
 
 
 def download_network_dbs():
-    nd.load_reactome_fi()
+    nd.download_reactome_fi()
     nd.download_signor()
-    nd.load_biogrid_network()
-    dl.HMDB()
+    nd.download_biogrid()
+    dl.download_hmdb()
 
 
 if __name__ == '__main__':
     import time
 
+    clear_cached_dbs()
+    create_storage_structure()
+    logger.info("Downloading all network and ID mapping databases")
     st = time.time()
     download_id_mapping()
     download_network_dbs()
     et = time.time()
-    print(et - st)
+    logger.info("Took {} seconds".format(et - st))

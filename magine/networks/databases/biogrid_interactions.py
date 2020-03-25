@@ -1,12 +1,15 @@
+import logging
 import os
 
 import networkx as nx
 import pandas as pd
 
-import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
+from magine.logging import get_logger
 from magine.mappings.chemical_mapper import ChemicalMapper
+import magine.networks.utils as utils
 
+logger = get_logger('magine.downloads', log_level=logging.INFO)
 p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
 _base_url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/'
 _chem_url = _base_url + 'BIOGRID-CHEMICALS-LATEST.chemtab.zip'
@@ -144,7 +147,7 @@ class BioGridDownload(object):
         -------
 
         """
-
+        logger.info("Downloading BioGrid")
         table = pd.read_csv(self.url,
                             compression='zip',
                             delimiter='\t',
@@ -194,6 +197,7 @@ class BioGridDownload(object):
         final_graph = utils.compose(protein_graph,
                                     self._create_chemical_network())
         nx.write_gpickle(final_graph, p_name)
+        logger.info("Done downloading BioGrid")
         return final_graph
 
 

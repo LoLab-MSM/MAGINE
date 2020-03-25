@@ -52,3 +52,7 @@ def load_hmdb_network(fresh_download=False, verbose=False):
                                                     len(tmp_graph.edges)))
 
     return tmp_graph
+
+
+if __name__ == '__main__':
+    load_hmdb_network(True, True)

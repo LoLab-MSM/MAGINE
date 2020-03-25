@@ -1,11 +1,11 @@
 import logging
+import math
 import os
 import zipfile
 
-import math
+from defusedxml import cElementTree as ElementTree
 import pandas as pd
 import requests
-from defusedxml import cElementTree as ElementTree
 
 from magine.data.storage import id_mapping_dir
 from magine.logging import get_logger
@@ -141,8 +141,7 @@ def download_ncbi():
 
 
 def _download(url, columns, name, save=True, names=None, compression=None):
-    logger.info("Downloading from {}. This might take awhile depending on "
-                "connection speed.".format(name))
+    logger.info("Downloading from {}.".format(name.upper()))
     if names is None:
         df = pd.read_table(url, delimiter='\t', low_memory=False, verbose=True,
                            compression=compression)
@@ -153,7 +152,18 @@ def _download(url, columns, name, save=True, names=None, compression=None):
     if save:
         outfile = os.path.join(id_mapping_dir, '{}.gz'.format(name))
         df.to_csv(outfile, compression='gzip', header=True, index=False)
+    logger.info("Done downloading from {}.".format(name.upper()))
     return df
+
+
+def download_hmdb():
+    """
+    Downloads data from HMDB
+
+    `<http://www.hmdb.ca/>`_
+
+    """
+    HMDB().download_db(fresh_download=True)
 
 
 class HMDB(object):
@@ -165,27 +175,36 @@ class HMDB(object):
     """
 
     def __init__(self):
-        self.tmp_dir = id_mapping_dir
+        self.id_dir = id_mapping_dir
         self.target_file = 'hmdb_metabolites.zip'
-        self.out_name = os.path.join(id_mapping_dir, 'hmdb_dataframe.csv.gz')
+        self.out_name = os.path.join(self.id_dir, 'hmdb_dataframe.csv.gz')
+        self.hmdb_file = os.path.join(self.id_dir, self.target_file)
 
-    def load_db(self):
-        if not os.path.exists(self.out_name):
-            self.download_db()
-        df = pd.read_csv(self.out_name, low_memory=False, encoding='utf-8')
-        return df
+    def load_db(self, fresh_download=False):
+        if not os.path.exists(self.out_name) or fresh_download:
+            self.download_db(fresh_download)
+        return pd.read_csv(self.out_name, low_memory=False, encoding='utf-8')
 
-    def download_db(self):
+    def download_db(self, fresh_download):
         """ parse HMDB to Pandas.DataFrame
 
         """
-        out_dir = os.path.join(self.tmp_dir, 'HMDB')
+        out_dir = os.path.join(self.id_dir, 'HMDB')
+        # create output directory
         if not os.path.exists(out_dir):
             os.mkdir(out_dir)
 
-        if len(os.listdir(out_dir)) == 0:
-            self._unzip_hmdb(out_dir)
+        # download and unzip xml file
+        if fresh_download or not len(os.listdir(out_dir)):
+            self._download_hmdb()
+            # unzips hmdb metabolites file
+            logger.info("Unzipping metabolites file")
+            zip_ref = zipfile.ZipFile(self.hmdb_file, 'r')
+            zip_ref.extractall(out_dir)
+            zip_ref.close()
+            logger.info("Done unzipping metabolites file")
 
+        # creates dataframe
         logger.info("Parsing metabolites information from files")
         df = pd.DataFrame([
             self._create_dict(e) for ev, e in
@@ -202,57 +221,35 @@ class HMDB(object):
                 del df[i]
 
         df.to_csv(self.out_name, index=False, encoding='utf-8',
-                  compression='gzip', tupleize_cols=True)
+                  compression='gzip')
         logger.info("Done processing HMDB")
 
-    def _unzip_hmdb(self, out_directory):
-        """ unzips hmdb metabolites file
-        """
-        hmdb_file = os.path.join(self.tmp_dir, self.target_file)
-        if not os.path.exists(hmdb_file):
-            self._download_hmdb()
-        logger.info("Unzipping metabolites file")
-        zip_ref = zipfile.ZipFile(hmdb_file, 'r')
-        zip_ref.extractall(out_directory)
-        zip_ref.close()
-        logger.info("Done unzipping metabolites file")
-
     def _download_hmdb(self):
-        """ Downloads hmdb metabolites xml file
-        """
-
+        """ Downloads hmdb metabolites xml file """
+        logger.info("Downloading metabolites information from HMDB")
         ur = 'http://www.hmdb.ca/system/downloads/current/hmdb_metabolites.zip'
 
-        out_path = os.path.join(self.tmp_dir, self.target_file)
-
         r = requests.get(ur, stream=True)
-        response = requests.head(ur)
-        file_size = int(response.headers['content-length'])
-        print("Downloading metabolites information from HMDB")
-        logger.info("Downloading metabolites information from HMDB")
-        logger.info("File size is : {} Bytes: {}".format(self.target_file,
-                                                         file_size))
+        file_size = int(r.headers['content-length'])
+        logger.info("File size is {} bytes".format(file_size))
         file_size_dl = 0
         block_sz = 1024
         # block_sz = 8024
         v = set()
         milestone_markers = range(0, 101, 10)
 
-        with open(out_path, 'wb') as f:
+        with open(self.hmdb_file, 'wb') as f:
             for chunk in r.iter_content(chunk_size=block_sz):
                 file_size_dl += len(chunk)
-                percent_download = int(
-                    math.floor(file_size_dl * 100. / file_size))
-
-                if percent_download in milestone_markers:
-                    if percent_download not in v:
-                        print("{}%".format(percent_download))
-                        v.add(percent_download)
+                percent_done = int(math.floor(file_size_dl * 100. / file_size))
+                if percent_done in milestone_markers:
+                    if percent_done not in v:
+                        logger.info("{}%".format(percent_done))
+                        v.add(percent_done)
                 if chunk:  # filter out keep-alive new chunks
                     f.write(chunk)
 
-        logger.info("Downloaded {} and stored {}".format(ur, out_path))
-        return
+        logger.info("Done downloading {}.".format(ur))
 
     @staticmethod
     def _create_dict(elem):
@@ -334,9 +331,7 @@ hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
 if __name__ == '__main__':
     # download_hgnc()
     # download_uniprot('acibt')
-    HMDB().download_db()
-
-    # end = time.time()
-    # st = time.time()
-    # human = download_uniprot()
-    # directory = os.path.dirname(__file__)
+    hmdb = HMDB()
+    df = hmdb.load_db(fresh_download=True)
+    print(df.head(10))
+    print(df.columns)
