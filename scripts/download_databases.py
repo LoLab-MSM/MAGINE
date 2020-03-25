@@ -16,10 +16,10 @@ def download_id_mapping():
 
 
 def download_network_dbs():
+    dl.download_hmdb()
     nd.download_reactome_fi()
     nd.download_signor()
     nd.download_biogrid()
-    dl.download_hmdb()
 
 
 if __name__ == '__main__':

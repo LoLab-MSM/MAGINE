@@ -1,18 +1,13 @@
 import io
 import logging
 import os
-import sys
+import urllib.request
 
 import networkx as nx
 import pandas as pd
 
 from magine.data.storage import network_data_dir
 from magine.logging import get_logger
-
-if sys.version_info[0] == 3:
-    from urllib.request import urlopen
-else:
-    from urllib import urlopen
 
 _p_name = os.path.join(network_data_dir, 'reactome_fi.p.gz')
 logger = get_logger('magine.downloads', log_level=logging.INFO)
@@ -99,10 +94,14 @@ def download_reactome_fi():
     logger.info("Downloading Reactome Functional interaction network")
 
     url = 'http://cpws.reactome.org/caBigR3WebApp2019/FIsInGene_020720_with_annotations.txt.zip'
-    table = pd.read_csv(
-        io.BytesIO(urlopen(url).read()), compression='zip', delimiter='\t',
-        error_bad_lines=False, encoding='utf-8'
-    )
+
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req) as response:
+        # the_page = response.read()
+        table = pd.read_csv(
+            io.BytesIO(response.read()), compression='zip', delimiter='\t',
+            error_bad_lines=False, encoding='utf-8'
+        )
     table = table[table['Direction'] != '-']
     table = table[~table['Annotation'].str.contains('indirect effect')]
     table = table[~table['Annotation'].str.contains('predicted')]
