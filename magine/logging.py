@@ -6,7 +6,7 @@ import time
 import os
 import warnings
 
-# code based off of pysb.logging.py
+# code based off of magine.logging.py
 
 SECONDS_IN_HOUR = 3600
 LOG_LEVEL_ENV_VAR = 'MAGINE_LOG'

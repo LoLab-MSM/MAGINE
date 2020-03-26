@@ -10,7 +10,7 @@ import requests
 from magine.data.storage import id_mapping_dir
 from magine.logging import get_logger
 
-logger = get_logger('magine.downloads', log_level=logging.INFO)
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
 def load_hgnc():

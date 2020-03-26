@@ -1,8 +1,9 @@
 import os
 import operator
 import networkx as nx
-from magine.networks.standards import edge_standards
 from collections import OrderedDict
+from magine.networks.standards import edge_standards
+from magine.mappings.gene_mapper import GeneMapper
 
 
 def create_dict_from_node_attributes(net, attribute):

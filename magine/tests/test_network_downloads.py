@@ -1,4 +1,4 @@
-# from magine.networks.databases import load_all_of_kegg, load_biogrid_network, \
+# from magine.networks.databases import load_kegg, load_biogrid_network, \
 #     load_signor, load_reactome_fi, load_hmdb_network
 # from magine.networks.databases.biogrid_interactions import BioGridDownload
 #
@@ -12,7 +12,7 @@
 #
 #
 # def test_kegg():
-#     kegg_network = load_all_of_kegg(fresh_download=fresh_download,
+#     kegg_network = load_kegg(fresh_download=fresh_download,
 #                                     verbose=verbose)
 #
 #

@@ -86,7 +86,17 @@ def test_kegg_to_uniprot():
     dic, kegg_short = gm.convert_kegg_nodes(g, species='hsa')
     nx.set_node_attributes(g, kegg_short, 'keggName')
     g = nx.relabel_nodes(g, dic)
-    ok_(g.node['ALDH3A2']['keggName'] == '224')
+
+    valid = {
+        'ALDH2': '217',
+        'ALDH1B1': '219',
+        'ALDH9A1': '223',
+        'ALDH7A1': '501',
+        'ALDH3A2': '224',
+        'CAV1': '857'
+    }
+    for k, v in valid.items():
+        ok_(g.node[k]['keggName'] == v)
 
 
 if __name__ == '__main__':

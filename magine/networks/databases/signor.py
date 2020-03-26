@@ -10,7 +10,7 @@ from magine.networks.standards import edge_standards
 _p_name = os.path.join(network_data_dir, 'signor.p.gz')
 from magine.logging import get_logger
 
-logger = get_logger('magine.downloads', log_level=logging.INFO)
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
 def download_signor():
@@ -100,7 +100,7 @@ def download_signor():
     logger.info("Done downloading SIGNOR")
 
 
-def load_signor(fresh_download=False, verbose=False):
+def load_signor(fresh_download=False):
     """
     Load reactome functional interaction network
 
@@ -117,11 +117,12 @@ def load_signor(fresh_download=False, verbose=False):
     if not os.path.exists(_p_name) or fresh_download:
         print("Downloading Signor network!")
         download_signor()
-        assert os.path.exists(_p_name), "Error downloading reactome FI. "
+        if not os.path.exists(_p_name):
+            raise FileNotFoundError("Error downloading reactome FI. ")
     tmp_graph = nx.read_gpickle(_p_name)
-    if verbose:
-        print("SIGNOR : {} nodes and {} edges".format(len(tmp_graph.nodes),
-                                                      len(tmp_graph.edges)))
+
+    logger.info("SIGNOR : {} nodes and {} edges".format(len(tmp_graph.nodes),
+                                                        len(tmp_graph.edges)))
     return tmp_graph
 
 

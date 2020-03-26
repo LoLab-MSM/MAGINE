@@ -46,6 +46,7 @@ def convert_all(network, species='hsa', verbose=False):
     hmdb, kegg_short, chem_names = cm.convert_kegg_nodes(renamed_network)
     nx.set_node_attributes(renamed_network, kegg_short, 'keggName')
     nx.set_node_attributes(renamed_network, chem_names, 'chemName')
+    print(chem_names)
     nx.set_node_attributes(renamed_network, hmdb, 'hmdbNames')
     change_dict.update(hmdb)
 
@@ -65,7 +66,6 @@ def drug_nodes(network):
     for i in hits:
         split_name = i.split(' ')
         if len(split_name) > 1:
-            print(split_name)
             if split_name[1].startswith('cpd:'):
                 drug_dict[i] = split_name[1]
                 network.node[i]['drug'] = split_name[0]

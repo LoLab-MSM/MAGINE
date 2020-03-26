@@ -13,6 +13,7 @@ try:
 # Allows isinstance(foo, basestring) to work in Python 3
 except:
     basestring = str
+chem = UniChem()
 
 
 class ChemicalMapper(object):
@@ -58,18 +59,9 @@ class ChemicalMapper(object):
         new_df = tidy_split(sub_db, 'secondary_accessions', '|')
         new_df['accession'] = new_df['secondary_accessions']
         self.database = pd.concat([self.database, new_df])
-
-    @property
-    def kegg_to_hmdb(self):
-        if self._kegg_to_hmdb is None:
-            self._kegg_to_hmdb = self._to_dict("kegg_id", "main_accession")
-        return self._kegg_to_hmdb
-
-    @property
-    def hmdb_to_chem_name(self):
-        if self._hmdb_to_chem_name is None:
-            self._hmdb_to_chem_name = self._to_dict("main_accession", "name")
-        return self._hmdb_to_chem_name
+        self.kegg_hmdb = chem.get_mapping("kegg_ligand", "hmdb")
+        self.kegg_to_hmdb = self._to_dict("kegg_id", "main_accession")
+        self.hmdb_to_chem_name = self._to_dict("main_accession", "name")
 
     @property
     def hmdb_to_kegg(self):
@@ -204,8 +196,6 @@ class ChemicalMapper(object):
 
         """
 
-        chem = UniChem()
-
         still_unknown = []
         hits = [i for i in set(network.nodes) if i.startswith('cpd:')]
         net_kegg_names = dict()
@@ -247,27 +237,29 @@ class ChemicalMapper(object):
             else:
                 still_unknown.append(i)
         if len(still_unknown):
-            kegg_hmdb = chem.get_mapping("kegg_ligand", "hmdb")
+
             for i in still_unknown:
                 name_stripped = i.lstrip('cpd:')
-                if name_stripped in kegg_hmdb:
-                    net_cpd_to_hmdb[i] = kegg_hmdb[name_stripped]
+                if name_stripped in self.kegg_hmdb:
+                    net_cpd_to_hmdb[i] = self.kegg_hmdb[name_stripped]
                 # else:
                 #     print("Cannot find a HMDB mapping for %s " % i)
         return net_cpd_to_hmdb, net_kegg_names, net_chem_names
 
 
-compound_manual = {'cpd:C07909': 'HMDB0015015',
-                   'cpd:C16844': 'HMDB0001039',
-                   'cpd:C00076': 'HMDB0000464',
-                   'cpd:C00154': 'HMDB0001338',
-                   'cpd:C01561': 'HMDB0003550',
-                   'cpd:C04043': 'HMDB0003791',
-                   'cpd:C01165': 'HMDB0002104',
-                   'cpd:C00025': 'HMDB0000148',
-                   'cpd:C00696': 'HMDB0001403',
-                   'cpd:C00124': 'HMDB0000143',
-                   }
+# manually created based on missing in KEGG
+compound_manual = {
+    'cpd:C07909': 'HMDB0015015',
+    'cpd:C16844': 'HMDB0001039',
+    'cpd:C00076': 'HMDB0000464',
+    'cpd:C00154': 'HMDB0001338',
+    'cpd:C01561': 'HMDB0003550',
+    'cpd:C04043': 'HMDB0003791',
+    'cpd:C01165': 'HMDB0002104',
+    'cpd:C00025': 'HMDB0000148',
+    'cpd:C00696': 'HMDB0001403',
+    'cpd:C00124': 'HMDB0000143',
+}
 
 
 def order_merge(species_set):

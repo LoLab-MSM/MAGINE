@@ -1,11 +1,15 @@
+import logging
 import os
 
 import networkx as nx
 
 from magine.data.storage import network_data_dir
+from magine.logging import get_logger
+
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
-def load_hmdb_network(fresh_download=False, verbose=False):
+def load_hmdb_network(fresh_download=False):
     """ Create HMDB network containing all metabolite-protein interactions
 
     Parameters
@@ -47,9 +51,10 @@ def load_hmdb_network(fresh_download=False, verbose=False):
                 tmp_graph.add_edge(source, target, interactionType='chemical',
                                    databaseSource='HMDB')
         nx.write_gpickle(tmp_graph, out_name)
-    if verbose:
-        print("HMDB : {} nodes and {} edges".format(len(tmp_graph.nodes),
-                                                    len(tmp_graph.edges)))
+
+    logger.info("HMDB : {} nodes and {} edges".format(
+        len(tmp_graph.nodes), len(tmp_graph.edges))
+    )
 
     return tmp_graph
 

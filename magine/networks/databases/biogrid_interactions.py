@@ -9,7 +9,7 @@ from magine.logging import get_logger
 from magine.mappings.chemical_mapper import ChemicalMapper
 import magine.networks.utils as utils
 
-logger = get_logger('magine.downloads', log_level=logging.INFO)
+logger = get_logger(__name__, log_level=logging.INFO)
 p_name = os.path.join(network_data_dir, 'biogrid.p.gz')
 _base_url = 'https://thebiogrid.org/downloads/archives/Latest%20Release/'
 _chem_url = _base_url + 'BIOGRID-CHEMICALS-LATEST.chemtab.zip'
@@ -205,15 +205,13 @@ def download_biogrid():
     BioGridDownload().parse_network()
 
 
-def load_biogrid_network(fresh_download=False, verbose=False):
+def load_biogrid_network(fresh_download=False):
     """
 
     Parameters
     ----------
     fresh_download : bool
         Download a fresh copy from biogrid
-    verbose : bool
-
 
     Returns
     -------
@@ -223,9 +221,8 @@ def load_biogrid_network(fresh_download=False, verbose=False):
         download_biogrid()
 
     g = nx.read_gpickle(p_name)
-    if verbose:
-        nn, ne = len(g.nodes()), len(g.edges())
-        print("BIOGRID network has {} nodes and {} edges".format(nn, ne))
+    nn, ne = len(g.nodes()), len(g.edges())
+    logger.info("BIOGRID: {} nodes and {} edges".format(nn, ne))
     return g
 
 

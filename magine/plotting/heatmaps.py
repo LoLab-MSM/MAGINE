@@ -398,8 +398,8 @@ def _set_col_colors(array):
     col_labels = array.columns.levels[0]
     labels = list(array.columns.levels[1])
     col_color_map = sns.color_palette("Dark2", len(col_labels))
-    col_colors = [col_color_map[i] for i in array.columns.labels[0]]
-    array.columns = [labels[i] for i in array.columns.labels[1]]
+    col_colors = [col_color_map[i] for i in array.columns.codes[0]]
+    array.columns = [labels[i] for i in array.columns.codes[1]]
     return col_labels, col_colors, col_color_map
 
 

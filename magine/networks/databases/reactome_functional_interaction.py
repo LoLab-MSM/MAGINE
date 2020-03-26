@@ -10,10 +10,10 @@ from magine.data.storage import network_data_dir
 from magine.logging import get_logger
 
 _p_name = os.path.join(network_data_dir, 'reactome_fi.p.gz')
-logger = get_logger('magine.downloads', log_level=logging.INFO)
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
-def load_reactome_fi(verbose=False):
+def load_reactome_fi():
     """
     Load reactome functional interaction network
 
@@ -27,9 +27,9 @@ def load_reactome_fi(verbose=False):
         if not os.path.exists(_p_name):
             raise FileNotFoundError("Error downloading reactome FI. ")
     tmp_graph = nx.read_gpickle(_p_name)
-    if verbose:
-        n_n, n_e = len(tmp_graph.nodes()), len(tmp_graph.edges())
-        logger.info("Reactome : {} nodes and {} edges".format(n_n, n_e))
+
+    n_n, n_e = len(tmp_graph.nodes()), len(tmp_graph.edges())
+    logger.info("Reactome : {} nodes and {} edges".format(n_n, n_e))
     return tmp_graph
 
 

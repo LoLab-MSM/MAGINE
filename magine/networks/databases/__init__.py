@@ -14,7 +14,7 @@ format and processed using lxml parser.
 """
 from .biogrid_interactions import download_biogrid, load_biogrid_network
 from .hmdb import load_hmdb_network
-from .kegg_kgml import download_kegg, load_all_of_kegg, load_kegg_mappings
+from .kegg_kgml import download_kegg, load_kegg, load_kegg_mappings
 from .reactome_functional_interaction import download_reactome_fi, \
     load_reactome_fi
 from .signor import download_signor, load_signor
@@ -22,5 +22,5 @@ from .signor import download_signor, load_signor
 __all__ = ['load_reactome_fi', 'download_reactome_fi',
            'load_biogrid_network', 'download_biogrid',
            'load_signor', 'download_signor',
-           'load_kegg_mappings', 'load_all_of_kegg',
+           'load_kegg_mappings', 'load_kegg',
            'load_hmdb_network']

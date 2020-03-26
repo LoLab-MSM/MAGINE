@@ -6,7 +6,7 @@ import pandas as pd
 from magine.data.storage import network_data_dir
 from magine.logging import get_logger
 
-log = get_logger(__file__)
+log = get_logger(__name__)
 _p_name = os.path.join(network_data_dir, 'trrust.p.gz')
 
 url = 'http://www.grnpedia.org/trrust/data/trrust_rawdata.human.tsv'

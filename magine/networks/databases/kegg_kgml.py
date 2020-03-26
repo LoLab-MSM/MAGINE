@@ -1,12 +1,14 @@
 import gzip
+import logging
+import math
 import os
 
+from bioservices import KEGG
 import defusedxml.cElementTree as et
 import networkx as nx
-from bioservices import KEGG
 
-import magine.networks.utils as utils
 from magine.data.storage import network_data_dir
+import magine.networks.utils as utils
 
 try:
     import cPickle as pickle
@@ -15,6 +17,10 @@ except:
 
 kegg = KEGG()
 kegg.TIMEOUT = 100
+
+from magine.logging import get_logger
+
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
 def pathway_id_to_network(pathway_id, species='hsa'):
@@ -144,7 +150,7 @@ def kgml_to_nx(xml_file, species='hsa'):
     return pathway_local, pathway_name
 
 
-def download_kegg(species='hsa', verbose=False):
+def download_kegg(species='hsa'):
     """
     Downloads every KEGG pathway to provided directory
 
@@ -153,27 +159,37 @@ def download_kegg(species='hsa', verbose=False):
         from magine.mappings.maps import convert_all
     kegg.organism = species
     list_of_kegg_pathways = [i[5:] for i in kegg.pathwayIds]
-    if verbose:
-        print("Number of pathways  = {}".format(len(list_of_kegg_pathways)))
+
+    n_pathways = len(list_of_kegg_pathways)
+    logger.info("Downloading {} KEGG pathways".format(n_pathways))
 
     # keys are KEGG pathways ids, values are kegg pathways
     kegg_dict = dict()
+    v = set()
+    milestone_markers = range(0, 101, 10)
 
-    for pathway_id in list_of_kegg_pathways:
+    for n, pathway_id in enumerate(list_of_kegg_pathways):
         pathway = kegg.get(pathway_id, "kgml")
 
         if pathway == 404:
-            print("%s ended with 404 error" % pathway_id)
+            logger.info("%s ended with 404 error" % pathway_id)
             continue
 
         graph, pathway_name = kgml_to_nx(pathway, species=species)
         if species == 'hsa':
             graph = convert_all(graph, species)
         kegg_dict[pathway_id] = graph
-        if verbose:
-            print('{} has {} nodes and {} edges'.format(pathway_name,
-                                                        len(graph.nodes),
-                                                        len(graph.edges)))
+        logger.debug('{} has {} nodes and {} edges'.format(
+            pathway_name,
+            len(graph.nodes),
+            len(graph.edges))
+        )
+        logger.info("On pathway {} of {}".format(n, n_pathways))
+        percent_done = int(math.floor(100 * n / n_pathways))
+        if percent_done in milestone_markers:
+            if percent_done not in v:
+                logger.info("{}%".format(percent_done))
+                v.add(percent_done)
 
     # create a dictionary mapping species to pathways
     node_to_path = dict()
@@ -192,11 +208,13 @@ def download_kegg(species='hsa', verbose=False):
     n = '{}_kegg_node_to_pathway.p.gz'.format(species)
     save_node_to_path = os.path.join(network_data_dir, n)
     save_gzip_pickle(save_node_to_path, node_to_path)
+    logger.info("Finished downloading all KEGG pathways")
+    return kegg_dict
 
 
-def load_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
+def load_kegg(species='hsa', fresh_download=False):
     """
-    Combines all KEGG pathways into a single network
+    Loads all KEGG pathways as a single network
 
     Parameters
     ----------
@@ -204,42 +222,35 @@ def load_all_of_kegg(species='hsa', fresh_download=False, verbose=False):
         Default 'hsa'
     fresh_download : bool
         Download kegg new
-    verbose : bool
 
     Returns
     -------
-
+    nx.DiGraph
     """
+    logger.info("Loading KEGG network")
     p_name = os.path.join(network_data_dir,
                           '{}_all_of_kegg.p.gz'.format(species))
-    # load in network if it exists
     if os.path.exists(p_name) and not fresh_download:
-        if verbose:
-            print('Reading in KEGG network')
+        # load in network if it exists
         all_of_kegg = nx.read_gpickle(p_name)
     else:
-        # create the network
-        path_to_graph, _ = load_kegg_mappings(species,
-                                              verbose=verbose,
-                                              fresh_download=fresh_download)
-
-        # merge into single networks
-        all_of_kegg = utils.compose_all(path_to_graph.values())
-
-        # relabel notes
+        kegg_pathways = download_kegg(species=species)
+        all_of_kegg = utils.compose_all(kegg_pathways.values())
+        # relabel nodes to gene names
         if species == 'hsa':
             from magine.mappings.maps import convert_all
             all_of_kegg = convert_all(all_of_kegg, species=species)
-
         # save network
         nx.write_gpickle(all_of_kegg, p_name)
-    print("KEGG network {} nodes and {} edges".format(len(all_of_kegg.nodes),
-                                                      len(all_of_kegg.edges)))
+    logger.info("KEGG network {} nodes and {} edges".format(
+        len(all_of_kegg.nodes), len(all_of_kegg.edges))
+    )
     return all_of_kegg
 
 
-def load_kegg_mappings(species, fresh_download=False, verbose=False):
+def load_kegg_mappings(species, fresh_download=False):
     """
+    Load mappings of kegg_pathway_id to nodes and nodes to kegg_pathway_id
 
     Parameters
     ----------
@@ -248,21 +259,21 @@ def load_kegg_mappings(species, fresh_download=False, verbose=False):
         conversion
     fresh_download : bool
         Download KEGG fresh
-    verbose : bool
 
     Returns
     -------
     dict, dict
     """
-    n = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
+    logger.info("Loading KEGG mapping")
 
-    save_path_id_to_graph = os.path.join(network_data_dir, n)
+    _kegg_id_to_pathway = '{}_kegg_path_ids_to_networks.p.gz'.format(species)
+    save_path_id_to_graph = os.path.join(network_data_dir, _kegg_id_to_pathway)
 
     if not os.path.exists(save_path_id_to_graph) or fresh_download:
-        download_kegg(species=species, verbose=verbose)
+        download_kegg(species=species)
 
-    n = '{}_kegg_node_to_pathway.p.gz'.format(species)
-    save_node_to_path = os.path.join(network_data_dir, n)
+    _kegg_node_to_pathway = '{}_kegg_node_to_pathway.p.gz'.format(species)
+    save_node_to_path = os.path.join(network_data_dir, _kegg_node_to_pathway)
 
     # load all networks
     return load_gz_p(save_path_id_to_graph), load_gz_p(save_node_to_path)
@@ -284,4 +295,5 @@ def load_gz_p(file_name):
 
 if __name__ == '__main__':
     # download_kegg('hsa')
-    load_all_of_kegg('acb')
+    g = load_kegg(fresh_download=True)
+    # load_kegg('acb')

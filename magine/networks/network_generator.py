@@ -1,3 +1,4 @@
+import logging
 import os
 import networkx as nx
 import numpy as np
@@ -12,8 +13,10 @@ try:
     import cPickle as pickle
 except ImportError:
     import pickle
+from magine.logging import get_logger
 
-cm = ChemicalMapper()
+# logger = get_logger("magine.networks.network_generator", log_level=logging.INFO)
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
 def build_network(seed_species, species='hsa', save_name=None,
@@ -52,8 +55,8 @@ def build_network(seed_species, species='hsa', save_name=None,
     -------
     networkx.DiGraph
     """
-
-    path_to_graph, node_to_path = db.load_kegg_mappings(species, verbose=False)
+    cm = ChemicalMapper()
+    path_to_graph, node_to_path = db.load_kegg_mappings(species)
 
     seed_species = set(x.upper() for x in seed_species)
     updated_accession = set()
@@ -96,25 +99,25 @@ def build_network(seed_species, species='hsa', save_name=None,
             all_measured_set.remove(i)
             all_measured_set.add(cm.hmdb_accession_to_main[i][0])
     networks_to_expand = []
-
+    logger.info("Gathering networks")
     if use_hmdb:
-        networks_to_expand.append(db.load_hmdb_network(verbose))
+        networks_to_expand.append(db.load_hmdb_network())
 
     if use_reactome:
-        networks_to_expand.append(db.load_reactome_fi(verbose))
+        networks_to_expand.append(db.load_reactome_fi())
 
     if use_biogrid:
-        networks_to_expand.append(db.load_biogrid_network(verbose))
+        networks_to_expand.append(db.load_biogrid_network())
 
     if use_signor:
-        networks_to_expand.append(db.load_signor(verbose))
-
+        networks_to_expand.append(db.load_signor())
+    logger.info("Merging networks")
     if len(networks_to_expand) != 0:
         entire_expansion_network = nt.compose_all(networks_to_expand)
         end_network = expand_by_db(end_network, entire_expansion_network,
                                    all_measured_set)
 
-    print("Trimming network")
+    logger.info("Trimming network")
     # makes all similar edge names the same
     nt.standardize_edge_types(end_network)
     # removes everything not connected to the largest graph
@@ -129,16 +132,17 @@ def build_network(seed_species, species='hsa', save_name=None,
 
     final_nodes = set(end_network.nodes)
     n_hits = len(seed_species.intersection(final_nodes))
+    logger.info('Network has {} nodes and {} edges'.format(
+        len(final_nodes), len(end_network.edges))
+    )
 
-    print('Network has {} nodes and {} edges'.format(len(final_nodes),
-                                                     len(end_network.edges)))
-
-    print("Found {} of {} seed species in network"
-          "".format(n_hits, len(seed_species)))
+    logger.info("Found {} of {} seed species in network".format(
+        n_hits, len(seed_species))
+    )
     if all_measured_list is not None:
         n_measured_hits = len(set(all_measured_list).intersection(final_nodes))
-        print("Found {} of {} background species in network"
-              "".format(n_measured_hits, len(all_measured_list)))
+        logger.info("Found {} of {} background species in network"
+                    "".format(n_measured_hits, len(all_measured_list)))
 
     return end_network
 
@@ -183,13 +187,12 @@ def expand_by_db(starting_network, expansion_source, measured_list,
         new_graph.add_node(node, **expansion_source.node[node])
 
     new_graph = nt.compose(starting_network, new_graph)
-    if verbose:
-        print("\t\t\tbefore\tafter")
-        print("\tNodes\t{}\t{}".format(len(starting_network.nodes),
-                                       len(new_graph.nodes)))
+    logger.info("\t\t\tbefore\tafter")
+    logger.info("\tNodes\t{}\t{}".format(len(starting_network.nodes),
+                                         len(new_graph.nodes)))
 
-        print("\tEdges\t{}\t{}".format(len(starting_network.edges),
-                                       len(new_graph.edges)))
+    logger.info("\tEdges\t{}\t{}".format(len(starting_network.edges),
+                                         len(new_graph.edges)))
 
     return new_graph
 
@@ -213,20 +216,15 @@ def create_background_network(save_name='background_network',
     -------
     nx.DiGraph
     """
-
-    kegg_network = db.load_all_of_kegg(fresh_download=fresh_download,
-                                       verbose=verbose)
-    hmdb_network = db.load_hmdb_network(fresh_download=fresh_download,
-                                        verbose=verbose)
-    biogrid_network = db.load_biogrid_network(fresh_download=fresh_download,
-                                              verbose=verbose)
-    signor_network = db.load_signor(fresh_download=fresh_download,
-                                    verbose=verbose)
-    reactome_network = db.load_reactome_fi(verbose=verbose)
+    logger.info("Generating background network from all databases")
+    kegg_network = db.load_kegg(fresh_download=fresh_download)
+    hmdb_network = db.load_hmdb_network(fresh_download=fresh_download)
+    biogrid_network = db.load_biogrid_network(fresh_download=fresh_download)
+    signor_network = db.load_signor(fresh_download=fresh_download)
+    reactome_network = db.load_reactome_fi()
     network_list = [hmdb_network, kegg_network, biogrid_network,
                     reactome_network, signor_network]
     names = ['hmdb', 'kegg', 'biogrid', 'reactome', 'signor']
-
 
     def find_overlap(n1, n2):
         nodes1 = set(n1.nodes())
@@ -235,8 +233,6 @@ def create_background_network(save_name='background_network',
         e2 = set(n2.edges())
         edge_overlap = len(e2.intersection(e1))
         node_overlap = len(nodes1.intersection(nodes2))
-        print("\tnode overlap = {}".format(node_overlap))
-        print("\tedge overlap = {}".format(edge_overlap))
         return node_overlap, edge_overlap
 
     if create_overlap:
@@ -272,15 +268,15 @@ def create_background_network(save_name='background_network',
         plt.subplots_adjust(wspace=.3)
         plt.savefig('compare_network_dbs.png', dpi=300, bbox_inches='tight')
         plt.close()
-
+    logger.info("Combinding networks")
     full_network = nt.compose_all(network_list)
-
+    logger.info("Finished combinding networks")
     nt.standardize_edge_types(full_network)
     full_network = nt.delete_disconnected_network(full_network)
-    # find_overlap(reactome_network, full_network)
     n_nodes = len(full_network.nodes)
     n_edges = len(full_network.edges)
-    print("Background network {} nodes and {} edges".format(n_nodes, n_edges))
+    logger.info("Background network {} nodes and {} edges".format(n_nodes,
+                                                                  n_edges))
 
     nx.write_gpickle(full_network, '{}.p.gz'.format(save_name))
     nx.write_gml(full_network, '{}.gml'.format(save_name))
@@ -288,7 +284,5 @@ def create_background_network(save_name='background_network',
 
 
 if __name__ == '__main__':
-    create_background_network(fresh_download=True, verbose=True,
+    create_background_network(fresh_download=False, verbose=True,
                               create_overlap=True)
-    # load_hmdb_network(create_new=True)
-    # load_hmdb_network(False)

@@ -6,7 +6,7 @@ from magine.logging import get_logger
 import magine.mappings.databases.download_libraries as dl
 import magine.networks.databases as nd
 
-logger = get_logger('magine.downloads', log_level=logging.INFO)
+logger = get_logger(__name__, log_level=logging.INFO)
 
 
 def download_id_mapping():

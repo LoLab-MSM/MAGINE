@@ -4,8 +4,8 @@ try:
 except:
     basestring = str
 
-import pandas as pd
 from bioservices import HGNC, UniProt
+import pandas as pd
 from sortedcontainers import SortedSet, SortedDict
 
 from magine.mappings.databases import load_hgnc, load_uniprot, load_ncbi
@@ -35,6 +35,13 @@ class GeneMapper(object):
         self._kegg_to_gene_name = None
         self._kegg_to_uniprot = None
         self._ncbi_to_symbol = None
+        # hackish way to initilize
+        if 'x' in self.kegg_to_gene_name:
+            pass
+        if 'x' in self.ncbi_to_symbol:
+            pass
+        if 'x' in self.gene_name_to_uniprot:
+            pass
 
     @property
     def gene_name_to_uniprot(self):
@@ -135,6 +142,7 @@ class GeneMapper(object):
         -------
         kegg_to_gene_name, kegg_short : dict, dict
         """
+
         # Create the dictionary to store all conversions to be returned
         missing = set()
         unknown_genes = set()
@@ -175,10 +183,11 @@ class GeneMapper(object):
                 unknown_genes.add(gene)
 
         if len(unknown_genes) > 0:
-            add_dict, missed = kegg_to_symbol_through_uniprot(unknown_genes)
+            add_dict, missed = self.kegg_to_symbol_through_uniprot(
+                unknown_genes)
             kegg_to_gene_name.update(add_dict)
 
-            add_dict, final_missed = kegg_to_hugo(missed, species)
+            add_dict, final_missed = self.kegg_to_hugo(missed, species)
             kegg_to_gene_name.update(add_dict)
 
             print("{} mappings not found from kegg to"
@@ -187,77 +196,75 @@ class GeneMapper(object):
 
         return kegg_to_gene_name, kegg_short
 
+    def kegg_to_symbol_through_uniprot(self, unknown_genes):
+        # create string to call uniprot for mapping
+        search_string = '\t'.join(unknown_genes)
+        kegg_to_gene_name = dict()
+        missing = set()
+        uniprot = UniProt(verbose=True)
+        # This is where it gets tricky. Checking to see if there is a uniprot
+        # mapping for the species, if not, trying from KEGG side. Sometimes
+        # kegg  links to a different uniprot, or uniprot links to a diff kegg.
+        uni_dict = dict(uniprot.mapping("KEGG_ID", "ACC", query=search_string))
+        for i in unknown_genes:
+            if i in uni_dict:
+                for n in uni_dict[i]:
+                    x = uniprot.search("accession:{}".format(n),
+                                       columns='genes(PREFERRED),reviewed,id',
+                                       limit=1)
+                    _, data = x.rstrip('\n').split('\n')
+                    name, review, entry = data.split('\t')
+                    if n != entry:
+                        print(i, n, entry, x, "dont match")
+                    elif review == 'reviewed':
+                        kegg_to_gene_name[i] = name
 
-def kegg_to_symbol_through_uniprot(unknown_genes):
-    # create string to call uniprot for mapping
-    search_string = '\t'.join(unknown_genes)
-    kegg_to_gene_name = dict()
-    missing = set()
-    uniprot = UniProt(verbose=True)
-    # This is where it gets tricky. Checking to see if there is a uniprot
-    # mapping for the species, if not, trying from KEGG side. Sometimes
-    # kegg  links to a different uniprot, or uniprot links to a diff kegg.
-    uni_dict = dict(uniprot.mapping("KEGG_ID", "ACC", query=search_string))
-    for i in unknown_genes:
-        if i in uni_dict:
-            for n in uni_dict[i]:
-                x = uniprot.search("accession:{}".format(n),
-                                   columns='genes(PREFERRED),reviewed,id',
-                                   limit=1)
-                _, data = x.rstrip('\n').split('\n')
-                name, review, entry = data.split('\t')
-                if n != entry:
-                    print(i, n, entry, x, "dont match")
-                elif review == 'reviewed':
-                    kegg_to_gene_name[i] = name
+            else:
+                missing.add(i)
+        print("{} mappings not found from kegg to"
+              " gene name".format(len(missing)))
+        print(missing)
+        return kegg_to_gene_name, missing
 
-        else:
-            missing.add(i)
-    print("{} mappings not found from kegg to"
-          " gene name".format(len(missing)))
-    print(missing)
-    return kegg_to_gene_name
+    def kegg_to_hugo(self, genes, species='hsa'):
+        """
+        Converts all KEGG names to HGNC
 
+        Parameters
+        ----------
+        genes : list
+        species : str
 
-def kegg_to_hugo(genes, species='hsa'):
-    """
-    Converts all KEGG names to HGNC
-
-    Parameters
-    ----------
-    genes : list
-    species : str
-
-    Returns
-    -------
-    dict
-    """
-    prefix = species + ':'
-    hugo = HGNC(verbose=True)
-    hugo_dict = {}
-    not_found = set()
-    for i in genes:
-        tmp_name = i.lstrip(prefix)
-        mapping = hugo.search(tmp_name)
-        if 'response' in mapping:
-            response = mapping['response']
-            if 'numFound' in response:
-                if response['numFound'] == 0:
-                    not_found.add(i)
-                    continue
-                elif response['numFound'] == 1:
-                    docs = response['docs'][0]
-                    hugo_dict[i] = docs['symbol']
-                    continue
-                else:
-                    if 'symbol' in response['docs'][0]:
-                        hugo_dict[i] = response['docs'][0]['symbol']
-        else:
-            not_found.add(i)
-    if not_found != 0:
-        print("{} not found after HGNC mapping".format(len(not_found)))
-        print("{} ".format(not_found))
-    return hugo_dict, not_found
+        Returns
+        -------
+        dict
+        """
+        prefix = species + ':'
+        hugo = HGNC(verbose=True)
+        hugo_dict = {}
+        not_found = set()
+        for i in genes:
+            tmp_name = i.lstrip(prefix)
+            mapping = hugo.search(tmp_name)
+            if 'response' in mapping:
+                response = mapping['response']
+                if 'numFound' in response:
+                    if response['numFound'] == 0:
+                        not_found.add(i)
+                        continue
+                    elif response['numFound'] == 1:
+                        docs = response['docs'][0]
+                        hugo_dict[i] = docs['symbol']
+                        continue
+                    else:
+                        if 'symbol' in response['docs'][0]:
+                            hugo_dict[i] = response['docs'][0]['symbol']
+            else:
+                not_found.add(i)
+        if not_found != 0:
+            print("{} not found after HGNC mapping".format(len(not_found)))
+            print("{} ".format(not_found))
+        return hugo_dict, not_found
 
 
 def _dict(data, key, value):
@@ -310,7 +317,8 @@ manual_dict = {'hsa:857': 'CAV1',
                'hsa:93034': 'NT5C1B',
                'hsa:574537': 'UGT2A2',
                'hsa:11044': 'PAPD7',
-               'hsa:57292': 'KIR2DL5A'
+               'hsa:57292': 'KIR2DL5A',
+               'hsa:107984026': 'ACAP3'
                }
 
 if __name__ == '__main__':
