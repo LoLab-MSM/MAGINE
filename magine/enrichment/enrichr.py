@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 
@@ -15,11 +16,13 @@ import requests
 
 from magine.plotting.species_plotting import write_table_to_html
 from magine.enrichment.enrichment_result import EnrichmentResult
+from magine.logging import get_logger
 
-_path = os.path.dirname(__file__)
+logger = get_logger(__name__, log_level=logging.INFO)
 
 _valid_libs = set()
-with open(os.path.join(_path, '_valid_enricher_libs.txt'), 'r') as f:
+with open(os.path.join(os.path.dirname(__file__),
+                       '_valid_enricher_libs.txt'), 'r') as f:
     for n in f.read().splitlines():
         _valid_libs.add(n)
 
@@ -172,11 +175,11 @@ class Enrichr(object):
                         gene_set_lib='Reactome_2016')
         >>> print(df[['term_name','combined_score']].head(5))#doctest: +NORMALIZE_WHITESPACE
                                              term_name  combined_score
-            0  intrinsic pathway for apoptosis_hsa_...      48.157
-            1  programmed cell death_hsa_r-hsa-5357801      41.516
-            2               apoptosis_hsa_r-hsa-109581      41.403
-            3  caspase-mediated cleavage of cytoske...      27.349
-            4  caspase activation via extrinsic apo...      22.438
+            0  intrinsic pathway for apoptosis hsa ...       11814.410
+            1               apoptosis hsa r-hsa-109581        2365.141
+            2  programmed cell death hsa r-hsa-5357801        2313.527
+            3  caspase-mediated cleavage of cytoske...       10944.261
+            4  caspase activation via extrinsic apo...        4245.542
 
         Returns
         -------
@@ -186,10 +189,7 @@ class Enrichr(object):
         """
         if not isinstance(list_of_genes, (list, set)):
             raise AssertionError("list_of_genes must be list like")
-
-        if self.verbose:
-            print("Running Enrichr with gene set {}".format(gene_set_lib))
-
+        logger.debug("Running Enrichr with gene set {}".format(gene_set_lib))
         user_list_id = self._add_gene_list(list_of_genes)
         if isinstance(gene_set_lib, basestring):
             df = self._run_id(user_list_id, gene_set_lib)
@@ -198,16 +198,13 @@ class Enrichr(object):
 
         init_size = len(df)
         if init_size == 0:
-            print("No terms returned")
+            logger.debug("No terms returned")
             return df
         df = _prepare_output(df)
         after_size = len(df)
         if init_size != after_size:
             raise AssertionError('not the same shape {}'.format(gene_set_lib))
-
-        if self.verbose:
-            print("Done calling Enrichr.")
-
+        logger.debug("Done calling Enrichr.")
         return df
 
     def run_samples(self, sample_lists, sample_ids,
@@ -255,11 +252,11 @@ class Enrichr(object):
 gene_set_lib='Reactome_2016')
             >>> print(df[['term_name','combined_score']].head(5))#doctest: +NORMALIZE_WHITESPACE
                                                  term_name  combined_score
-                0  intrinsic pathway for apoptosis_hsa_...      48.157
-                1  programmed cell death_hsa_r-hsa-5357801      41.516
-                2               apoptosis_hsa_r-hsa-109581      41.403
-                3  caspase-mediated cleavage of cytoske...      27.349
-                4  caspase activation via extrinsic apo...      22.438
+                0  intrinsic pathway for apoptosis hsa ...       11814.410
+                1               apoptosis hsa r-hsa-109581        2365.141
+                2  programmed cell death hsa r-hsa-5357801        2313.527
+                3  caspase-mediated cleavage of cytoske...       10944.261
+                4  caspase activation via extrinsic apo...        4245.542
             >>> df.filter_multi(rank=10, inplace=True)
             >>> df['term_name'] = df['term_name'].str.split('_').str.get(0)
             >>> fig = df.sig.heatmap(figsize=(6, 6), linewidths=.05)
@@ -359,8 +356,7 @@ gene_set_lib='Reactome_2016')
         for db in databases[1:]:
             data = data.append(self._run_id(gene_list_id, db),
                                ignore_index=True)
-            if self.verbose:
-                print('\t\t{}/{} databases'.format(db, len(databases)))
+            logger.debug('\t\t{}/{} databases'.format(db, len(databases)))
         return data
 
     def _add_gene_list(self, gene_list):
@@ -474,7 +470,6 @@ def clean_lincs(df):
             # spaces instead of "_". Hard to parse since the names of the drugs
             # can also have spaces ("sulfide salts")
             # ex. cpc006 snuc5 6h-quinine hemisulfate salt monohydrate-10.0
-            print(term_name)
             return term_name
 
     df['term_name'] = df.apply(get_drug, axis=1)
@@ -612,7 +607,8 @@ def get_background_list(lib_name):
     return term_to_gene
 
 
-def run_enrichment_for_project(exp_data, project_name, databases=None):
+def run_enrichment_for_project(exp_data, project_name, databases=None,
+                               output_path=None):
     """
 
     Parameters
@@ -620,30 +616,35 @@ def run_enrichment_for_project(exp_data, project_name, databases=None):
     exp_data : magine.data.experimental_data.ExprerimentalData
     project_name : str
     databases : list
-
-    Returns
-    -------
-    magine.enrichment.enrichment_result.EnrichmentResult
+    output_path : str
+        Location to save all individual enrichment output files created.
 
     """
-    e = Enrichr(verbose=True)
-    all_df = []
-    _dir = 'enrichment_output'
-    if not os.path.exists(_dir):
-        os.mkdir(_dir)
+
     if databases is None:
         databases = standard_dbs
-    print("Running {} databases".format(len(databases)))
+
+    logger.info("Running enrichment on project")
+    logger.info("Running {} databases".format(len(databases)))
+
+    e = Enrichr(verbose=True)
+    all_df = []
+    if output_path is None:
+        _dir = os.path.join(os.getcwd(), 'enrichment_output')
+    else:
+        _dir = output_path
+
+    if not os.path.exists(_dir):
+        logger.info("Creating output directory: {}".format(_dir))
+        os.mkdir(_dir)
 
     def _run_new(samples, timepoints, category):
-        print("Running {}".format(category))
+        logger.info("Running {}".format(category))
         for genes, sample_id in zip(samples, timepoints):
             if not len(genes):
                 continue
-            print('\t time point = {}'.format(sample_id))
-            current = "{}_{}_{}".format(category,
-                                        sample_id,
-                                        project_name)
+            logger.info('\t time point = {}'.format(sample_id))
+            current = "{}_{}_{}".format(category, sample_id, project_name)
             name = os.path.join(_dir, current + '.csv.gz')
             try:
                 df = pd.read_csv(name, index_col=None, encoding='utf-8')
@@ -657,41 +658,51 @@ def run_enrichment_for_project(exp_data, project_name, databases=None):
             df['category'] = category
             all_df.append(df)
 
+    #  run all protein labeled species grouped by time point
+    #  ( label-free, ph-silac, etc are all combined)
     if len(exp_data.proteins.sample_ids) != 0:
         sample = exp_data.proteins.sig
         _run_new(sample.by_sample, sample.sample_ids, 'proteomics_both')
         _run_new(sample.up_by_sample, sample.sample_ids, 'proteomics_up')
         _run_new(sample.down_by_sample, sample.sample_ids, 'proteomics_down')
 
+    #  run all RNA labeled species grouped by time point
     if len(exp_data.rna.sample_ids) != 0:
         sample = exp_data.rna.sig
         _run_new(sample.by_sample, sample.sample_ids, 'rna_both')
         _run_new(sample.down_by_sample, sample.sample_ids, 'rna_down')
         _run_new(sample.up_by_sample, sample.sample_ids, 'rna_up')
 
+    #  run each experimental 'source' by time point
+    #  ( label-free, ph-silac, etc are all separate)
     for source in exp_data.exp_methods:
         df = exp_data[source].sig
-        if len(df['species_type'].unique()) != 1:
+        col_options = df['species_type'].unique()
+        # make sure there is only a single species type and it is protein
+        # this makes sure that the RNA seq doesnt get ran twice
+        if len(col_options) != 1:
             continue
-
-        if df['species_type'].unique()[0] == 'protein':
+        if col_options[0] == 'protein':
             _run_new(df.by_sample, df.sample_ids, '{}_both'.format(source))
             _run_new(df.up_by_sample, df.sample_ids, '{}_up'.format(source))
             _run_new(df.down_by_sample, df.sample_ids,
                      '{}_down'.format(source))
 
+    # merge all outputs
     final_df = pd.concat(all_df, ignore_index=True)
 
     final_df = final_df[
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
+
+    # remove rows without a term name
     final_df = final_df[~final_df['term_name'].isnull()].copy()
+
+    # Adds significant column
     final_df.loc[(final_df['adj_p_value'] <= 0.05) &
                  (final_df['combined_score'] > 0.0), 'significant'] = True
 
+    logger.info("Saving output: {}_enrichment.csv.gz".format(project_name))
     final_df.to_csv('{}_enrichment.csv.gz'.format(project_name),
                     encoding='utf-8', compression='gzip', index=False)
-    print("Done with enrichment")
-
-
