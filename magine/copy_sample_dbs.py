@@ -4,16 +4,22 @@ from shutil import copytree, rmtree
 from appdirs import user_data_dir
 
 
-def copy_sample_databases():
+def copy_sample_databases(force=False):
     dir_name = user_data_dir('magine')
 
     network_data_dir = os.path.join(dir_name, 'network_data')
     id_mapping_dir = os.path.join(dir_name, 'id_data')
 
+    # Check if database directories already exist
+    if os.path.exists(id_mapping_dir) and os.path.exists(network_data_dir) and not force:
+        print('Database directories already exist. Override using force=True argument. Skipping...')
+        return
+
     # check or create the main data storage directory
     if not os.path.exists(dir_name):
         os.makedirs(dir_name)
-    # check or create the network data storage directory
+
+    # check or create the ID mapping data storage directory
     if os.path.exists(id_mapping_dir):
         rmtree(id_mapping_dir)
 
