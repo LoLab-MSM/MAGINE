@@ -34,3 +34,7 @@ def copy_sample_databases(force=False):
 
     copytree(id_dir, id_mapping_dir)
     copytree(network_dir, network_data_dir)
+
+
+if __name__ == '__main__':
+    copy_sample_databases()

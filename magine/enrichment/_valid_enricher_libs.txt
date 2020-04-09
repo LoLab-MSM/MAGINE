@@ -75,7 +75,6 @@ HumanCyc_2015
 HumanCyc_2016
 Human_Gene_Atlas
 Human_Phenotype_Ontology
-Humancyc_2016
 InterPro_Domains_2019
 Jensen_COMPARTMENTS
 Jensen_DISEASES
@@ -91,8 +90,8 @@ Kinase_Perturbations_from_GEO_down
 Kinase_Perturbations_from_GEO_up
 LINCS_L1000_Chem_Pert_down
 LINCS_L1000_Chem_Pert_up
-LINCS_L1000_Kinase_Perturbations_down
-LINCS_L1000_Kinase_Perturbations_up
+L1000_Kinase_and_GPCR_Perturbations_down
+L1000_Kinase_and_GPCR_Perturbations_up
 LINCS_L1000_Ligand_Perturbations_down
 LINCS_L1000_Ligand_Perturbations_up
 Ligand_Perturbations_from_GEO_down
@@ -138,8 +137,6 @@ Reactome_2013
 Reactome_2015
 Reactome_2016
 SILAC_Phosphoproteomics
-Single_Gene_Perturbations_from_GEO_down
-Single_Gene_Perturbations_from_GEO_up
 SubCell_BarCode
 SysMyo_Muscle_Gene_Sets
 TF-LOF_Expression_from_GEO
@@ -163,3 +160,5 @@ WikiPathways_2019_Mouse
 dbGaP
 huMAP
 miRTarBase_2017
+Virus-Host_PPI_P-HIPSTer_2020
+lncHUB_lncRNA_Co-Expression

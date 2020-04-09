@@ -40,8 +40,6 @@ db_types = {
     ],
     'kinases': [
         'KEA_2015',
-        'LINCS_L1000_Kinase_Perturbations_down',
-        'LINCS_L1000_Kinase_Perturbations_up',
         'Kinase_Perturbations_from_GEO_down',
         'Kinase_Perturbations_from_GEO_up',
         'Phosphatase_Substrates_from_DEPOD',
@@ -112,8 +110,6 @@ db_types = {
         'Disease_Perturbations_from_GEO_up',
         'Drug_Perturbations_from_GEO_down',
         'Drug_Perturbations_from_GEO_up',
-        'Single_Gene_Perturbations_from_GEO_up',
-        'Single_Gene_Perturbations_from_GEO_down',
         'RNA-Seq_Disease_Gene_and_Drug_Signatures_from_GEO',
         'Aging_Perturbations_from_GEO_up',
         'Aging_Perturbations_from_GEO_down',
@@ -316,6 +312,8 @@ gene_set_lib='Reactome_2016')
         if not response.ok:
             raise Exception("EnrichR response error")
         data = json.loads(response.text)
+        if gene_set_lib not in data:
+            raise Exception("{} not in enrichR".format(gene_set_lib))
         if len(data[gene_set_lib]) == 0:
             return EnrichmentResult()
         #####
@@ -562,7 +560,7 @@ replace_pairs = [
     ('Mus musculus', 'mus'),
     ('hg19', '_hsa'),
     ('mm9', '_mus'),
-    ('hsa_r-hsa', 'hsa')
+    (' hsa r-hsa', '_hsa')
 
 ]
 
