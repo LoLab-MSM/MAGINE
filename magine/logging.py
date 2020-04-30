@@ -5,6 +5,7 @@ import socket
 import time
 import os
 import warnings
+from . import __version__
 
 # code based off of magine.logging.py
 
@@ -115,7 +116,7 @@ def setup_logger(level=logging.INFO, console_output=True, file_output=False,
         file_handler.setFormatter(log_fmt)
         log.addHandler(file_handler)
 
-    log.info('Logging started on MAGINE')
+    log.info('Logging started on MAGINE version {}'.format(__version__))
     if time_utc:
         log.info('Log entry times are in UTC')
     else:
