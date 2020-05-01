@@ -43,3 +43,11 @@ script:
 after_success:
   - codecov
   - coveralls
+deploy:
+  provider: pypi
+  username: "__token__"
+  password:
+    secure:
+      pypi-AgEIcHlwaS5vcmcCJGYxMGU3ZDU4LWY1MzUtNGU5MC1iMzViLTQ3MzMzZWZlYTc1ZAACN3sicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJtYWdpbmUiXX0sICJ2ZXJzaW9uIjogMX0AAAYgbHopPozQzbunSaJ0hqCooTuTheeWqhJ5VYdxHhFhl0M
+    on:
+      tags: true

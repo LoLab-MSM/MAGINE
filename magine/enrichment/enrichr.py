@@ -196,7 +196,18 @@ class Enrichr(object):
         if init_size == 0:
             logger.debug("No terms returned")
             return df
-        df = _prepare_output(df)
+        try:
+            df = _prepare_output(df)
+        except:
+            logger.warning("Unable to simplify enrichR term names. This could "
+                           "be due to a change in enrichR formatting. "
+                           "Returning as default output.")
+
+        # set all terms with adj_p_value less than 0.05 to significant.
+        df['significant'] = False
+        crit = (df['adj_p_value'] <= 0.05)
+        df.loc[crit, 'significant'] = True
+
         after_size = len(df)
         if init_size != after_size:
             raise AssertionError('not the same shape {}'.format(gene_set_lib))
@@ -272,6 +283,8 @@ gene_set_lib='Reactome_2016')
             df['sample_id'] = j
             df_final = df_final.append(df, ignore_index=True)
 
+        # removes terms that do not have at least 1 signficant term across any
+        # of the samples list provided
         df_final.require_n_sig(n_sig=1, inplace=True)
         df_final = EnrichmentResult(df_final)
         if save_name:
@@ -386,9 +399,7 @@ gene_set_lib='Reactome_2016')
 
 def _prepare_output(df):
     df['term_name'] = df.apply(clean_term_names, axis=1)
-    df['significant'] = False
-    crit = (df['adj_p_value'] <= 0.05)
-    df.loc[crit, 'significant'] = True
+
     return df
 
 
@@ -424,8 +435,10 @@ def clean_term_names(row):
         drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
         direction = re.search(r'-(.{2})$', term_name).group(0)
         term_name = drug_name + direction
-    if db in ['Old_CMAP_down', 'Old_CMAP_up', ]:
+
+    if db in ['Old_CMAP_down', 'Old_CMAP_up']:
         term_name = term_name.rsplit('-', 1)[0]
+
     if db in ['Ligand_Perturbations_from_GEO_down',
               'Ligand_Perturbations_from_GEO_up']:
         term_name = term_name.split('_', 1)[0]
