@@ -45,9 +45,9 @@ after_success:
   - coveralls
 deploy:
   provider: pypi
-  username: "__token__"
+  username: __token__
   password:
     secure:
-      pypi-AgEIcHlwaS5vcmcCJGYxMGU3ZDU4LWY1MzUtNGU5MC1iMzViLTQ3MzMzZWZlYTc1ZAACN3sicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJtYWdpbmUiXX0sICJ2ZXJzaW9uIjogMX0AAAYgbHopPozQzbunSaJ0hqCooTuTheeWqhJ5VYdxHhFhl0M
+      pypi-AgEIcHlwaS5vcmcCJGE4M2U1YjA3LTFjOTEtNGFkYS1iNTU1LTg3MmUzMTJmOWM5YwACN3sicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJtYWdpbmUiXX0sICJ2ZXJzaW9uIjogMX0AAAYg0Qac-bQgkU_w5asJnc0czZmzYBB0jt1V_fhNnXKVyYQ
     on:
       tags: true
