@@ -12,6 +12,8 @@ from os import path
 # Always prefer setuptools over distutils
 from setuptools import find_packages, setup
 
+import magine
+
 here = path.abspath(path.dirname(__file__))
 
 # Get the long description from the README file
@@ -20,7 +22,7 @@ with open(path.join(here, 'README.rst'), 'r') as f:
 
 setup(
     name='MAGINE',
-    version='0.0.13',
+    version=magine.__version__,
     description='Package to analyze biological data.',
     long_description=long_description,
     long_description_content_type='text/x-rst',
