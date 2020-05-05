@@ -6,40 +6,29 @@ env:
 - PYVER=3.7
 cache: pip
 before_install:
-  # setup igraph.
-  #  - sudo apt-get install build-essential python-dev libxml2 libxml2-dev zlib1g-dev autoconf
-  #  - wget https://github.com/igraph/igraph/releases/download/0.7.1/igraph-0.7.1.tar.gz
-  #  - tar -xzf igraph-0.7.1.tar.gz
-  #  - cd igraph
-  #  - autoconf
-  #  - ./configure
-  #  - make
-  #  - make check
-  #  - make install
-  #  - cd ..
-  # install conda
-  - wget http://repo.continuum.io/miniconda/Miniconda${PYVER:0:1}-latest-Linux-x86_64.sh -O miniconda.sh
-  - chmod +x miniconda.sh
-  - bash miniconda.sh -b -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - conda update --yes conda
-  - conda install --yes python="$PYVER" numpy scipy networkx nose pandas jinja2 plotly pycairo
-  - conda install --yes -c conda-forge python-igraph
-  - mkdir -p ~/.config/matplotlib
-  - echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
-  - pip install -r requirements.txt
-  - pip install python-coveralls
-  - pip install nose-exclude
-  - pip install nose-timer
-  - pip install codecov
-
+- wget http://repo.continuum.io/miniconda/Miniconda${PYVER:0:1}-latest-Linux-x86_64.sh
+  -O miniconda.sh
+- chmod +x miniconda.sh
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- conda update --yes conda
+- conda install --yes python="$PYVER" numpy scipy networkx nose pandas jinja2 plotly
+  pycairo
+- conda install --yes -c conda-forge python-igraph
+- mkdir -p ~/.config/matplotlib
+- echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
+- pip install -r requirements.txt
+- pip install python-coveralls
+- pip install nose-exclude
+- pip install nose-timer
+- pip install codecov
 install:
   - sudo apt-get install graphviz
   - python setup.py build --build-lib=build/lib
-
 script:
   - python magine/copy_sample_dbs.py
-  - travis_wait 45 nosetests build/lib/magine/tests --with-coverage --cover-inclusive --cover-package=build/lib/magine --logging-level=INFO --with-timer
+  - travis_wait 45 nosetests build/lib/magine/tests --with-coverage --cover-inclusive
+    --cover-package=build/lib/magine --logging-level=INFO --with-timer
 after_success:
   - codecov
   - coveralls
@@ -47,7 +36,4 @@ deploy:
   provider: pypi
   username: __token__
   password:
-    secure:
-      pypi-AgEIcHlwaS5vcmcCJGE4M2U1YjA3LTFjOTEtNGFkYS1iNTU1LTg3MmUzMTJmOWM5YwACN3sicGVybWlzc2lvbnMiOiB7InByb2plY3RzIjogWyJtYWdpbmUiXX0sICJ2ZXJzaW9uIjogMX0AAAYg0Qac-bQgkU_w5asJnc0czZmzYBB0jt1V_fhNnXKVyYQ
-    on:
-      tags: true
+    secure: mgej0gyheuzkg4Z5sTQC28oUD/l56h/TPtp4iZn0c/ht/GlbW3tHVdyTG/IzevGM+DOMoYmNlPfgLMQStLsZcugqatHM1rD9ExB9EsoqxS9Lj1rA0FI/BPp2PJGTkcLTMJjMDRYTck9mv3Ow2XCuxREhr7xjL58d7K5jU4+9NC0GP3UMcBg7ohp1G3n+PsYW4eZGjhD0gAwxcFPMIxv81r8IMTP5RpMtU7PcL88QpRUYDJ6NsBH6/Z+ryDGV3KQXulv1iM1HPTKbqQTQR40ZrELl3FIVGX+mYGuZ1YTgT+k1gh/J7K9wI1NVQy4pghQs0tg3Yiek7752NGEXzSjGH4M3u4VnI2GQMafcVLtA2NlGqjbPc1QUK6x8GMdetjc9d5DoAPpHDKQz/1hsiHgFZ9fuCZRAMseIH/CEfwSVCqiGk8IePP6fOrsWrSaDrrsoxVWwqQ74xN8cNUcrKKjcMEPxDPw64ZpFLTT5IcZXvjeP/92Vxrr8xuMG2TBWqzPkfIujSsq66IFrP+oDGklwIKfiOcOBvi4RQ972HKwap9JLYrQd1LdCiyw0aVtYlcHc2eiE0l+I4Ey2mLaK3Op1SKk+D6QI6uhzEhDyvpq1seeC5yerq7NNHJGM9axrUi1QRjoVm0Af++BBdOnrk0yHLlmmkbtFtGH2ABNi6r+T2+Q=
