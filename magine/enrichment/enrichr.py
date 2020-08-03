@@ -709,6 +709,7 @@ def run_enrichment_for_project(exp_data, project_name, databases=None,
 
     # remove rows without a term name
     final_df = final_df[~final_df['term_name'].isnull()].copy()
+    final_df = final_df[~final_df['adj_p_value'].isnull()].copy()
 
     # Adds significant column
     final_df.loc[(final_df['adj_p_value'] <= 0.05) &
