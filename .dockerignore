@@ -1,5 +1,2 @@
-# Ignore everything
-**
-
-# Except examples
-!magine/examples
+.git
+_sample_databases

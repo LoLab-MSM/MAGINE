@@ -1,9 +1,15 @@
 FROM continuumio/miniconda:4.7.12
 
 RUN conda config --add channels conda-forge
-RUN conda install jinja2 statsmodels networkx graphviz pip python=3.7
+RUN conda install jinja2 statsmodels networkx graphviz pip python=3.7 matplotlib
 RUN conda install -c marufr python-igraph
-RUN pip install magine
+
+RUN mkdir /tmp/magine-build
+COPY setup.py setup.cfg README.rst /tmp/magine-build/
+COPY docs /tmp/magine-build/docs/
+COPY scripts /tmp/magine-build/scripts/
+COPY magine/*[^examples] /tmp/magine-build/magine/
+RUN cd /tmp/magine-build && python setup.py install
 
 RUN useradd -ms /bin/bash magine
 USER magine
