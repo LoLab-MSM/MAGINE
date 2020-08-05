@@ -1,2 +1,4 @@
 .git
+*.pyc
+__pycache__
 _sample_databases
