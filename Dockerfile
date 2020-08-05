@@ -1,14 +1,8 @@
 FROM continuumio/miniconda:4.7.12
 
-RUN pwd
-RUN ls
-
 RUN useradd -ms /bin/bash magine
 USER magine
 WORKDIR /home/magine
-
-RUN pwd
-RUN ls
 
 COPY magine/examples /home/magine/examples
 
