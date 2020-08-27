@@ -1,8 +1,8 @@
-name: magine_env
+name: base
 channels:
   - conda-forge
 dependencies:
-  - python
+  - python=3.7
   - numpy
   - seaborn
   - python-igraph
@@ -13,7 +13,9 @@ dependencies:
   - matplotlib
   - plotly
   - jupyter
-  - networkx
+  - networkx=2.3
+  - statsmodels
+  - Jinja2
   - pip
   - pip:
       - wordcloud
@@ -27,5 +29,3 @@ dependencies:
       - pydot
       - defusedxml
       - requests
-      - Jinja2
-      - statsmodels
