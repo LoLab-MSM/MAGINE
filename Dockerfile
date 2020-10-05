@@ -1,9 +1,9 @@
-FROM alpine:3.7
-RUN apk add --update graphviz ttf-ubuntu-font-family
-
 FROM continuumio/miniconda:4.7.12
-
 RUN mkdir /tmp/magine-build
+
+RUN apt-get update -y
+RUN apt-get install -y graphviz libgts-dev
+
 COPY docs /tmp/magine-build/docs/
 COPY scripts /tmp/magine-build/scripts/
 COPY magine /tmp/magine-build/magine/
