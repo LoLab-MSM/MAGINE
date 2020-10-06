@@ -1,5 +1,5 @@
-from itertools import chain
 import warnings
+from itertools import chain
 
 import matplotlib.pyplot as plt
 import scipy.cluster.hierarchy as sch
@@ -10,7 +10,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                        cluster_row=False, cluster_col=False,
                        columns='sample_id', index='term_name',
                        values='combined_score', div_colors=False, num_colors=7,
-                       figsize=(6, 4), rank_index=False, annotate_sig=False,
+                       figsize=(6, 4), sort_row=None, annotate_sig=False,
+                       rank_index=None,
                        linewidths=0.0, cluster_by_set=False, min_sig=0):
     """
 
@@ -34,8 +35,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         Use divergent colors for plotting
     figsize : tuple
         Size of figure, passed to matplotlib/seaborn
-    rank_index : bool
-        Order by index.
+    sort_row : str
+        Sort rows by ('index', 'mean', max')
     num_colors : int
         Number of colors for color bar
     annotate_sig : bool
@@ -47,7 +48,8 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     min_sig : int
         Minimum number of significant 'index' across samples. Can be used to
         remove rows that are not significant across any sample.
-
+    rank_index: bool
+        Rank rows by index. Deprecated , plus use sort_row arg instead.
     Returns
     -------
     plt.Figure
@@ -71,11 +73,32 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     fmt = None
     linkage = None
     add_col_group = False
+    print(rank_index)
+    if rank_index is not None:
+        warnings.warn("rank_index is deprecated; use sort_row='index'",
+                      DeprecationWarning)
+        if rank_index:
+            # assuming provided true, will sort by rank.
+            array.sort_index(ascending=True, inplace=True)
+
+    if sort_row is not None:
+        if sort_row not in ('index', 'max', 'mean', 'min'):
+            raise ValueError("Can sort rows by 'index' name or 'max', 'min',"
+                             "'mean' of values")
 
     # rank by index or cluster by term column
-    if rank_index:
+    if sort_row == 'index':
         array.sort_index(ascending=True, inplace=True)
-    elif cluster_by_set and "genes" in d_copy.columns:
+    elif sort_row == 'mean':
+        new_index = array.mean(axis=1).sort_values(ascending=False).index
+        array = array.reindex(new_index)
+    elif sort_row == 'max':
+        new_index = array.max(axis=1).sort_values(ascending=False).index
+        array = array.reindex(new_index)
+    elif sort_row == 'min':
+        new_index = array.max(axis=1).sort_values(ascending=False).index
+        array = array.reindex(new_index)
+    if cluster_by_set and "genes" in d_copy.columns:
         # clustering will be based on jaccard index of terms
         dist_mat, names = d_copy.calc_dist(level='sample')
         linkage = sch.linkage(dist_mat, method='average')
@@ -120,7 +143,13 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
                 annotations = annotations[fig.dendrogram_row.reordered_ind]
             if cluster_col:
                 annotations = annotations[:, fig.dendrogram_col.reordered_ind]
+            # Only need figure for dendrogram ordering, not actual plot.
+            # Can probably do this without the plotting interface, but this
+            # seems to do the job for now.
+
             plt.close()
+
+            # make final figure
             fig = sns.clustermap(array, cmap=pal, center=center,
                                  yticklabels=y_tick_labels,
                                  col_colors=col_colors,
@@ -136,6 +165,10 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
         if add_col_group:
             fig = _add_column_color_groups(d_copy, fig, col_color_map,
                                            col_labels, columns)
+
+        # add clustered columns and rows, basically allows us to extract out
+        # the clusters from the figure, if we wanted to do something with them
+        # ie run enrichment analysis.
         if cluster_col:
             col_cltrs = sch.fcluster(fig.dendrogram_col.linkage, t=2,
                                      criterion='maxclust')
@@ -155,6 +188,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
             fig.row_clusters = row_clusters
         fig.ax_heatmap.set_ylabel('')
         fig.ax_heatmap.set_xlabel('')
+        # plt.subplots_adjust(right=0.7, top=1.5)
     else:
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111)
@@ -335,7 +369,7 @@ def heatmap_by_terms(data, term_labels, term_sets, colors=None, min_sig=None,
 
 
 def cluster_distance_mat(dist_mat, names, figsize=(8, 8)):
-    """
+    """ Creates heatmap from distance matrix.
 
     Parameters
     ----------
@@ -408,7 +442,8 @@ def _add_column_color_groups(data, fig, colors, color_labels, columns):
         fig.ax_col_dendrogram.bar(0, 0, color=color, label=label, linewidth=0)
     plt.setp(fig.ax_col_dendrogram.yaxis.get_majorticklabels(), rotation=0,
              fontsize=16)
-    fig.ax_col_dendrogram.legend(loc="right", fontsize=12)
+    fig.ax_col_dendrogram.legend(loc="center", fontsize=12, ncol=2,
+                                 bbox_to_anchor=(0.5, 1., 0.5, 0.5))
     v_line_list = []
     prev = 0
     for i in color_labels:
@@ -428,6 +463,7 @@ def _get_sig_annotations(arr, dat, columns, index, min_sig):
                            values='significant', fill_value=0, min_sig=min_sig)
         tmp2 = tmp2.reindex(arr.index)
         tmp2[tmp2 > 0] = True
+        tmp2 = tmp2.replace(0, '')
         tmp2 = tmp2.replace(False, '')
         tmp2 = tmp2.replace(True, '+')
         return True, tmp2.values, ''
