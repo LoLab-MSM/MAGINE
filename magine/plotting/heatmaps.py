@@ -73,7 +73,7 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     fmt = None
     linkage = None
     add_col_group = False
-    print(rank_index)
+
     if rank_index is not None:
         warnings.warn("rank_index is deprecated; use sort_row='index'",
                       DeprecationWarning)
