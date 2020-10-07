@@ -2,7 +2,7 @@ import os
 
 import matplotlib.figure
 import matplotlib.pyplot as plt
-from nose.tools import ok_
+from nose.tools import ok_, raises
 
 import magine.enrichment.enrichment_result as et
 from magine.data.experimental_data import load_data
@@ -77,9 +77,22 @@ class TestEnrichmentResult(object):
         plt.close()
 
         df = load_data(os.path.join(os.path.dirname(__file__), 'Data',
-                                        'example_apoptosis.csv'))
+                                    'example_apoptosis.csv'))
         terms = [{'BAX'}, {'PARP4'}]
         heatmap_by_terms(df.species, ['1', '2'], terms)
+        plt.close()
+
+    @raises(DeprecationWarning)
+    def test_deprecated_warning(self):
+        # dist = self.data.dist_matrix()
+        # assert isinstance(dist, matplotlib.figure.Figure)
+        copy_data = self.data.copy()
+        copy_data.remove_redundant(level='sample', verbose=False, inplace=True)
+
+        copy_data.heatmap(convert_to_log=True, index='term_name',
+                          columns='sample_id', figsize=(6, 14),
+                          rank_index=True,
+                          )
         plt.close()
 
     def test_find_similar_terms(self):

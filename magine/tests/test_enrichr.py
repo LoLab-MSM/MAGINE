@@ -34,7 +34,7 @@ def test_project():
 
 
 def test_get_gene_set_lib():
-    get_background_list('DrugMatrix')
+    get_background_list('Phosphatase_Substrates_from_DEPOD')
 
 
 def test_clean_drug_dbs():

@@ -69,23 +69,33 @@ class LayoutClient(object):
 
 
 class RenderModel(object):
-    def __init__(self, graph, layout="attributes-layout", style='Directed'):
-        # name='FromMAGINE'):
-        # force-directed
-        # attributes-layout
+    def __init__(self, graph, layout="attributes-layout", use_cyto_net=False):
+        """
+
+        Parameters
+        ----------
+        graph : nx.DiGraph
+        layout : str
+        use_cyto_net : bool
+            Use already loaded network in cytoscape
+        """
 
         self.graph = graph
         self.cy = CyRestClient()
-        self.cy.session.delete()
+        # self.cy.session.delete()
         self.cy.layout2 = LayoutClient()
 
         for n, (i, j) in enumerate(self.graph.edges()):
             self.graph[i][j]['name'] = '{},{}'.format(i, j)
-        self.g_cy = self.cy.network.create_from_networkx(self.graph)
+        if use_cyto_net:
+            self.g_cy = self.cy.network.create(self.cy.network.get_all()[0])
+        else:
+            self.g_cy = self.cy.network.create_from_networkx(self.graph)
 
-        time.sleep(2)
+        time.sleep(5)
+
         view_id_list = self.g_cy.get_views()
-        self.view1 = self.g_cy.get_view(view_id_list[0], format='view')
+        self.view1 = self.g_cy.get_view(view_id_list[0], fmt='view')
 
         # Marquee Directed Simple
         self.style = self.cy.style.create('MAGINE')
@@ -129,7 +139,7 @@ class RenderModel(object):
             print(i)
 
     def visualize_by_list_of_time(self, list_of_time, labels=None,
-                                  prefix='tmp', out_dir=None, scale=10):
+                                  prefix='tmp', out_dir=None, scale=100):
         """
         create sequences of pdfs and svgs based on list of attributes
 
@@ -207,7 +217,7 @@ class RenderModel(object):
 
         x = self.view1.get_network_view_as_dict()
         self.create_png('out.png', 2400)
-        trip_photo('out.png', 'x')
+        trim_photo('out.png', 'x')
 
         all_node_size = []
         for ind, j in enumerate(list_of_time):
@@ -242,9 +252,9 @@ class RenderModel(object):
             self.create_png(out_file, int(x['NETWORK_WIDTH']))
             self.create_svg(out_file, int(x['NETWORK_WIDTH']))
             if labels is None:
-                trip_photo(out_file, j)
+                trim_photo(out_file, j)
             else:
-                trip_photo(out_file, j)
+                trim_photo(out_file, j)
 
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
@@ -293,6 +303,26 @@ class RenderModel(object):
         url = '%sviews/first.svg?h=%d' % (self.g_cy._CyNetwork__url, height)
         return requests.get(url).content
 
+    def color_nodes(self, nodes, color):
+        self.reset_style()
+
+        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
+
+        node_color_values = {self.node_name2id[i]: color for i in valid_nodes}
+        node_label_colors = {self.node_name2id[i]: 'black' for i in
+                             valid_nodes}
+        node_size = {self.node_name2id[i]: 100 for i in valid_nodes}
+        # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_color_values, node_size],
+            index=['NODE_FILL_COLOR', 'NODE_SIZE']
+        ).T
+
+        self.view1.batch_update_node_views(df_vs_node)
+
+    def reset_style(self):
+        self.cy.style.apply(style=self.style, network=self.g_cy)
+
 
 def name2suid(network, obj_type='node'):
     if obj_type is 'node':
@@ -308,7 +338,7 @@ def name2suid(network, obj_type='node'):
     return name_to_suid
 
 
-def trip_photo(im_location, title=None):
+def trim_photo(im_location, title=None):
     """
     Removes whitespace and adds title to image
 
@@ -337,10 +367,8 @@ def trip_photo(im_location, title=None):
     if title is not None:
         plt.title(title, fontsize=24)
     plt.axis('off')
-    out = im_location.replace('.png', '_formatted.png')
-    out2 = im_location.replace('.png', '_formatted.svg')
-    plt.savefig(out, dpi=1000, bbox_inches='tight', transparent=True)
-    plt.savefig(out2, bbox_inches='tight', transparent=True)
+    # out = im_location.replace('.png', '_formatted.png')
+    plt.savefig(im_location, dpi=2000, bbox_inches='tight', transparent=True)
     plt.close()
 
 
@@ -438,17 +466,17 @@ default_style = {
     u'NETWORK_EDGE_SELECTION'            : True,
     u'NETWORK_HEIGHT'                    : 400.0,
     u'NETWORK_NODE_SELECTION'            : True,
-    u'NETWORK_SCALE_FACTOR'              : 1.0,
-    u'NETWORK_SIZE'                      : 550.0,
-    u'NETWORK_TITLE'                     : u'',
-    u'NETWORK_WIDTH'                     : 550.0,
+    u'NETWORK_SCALE_FACTOR': 1.0,
+    u'NETWORK_SIZE': 550.0,
+    u'NETWORK_TITLE': u'',
+    u'NETWORK_WIDTH': 550.0,
 
-    u'NODE_BORDER_PAINT'                 : u'#000000',
+    u'NODE_BORDER_PAINT': u'#000000',
     u'NODE_BORDER_STROKE': u'SOLID',
     u'NODE_BORDER_TRANSPARENCY': 255,
     u'NODE_BORDER_WIDTH': 2.0,
     u'NODE_DEPTH': 0.0,
-    u'NODE_FILL_COLOR': u'red',
+    u'NODE_FILL_COLOR': u'LightGray',
     u'NODE_HEIGHT': 40.0,
     # u'NODE_LABEL': u'<passthroughMapping attributeName="name" ',
     u'NODE_LABEL_COLOR': u'black',

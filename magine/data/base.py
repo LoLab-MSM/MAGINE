@@ -225,7 +225,8 @@ class BaseData(pd.DataFrame):
                 cluster_row=False, cluster_col=False, cluster_by_set=False,
                 index=None, values=None, columns=None,
                 annotate_sig=True, figsize=(8, 12), div_colors=True,
-                linewidths=0, num_colors=21, rank_index=False, min_sig=0):
+                linewidths=0, num_colors=21, sort_row=None, min_sig=0,
+                rank_index=None):
         """ Creates heatmap of data, providing pivot and formatting.
 
         Parameters
@@ -260,18 +261,20 @@ class BaseData(pd.DataFrame):
             How many colors to include on color bar
         linewidths : float
             line width between individual cols and rows
-        rank_index : bool
-            Rank index alphabetically
+        sort_row : str
+            Rank by 'mean', 'max', 'min' or 'index'
         min_sig : int
             Minimum number of significant 'index' across samples. Can be used to
             remove rows that are not significant across any sample.
-
+        rank_index : bool
+            Deprecated, please use sort_row='index' to sort by alphabetically
         Returns
         -------
         matplotlib.figure
 
         """
-
+        if rank_index is not None:
+            raise DeprecationWarning("Please use sort_row='index'")
         if index is None:
             index = self._identifier
         if values is None:
@@ -296,6 +299,6 @@ class BaseData(pd.DataFrame):
             cluster_by_set=cluster_by_set, figsize=figsize,
             columns=columns, index=index, values=values,
             div_colors=div_colors, num_colors=num_colors,
-            rank_index=rank_index, annotate_sig=annotate_sig,
-            linewidths=linewidths, min_sig=min_sig
+            sort_row=sort_row, annotate_sig=annotate_sig,
+            linewidths=linewidths, min_sig=min_sig, rank_index=rank_index
         )
