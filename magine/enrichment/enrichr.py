@@ -3,20 +3,13 @@ import logging
 import os
 import re
 
-# Will be OK in Python 2
-try:
-    basestring
-# Allows isinstance(foo, basestring) to work in Python 3
-except:
-    basestring = str
-
 import numpy as np
 import pandas as pd
 import requests
 
-from magine.plotting.species_plotting import write_table_to_html
 from magine.enrichment.enrichment_result import EnrichmentResult
 from magine.logging import get_logger
+from magine.plotting.species_plotting import write_table_to_html
 
 logger = get_logger(__name__, log_level=logging.INFO)
 
@@ -187,7 +180,7 @@ class Enrichr(object):
             raise AssertionError("list_of_genes must be list like")
         logger.debug("Running Enrichr with gene set {}".format(gene_set_lib))
         user_list_id = self._add_gene_list(list_of_genes)
-        if isinstance(gene_set_lib, basestring):
+        if isinstance(gene_set_lib, str):
             df = self._run_id(user_list_id, gene_set_lib)
         else:
             df = self._run_list_of_dbs(user_list_id, gene_set_lib)
@@ -196,12 +189,7 @@ class Enrichr(object):
         if init_size == 0:
             logger.debug("No terms returned")
             return df
-        try:
-            df = _prepare_output(df)
-        except:
-            logger.warning("Unable to simplify enrichR term names. This could "
-                           "be due to a change in enrichR formatting. "
-                           "Returning as default output.")
+
 
         # set all terms with adj_p_value less than 0.05 to significant.
         df['significant'] = False
@@ -360,6 +348,13 @@ gene_set_lib='Reactome_2016')
 
         df = df[cols]
         df['db'] = gene_set_lib
+        df.dropna(inplace=True)
+        try:
+            df = _prepare_output(df)
+        except:
+            logger.warning("Unable to simplify enrichR term names. This could "
+                           "be due to a change in enrichR formatting. "
+                           "Returning as default output.")
         return df
 
     def _run_list_of_dbs(self, gene_list_id, databases):
@@ -405,7 +400,7 @@ def _prepare_output(df):
 
 def clean_term_names(row):
     term_name = row['term_name']
-    if not isinstance(term_name, basestring):
+    if not isinstance(term_name, str):
         return term_name
 
     db = row['db']
@@ -416,31 +411,34 @@ def clean_term_names(row):
         'GO_Biological_Process_2017', 'GO_Molecular_Function_2017',
         'GO_Cellular_Component_2017',
         'GO_Biological_Process_2017b', 'GO_Molecular_Function_2017b',
-        'GO_Cellular_Component_2017b',
+        'GO_Cellular_Component_2017b'
     ]:
 
         if 'GO:' in term_name:
             term_name = term_name.split('(GO:', 1)[0]
         elif 'go:' in term_name:
             term_name = term_name.split('(go:', 1)[0]
-    if db == 'Human_Phenotype_Ontology':
+    elif db == 'Human_Phenotype_Ontology':
         if 'HP:' in term_name:
             term_name = term_name.split('(HP:', 1)[0]
 
-    if db == 'MGI_Mammalian_Phenotype_2017':
+    elif db == 'MGI_Mammalian_Phenotype_2017':
         if term_name.startswith('MP:'):
             term_name = term_name.split(' ', 1)[1]
 
-    if db == 'DrugMatrix':
-        drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
-        direction = re.search(r'-(.{2})$', term_name).group(0)
-        term_name = drug_name + direction
+    elif db == 'DrugMatrix':
+        try:
+            drug_name = re.search(r'^(.*)(-\d*.*\d_)', term_name).group(1)
+            direction = re.search(r'-(.{2})$', term_name).group(0)
+            term_name = drug_name + direction
+        except:
+            term_name = term_name
 
-    if db in ['Old_CMAP_down', 'Old_CMAP_up']:
+    elif db in ['Old_CMAP_down', 'Old_CMAP_up']:
         term_name = term_name.rsplit('-', 1)[0]
 
-    if db in ['Ligand_Perturbations_from_GEO_down',
-              'Ligand_Perturbations_from_GEO_up']:
+    elif db in ['Ligand_Perturbations_from_GEO_down',
+                'Ligand_Perturbations_from_GEO_up']:
         term_name = term_name.split('_', 1)[0]
 
     term_name = term_name.strip()
@@ -654,7 +652,7 @@ def run_enrichment_for_project(exp_data, project_name, databases=None,
         for genes, sample_id in zip(samples, timepoints):
             if not len(genes):
                 continue
-            logger.info('\t time point = {}'.format(sample_id))
+            logger.info('sample_id = {}'.format(sample_id))
             current = "{}_{}_{}".format(category, sample_id, project_name)
             name = os.path.join(_dir, current + '.csv.gz')
             try:
@@ -710,6 +708,7 @@ def run_enrichment_for_project(exp_data, project_name, databases=None,
     # remove rows without a term name
     final_df = final_df[~final_df['term_name'].isnull()].copy()
     final_df = final_df[~final_df['adj_p_value'].isnull()].copy()
+    final_df = final_df[~final_df['combined_score'].isnull()].copy()
 
     # Adds significant column
     final_df.loc[(final_df['adj_p_value'] <= 0.05) &

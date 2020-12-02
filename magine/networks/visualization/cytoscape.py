@@ -303,8 +303,10 @@ class RenderModel(object):
         url = '%sviews/first.svg?h=%d' % (self.g_cy._CyNetwork__url, height)
         return requests.get(url).content
 
-    def color_nodes(self, nodes, color):
-        self.reset_style()
+    def color_nodes(self, nodes, color, reset_style=True):
+        # resets node colors to default
+        if reset_style:
+            self.reset_style()
 
         valid_nodes = {i for i in nodes if i in self.graph.nodes()}
 
