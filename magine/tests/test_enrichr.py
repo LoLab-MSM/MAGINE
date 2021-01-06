@@ -52,7 +52,8 @@ def test_clean_drug_dbs():
                         ])
     df = clean_drug_dbs(df)
     ok_(len(df['term_name']) == 6243)
-    ok_(len(df.sig['term_name']) == 11)
+
+    ok_(len(df.sig['term_name']) == 249)
 
 
 def test_multi_sample():
@@ -60,7 +61,9 @@ def test_multi_sample():
              ['CASP10', 'CASP8', 'BAK'],
              ['BIM', 'CASP3']]
     df2 = e.run_samples(lists, ['1', '2', '3'], save_name='enrichr_test')
-    ok_(df2.shape == (22, 11))
+    df2.to_csv('enrichment.csv')
+
+    ok_(df2.shape == (110, 11))
 
 
 def test_multi_sample_plotting():
@@ -83,7 +86,7 @@ def test_set_of_dbs():
     df2 = e.run_samples(lists, ['1', '2', '3'],
                         gene_set_lib=['KEGG_2016', 'NCI-Nature_2016'],
                         save_name='t')
-    ok_(df2.shape == (60, 11))
+    ok_(df2.shape == (120, 11))
 
 
 def test_tf_names():

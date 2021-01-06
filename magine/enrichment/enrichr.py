@@ -351,7 +351,14 @@ gene_set_lib='Reactome_2016')
 
         df = df[cols]
         df['db'] = gene_set_lib
-        df.dropna(inplace=True)
+        df['combined_score'] = pd.to_numeric(df['combined_score'],
+                                             errors='coerce')
+
+        with pd.option_context('mode.use_inf_as_null', True):
+            # remove rows without a term name, nans, or infinite values
+            df = df.dropna(
+                subset=['term_name', 'adj_p_value', 'combined_score']
+            )
         try:
             df = _prepare_output(df)
         except:
