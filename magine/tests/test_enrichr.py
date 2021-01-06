@@ -27,7 +27,13 @@ def test_libaries():
 def test_project():
     slimmed = exp_data.species.copy()
     slimmed = slimmed.loc[slimmed.source.isin(['label_free', 'silac'])]
-    slimmed = slimmed.loc[slimmed.sample_id.isin(['Time_1', 'Time_2',])]
+    slimmed = slimmed.loc[slimmed.sample_id.isin(['Time_1', 'Time_2', ])]
+    slimmed = ExperimentalData(slimmed)
+    run_enrichment_for_project(slimmed, 'test',
+                               databases=['KEGG_2016'])
+    slimmed = exp_data.species.copy()
+    slimmed = slimmed.loc[slimmed.source.isin(['label_free'])]
+    slimmed = slimmed.loc[slimmed.sample_id.isin(['Time_1', 'Time_2', ])]
     slimmed = ExperimentalData(slimmed)
     run_enrichment_for_project(slimmed, 'test',
                                databases=['KEGG_2016'])

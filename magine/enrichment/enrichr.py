@@ -96,7 +96,7 @@ db_types = {
         'Cancer_Cell_Line_Encyclopedia',
         'Human_Gene_Atlas',
         'NCI-60_Cancer_Cell_Lines',
-        'Jensen_TISSUES',
+        # 'Jensen_TISSUES',
     ],
     'crowd': [
         'Disease_Perturbations_from_GEO_down',
@@ -308,10 +308,13 @@ gene_set_lib='Reactome_2016')
 
         q = self._query.format(url=self._url, list_id=list_id,
                                lib=gene_set_lib)
-        response = requests.get(q, timeout=100)
+        response = requests.get(q, timeout=300)
 
         if not response.ok:
-            raise Exception("EnrichR response error")
+            logger.warn("{} library failed to run on enrichRs side. "
+                        "View their response for more info {}"
+                        "".format(gene_set_lib, q))
+            return EnrichmentResult()
         data = json.loads(response.text)
         if gene_set_lib not in data:
             raise Exception("{} not in enrichR".format(gene_set_lib))
@@ -667,13 +670,31 @@ def run_enrichment_for_project(exp_data, project_name, databases=None,
             df['category'] = category
             all_df.append(df)
 
+    #  run each experimental 'source' by time point
+    #  ( label-free, ph-silac, etc are all separate)
+    for source in exp_data.exp_methods:
+        df = exp_data[source].sig
+        col_options = df['species_type'].unique()
+        # make sure there is only a single species type and it is protein
+        # this makes sure that the RNA seq doesnt get ran twice
+        if len(col_options) == 1 and col_options[0] == 'protein':
+            _run_new(df.by_sample, df.sample_ids, '{}_both'.format(source))
+            _run_new(df.up_by_sample, df.sample_ids, '{}_up'.format(source))
+            _run_new(df.down_by_sample, df.sample_ids,
+                     '{}_down'.format(source))
+
     #  run all protein labeled species grouped by time point
     #  ( label-free, ph-silac, etc are all combined)
     if len(exp_data.proteins.sample_ids) != 0:
         sample = exp_data.proteins.sig
-        _run_new(sample.by_sample, sample.sample_ids, 'proteomics_both')
-        _run_new(sample.up_by_sample, sample.sample_ids, 'proteomics_up')
-        _run_new(sample.down_by_sample, sample.sample_ids, 'proteomics_down')
+        if len(sample.source.unique()) == 1:
+            print("Only single source found. "
+                  "No aggregation enrichment to perform")
+        else:
+            _run_new(sample.by_sample, sample.sample_ids, 'proteomics_both')
+            _run_new(sample.up_by_sample, sample.sample_ids, 'proteomics_up')
+            _run_new(sample.down_by_sample, sample.sample_ids,
+                     'proteomics_down')
 
     #  run all RNA labeled species grouped by time point
     if len(exp_data.rna.sample_ids) != 0:
@@ -682,21 +703,6 @@ def run_enrichment_for_project(exp_data, project_name, databases=None,
         _run_new(sample.down_by_sample, sample.sample_ids, 'rna_down')
         _run_new(sample.up_by_sample, sample.sample_ids, 'rna_up')
 
-    #  run each experimental 'source' by time point
-    #  ( label-free, ph-silac, etc are all separate)
-    for source in exp_data.exp_methods:
-        df = exp_data[source].sig
-        col_options = df['species_type'].unique()
-        # make sure there is only a single species type and it is protein
-        # this makes sure that the RNA seq doesnt get ran twice
-        if len(col_options) != 1:
-            continue
-        if col_options[0] == 'protein':
-            _run_new(df.by_sample, df.sample_ids, '{}_both'.format(source))
-            _run_new(df.up_by_sample, df.sample_ids, '{}_up'.format(source))
-            _run_new(df.down_by_sample, df.sample_ids,
-                     '{}_down'.format(source))
-
     # merge all outputs
     final_df = pd.concat(all_df, ignore_index=True)
 
@@ -704,11 +710,18 @@ def run_enrichment_for_project(exp_data, project_name, databases=None,
         ['term_name', 'rank', 'combined_score', 'adj_p_value', 'genes',
          'n_genes', 'sample_id', 'category', 'db']
     ]
+    final_df.dropna(inplace=True)
 
-    # remove rows without a term name
-    final_df = final_df[~final_df['term_name'].isnull()].copy()
-    final_df = final_df[~final_df['adj_p_value'].isnull()].copy()
-    final_df = final_df[~final_df['combined_score'].isnull()].copy()
+    # enrichR started returning Infinite values, which are returned as str
+    # rather than numeric. To filter, this must be converted to numeric
+    final_df['combined_score'] = pd.to_numeric(final_df['combined_score'],
+                                               errors='coerce')
+
+    with pd.option_context('mode.use_inf_as_null', True):
+        # remove rows without a term name, nans, or infinite values
+        final_df = final_df.dropna(
+            subset=['term_name', 'adj_p_value', 'combined_score']
+        )
 
     # Adds significant column
     final_df.loc[(final_df['adj_p_value'] <= 0.05) &

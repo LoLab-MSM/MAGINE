@@ -2,6 +2,7 @@ import warnings
 from itertools import chain
 
 import matplotlib.pyplot as plt
+import numpy as np
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 
@@ -82,7 +83,9 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
             array.sort_index(ascending=True, inplace=True)
 
     if sort_row is not None:
-        if sort_row not in ('index', 'max', 'mean', 'min'):
+        if isinstance(sort_row, (list, np.ndarray)):
+            array = array.reindex(sort_row)
+        elif sort_row not in ('index', 'max', 'mean', 'min', 'sum'):
             raise ValueError("Can sort rows by 'index' name or 'max', 'min',"
                              "'mean' of values")
 
@@ -98,6 +101,11 @@ def heatmap_from_array(data, convert_to_log=False, y_tick_labels='auto',
     elif sort_row == 'min':
         new_index = array.max(axis=1).sort_values(ascending=False).index
         array = array.reindex(new_index)
+    elif sort_row == 'sum':
+        new_index = array.sum(axis=1).sort_values(ascending=True).index
+        array = array.reindex(new_index)
+    elif isinstance(sort_row, list):
+        array = array.reindex(sort_row)
     if cluster_by_set and "genes" in d_copy.columns:
         # clustering will be based on jaccard index of terms
         dist_mat, names = d_copy.calc_dist(level='sample')
