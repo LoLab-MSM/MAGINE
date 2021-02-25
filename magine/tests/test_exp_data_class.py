@@ -7,6 +7,7 @@ import pandas as pd
 from nose.tools import ok_
 
 from magine.data.experimental_data import ExperimentalData, load_data
+from magine.plotting.species_plotting import plot_dataframe
 
 
 class TestExpData(object):
@@ -16,6 +17,10 @@ class TestExpData(object):
             os.path.join(self._dir, 'example_apoptosis.csv')
         )
         self.out_dir = tempfile.mkdtemp()
+
+    def test_plot(self):
+        plot_dataframe(self.exp_data.data, 'test.html', out_dir='proteins',
+                       plot_type='matplotlib', )
 
     def tearDown(self):
         self.exp_data = None

@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import requests
 
+from py2cytoscape.cyrest.layout import layout as cy_layout
 from py2cytoscape.data.cyrest_client import CyRestClient
 
 IP = 'localhost'
@@ -92,15 +93,15 @@ class RenderModel(object):
         else:
             self.g_cy = self.cy.network.create_from_networkx(self.graph)
 
-        time.sleep(5)
-
+        # time.sleep(5)
+        self.layout = cy_layout(url)
         view_id_list = self.g_cy.get_views()
         self.view1 = self.g_cy.get_view(view_id_list[0], fmt='view')
 
         # Marquee Directed Simple
         self.style = self.cy.style.create('MAGINE')
         self.style.update_defaults(default_style)
-        self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
+        # self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
         if layout == 'attributes-layout':
             self.cy.layout2.apply(name=layout, network=self.g_cy,
                                   params={'column': 'color'})
@@ -109,11 +110,18 @@ class RenderModel(object):
                 name=layout, network=self.g_cy,
                 params={
                     'defaultSpringLength': 50,
-                    'defaultNodeMass'    : 5,
+                    'defaultNodeMass': 5,
                 }
             )
         self.node_name2id = name2suid(self.g_cy, 'node')
         self.edge_name2id = name2suid(self.g_cy, 'edge')
+
+    def apply_layout(self, layout, params):
+
+        self.cy.layout2.apply(
+            name=layout, network=self.g_cy,
+            params=params
+        )
 
     def print_options(self):
         """ print cytoscape options for network, style, nodes, edges
@@ -303,6 +311,14 @@ class RenderModel(object):
         url = '%sviews/first.svg?h=%d' % (self.g_cy._CyNetwork__url, height)
         return requests.get(url).content
 
+    def fit(self):
+        self.cy.layout.fit(network=self.g_cy)
+
+    def get_png(self, height=2000):
+
+        url = '%sviews/first.png?h=%d' % (self.g_cy._CyNetwork__url, height)
+        return requests.get(url).content
+
     def color_nodes(self, nodes, color, reset_style=True):
         # resets node colors to default
         if reset_style:
@@ -313,13 +329,33 @@ class RenderModel(object):
         node_color_values = {self.node_name2id[i]: color for i in valid_nodes}
         node_label_colors = {self.node_name2id[i]: 'black' for i in
                              valid_nodes}
-        node_size = {self.node_name2id[i]: 100 for i in valid_nodes}
-        # do all node changes
+        node_size = {self.node_name2id[i]: int(200) for i in valid_nodes}
         df_vs_node = pd.DataFrame(
-            [node_color_values, node_size],
-            index=['NODE_FILL_COLOR', 'NODE_SIZE']
+            [node_size],
+            index=['NODE_SIZE']
         ).T
+        # self.view1.batch_update_node_views(df_vs_node)
+        # # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_color_values, ],
+            # [node_color_values, node_size, node_size],
+            # index=['NODE_FILL_COLOR', 'NODE_HEIGHT', 'NODE_WIDTH']
+            index=['NODE_FILL_COLOR']
+        ).T
+        # print(df_vs_node.head(5))
+        self.view1.batch_update_node_views(df_vs_node)
 
+    def update_node_size(self, nodes, size):
+        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
+
+        node_size = {self.node_name2id[i]: int(size) for i in valid_nodes}
+        # self.view1.batch_update_node_views(df_vs_node)
+        # # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_size, node_size],
+            index=['NODE_HEIGHT', 'NODE_WIDTH']
+        ).T
+        # print(df_vs_node.head(5))
         self.view1.batch_update_node_views(df_vs_node)
 
     def reset_style(self):
@@ -480,6 +516,7 @@ default_style = {
     u'NODE_DEPTH': 0.0,
     u'NODE_FILL_COLOR': u'LightGray',
     u'NODE_HEIGHT': 40.0,
+    # u'NODE_LABEL': ' ',
     # u'NODE_LABEL': u'<passthroughMapping attributeName="name" ',
     u'NODE_LABEL_COLOR': u'black',
     u'NODE_LABEL_FONT_FACE': u'SansSerif.plain,plain,12',

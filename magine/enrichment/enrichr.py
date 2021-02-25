@@ -128,7 +128,7 @@ class Enrichr(object):
     _query = '{url}/enrich?userListId={list_id}&backgroundType={lib}'
 
     def __init__(self, verbose=False):
-        self._url = 'http://amp.pharm.mssm.edu/Enrichr'
+        self._url = 'http://maayanlab.cloud/Enrichr/'
         self._valid_libs = _valid_libs
         self.verbose = verbose
 
