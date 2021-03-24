@@ -15,8 +15,11 @@ except ImportError:
     import pickle
 from magine.logging import get_logger
 
-# logger = get_logger("magine.networks.network_generator", log_level=logging.INFO)
-logger = get_logger(__name__, log_level=logging.INFO)
+logger = get_logger("magine.networks.network_generator",
+                    log_level=logging.INFO)
+
+
+# logger = get_logger(__name__, log_level=logging.INFO)
 
 
 def build_network(seed_species, species='hsa', save_name=None,

@@ -10,6 +10,70 @@ from magine.networks.exporters import nx_to_json
 from .cyjs_options import layouts, styles
 
 
+def draw_js(graph, add_parent=False, layout='cose', default_node_color='white',
+            **layout_args):
+    """ cytoscape.js visualization for Jupyter-lab.
+
+    Requires ipycytoscape to be installed. No capabilities to save figure of
+    current network (ipycytoscape feature request).
+
+    Work in progress, but Jupyter-lab prevents using draw_cyjs due to js
+    protection.
+
+    Parameters
+    ----------
+    graph : nx.DiGraph
+    add_parent : bool
+        Group together nodes that share 'termName'.
+    layout : str
+        Layout
+    default_node_color : str
+        Will only be used if color is not already set for node
+    layout_args : dict
+        Any additional arguments for use in cytoscape.js. Examples can be found
+        in cyjs_options.py
+    Returns
+    -------
+    CytoscapeWidget
+    """
+    try:
+        import ipycytoscape
+    except ImportError("Please install ipycytoscape. You may need to enable "
+                       "the widget for older jupyterlab "
+                       "(https://github.com/QuantStack/ipycytoscape)") as e:
+        raise e
+
+    g_copy = graph.copy()
+    if add_parent:
+        g_copy = _add_parent_term(g_copy)
+
+    _scale_edges(g_copy)
+    _set_node_color(g_copy, default_node_color)
+
+    for i in g_copy.nodes:
+        g_copy.node[i]['tooltip'] = i
+        g_copy.node[i]['name'] = i
+
+    for i, j, d in g_copy.edges(data=True):
+        if 'interactionType' in d:
+            g_copy[i][j]['tooltip'] = d['interactionType']
+        elif 'weight' in d:
+            g_copy[i][j]['tooltip'] = d['weight']
+
+    if layout not in layouts:
+        raise Exception(
+            "layout {} is not in {}".format(layout, layouts.keys())
+        )
+    else:
+        layout_opts = layouts[layout].copy()
+        layout_opts.update(layout_args)
+    cytoscapeobj = ipycytoscape.CytoscapeWidget(box_selection_enabled=True)
+    cytoscapeobj.set_layout(**layout_opts)
+    cytoscapeobj.graph.add_graph_from_networkx(g_copy)
+    cytoscapeobj.set_style(styles['default'])
+    return cytoscapeobj
+
+
 def draw_cyjs(graph, add_parent=False, layout='cose-bilkent',
               bg_color='white', default_node_color='white', **layout_args):
     """ Renders a graph using cytoscape.js

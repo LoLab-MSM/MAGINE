@@ -3,7 +3,7 @@ import os
 import networkx as nx
 
 from magine.enrichment.enrichr import Enrichr
-from magine.networks.annotated_set import create_subnetwork
+from magine.networks.annotated_set import create_asn
 
 
 def test_ont_grouping():
@@ -20,7 +20,7 @@ def test_ont_grouping():
     _path = os.path.join(os.path.dirname(__file__), 'Network_files',
                          'sample_network.gml')
     network = nx.read_gml(_path)
-    create_subnetwork(df, network, use_threshold=True, save_name='test')
-    create_subnetwork(df, network, use_threshold=True, use_fdr=True)
-    create_subnetwork(df, network, use_threshold=True, use_fdr=True,
-                      out_dir='del')
+    create_asn(df, network, use_threshold=True, save_name='test')
+    create_asn(df, network, use_threshold=True, use_fdr=True)
+    create_asn(df, network, use_threshold=True, use_fdr=True,
+               out_dir='del')

@@ -1,3 +1,4 @@
+import numbers
 import os
 import time
 
@@ -70,7 +71,8 @@ class LayoutClient(object):
 
 
 class RenderModel(object):
-    def __init__(self, graph, layout="attributes-layout", use_cyto_net=False):
+    def __init__(self, graph, layout="attributes-layout", use_cyto_net=False,
+                 clear_cytoscape=False):
         """
 
         Parameters
@@ -78,12 +80,16 @@ class RenderModel(object):
         graph : nx.DiGraph
         layout : str
         use_cyto_net : bool
-            Use already loaded network in cytoscape
+            Use already loaded network in cytoscape. Will use first network.
+        clear_cytoscape : bool
+            Clear cytoscape session. Useful when multiple instance of
+            RenderModel.
         """
 
         self.graph = graph
         self.cy = CyRestClient()
-        # self.cy.session.delete()
+        if clear_cytoscape:
+            self.cy.session.delete()
         self.cy.layout2 = LayoutClient()
 
         for n, (i, j) in enumerate(self.graph.edges()):
@@ -146,6 +152,32 @@ class RenderModel(object):
         for i in style_opts:
             print(i)
 
+    def map_edge_width(self, column='weight', min_value=None, max_value=None,
+                       min_width=3, max_width=10):
+
+        if min_value is None and max_value is None:
+            edge_width = {}
+            for i, j, d in self.graph.edges(data=True):
+                edge_width[self.edge_name2id['{},{}'.format(i, j)]] = d[column]
+
+            _min, _max = min(edge_width.values()), max(edge_width.values())
+        elif [isinstance(x, numbers.Number) for x in [min_value, max_value]]:
+            raise Exception("Must provide min_value and max_value to "
+                            "create continuous mapping of edge width")
+        else:
+            _min, _max = min_value, max_value
+
+        slope = create_slope(
+            min_val=_min,
+            max_val=_max,
+            values=(min_width, max_width)
+        )
+
+        self.style.create_continuous_mapping(
+            column=column, col_type='Double', vp='EDGE_WIDTH',
+            points=slope
+        )
+
     def visualize_by_list_of_time(self, list_of_time, labels=None,
                                   prefix='tmp', out_dir=None, scale=100):
         """
@@ -161,10 +193,6 @@ class RenderModel(object):
         prefix : str
         out_dir : str
 
-
-        Returns
-        -------
-
         """
         if out_dir is not None:
             if not os.path.exists(out_dir):
@@ -172,17 +200,10 @@ class RenderModel(object):
             if not os.path.exists(os.path.join(out_dir, 'Figures')):
                 os.mkdir(os.path.join(out_dir, 'Figures'))
 
-        edge_width = {}
-        for i, j, d in self.graph.edges(data=True):
-            edge_width[self.edge_name2id['{},{}'.format(i, j)]] = d['weight']
+        self.map_edge_width(column='weight', min_value=None, max_value=None,
+                            min_width=3, max_width=10)
 
-        _min, _max = min(edge_width.values()), max(edge_width.values())
         self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
-        self.style.create_continuous_mapping(
-            column='weight', col_type='Double', vp='EDGE_WIDTH',
-            points=create_slope(min_val=_min, max_val=_max, values=(3, 10))
-        )
-
         self.cy.style.apply(style=self.style, network=self.g_cy)
 
         node_label_colors = {self.node_name2id[i]: 'black' for i in
@@ -200,9 +221,6 @@ class RenderModel(object):
         df_vs_node['NODE_BORDER_PAINT'] = df_vs_node['NODE_LABEL_COLOR']
 
         # do all edge changes
-        edge_color_values = {}
-        for i in self.edge_name2id:
-            edge_color_values[self.edge_name2id[i]] = 'gray'
 
         df_edge = pd.DataFrame(index=self.edge_name2id.values())
         # df_edge = df_edge.T
@@ -232,8 +250,9 @@ class RenderModel(object):
             size = np.array([self.graph.node[n]['sample{}'.format(j)]
                              for n in self.graph.nodes])
             all_node_size.append(size)
-        size = np.array(all_node_size).flatten()
-        simple_slope = create_slope(min_val=size.min(), max_val=size.max(),
+        all_node_size = np.array(all_node_size).flatten()
+        simple_slope = create_slope(min_val=all_node_size.min(),
+                                    max_val=all_node_size.max(),
                                     values=(10, scale))
 
         for j in sorted(list_of_time):
@@ -264,6 +283,105 @@ class RenderModel(object):
             else:
                 trim_photo(out_file, j)
 
+    def pretty_layout(self):
+        df_edge = pd.DataFrame(index=self.edge_name2id.values())
+        # df_edge = df_edge.T
+        df_edge['EDGE_STROKE_UNSELECTED_PAINT'] = 'gray'
+        df_edge['EDGE_SOURCE_ARROW_UNSELECTED_PAINT'] = 'black'
+        df_edge['EDGE_TARGET_ARROW_UNSELECTED_PAINT'] = 'gray'
+
+        self.view1.batch_update_edge_views(df_edge)
+
+        self.fit()
+        x = self.view1.get_network_view_as_dict()
+        self.view1.update_network_view(
+            visual_property='NETWORK_BACKGROUND_PAINT', value=u'#FFFFFF')
+        self.view1.update_network_view(
+            visual_property='NETWORK_SCALE_FACTOR',
+            value=0.8 * x['NETWORK_SCALE_FACTOR']
+        )
+
+    def update_node_edge_by_samples(self, sample_list, labels=None,
+                                    prefix='tmp', out_dir=None, scale=50):
+        """
+        Update node size and edge width by attributes in network
+
+        Created for the magine.networks.annotated_set.create_agn
+        It generates images for each sample_list
+
+        Parameters
+        ----------
+        sample_list : list
+        labels : list
+        prefix : str
+            Output prefix
+        out_dir : str
+            Directory to place output images
+        scale : int
+            Max node size for scaling.
+
+        """
+        if out_dir is not None:
+            if not os.path.exists(out_dir):
+                os.mkdir(out_dir)
+
+        all_node_size = []
+        for ind, j in enumerate(sample_list):
+            size = np.array([self.graph.node[n]['sample{}'.format(j)]
+                             for n in self.graph.nodes])
+            all_node_size.append(size)
+        node_size = np.array(all_node_size).flatten()
+        node_slope = create_slope(min_val=node_size.min(),
+                                  max_val=node_size.max(),
+                                  values=(10, scale))
+
+        edge_width = []
+        for label in sample_list:
+            for i, j, d in self.graph.edges(data=True):
+                edge_width.append(d['weight{}'.format(label)])
+
+        edge_width = np.array(edge_width).flatten()
+        edge_slope = create_slope(min_val=edge_width.min(),
+                                  max_val=edge_width.max(),
+                                  values=(1, 10))
+
+        self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
+        # self.apply_layout('circular', {})
+        # self.layout.circular(nodeHorizontalSpacing=50, nodeVerticalSpacing=50)
+        self.layout.attribute_circle(NodeAttribute='term', spacing='50')
+        self.pretty_layout()
+
+        for sample in sorted(sample_list):
+            self.style.create_continuous_mapping(
+                column='weight{}'.format(sample),
+                col_type='Double',
+                vp='EDGE_WIDTH',
+                points=edge_slope
+            )
+
+            self.style.create_continuous_mapping(
+                column='sample{}'.format(sample),
+                col_type='Double',
+                vp='NODE_SIZE',
+                points=node_slope
+            )
+
+            self.cy.style.apply(style=self.style, network=self.g_cy)
+
+            fig_name = '{0}_{1}'.format(prefix, sample)
+            print("Saving {}".format(fig_name))
+
+            if out_dir is not None:
+                fig_name = os.path.join(out_dir, fig_name)
+
+            x = self.view1.get_network_view_as_dict()
+            self.create_png(fig_name, int(x['NETWORK_WIDTH']))
+            self.create_svg(fig_name, int(x['NETWORK_WIDTH']))
+            if labels is None:
+                trim_photo('{}.png'.format(fig_name), sample)
+            else:
+                trim_photo('{}.png'.format(fig_name), sample)
+
     def update_node_color(self, attribute, save_name):
         self.cy.style.apply(style=self.style, network=self.g_cy)
         node_color_values = {self.node_name2id[i[0]]: i[1][attribute] for i in
@@ -282,29 +400,86 @@ class RenderModel(object):
             index=['NODE_LABEL_COLOR', 'NODE_FILL_COLOR', 'NODE_LABEL'],
         )
 
-        df_vs_node = df_vs_node.T
-        self.view1.batch_update_node_views(df_vs_node)
+        self.view1.batch_update_node_views(df_vs_node.T)
         with open('{0}.svg'.format(save_name), 'wb') as f:
-            network_pdf = self.g_cy.get_svg()
-            f.write(network_pdf)
+            f.write(self.g_cy.get_svg())
             f.close()
 
         with open('{0}.pdf'.format(save_name), 'wb') as f:
-            network_pdf = self.g_cy.get_pdf()
-            f.write(network_pdf)
+            f.write(self.g_cy.get_pdf())
             f.close()
 
         with open('{0}.png'.format(save_name), 'wb') as f:
-            network_pdf = self.g_cy.get_png()
-            f.write(network_pdf)
+            f.write(self.g_cy.get_png())
             f.close()
 
+    def update_all_node_attribute(self, nodes, attribute, value):
+
+        # Update only valid nodes
+        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
+
+        # assume correct datatype
+        node_size = {self.node_name2id[i]: value for i in valid_nodes}
+        # # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_size, node_size],
+            index=[attribute]
+        ).T
+        self.view1.batch_update_node_views(df_vs_node)
+
+    def update_node_color(self, nodes, color, reset_style=True):
+        # resets node colors to default
+        if reset_style:
+            self.reset_style()
+
+        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
+
+        node_color_values = {self.node_name2id[i]: color for i in valid_nodes}
+        print(node_color_values)
+        # # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_color_values, ],
+            index=['NODE_FILL_COLOR']
+        ).T
+        self.view1.batch_update_node_views(df_vs_node)
+
+    def update_node_size(self, nodes, size):
+        """ Change list of nodes size to provided integer
+
+        Parameters
+        ----------
+        nodes : list
+            List of nodes. Nodes outside of network will be ignored.
+        size : int
+            Size of nodes in cytoscape session
+
+        Returns
+        -------
+
+        """
+        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
+
+        node_size = {self.node_name2id[i]: int(size) for i in valid_nodes}
+        # # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_size, node_size],
+            index=['NODE_HEIGHT', 'NODE_WIDTH']
+        ).T
+        self.view1.batch_update_node_views(df_vs_node)
+
+    def reset_style(self):
+        self.cy.style.apply(style=self.style, network=self.g_cy)
+
     def create_png(self, out_file, width):
+        if not out_file.endswith('png'):
+            out_file = f'{out_file}.png'
         with open(out_file, 'wb') as f:
             f.write(self.g_cy.get_png(width))
 
     def create_svg(self, out_file, width):
-        with open(out_file.replace('png', 'svg'), 'wb') as f:
+        if not out_file.endswith('svg'):
+            out_file = f'{out_file}.svg'
+        with open(out_file, 'wb') as f:
             f.write(self.get_svg(width))
 
     def get_svg(self, height=2000):
@@ -313,53 +488,12 @@ class RenderModel(object):
 
     def fit(self):
         self.cy.layout.fit(network=self.g_cy)
+        time.sleep(1)
 
     def get_png(self, height=2000):
 
         url = '%sviews/first.png?h=%d' % (self.g_cy._CyNetwork__url, height)
         return requests.get(url).content
-
-    def color_nodes(self, nodes, color, reset_style=True):
-        # resets node colors to default
-        if reset_style:
-            self.reset_style()
-
-        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
-
-        node_color_values = {self.node_name2id[i]: color for i in valid_nodes}
-        node_label_colors = {self.node_name2id[i]: 'black' for i in
-                             valid_nodes}
-        node_size = {self.node_name2id[i]: int(200) for i in valid_nodes}
-        df_vs_node = pd.DataFrame(
-            [node_size],
-            index=['NODE_SIZE']
-        ).T
-        # self.view1.batch_update_node_views(df_vs_node)
-        # # do all node changes
-        df_vs_node = pd.DataFrame(
-            [node_color_values, ],
-            # [node_color_values, node_size, node_size],
-            # index=['NODE_FILL_COLOR', 'NODE_HEIGHT', 'NODE_WIDTH']
-            index=['NODE_FILL_COLOR']
-        ).T
-        # print(df_vs_node.head(5))
-        self.view1.batch_update_node_views(df_vs_node)
-
-    def update_node_size(self, nodes, size):
-        valid_nodes = {i for i in nodes if i in self.graph.nodes()}
-
-        node_size = {self.node_name2id[i]: int(size) for i in valid_nodes}
-        # self.view1.batch_update_node_views(df_vs_node)
-        # # do all node changes
-        df_vs_node = pd.DataFrame(
-            [node_size, node_size],
-            index=['NODE_HEIGHT', 'NODE_WIDTH']
-        ).T
-        # print(df_vs_node.head(5))
-        self.view1.batch_update_node_views(df_vs_node)
-
-    def reset_style(self):
-        self.cy.style.apply(style=self.style, network=self.g_cy)
 
 
 def name2suid(network, obj_type='node'):
@@ -499,28 +633,28 @@ default_style = {
     u'NETWORK_BACKGROUND_PAINT'          : u'#FFFFFF',
     u'NETWORK_CENTER_X_LOCATION'         : 0.0,
     u'NETWORK_CENTER_Y_LOCATION'         : 0.0,
-    u'NETWORK_CENTER_Z_LOCATION'         : 0.0,
-    u'NETWORK_DEPTH'                     : 0.0,
-    u'NETWORK_EDGE_SELECTION'            : True,
-    u'NETWORK_HEIGHT'                    : 400.0,
-    u'NETWORK_NODE_SELECTION'            : True,
+    u'NETWORK_CENTER_Z_LOCATION': 0.0,
+    u'NETWORK_DEPTH': 0.0,
+    u'NETWORK_EDGE_SELECTION': True,
+    u'NETWORK_HEIGHT': 400.0,
+    u'NETWORK_NODE_SELECTION': True,
     u'NETWORK_SCALE_FACTOR': 1.0,
     u'NETWORK_SIZE': 550.0,
     u'NETWORK_TITLE': u'',
     u'NETWORK_WIDTH': 550.0,
 
-    u'NODE_BORDER_PAINT': u'#000000',
+    u'NODE_BORDER_PAINT': 'black',
     u'NODE_BORDER_STROKE': u'SOLID',
     u'NODE_BORDER_TRANSPARENCY': 255,
     u'NODE_BORDER_WIDTH': 2.0,
     u'NODE_DEPTH': 0.0,
-    u'NODE_FILL_COLOR': u'LightGray',
+    u'NODE_FILL_COLOR': 'red',
     u'NODE_HEIGHT': 40.0,
     # u'NODE_LABEL': ' ',
     # u'NODE_LABEL': u'<passthroughMapping attributeName="name" ',
     u'NODE_LABEL_COLOR': u'black',
     u'NODE_LABEL_FONT_FACE': u'SansSerif.plain,plain,12',
-    u'NODE_LABEL_FONT_SIZE': 24,
+    u'NODE_LABEL_FONT_SIZE': 12,
     u'NODE_LABEL_POSITION': u'C,C,c,0.50,0.00',
     u'NODE_LABEL_TRANSPARENCY': 255,
     u'NODE_LABEL_WIDTH': 200.0,

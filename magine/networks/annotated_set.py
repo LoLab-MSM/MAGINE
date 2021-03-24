@@ -1,6 +1,5 @@
 import itertools
 import os
-import random
 from itertools import combinations, product
 
 import networkx as nx
@@ -44,7 +43,7 @@ class AnnotatedSetNetworkGenerator(object):
                                  use_threshold=True, use_fdr=False,
                                  min_edges=0):
         """
-        Creates a GO level network from list of GO terms
+        Creates a annotated set network from list of term names
 
         Parameters
         ----------
@@ -114,10 +113,6 @@ class AnnotatedSetNetworkGenerator(object):
             n_possible = len(possible_edges)
             edge_hits = possible_edges.intersection(self.edges)
             n_hits = len(edge_hits)
-            # odds_to_find = float(n_possible) / n_total_edges
-            # p_val = stats.binom_test(n_hits, n_possible, odds_to_find)
-            # print(stats.binom_test(n_hits, n_possible, odds_to_find),
-            #       stats.binom_test(n_hits, n_possible, avg_conn))
             p_val = stats.binom_test(n_hits, n_possible, avg_conn)
             return [edge_hits, n_hits, p_val]
 
@@ -127,15 +122,6 @@ class AnnotatedSetNetworkGenerator(object):
 
             add_to_dict(term_1, term1)
             add_to_dict(term_2, term2)
-            # print(get_edges(term_1, term_2)[1:],
-            # gather_stats(term_1, term_2, self.nodes, self.edges)[1:])
-
-            # p_values.append(
-            #     [term1, term2] + gather_stats(term_1, term_2, self.nodes,
-            #                                   self.edges))
-            # p_values.append(
-            #     [term2, term1] + gather_stats(term_2, term_1, self.nodes,
-            #                                   self.edges))
 
             p_values.append([term1, term2] + get_edges(term_1, term_2))
             p_values.append([term2, term1] + get_edges(term_2, term_1))
@@ -174,7 +160,7 @@ class AnnotatedSetNetworkGenerator(object):
 
             mol_net.add_edges_from(list(x.edges(data=True)))
 
-        # addes missing edges between that maybe absent due to threshold, want
+        # adds missing edges between that maybe absent due to threshold, want
         # to keep in network
         for i, j, d in self.network.subgraph(mol_net.nodes).edges(data=True):
             mol_net.add_edge(i, j, **d)
@@ -200,38 +186,11 @@ class AnnotatedSetNetworkGenerator(object):
         return asn, mol_net
 
 
-def gather_stats(set1, set2, backgroud_nodes, edges):
-    n_set1 = len(set1)
-    n_set2 = len(set2.difference(set1))
-    total_nodes = n_set1 + n_set2
-
-    n_tests = 100
-    odds = np.zeros(n_tests)
-    nodes_list = list(backgroud_nodes)
-    n_possible = range(len(backgroud_nodes))
-    for i in range(n_tests):
-        s = [nodes_list[j] for j in random.sample(n_possible, total_nodes)]
-        odds[i] = len(set(product(s[:n_set1], s[n_set1:])).intersection(edges))
-
-    # calculates edges between two sets
-    possible_edges = set(product(set1, set2.difference(set1)))
-    edge_hits = possible_edges.intersection(edges)
-    n_hits = len(edge_hits)
-
-    # sort to find probability of finding random sets connectivity
-    odds.sort()
-    first_index = np.searchsorted(odds, n_hits, side='right')
-    probability = float(n_tests - first_index) / n_tests
-    p_val = stats.binom_test(n_hits, len(possible_edges), probability)
-
-    return [edge_hits, len(edge_hits), p_val]
-
-
-def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
-                      remove_isolated=False, use_cytoscape=False, merge=False,
-                      out_dir=None, use_threshold=False, use_fdr=False,
-                      min_edges=0):
-    """
+def create_asn(df, network, terms=None, save_name=None, draw_png=False,
+               remove_isolated=False, use_cytoscape=False, merge=False,
+               out_dir=None, use_threshold=False, use_fdr=False,
+               min_edges=0, exp_data=None, edge_weight_by_sample=False):
+    """ Generates ASN based from terms and molecular network
 
     Parameters
     ----------
@@ -256,11 +215,21 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         Use BH correction on binomial test
     min_edges : int
         Minimum number of edges between two terms
+    exp_data : magine.data.ExperimentalData
+        Experimental data to determine edge weights based on sample_id
+    edge_weight_by_sample : bool
+        Add edge weights for each sample_id based on signficant flag in
+        exp_data.
 
     Returns
     -------
-
+    nx.DiGraph, nx.DiGraph
     """
+    if edge_weight_by_sample:
+        if exp_data is None:
+            raise ValueError("Please provide an ExperimentalData instance in"
+                             "order to provide edges as weights per sample.")
+
     if terms is not None:
         df_copy = df[df['term_name'].isin(terms)].copy()
         terms = set(terms)
@@ -270,8 +239,6 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
 
     # normalize enriched scores
     df_copy['combined_score'] = np.abs(df_copy['combined_score'])
-    # df_copy['combined_score'] = np.log2(df_copy['combined_score'])
-    # df_copy.loc[df['combined_score'] > 150, 'combined_score'] = 150
 
     labels = df_copy['sample_id'].unique()
     # create dictionary of values
@@ -293,29 +260,61 @@ def create_subnetwork(df, network, terms=None, save_name=None, draw_png=False,
         nt.remove_isolated_nodes(term_g)
         nt.remove_isolated_nodes(molecular_g)
 
-    score_array = pd.pivot_table(df_copy, index=['term_name'],
-                                 columns='sample_id')
-    x = score_array['combined_score'].fillna(0)
+    # add combined_score per sample_id to node attributes
+    score_array = pd.pivot_table(
+        df_copy, index=['term_name'], columns='sample_id'
+    )['combined_score'].fillna(0)
 
     for i in term_g.nodes:
-        values = x.loc[i]
+        values = score_array.loc[i]
         term_g.node[i]['color'] = 'red'
         term_g.node[i]['label'] = i
         for n, time in enumerate(labels):
             fmt_label = 'sample{}'.format(time.replace('_', ''))
             term_g.node[i][fmt_label] = float(values[time])
+
+    # add weights per sample to molecular network
+    if exp_data is not None:
+        term_to_gene = dict()
+        edges = set(molecular_g.edges)
+        for node, data in molecular_g.nodes(data=True):
+            terms = data['termName'].split(',')
+            for term in terms:
+                if term not in term_to_gene:
+                    term_to_gene[term] = []
+                term_to_gene[term].append(node)
+
+        for tp in sorted(labels):
+            weight_name = 'weight{}'.format(tp.replace('_', ''))
+            species_at_tp = exp_data[tp].sig.id_list
+            for i, j in term_g.edges:
+                count = 0
+                in_t1 = term_to_gene[i]
+                in_t2 = term_to_gene[j]
+                for g1, g2 in product(in_t1, in_t2):
+                    if g1 in species_at_tp and g2 in species_at_tp:
+                        if (g1, g2) in edges:
+                            count += 1
+                term_g[i][j][weight_name] = count
     labels = [i.replace('_', '') for i in labels]
     if save_name:
-        nx.write_graphml(term_g, "{}_ags_network.graphml".format(save_name))
+        nx.write_gml(molecular_g, '{}_subgraph.gml'.format(save_name))
+        nx.write_gml(term_g, '{}.gml'.format(save_name))
     if use_cytoscape:
         from magine.networks.visualization.cytoscape import RenderModel
-        rm = RenderModel(term_g, layout='force-directed')
-        rm.visualize_by_list_of_time(labels,
-                                     prefix=save_name,
-                                     out_dir=out_dir,
-                                     )
+        rm = RenderModel(term_g, layout='circular')
+        if edge_weight_by_sample:
+            rm.update_node_edge_by_samples(labels,
+                                           prefix=save_name,
+                                           out_dir=out_dir
+                                           )
+        else:
+            rm.visualize_by_list_of_time(labels, prefix=save_name,
+                                         out_dir=out_dir)
+
         _s = "convert -delay 100 -dispose previous -loop 0 " \
              "ont_network_*_formatted.png {}.gif"
         if merge:
             os.system(_s.format(save_name))
     return term_g, molecular_g
+
