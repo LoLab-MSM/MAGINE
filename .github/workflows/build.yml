@@ -9,7 +9,7 @@ jobs:
       max-parallel: 4
       matrix:
         os: [ windows-latest, ubuntu-latest ]
-        python-version: [ 3.6, 3.7, 3.8 ]
+        python-version: [ 3.7 ]
 
     steps:
       - uses: actions/checkout@master
@@ -21,12 +21,12 @@ jobs:
       # Installing dependencies in macos and ubuntu
       - name: Install dependencies for macos and ubuntu
         shell: bash -l {0}
-        if: matrix.os == 'macos-latest' || matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: |
-          conda install --yes -c conda-forge numpy scipy networkx nose pandas jinja2 plotly  python-igraph
+               conda install --yes -c conda-forge numpy bioservices scipy networkx nose pandas jinja2 plotly python-igraph py2cytoscape matplotlib pycairo seaborn
           mkdir -p ~/.config/matplotlib
           echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
-          pip install -r requirements.txt
+          #          pip install -r requirements.txt
           pip install python-coveralls
           pip install nose-exclude
           pip install nose-timer
@@ -38,18 +38,13 @@ jobs:
       #        if: matrix.os == 'windows-latest'
       #        run: |
 
-      - name: Install pysb
+      - name: Install MAGINE
         shell: bash -l {0}
         run: |
           python setup.py build --build-lib=build/lib
           python magine/copy_sample_dbs.py
-          python setup.py sdist && twine check dist/*
-      #    - name: Setup tmate session
-      #      uses: mxschmitt/action-tmate@v3
-      - name: Test pysb
+
+      - name: Test MAGINE
         shell: bash -l {0}
         run: |
           nosetests build/lib/magine/tests --with-coverage --cover-inclusive  --cover-package=build/lib/magine --logging-level=INFO --with-timer
-      - uses: codecov/codecov-action@v1
-        with:
-          verbose: true # optional (default = false)
