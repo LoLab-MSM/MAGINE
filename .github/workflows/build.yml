@@ -23,7 +23,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install --yes -c conda-forge numpy bioservices scipy networkx=2.3 \
-          nose pandas jinja2 plotly pathos sortedcontainers wordcloud\
+          nose pandas jinja2 plotly pathos sortedcontainers wordcloud \
           python-igraph py2cytoscape matplotlib pycairo seaborn
           mkdir -p ~/.config/matplotlib
           echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
