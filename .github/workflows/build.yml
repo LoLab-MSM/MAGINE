@@ -8,7 +8,7 @@ jobs:
     strategy:
       max-parallel: 4
       matrix:
-        os: [ windows-latest, ubuntu-latest ]
+        os: [ ubuntu-latest ]
         python-version: [ 3.7 ]
 
     steps:
@@ -18,12 +18,13 @@ jobs:
         with:
           auto-update-conda: true
           python-version: ${{ matrix.python-version }}
-      # Installing dependencies in macos and ubuntu
-      - name: Install dependencies for macos and ubuntu
+      # Installing dependencies
+      - name: Install dependencies
         shell: bash -l {0}
-        if: matrix.os == 'windows-latest' || matrix.os == 'ubuntu-latest'
         run: |
-               conda install --yes -c conda-forge numpy bioservices scipy networkx nose pandas jinja2 plotly python-igraph py2cytoscape matplotlib pycairo seaborn
+          conda install --yes -c conda-forge numpy bioservices scipy networkx=2.3 \
+          nose pandas jinja2 plotly \
+          python-igraph py2cytoscape matplotlib pycairo seaborn
           mkdir -p ~/.config/matplotlib
           echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
           pip install python-coveralls
