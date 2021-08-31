@@ -24,7 +24,7 @@ jobs:
         run: |
           conda install --yes -c conda-forge numpy pandas scipy networkx=2.3 \
           nose  jinja2 plotly pathos sortedcontainers wordcloud \
-          python-igraph py2cytoscape matplotlib pycairo seaborn \
+          python-igraph py2cytoscape matplotlib=2.2.3 pycairo seaborn \
           defusedxml openpyxl jupyter
           mkdir -p ~/.config/matplotlib
           echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
