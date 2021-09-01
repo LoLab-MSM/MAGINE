@@ -22,13 +22,13 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install --yes -c conda-forge numpy pandas scipy networkx=2.3 \
-          nose  jinja2 plotly pathos sortedcontainers wordcloud \
+            jinja2 plotly pathos sortedcontainers wordcloud \
           python-igraph py2cytoscape matplotlib=2.2.3 matplotlib-base=2.2.3 pycairo seaborn \
           defusedxml openpyxl jupyter
           mkdir -p ~/.config/matplotlib
           echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
-          pip install bioservices==1.6
-          pip install python-coveralls nose-exclude nose-timer codecov matplotlib_venn
+          pip install bioservices==1.6 matplotlib_venn
+          pip install nose python-coveralls nose-exclude nose-timer codecov
 
       - name: Install MAGINE
         shell: bash -l {0}
@@ -39,7 +39,9 @@ jobs:
       - name: Test MAGINE
         shell: bash -l {0}
         run: |
-          nosetests build/lib/magine/tests --with-coverage --cover-inclusive  --cover-package=build/lib/magine --logging-level=INFO --with-timer
+          nosetests build/lib/magine/tests --with-coverage --cover-inclusive  \
+                    --cover-package=build/lib/magine --logging-level=INFO --with-timer \
+                    --cover-xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
