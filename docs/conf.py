@@ -246,9 +246,9 @@ html_js_files = [
 
 
 def setup(app):
-    app.add_javascript(
+    app.add_js_file(
         "https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js")
-    app.add_javascript(
+    app.add_js_file(
         "https://unpkg.com/@jupyter-widgets/html-manager@*/dist/embed-amd.js")
     for i in html_js_files:
-        app.add_javascript(i)
+        app.add_js_file(i)

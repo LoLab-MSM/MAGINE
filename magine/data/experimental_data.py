@@ -272,7 +272,7 @@ class Sample(BaseData):
             n_cols = 3
         else:
             n_cols = 2
-        n_rows = np.rint(np.rint(len(n_sample) / float(n_cols)))
+        n_rows = int(np.rint(np.rint(len(n_sample) / float(n_cols))))
         if n_cols * n_rows < len(n_sample):
             if n_cols >= n_rows:
                 n_rows += 1
@@ -289,7 +289,6 @@ class Sample(BaseData):
             sec_0, sec_1, sec_2 = v_plot.create_mask(sample, sig_column,
                                                      p_value,
                                                      fold_change_cutoff)
-
             ax = fig.add_subplot(n_rows, n_cols, n + 1)
             ax.set_title(i)
             v_plot.add_volcano_plot(ax, sec_0, sec_1, sec_2)
@@ -400,7 +399,7 @@ class Sample(BaseData):
         if y_range is not None:
             plt.xlim(y_range[0], y_range[1])
 
-        ax.set_yscale('log', basey=10)
+        ax.set_yscale('log', base=10)
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
         ax.set_ylabel('Count', fontsize=16)
         fig.tight_layout()
@@ -468,7 +467,7 @@ class ExperimentalData(object):
         """
         if self.__genes is None:
             tmp = self.data.copy()
-            tmp = tmp.loc[tmp[species_type] == protein]
+            tmp = tmp.loc[tmp[species_type].isin([protein, gene])]
             self.__genes = Sample(tmp)
         return self.__genes
 
@@ -484,7 +483,7 @@ class ExperimentalData(object):
         """
         if self.__proteins is None:
             tmp = self.data.copy()
-            tmp = tmp.loc[(self.data[species_type] == protein) &
+            tmp = tmp.loc[(self.data[species_type].isin([protein, gene])) &
                           ~(tmp[exp_method] == rna)]
             self.__proteins = Sample(tmp)
         return self.__proteins

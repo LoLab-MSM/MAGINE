@@ -24,7 +24,7 @@ MAGINE has four main modules
     - Networks
     - Tools
 
-Our Data classes are built to organize and facilate exploration for both the raw data and the analysis.
+Our Data classes are built to organize and facilitate exploration for both the raw data and the analysis.
 The data class is the central structure that enables this.
 
 
@@ -36,7 +36,7 @@ Table of contents
 
    installation
    overview
-   Tutorial.ipynb
+   Tutorial.rst
    modules/index
 
 
