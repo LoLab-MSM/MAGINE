@@ -399,7 +399,7 @@ class Sample(BaseData):
         if y_range is not None:
             plt.xlim(y_range[0], y_range[1])
 
-        ax.set_yscale('log', base=10)
+        ax.set_yscale('log', basey=10)
         ax.set_xlabel('log$_2$ Fold Change', fontsize=16)
         ax.set_ylabel('Count', fontsize=16)
         fig.tight_layout()
