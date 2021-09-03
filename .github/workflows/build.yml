@@ -1,0 +1,49 @@
+name: build
+on: [ push ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      max-parallel: 4
+      matrix:
+        os: [ ubuntu-latest, windows-latest ]
+        python-version: [ 3.7 ]
+
+    steps:
+      - uses: actions/checkout@master
+      - name: Setup conda
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+      # Installing dependencies
+      - name: Install dependencies
+        shell: bash -l {0}
+        run: |
+          conda install --yes -c conda-forge numpy pandas scipy networkx=2.3 \
+            jinja2 plotly pathos sortedcontainers wordcloud \
+          python-igraph py2cytoscape matplotlib=2.2.3 matplotlib-base=2.2.3 pycairo seaborn \
+          defusedxml openpyxl jupyter
+          mkdir -p ~/.config/matplotlib
+          echo "backend:Agg" > ~/.config/matplotlib/matplotlibrc
+          pip install bioservices==1.6 matplotlib_venn
+          pip install nose python-coveralls nose-exclude nose-timer codecov
+
+      - name: Install MAGINE
+        shell: bash -l {0}
+        run: |
+          python setup.py build --build-lib=build/lib
+          python magine/copy_sample_dbs.py
+
+      - name: Test MAGINE
+        shell: bash -l {0}
+        run: |
+          nosetests build/lib/magine/tests --with-coverage --cover-inclusive  \
+                    --cover-package=build/lib/magine --logging-level=INFO --with-timer \
+                    --cover-xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          fail_ci_if_error: true

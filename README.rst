@@ -2,23 +2,17 @@
 MAGINE : Mechanism of Action Generator involving Network Analysis
 =================================================================
 
-.. image:: https://api.codacy.com/project/badge/Grade/cba1091c58a246bfb07f7ed7f86afe24
-   :alt: Codacy Badge
-   :target: https://app.codacy.com/app/james.c.pino/MAGINE?utm_source=github.com&utm_medium=referral&utm_content=LoLab-VU/MAGINE&utm_campaign=badger
-
-.. image:: https://travis-ci.org/LoLab-VU/MAGINE.svg?branch=master
-    :target: https://travis-ci.org/LoLab-VU/MAGINE
-
+.. image:: https://app.codacy.com/project/badge/Grade/d5248a84f769428281e340bff1338963
+    :target: https://www.codacy.com/gh/LoLab-VU/MAGINE/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=LoLab-VU/MAGINE&amp;utm_campaign=Badge_Grade
+.. image:: https://github.com/LoLab-VU/MAGINE/actions/workflows/build.yml/badge.svg
+    :target: https://github.com/LoLab-VU/MAGINE/actions/workflows/build.yml
 .. image:: https://codecov.io/gh/LoLab-VU/MAGINE/branch/master/graph/badge.svg
     :target: https://codecov.io/gh/LoLab-VU/MAGINE
-
 .. image:: https://readthedocs.org/projects/magine/badge/?version=latest
    :target: https://magine.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
-
 .. image:: https://mybinder.org/badge.svg
     :target: https://mybinder.org/v2/gh/LoLab-VU/MAGINE/master
-
 .. image:: https://badges.gitter.im/LoLab-VU/MAGINE.svg
    :target: https://gitter.im/LoLab-VU/MAGINE?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge
    :alt: Join the chat at https://gitter.im/LoLab-VU/MAGINE
