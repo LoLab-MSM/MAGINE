@@ -283,6 +283,94 @@ class RenderModel(object):
             else:
                 trim_photo(out_file, j)
 
+    def update_by_list_of_nodes(self, list_of_time, prefix='tmp', scale=100):
+        """
+        create sequences of pdfs and svgs based on list of attributes
+
+        list_of_time should point to attributes of the network.
+        This attribute will update the network accordingly.
+
+        Parameters
+        ----------
+        list_of_time : list_like
+        prefix : str
+
+
+        """
+        self.map_edge_width(column='weight', min_value=None, max_value=None,
+                            min_width=3, max_width=10)
+
+        self.style.create_passthrough_mapping('name', vp='NODE_LABEL')
+        self.cy.style.apply(style=self.style, network=self.g_cy)
+
+        node_label_colors = {self.node_name2id[i]: 'black' for i in
+                             self.graph.nodes}
+
+        node_color_values = {self.node_name2id[i]: d['color'] for i, d in
+                             self.graph.nodes(data=True)}
+        # do all node changes
+        df_vs_node = pd.DataFrame(
+            [node_label_colors, node_color_values],
+            index=['NODE_LABEL_COLOR', 'NODE_FILL_COLOR'],
+        ).T
+        df_vs_node['NODE_BORDER_PAINT'] = df_vs_node['NODE_LABEL_COLOR']
+        self.view1.batch_update_node_views(df_vs_node)
+        self.pretty_layout()
+
+        all_node_size = []
+        for ind, j in enumerate(list_of_time):
+            size = np.array([self.graph.node[n]['sample{}'.format(j)]
+                             for n in self.graph.nodes])
+            all_node_size.append(size)
+        all_node_size = np.array(all_node_size).flatten()
+        simple_slope = create_slope(min_val=all_node_size.min(),
+                                    max_val=all_node_size.max(),
+                                    values=(10, scale))
+        # Continuous mapping
+        points = [
+            {
+                'value': str(all_node_size.min()),
+                'lesser': 'blue',
+                'equal': 'blue',
+                'greater': 'blue'
+            },
+            {
+                'value': str(all_node_size.max()),
+                'lesser': 'red',
+                'equal': 'red',
+                'greater': 'red'
+            }
+        ]
+        for sample in sorted(list_of_time):
+            time.sleep(1)
+            self.style.create_continuous_mapping(
+                column='sample{}'.format(sample),
+                col_type='Double',
+                vp='NODE_SIZE',
+                points=simple_slope
+            )
+            self.style.create_continuous_mapping(
+                column='sample{}'.format(sample),
+                col_type='Double',
+                vp='NODE_FILL_COLOR',
+                points=points
+            )
+
+            self.cy.style.apply(style=self.style, network=self.g_cy)
+
+            fig_name = '{0}_{1}'.format(prefix, sample)
+            print("Saving {}".format(fig_name))
+
+            out_file = '{}.png'.format(fig_name)
+
+            if os.path.exists(out_file):
+                os.remove(out_file)
+
+            x = self.view1.get_network_view_as_dict()
+            self.create_png(out_file, int(x['NETWORK_WIDTH']))
+            self.create_svg(out_file, int(x['NETWORK_WIDTH']))
+            trim_photo(out_file, j)
+
     def pretty_layout(self):
         df_edge = pd.DataFrame(index=self.edge_name2id.values())
         # df_edge = df_edge.T
@@ -382,37 +470,6 @@ class RenderModel(object):
             else:
                 trim_photo('{}.png'.format(fig_name), sample)
 
-    def update_node_color(self, attribute, save_name):
-        self.cy.style.apply(style=self.style, network=self.g_cy)
-        node_color_values = {self.node_name2id[i[0]]: i[1][attribute] for i in
-                             self.graph.nodes(data=True)}
-
-        self.view1.update_node_views(visual_property='NODE_FILL_COLOR',
-                                     values=node_color_values)
-        node_label_colors = {self.node_name2id[i]: 'black' for i in
-                             self.graph.nodes}
-        node_labels = {self.node_name2id[i]: i for i in self.graph.nodes()}
-        node_color_values = {self.node_name2id[i]: d[attribute] for i, d in
-                             self.graph.nodes(data=True)}
-        # do all node changes
-        df_vs_node = pd.DataFrame(
-            [node_label_colors, node_color_values, node_labels],
-            index=['NODE_LABEL_COLOR', 'NODE_FILL_COLOR', 'NODE_LABEL'],
-        )
-
-        self.view1.batch_update_node_views(df_vs_node.T)
-        with open('{0}.svg'.format(save_name), 'wb') as f:
-            f.write(self.g_cy.get_svg())
-            f.close()
-
-        with open('{0}.pdf'.format(save_name), 'wb') as f:
-            f.write(self.g_cy.get_pdf())
-            f.close()
-
-        with open('{0}.png'.format(save_name), 'wb') as f:
-            f.write(self.g_cy.get_png())
-            f.close()
-
     def update_all_node_attribute(self, nodes, attribute, value):
 
         # Update only valid nodes
@@ -435,7 +492,7 @@ class RenderModel(object):
         valid_nodes = {i for i in nodes if i in self.graph.nodes()}
 
         node_color_values = {self.node_name2id[i]: color for i in valid_nodes}
-        print(node_color_values)
+
         # # do all node changes
         df_vs_node = pd.DataFrame(
             [node_color_values, ],

@@ -1,5 +1,5 @@
 mock
-networkx>=2.1
+networkx==2.3
 jinja2
 scipy
 numpy
@@ -13,6 +13,7 @@ seaborn
 plotly
 appdirs
 numpydoc
+pandoc
 pyparsing>=2.1.4
 sortedcontainers
 IPython>=5.3.0
