@@ -3,7 +3,7 @@ import math
 import os
 import zipfile
 
-from defusedxml import cElementTree as ElementTree
+from defusedxml import ElementTree
 import pandas as pd
 import requests
 
@@ -98,7 +98,7 @@ def download_hgnc():
 
     columns = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name', 'location',
                'entrez_id', 'ucsc_id', 'vega_id', 'alias_name', 'alias_symbol',
-               'status', 'gene_family', 'gene_family_id', 'ena', 'iuphar',
+               'status', 'ena', 'iuphar',
                'cd',
                'refseq_accession', 'ccds_id', 'pubmed_id', 'mgd_id', 'rgd_id',
                'lsdb', 'bioparadigms_slc', 'enzyme_id', 'merops', 'horde_id',
@@ -311,8 +311,8 @@ hgnc_valid_categories = ['symbol', 'uniprot_ids', 'ensembl_gene_id', 'name',
                          ]
 
 if __name__ == '__main__':
-    # download_hgnc()
-    download_uniprot('hsa')
+    download_hgnc()
+    # download_uniprot('hsa')
     # hmdb = HMDB()
     # df = hmdb.load_db(fresh_download=True)
     # print(df.head(10))

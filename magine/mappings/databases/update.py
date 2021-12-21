@@ -1,8 +1,8 @@
-from .download_libraries import HMDB, download_hgnc, download_ncbi, \
-    download_uniprot
+from magine.mappings.databases.download_libraries \
+    import download_hmdb, download_hgnc, download_ncbi, download_uniprot
 
 if __name__ == '__main__':
     download_hgnc()
     download_ncbi()
     download_uniprot()
-    HMDB().download_db()
+    download_hmdb()

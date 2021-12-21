@@ -13,6 +13,8 @@ from magine.plotting.species_plotting import write_table_to_html
 
 logger = get_logger(__name__, log_level=logging.INFO)
 
+# TODO remove this snippet. Have the function to gather fresh list of
+# available gene sets
 _valid_libs = set()
 with open(os.path.join(os.path.dirname(__file__),
                        '_valid_enricher_libs.txt'), 'r') as f:
@@ -122,6 +124,10 @@ def get_libraries():
     url = 'http://amp.pharm.mssm.edu/Enrichr/datasetStatistics'
     libs_json = json.loads(requests.get(url).text)
     return [lib['libraryName'] for lib in libs_json['statistics']]
+
+
+# get fresh list of all valid libs
+_valid_libs = set(get_libraries())
 
 
 class Enrichr(object):

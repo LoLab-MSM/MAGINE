@@ -109,8 +109,13 @@ class BaseData(pd.DataFrame):
 
         # get list of columns
         cols_to_check = list(new_data[columns].unique())
+
         if flag not in new_data.columns:
             raise AssertionError('Requires significant column')
+
+        # convert bool to int, used to not need to do (pandas change?)
+        new_data[flag] = pd.to_numeric(new_data[flag])
+
         # pivot
         sig = pd.pivot_table(new_data,
                              index=index,
