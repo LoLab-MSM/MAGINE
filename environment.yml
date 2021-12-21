@@ -18,9 +18,6 @@ dependencies:
   - networkx=2.3
   - statsmodels
   - Jinja2>=2.10.1
-  - pyicu
-  - wordcloud
-  - py2cytoscape
   - requests
   - defusedxml
   - pydot
@@ -32,3 +29,6 @@ dependencies:
   - pip:
       - matplotlib_venn
       - bioservices==1.6
+      - py2cytoscape==0.7.1
+      - matplotlib_venn==0.11.5
+      - wordcloud
